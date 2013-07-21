@@ -1,0 +1,7 @@
+main cycle:
+changing main cycle
+rollbacks
+transactions
+caching
+releases dir
+ex:
