@@ -1,6 +1,7 @@
 package cap4j.session;
 
 import cap4j.GlobalContext;
+import cap4j.Role;
 import cap4j.Variables;
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
@@ -9,7 +10,9 @@ import com.google.common.collect.Iterables;
 import javax.annotation.Nullable;
 import java.io.File;
 import java.util.Arrays;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * User: chaschev
@@ -17,6 +20,8 @@ import java.util.List;
  */
 public abstract class SystemEnvironment {
     private boolean unixType = true;
+
+    protected Set<Role> roles = new LinkedHashSet<Role>();
 
     public Variable joinPath(final Variable... vars) {
         final List<Variable> fromIterable = Arrays.asList(vars);
@@ -94,4 +99,7 @@ public abstract class SystemEnvironment {
         return copyOperation(src, dest, CopyCommandType.LINK, false);
     }
 
+    public Set<Role> getRoles() {
+        return roles;
+    }
 }

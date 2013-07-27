@@ -1,7 +1,15 @@
+features:
+
+Console: saving/loading user input - only in the very beginning
+
+
 main cycle:
+
 changing main cycle
 rollbacks
 transactions
 caching
 releases dir
+dependencies
 ex:
+

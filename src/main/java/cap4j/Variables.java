@@ -3,7 +3,6 @@ package cap4j;
 import cap4j.session.SessionContext;
 import cap4j.session.SystemEnvironment;
 import cap4j.session.Variable;
-import com.google.common.base.Function;
 
 import javax.annotation.Nullable;
 import java.util.LinkedHashMap;
@@ -11,15 +10,7 @@ import java.util.LinkedHashMap;
 public class Variables {
     private final GlobalContext globalContext;
 
-    public static Variable fallback(final String name, final Variables srcVariables) {
-        return new Variable() {
-            public Object apply(@Nullable Context input) {
-                return srcVariables.getClosure(name);
-            }
-        };
-    }
-
-
+    public LinkedHashMap<Nameable, Variable> variables = new LinkedHashMap<Nameable, Variable>();
 
     public static class Context{
         public final GlobalContext globalContext;
@@ -30,29 +21,36 @@ public class Variables {
             this.globalContext = globalContext;
             this.sessionContext = sessionContext;
             this.system = system;
+
         }
     }
-
-    public LinkedHashMap<String, Variable> variables = new LinkedHashMap<String, Variable>();
 
     public Variables(GlobalContext globalContext) {
         this.globalContext = globalContext;
     }
 
-    public void set(String name, String value) {
-        variables.put(name, new GlobalContext.ConstantString(value));
+    public void set(Nameable name, String value) {
+        putUnlessFrozen(name, new GlobalContext.ConstantString(value));
     }
 
-    public Function<Variables.Context, Object> put(String key, Variable value) {
-        return variables.put(key, value);
+    private Variable putUnlessFrozen(Nameable name, Variable val) {
+        final Variable variable = variables.get(name);
+
+        boolean frozen = variable.isFrozen();
+
+        if(!frozen){
+            return variables.put(name, val);
+        }else{
+            throw new IllegalStateException("can't assign to " + name + ": it is frozen");
+        }
     }
 
-    public Variables put(GlobalContext.VariableName key, Variable value) {
-        variables.put(key.name(), value);
+    public Variables put(Nameable key, Variable value) {
+        putUnlessFrozen(key, value);
         return this;
     }
 
-    public String getString(SessionContext context, String name, String _default) {
+    public String getString(SessionContext context, Nameable name, String _default) {
         final Object result = get(context, name, _default);
 
         if (result == null) return null;
@@ -60,11 +58,23 @@ public class Variables {
         return result.toString();
     }
 
-    public <T> T get(SessionContext context, String name, T _default) {
-        return get(new Context(globalContext, context), name, _default);
+    public String getString(Nameable name, String _default) {
+        final Object result = get(name, _default);
+
+        if (result == null) return null;
+
+        return result.toString();
     }
 
-    public <T> T get(Context context, String name, T _default) {
+    public <T> T get(SessionContext context, Nameable name, T _default) {
+        return get(new Context(globalContext, context, null), name, _default);
+    }
+
+    public <T> T get(Nameable name, T _default) {
+        return get(new Context(globalContext, null, null), name, _default);
+    }
+
+    public <T> T get(Context context, Nameable name, T _default) {
         final Object result;
 
         final Variable r = getClosure(name);
@@ -78,19 +88,36 @@ public class Variables {
         return (T) result;
     }
 
-    public Variable getClosure(String name) {
-        return variables.get(name);
-    }
-
-    public Variable getClosure(GlobalContext.VariableName name) {
+    public Variable getClosure(Nameable name) {
         return variables.get(name.name());
     }
 
-    public Variables fallbackTo(final Variables srcVariables, String... names){
-        for (String name : names) {
+    public Variables fallbackTo(final Variables srcVariables, Nameable... names){
+        for (Nameable name : names) {
             put(name, fallback(name, srcVariables));
         }
 
         return this;
     }
+
+    public static Variable fallback(final Nameable name2, final Variables srcVariables) {
+        return new Variable() {
+            public Object apply(@Nullable Context input) {
+                return srcVariables.getClosure(name2);
+            }
+        };
+    }
+
+    public Variables dup(){
+        final Variables v = new Variables(globalContext);
+
+        v.variables = new LinkedHashMap<Nameable, Variable>(variables);
+
+        return v;
+    }
+
+    public void freeze(VariableName variable){
+        getClosure(variable).setFrozen(true);
+    }
+
 }

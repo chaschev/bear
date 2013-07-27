@@ -3,23 +3,22 @@ package cap4j;
 import cap4j.session.SystemEnvironments;
 import cap4j.session.Variable;
 
-import static cap4j.GlobalContext.VariableName.applicationName;
-import static cap4j.GlobalContext.VariableName.applicationsPath;
-import static cap4j.GlobalContext.VariableName.deployTo;
-
 /**
  * User: chaschev
  * Date: 7/21/13
  */
 public abstract class GlobalContext {
+    public static GlobalContext INSTANCE;
     public final Variables variables = new Variables(null);
+    public final Console console = new Console();
 
-    public static class ConstantString implements Variable {
+    public static class ConstantString extends Variable {
         String s;
 
         public ConstantString(String s) {
             this.s = s;
         }
+
         public Object apply(Variables.Context input) {
             return s;
         }
@@ -27,33 +26,23 @@ public abstract class GlobalContext {
 
     SystemEnvironments system;
 
-    public static interface GlobalContextFactory{
-        GlobalContext create(SystemEnvironments system);
+    protected GlobalContext() {
+
     }
 
-    public static enum VariableName{
-        applicationName,
-        applicationsPath,
-        deployTo;
+    public static Variables gvars(){
+        return INSTANCE.variables;
     }
 
-    GlobalContextFactory globalContextFactory = new GlobalContextFactory() {
-        @Override
-        public GlobalContext create(SystemEnvironments system) {
-            final GlobalContext globalContext = new GlobalContext() {
+    public static String var(Nameable varName){
+        return INSTANCE.variables.get(varName, null);
+    }
 
-            };
+    public static <T> T var(Nameable varName, T _default){
+        return INSTANCE.variables.get(varName, _default);
+    }
 
-            final Variables vars = globalContext.variables;
-
-            vars
-                .put(deployTo, system.joinPath(vars.getClosure(applicationsPath), vars.getClosure(applicationName)))
-
-
-            ;
-
-
-            return globalContext;
-        }
-    };
+    public static Console console(){
+        return INSTANCE.console;
+    }
 }

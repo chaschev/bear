@@ -1,29 +1,32 @@
 package cap4j.examples;
 
-import cap4j.Stage;
-import cap4j.session.*;
+import cap4j.*;
+import cap4j.session.Result;
+import cap4j.session.SystemEnvironment;
+import cap4j.session.SystemEnvironments;
 import cap4j.task.Task;
 
+import static cap4j.CapConstants.devEnvironment;
 import static cap4j.session.GenericUnixRemoteEnvironment.newUnixRemote;
 
 /**
- * User: chaschev
- * Date: 7/21/13
+ * User: ACHASCHEV
+ * Date: 7/27/13
  */
-public class Ex1Basic {
-    public static void main(String[] args) {
-        new GenericUnixRemoteEnvironment()
-            .setSshAddress(
-                new GenericUnixRemoteEnvironment.SshAddress("chaschev", "aaaaaa", "192.168.25.66")
-            );
+public class Ex4ConsoleVars {
+    static enum ProjectVars implements Nameable{
+        quickDeploy
+    }
 
+    public static void main(String[] args) {
         final Stage pacDev = new Stage("pac-dev")
             .add(newUnixRemote("chaschev", "aaaaaa", "192.168.25.66"))
             ;
 
         final Task<Task.TaskResult> testTask = new Task<Task.TaskResult>() {
-            {
-
+            @Override
+            protected void defineVars(Console console) {
+                console.askIfUnset("Deploy quickly?", ProjectVars.quickDeploy, !"prod".equals(GlobalContext.var(devEnvironment)));
             }
 
             @Override

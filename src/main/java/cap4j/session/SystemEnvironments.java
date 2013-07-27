@@ -68,6 +68,11 @@ public class SystemEnvironments extends SystemEnvironment {
     }
 
     @Override
+    public boolean exists(String path) {
+        return getCurrent().exists(path);
+    }
+
+    @Override
     public Result uploadRemotelyToMe(File file, String dest) {
         return getCurrent().uploadRemotelyToMe(file, dest);
     }
@@ -75,6 +80,11 @@ public class SystemEnvironments extends SystemEnvironment {
     @Override
     public String getName() {
         return getCurrent().getName();
+    }
+
+    @Override
+    public String readLink(String path) {
+        return getCurrent().readLink(path);
     }
 
     @Override
@@ -119,5 +129,13 @@ public class SystemEnvironments extends SystemEnvironment {
     @Override
     public Variable joinPath(Variable... vars) {
         return getCurrent().joinPath(vars);
+    }
+
+    public boolean add(SystemEnvironment systemEnvironment) {
+        return implementations.add(systemEnvironment);
+    }
+
+    public List<SystemEnvironment> getImplementations() {
+        return implementations;
     }
 }
