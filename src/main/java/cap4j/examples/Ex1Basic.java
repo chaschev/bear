@@ -3,6 +3,8 @@ package cap4j.examples;
 import cap4j.Stage;
 import cap4j.session.*;
 import cap4j.task.Task;
+import cap4j.task.TaskResult;
+import cap4j.task.TaskRunner;
 
 import static cap4j.session.GenericUnixRemoteEnvironment.newUnixRemote;
 
@@ -18,16 +20,16 @@ public class Ex1Basic {
             );
 
         final Stage pacDev = new Stage("pac-dev")
-            .add(newUnixRemote("chaschev", "aaaaaa", "192.168.25.66"))
+            .add(newUnixRemote("chaschev", "1", "192.168.25.66"))
             ;
 
-        final Task<Task.TaskResult> testTask = new Task<Task.TaskResult>() {
+        final Task<TaskResult> testTask = new Task<TaskResult>() {
             {
 
             }
 
             @Override
-            protected TaskResult run() {
+            protected TaskResult run(TaskRunner runner) {
                 system.copy("src", "dest");
                 system.runForEnvironment("linux", new SystemEnvironments.EnvRunnable() {
                     @Override

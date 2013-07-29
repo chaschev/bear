@@ -1,10 +1,15 @@
 package cap4j.examples;
 
-import cap4j.*;
+import cap4j.Console;
+import cap4j.GlobalContext;
+import cap4j.Nameable;
+import cap4j.Stage;
 import cap4j.session.Result;
 import cap4j.session.SystemEnvironment;
 import cap4j.session.SystemEnvironments;
 import cap4j.task.Task;
+import cap4j.task.TaskResult;
+import cap4j.task.TaskRunner;
 
 import static cap4j.CapConstants.devEnvironment;
 import static cap4j.session.GenericUnixRemoteEnvironment.newUnixRemote;
@@ -23,14 +28,14 @@ public class Ex4ConsoleVars {
             .add(newUnixRemote("chaschev", "aaaaaa", "192.168.25.66"))
             ;
 
-        final Task<Task.TaskResult> testTask = new Task<Task.TaskResult>() {
+        final Task<TaskResult> testTask = new Task<TaskResult>() {
             @Override
             protected void defineVars(Console console) {
                 console.askIfUnset("Deploy quickly?", ProjectVars.quickDeploy, !"prod".equals(GlobalContext.var(devEnvironment)));
             }
 
             @Override
-            protected TaskResult run() {
+            protected TaskResult run(TaskRunner runner) {
                 system.copy("src", "dest");
                 system.runForEnvironment("linux", new SystemEnvironments.EnvRunnable() {
                     @Override

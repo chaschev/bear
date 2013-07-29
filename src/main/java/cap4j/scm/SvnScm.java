@@ -3,39 +3,19 @@ package cap4j.scm;
 import cap4j.GlobalContext;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
 import static cap4j.GlobalContext.gvars;
 import static cap4j.VariableName.*;
-import static cap4j.scm.SvnScm.CommandLine.commandLine;
+import static cap4j.scm.BaseScm.CommandLine.commandLine;
 
 /**
  * User: ACHASCHEV
  * Date: 7/24/13
  */
 public class SvnScm extends BaseScm {
-    public static class CommandLine{
-        List<String> strings = new ArrayList<String>(4);
-
-        public CommandLine a(String... s){
-            Collections.addAll(strings, s);
-            return this;
-        }
-
-        public static CommandLine commandLine(String... s){
-            return new CommandLine().a(s);
-        }
-
-        public CommandLine p(Map<String, String> params) {
-            for (Map.Entry<String, String> e : params.entrySet()) {
-                strings.add(" --" + e.getKey() + "=" + e.getValue() + " ");
-            }
-            return this;
-        }
-    }
-
+    @Override
     public String head(){
         return "HEAD";
     }
