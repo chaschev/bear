@@ -1,7 +1,6 @@
 package cap4j;
 
 import cap4j.session.SystemEnvironments;
-import cap4j.session.Variable;
 
 /**
  * User: chaschev
@@ -11,18 +10,6 @@ public abstract class GlobalContext {
     public static GlobalContext INSTANCE;
     public final Variables variables = new Variables(null);
     public final Console console = new Console();
-
-    public static class ConstantString extends Variable {
-        String s;
-
-        public ConstantString(String s) {
-            this.s = s;
-        }
-
-        public Object apply(Variables.Context input) {
-            return s;
-        }
-    }
 
     SystemEnvironments system;
 

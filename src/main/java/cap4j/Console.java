@@ -1,5 +1,8 @@
 package cap4j;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.*;
 
 /**
@@ -7,6 +10,8 @@ import java.util.*;
  * Date: 7/27/13
  */
 public class Console {
+    private static final Logger logger = LoggerFactory.getLogger(Console.class);
+
     protected List<Map.Entry<Nameable, String>> recordedVars = new ArrayList<Map.Entry<Nameable, String>>();
 
     protected boolean recordingMode = true;
@@ -61,6 +66,7 @@ public class Console {
     }
 
     public void stopRecording(){
+        logger.info("stopping recording");
         recordingMode = false;
     }
 

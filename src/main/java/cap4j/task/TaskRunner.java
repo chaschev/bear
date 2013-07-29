@@ -1,23 +1,28 @@
 package cap4j.task;
 
 import cap4j.GlobalContext;
+import cap4j.Nameable;
 import cap4j.Variables;
 import cap4j.session.Result;
-import cap4j.session.SessionContext;
-import cap4j.session.SystemEnvironment;
-import cap4j.task.Task;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Set;
+
+import static cap4j.session.Result.ERROR;
+import static cap4j.session.Result.OK;
 
 /**
  * User: chaschev
  * Date: 7/21/13
  */
 public class TaskRunner {
-    Set<Task> tasksExecuted = new LinkedHashSet<Task>();
+    private static final Logger logger = LoggerFactory.getLogger(TaskRunner.class);
+
+    LinkedHashSet<Task> tasksExecuted = new LinkedHashSet<Task>();
 
     Variables.Context context;
 
@@ -25,84 +30,96 @@ public class TaskRunner {
         this.context = context;
     }
 
-    public Result run(Task<Task.TaskResult> task){
-        Result result = runRec(task);
+    public Result run(Task<TaskResult> task) {
+        return runWithDependencies(task);
+    }
 
-        if(result != Result.OK){
-            for (Task taskExecuted : tasksExecuted) {
-                taskExecuted.onRollback();
+    public Result run(Task... tasks) {
+        return run((List)Arrays.asList(tasks));
+    }
+
+    public Result run(Iterable<Task<TaskResult>> tasks) {
+        for (Task<TaskResult> task : tasks) {
+            final Result result = runWithDependencies(task);
+
+            if (result != OK) {
+                return result;
             }
         }
 
-        return result;
+        return OK;
     }
 
-    protected Result runRec(Task<Task.TaskResult> task){
-        if(tasksExecuted.contains(task)){
-            return Result.OK;
+    private void rollbackExecuted(Result result) {
+        if (result != OK) {
+            //todo fixme reverse!
+            try {
+                for (Task taskExecuted : tasksExecuted) {
+                    taskExecuted.onRollback();
+                }
+            } finally {
+                tasksExecuted.clear();
+            }
+        }
+    }
+
+    protected Result runWithDependencies(Task<TaskResult> task) {
+        if (tasksExecuted.contains(task)) {
+            return OK;
         }
 
         task.context = context;
 
-        Result runResult = runTasks(task.dependsOnTasks);
-
-        if(runResult != Result.OK){
-            return runResult;
-        }
-
-        runResult = runTasks(task.beforeTasks);
-
-        if(runResult != Result.OK){
-            return runResult;
-        }
-
-        runResult = runTasks(Collections.singletonList(task));
-
-        if(runResult!=Result.OK){
-            return runResult;
-        }
-
-        runResult = runTasks(task.afterTasks);
-
-        if(runResult!=Result.OK){
-            return runResult;
-        }
-
-        return Result.OK;
+        return Result.and(
+            runCollectionOfTasks(task.dependsOnTasks),
+            runCollectionOfTasks(task.beforeTasks),
+            runMe(task),
+            runCollectionOfTasks(task.afterTasks)
+        );
     }
 
-    private Result runTasks( List<Task<Task.TaskResult>> tasks) {
-        Result runResult = Result.OK;
-        for (Task<Task.TaskResult> dependantTask : tasks){
-            if(!dependantTask.roles.isEmpty() && !dependantTask.hasRole(context.system.getRoles())){
+    private Result runMe(Task<TaskResult> task) {
+        task.defineVars(GlobalContext.console());
+
+        return runCollectionOfTasks(Collections.singletonList(task));
+    }
+
+    private Result runCollectionOfTasks(List<Task<TaskResult>> tasks) {
+        Result runResult = OK;
+        for (Task<TaskResult> task : tasks) {
+            if (!task.roles.isEmpty() && !task.hasRole(context.system.getRoles())) {
                 continue;
             }
 
-            runResult = runTask(dependantTask);
+            runResult = _runSingleTask(task);
 
-            if(runResult!=Result.OK){
+            if (runResult != OK) {
                 break;
             }
         }
         return runResult;
     }
 
-    private Result runTask(Task<Task.TaskResult> task) {
+    private Result _runSingleTask(Task<TaskResult> task) {
         Result result = null;
         try {
-            result = runRec(task);
+            result = runWithDependencies(task);
         } catch (Exception ignore) {
-
+            logger.error(ignore.toString());
         }
 
         Result runResult;
 
-        if(result == null || result != Result.OK){
-            runResult = Result.ERROR;
-        }else{
-            runResult = Result.OK;
+        if (result == null || result != OK) {
+            runResult = ERROR;
+        } else {
+            runResult = OK;
         }
 
         return runResult;
+    }
+
+    public String varS(Nameable varName) {
+        return context.sessionContext.variables.get(varName, null);
     }
 }

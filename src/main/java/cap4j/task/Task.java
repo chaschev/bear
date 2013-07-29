@@ -1,9 +1,6 @@
 package cap4j.task;
 
-import cap4j.Console;
-import cap4j.Role;
-import cap4j.VariableName;
-import cap4j.Variables;
+import cap4j.*;
 import cap4j.session.Result;
 import cap4j.session.SystemEnvironments;
 import com.google.common.collect.Sets;
@@ -14,10 +11,10 @@ import java.util.*;
  * User: chaschev
  * Date: 7/21/13
  */
-public abstract class Task<T extends Task.TaskResult> {
-    List<Task<Task.TaskResult>> beforeTasks = new ArrayList<Task<Task.TaskResult>>();
-    List<Task<Task.TaskResult>> afterTasks = new ArrayList<Task<Task.TaskResult>>();
-    List<Task<Task.TaskResult>> dependsOnTasks = new ArrayList<Task<Task.TaskResult>>();
+public abstract class Task<T extends TaskResult> {
+    List<Task<TaskResult>> beforeTasks = new ArrayList<Task<TaskResult>>();
+    List<Task<TaskResult>> afterTasks = new ArrayList<Task<TaskResult>>();
+    List<Task<TaskResult>> dependsOnTasks = new ArrayList<Task<TaskResult>>();
     Set<Role> roles;
 
     String name;
@@ -38,24 +35,16 @@ public abstract class Task<T extends Task.TaskResult> {
         return this;
     }
 
-    public static class TaskResult{
-        Result result;
-
-        public TaskResult(Result result) {
-            this.result = result;
-        }
-    }
-
     protected void defineVars(Console console){
 
     }
 
-    protected TaskResult run() {
+    protected TaskResult run(TaskRunner runner) {
         return new TaskResult(Result.OK);
     }
 
     public Object var(VariableName varName){
-        return context.sessionContext.variables.get(context.sessionContext, varName.name(), null);
+        return context.sessionContext.variables.get(varName.name(), null);
     }
 
 
@@ -63,5 +52,7 @@ public abstract class Task<T extends Task.TaskResult> {
         //todo use it
     }
 
-
+    public String varS(Nameable varName) {
+        return context.varS(varName);
+    }
 }

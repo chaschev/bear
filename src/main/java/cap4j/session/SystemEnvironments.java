@@ -3,7 +3,6 @@ package cap4j.session;
 import cap4j.GlobalContext;
 import com.google.common.base.Predicate;
 
-import java.io.File;
 import java.util.List;
 
 import static com.google.common.collect.Iterables.find;
@@ -38,8 +37,13 @@ public class SystemEnvironments extends SystemEnvironment {
     }
 
     @Override
-    public Result mkdir(String src) {
-        return getCurrent().mkdir(src);
+    public Result mkdirs(String... dirs) {
+        return getCurrent().mkdirs(dirs);
+    }
+
+    @Override
+    public Result rm(String... paths) {
+        return getCurrent().mkdirs(paths);
     }
 
     @Override
@@ -53,8 +57,8 @@ public class SystemEnvironments extends SystemEnvironment {
     }
 
     @Override
-    public Result chmod(String dest, String octal, String user, boolean recursive) {
-        return getCurrent().chmod(dest, octal, user, recursive);
+    public Result chmod(String perms, boolean recursive, String... files) {
+        return getCurrent().chmod(perms, recursive, files);
     }
 
     @Override
@@ -63,18 +67,13 @@ public class SystemEnvironments extends SystemEnvironment {
     }
 
     @Override
-    public String getString(String dest, String _default) {
-        return getCurrent().getString(dest, _default);
+    public String readString(String dest, String _default) {
+        return getCurrent().readString(dest, _default);
     }
 
     @Override
     public boolean exists(String path) {
         return getCurrent().exists(path);
-    }
-
-    @Override
-    public Result uploadRemotelyToMe(File file, String dest) {
-        return getCurrent().uploadRemotelyToMe(file, dest);
     }
 
     @Override
@@ -97,12 +96,13 @@ public class SystemEnvironments extends SystemEnvironment {
         return getCurrent().move(src, dest);
     }
 
+    /**
+     * Should remove an existing link.
+     */
     @Override
-    public CopyResult link(String src, String dest) {
+    public Result link(String src, String dest) {
         return getCurrent().link(src, dest);
     }
-
-
 
     public static interface EnvRunnable {
         Result run(SystemEnvironment system);
@@ -127,7 +127,7 @@ public class SystemEnvironments extends SystemEnvironment {
     }
 
     @Override
-    public Variable joinPath(Variable... vars) {
+    public DynamicVariable joinPath(DynamicVariable... vars) {
         return getCurrent().joinPath(vars);
     }
 
@@ -137,5 +137,9 @@ public class SystemEnvironments extends SystemEnvironment {
 
     public List<SystemEnvironment> getImplementations() {
         return implementations;
+    }
+
+    public int size() {
+        return implementations.size();
     }
 }

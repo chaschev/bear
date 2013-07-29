@@ -1,8 +1,9 @@
 package cap4j.session;
 
-import cap4j.GlobalContext;
 import cap4j.Role;
 import cap4j.Variables;
+import cap4j.scm.BaseScm;
+import cap4j.scm.SvnScm;
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
 import com.google.common.collect.Iterables;
@@ -23,13 +24,13 @@ public abstract class SystemEnvironment {
 
     protected Set<Role> roles = new LinkedHashSet<Role>();
 
-    public Variable joinPath(final Variable... vars) {
-        final List<Variable> fromIterable = Arrays.asList(vars);
+    public DynamicVariable joinPath(final DynamicVariable... vars) {
+        final List<DynamicVariable> fromIterable = Arrays.asList(vars);
 
-        return new Variable() {
+        return new DynamicVariable() {
             public Object apply(Variables.Context input) {
-                final Iterable<String> strings = Iterables.transform(fromIterable, new Function<Variable, String>() {
-                    public String apply(@Nullable Variable input) {
+                final Iterable<String> strings = Iterables.transform(fromIterable, new Function<DynamicVariable, String>() {
+                    public String apply(@Nullable DynamicVariable input) {
                         return input.toString();
                     }
                 });
@@ -40,6 +41,10 @@ public abstract class SystemEnvironment {
 
     public String diskRoot(){return unixType ? "" : "c:";}
 
+    public String joinPath(String... strings) {
+        return joinPath(Arrays.asList(strings));
+    }
+
     public String joinPath(Iterable<String> strings) {
         return Joiner.on(dirSeparator()).join(strings);
     }
@@ -48,54 +53,87 @@ public abstract class SystemEnvironment {
         return unixType ? '/' : '\\';
     }
 
-    public static abstract class RunResult{
-        public Result result;
+
+    public abstract List<String> ls(String path);
+
+    public void zip(String dest, String... paths){
+        zip(dest, Arrays.asList(paths));
     }
+    public abstract void zip(String dest, Iterable<String> paths);
+    public abstract void unzip(String file, @Nullable String destDir);
+
+    public abstract String newTempDir();
+
+    public abstract boolean isUnix();
+
 
     public static class CopyResult{
 
     }
-
     public static class MakeDirResult{
 
     }
 
     public static class GetStringResult{
+
         Result result;
         String s;
     }
 
+
     public enum CopyCommandType{
-        COPY, LINK, MOVE
+        COPY, LINK, MOVE;
     }
 
-    public abstract RunResult run(String command);
+    public SvnScm.CommandLineResult run(BaseScm.Script script){
+        StringBuilder sb = new StringBuilder(1024);
+        Result r = Result.OK;
+
+        for (BaseScm.CommandLine line : script.lines) {
+            final BaseScm.CommandLineResult result = run(line);
+            sb.append(result.text);
+            sb.append("\n");
+
+            if(result.result != Result.OK){
+                r = result.result;
+                break;
+            }
+        }
+
+        return new BaseScm.CommandLineResult(sb.toString(), r);
+    }
+    public abstract <T extends SvnScm.CommandLineResult> T run(BaseScm.CommandLine commandLine) ;
+    public abstract <T extends SvnScm.CommandLineResult> T runVCS(SvnScm.CommandLine<T> stringResultCommandLine);
+
     public abstract Result sftp(String dest, String host, String path, String user, String pw);
-    public abstract Result mkdir(String src);
-    protected abstract CopyResult copyOperation(String src, String dest, CopyCommandType type, boolean folder);
+    public abstract Result scpLocal(String dest, File... files);
+    public abstract Result mkdirs(String... dirs);
+    protected abstract Result copyOperation(String src, String dest, CopyCommandType type, boolean folder);
     public abstract Result chown(String dest, String octal, String user, boolean recursive);
-    public abstract Result chmod(String dest, String octal, String user, boolean recursive);
-    public abstract Result writeString(String dest, String s);
-    public abstract String getString(String dest, String _default);
+    public abstract Result chmod(String octal, boolean recursive, String... files);
+    public abstract Result writeString(String path, String s);
+    public abstract String readString(String path, String _default);
     public abstract boolean exists(String path);
-    public abstract Result uploadRemotelyToMe(File file, String dest);
+
     public abstract String getName();
     public abstract String readLink(String path);
+    public abstract Result rm(String... paths);
 
-    public Variable appsDirVar(Variables vars){
+
+    public DynamicVariable appsDirVar(Variables vars){
         //return vars.
     }
 
 
-    public CopyResult copy(String src, String dest){
+    public Result copy(String src, String dest){
         return copyOperation(src, dest, CopyCommandType.COPY, false);
     }
 
-    public CopyResult move(String src, String dest){
+    public Result move(String src, String dest){
         return copyOperation(src, dest, CopyCommandType.MOVE, false);
     }
 
-    public CopyResult link(String src, String dest){
+    public Result link(String src, String dest){
         return copyOperation(src, dest, CopyCommandType.LINK, false);
     }
 

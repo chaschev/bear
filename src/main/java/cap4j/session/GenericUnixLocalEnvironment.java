@@ -1,7 +1,5 @@
 package cap4j.session;
 
-import java.io.File;
-
 /**
  * User: ACHASCHEV
  * Date: 7/23/13
@@ -34,7 +32,7 @@ public class GenericUnixLocalEnvironment extends SystemEnvironment {
     }
 
     @Override
-    public Result chmod(String dest, String octal, String user, boolean recursive) {
+    public Result chmod(String octal, boolean recursive, String... files) {
         throw new UnsupportedOperationException("todo");
     }
 
@@ -44,17 +42,12 @@ public class GenericUnixLocalEnvironment extends SystemEnvironment {
     }
 
     @Override
-    public String getString(String dest, String _default) {
+    public String readString(String dest, String _default) {
         throw new UnsupportedOperationException("todo");
     }
 
     @Override
     public boolean exists(String path) {
-        throw new UnsupportedOperationException("todo");
-    }
-
-    @Override
-    public Result uploadRemotelyToMe(File file, String dest) {
         throw new UnsupportedOperationException("todo");
     }
 
