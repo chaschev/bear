@@ -12,15 +12,23 @@ import java.util.*;
  * Date: 7/21/13
  */
 public abstract class Task<T extends TaskResult> {
-    List<Task<TaskResult>> beforeTasks = new ArrayList<Task<TaskResult>>();
-    List<Task<TaskResult>> afterTasks = new ArrayList<Task<TaskResult>>();
-    List<Task<TaskResult>> dependsOnTasks = new ArrayList<Task<TaskResult>>();
-    Set<Role> roles;
-
     String name;
     String description;
 
-    protected transient Variables.Context context;
+    Set<Role> roles = new HashSet<Role>();
+
+    List<Task<TaskResult>> beforeTasks = new ArrayList<Task<TaskResult>>();
+    List<Task<TaskResult>> afterTasks = new ArrayList<Task<TaskResult>>();
+    List<Task<TaskResult>> dependsOnTasks = new ArrayList<Task<TaskResult>>();
+
+    public Task() {
+    }
+
+    public Task(String name) {
+        this.name = name;
+    }
+
+    protected transient VarContext context;
 
     protected SystemEnvironments system;
 
@@ -28,9 +36,9 @@ public abstract class Task<T extends TaskResult> {
         return !Sets.intersection(this.roles, roles).isEmpty();
     }
 
-    public Task<T> setDependsOnTasks(Task... tasks) {
+    public Task setDependsOnTasks(Task... tasks) {
         dependsOnTasks.clear();
-        Collections.addAll(dependsOnTasks, tasks);
+        Collections.addAll((List)dependsOnTasks, tasks);
 
         return this;
     }
@@ -43,8 +51,8 @@ public abstract class Task<T extends TaskResult> {
         return new TaskResult(Result.OK);
     }
 
-    public Object var(VariableName varName){
-        return context.sessionContext.variables.get(varName.name(), null);
+    public Object var(Nameable varName){
+        return context.var(varName);
     }
 
 
@@ -54,5 +62,20 @@ public abstract class Task<T extends TaskResult> {
 
     public String varS(Nameable varName) {
         return context.varS(varName);
+    }
+
+    public Task<T> addBeforeTask(Task task) {
+        beforeTasks.add(task);
+        return this;
+    }
+
+    @Override
+    public String toString() {
+        final StringBuilder sb = new StringBuilder("Task{");
+        sb.append("name='").append(name).append('\'');
+        sb.append(", description='").append(description).append('\'');
+        sb.append(", roles=").append(roles);
+        sb.append('}');
+        return sb.toString();
     }
 }

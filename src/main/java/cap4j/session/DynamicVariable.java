@@ -1,7 +1,7 @@
 package cap4j.session;
 
+import cap4j.VarContext;
 import cap4j.Nameable;
-import cap4j.Variables;
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import org.slf4j.Logger;
@@ -19,7 +19,7 @@ public class DynamicVariable<T> implements Nameable {
     public final String name;
     public final String title;
 
-    protected Function<Variables.Context, T> dynamicImplementation;
+    protected Function<VarContext, T> dynamicImplementation;
 
     T defaultValue;
 
@@ -57,7 +57,7 @@ public class DynamicVariable<T> implements Nameable {
         return name;
     }
 
-    public final T apply(Variables.Context context) {
+    public final T apply(VarContext context) {
         if(defaultValue == null && dynamicImplementation == null){
             throw new UnsupportedOperationException("you should implement dynamic variable :" + name + " or set its default value");
         }
@@ -93,7 +93,7 @@ public class DynamicVariable<T> implements Nameable {
         return this;
     }
 
-    public DynamicVariable<T> setDynamic(Function<Variables.Context, T> dynamicImplementation) {
+    public DynamicVariable<T> setDynamic(Function<VarContext, T> dynamicImplementation) {
         this.dynamicImplementation = dynamicImplementation;
         defaultValue = null;
         return this;

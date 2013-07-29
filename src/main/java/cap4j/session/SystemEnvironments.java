@@ -1,8 +1,12 @@
 package cap4j.session;
 
-import cap4j.GlobalContext;
+import cap4j.scm.BaseScm;
+import cap4j.scm.SvnScm;
 import com.google.common.base.Predicate;
 
+import javax.annotation.Nullable;
+import java.io.File;
+import java.util.ArrayList;
 import java.util.List;
 
 import static com.google.common.collect.Iterables.find;
@@ -15,91 +19,89 @@ import static com.google.common.collect.Iterables.find;
 
 //todo don't extends
 //todo change to index
-public class SystemEnvironments extends SystemEnvironment {
-    List<SystemEnvironment> implementations;
+public class SystemEnvironments  {
+    List<SystemEnvironment> implementations = new ArrayList<SystemEnvironment>();
 
     SystemEnvironment current;
 
-    GlobalContext globalContext;
-
-    private SystemEnvironments(SystemEnvironment current) {
+    public SystemEnvironments(SystemEnvironment current) {
         this.current = current;
     }
 
-    @Override
-    public RunResult run(String command) {
-        return getCurrent().run(command);
-    }
-
-    @Override
+    
     public Result sftp(String dest, String host, String path, String user, String pw) {
         return getCurrent().sftp(dest, host, path, user, pw);
     }
 
-    @Override
+    
+    public Result scpLocal(String dest, File... files) {
+        throw new UnsupportedOperationException("todo SystemEnvironments.scpLocal");
+    }
+
+    
     public Result mkdirs(String... dirs) {
         return getCurrent().mkdirs(dirs);
     }
 
-    @Override
+    
     public Result rm(String... paths) {
         return getCurrent().mkdirs(paths);
     }
 
-    @Override
-    public CopyResult copyOperation(String src, String dest, CopyCommandType type, boolean folder) {
+    
+    public Result copyOperation(String src, String dest, SystemEnvironment.CopyCommandType type, boolean folder) {
         return getCurrent().copyOperation(src, dest, type, folder);
     }
 
-    @Override
+    
     public Result chown(String dest, String octal, String user, boolean recursive) {
         return getCurrent().chown(dest, octal, user, recursive);
     }
 
-    @Override
+    
     public Result chmod(String perms, boolean recursive, String... files) {
         return getCurrent().chmod(perms, recursive, files);
     }
 
-    @Override
+    
     public Result writeString(String dest, String s) {
         return getCurrent().writeString(dest, s);
     }
 
-    @Override
+    
     public String readString(String dest, String _default) {
         return getCurrent().readString(dest, _default);
     }
 
-    @Override
+    
     public boolean exists(String path) {
         return getCurrent().exists(path);
     }
 
-    @Override
+    
     public String getName() {
         return getCurrent().getName();
     }
 
-    @Override
+    
     public String readLink(String path) {
         return getCurrent().readLink(path);
     }
 
-    @Override
-    public CopyResult copy(String src, String dest) {
+    
+    public Result copy(String src, String dest) {
         return getCurrent().copy(src, dest);
     }
 
-    @Override
-    public CopyResult move(String src, String dest) {
+    
+    public Result move(String src, String dest) {
         return getCurrent().move(src, dest);
     }
 
     /**
      * Should remove an existing link.
      */
-    @Override
+    
     public Result link(String src, String dest) {
         return getCurrent().link(src, dest);
     }
@@ -110,7 +112,7 @@ public class SystemEnvironments extends SystemEnvironment {
 
     public Result runForEnvironment(final String name, EnvRunnable runnable) {
         return runnable.run(find(implementations, new Predicate<SystemEnvironment>() {
-            @Override
+            
             public boolean apply(SystemEnvironment input) {
                 return input.getName().equals(name);
             }
@@ -121,12 +123,47 @@ public class SystemEnvironments extends SystemEnvironment {
         return this.current;
     }
 
-    @Override
+    
     public String joinPath(Iterable<String> strings) {
         return getCurrent().joinPath(strings);
     }
 
-    @Override
+    
+    public List<String> ls(String path) {
+        throw new UnsupportedOperationException("todo SystemEnvironments.ls");
+    }
+
+    
+    public void zip(String dest, Iterable<String> paths) {
+        throw new UnsupportedOperationException("todo SystemEnvironments.zip");
+    }
+
+    
+    public void unzip(String file, @Nullable String destDir) {
+        throw new UnsupportedOperationException("todo SystemEnvironments.unzip");
+    }
+
+    
+    public String newTempDir() {
+        throw new UnsupportedOperationException("todo SystemEnvironments.newTempDir");
+    }
+
+    
+    public boolean isUnix() {
+        throw new UnsupportedOperationException("todo SystemEnvironments.isUnix");
+    }
+
+    
+    public <T extends SvnScm.CommandLineResult> T run(BaseScm.CommandLine commandLine) {
+        throw new UnsupportedOperationException("todo SystemEnvironments.run");
+    }
+
+    
+    public <T extends SvnScm.CommandLineResult> T runVCS(BaseScm.CommandLine<T> stringResultCommandLine) {
+        throw new UnsupportedOperationException("todo SystemEnvironments.runVCS");
+    }
+
+    
     public DynamicVariable joinPath(DynamicVariable... vars) {
         return getCurrent().joinPath(vars);
     }

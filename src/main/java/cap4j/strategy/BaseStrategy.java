@@ -1,7 +1,8 @@
 package cap4j.strategy;
 
+import cap4j.GlobalContext;
+import cap4j.VarContext;
 import cap4j.Stage;
-import cap4j.Variables;
 import cap4j.session.Result;
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
@@ -17,6 +18,7 @@ import java.util.concurrent.TimeUnit;
 
 import static cap4j.CapConstants.newStrategy;
 import static cap4j.CapConstants.releasePath;
+import static cap4j.GlobalContext.local;
 import static org.apache.commons.io.FileUtils.byteCountToDisplaySize;
 
 /**
@@ -35,29 +37,29 @@ public abstract class BaseStrategy {
     @Nullable
     private static String deployZipPath;
 
-    protected Variables.Context ctx;
+    protected VarContext ctx;
 
-    public static void setBarriers(Stage stage, final Variables.Context localCtx) {
+    public static void setBarriers(Stage stage, final VarContext localCtx) {
         prepareRemoteDataBarrier = new CyclicBarrier(stage.getEnvironments().size(), new Runnable() {
             @Override
             public void run() {
                 deployZipPath = null;
 
-                localCtx.globalContext.console.stopRecording();
+                GlobalContext.console().stopRecording();
 
                 logger.info("20: preparing local files");
                 preparedLocalFiles = localCtx.gvar(newStrategy).step_20_prepareLocalFiles(localCtx);
 
                 if(preparedLocalFiles.isEmpty()) return;
 
-                String tempDir = localCtx.local.newTempDir();
+                String tempDir = local().newTempDir();
 
                 logger.info("20: zipping {} files of total size {} to: {}", preparedLocalFiles.size(),
                     byteCountToDisplaySize(countSpace(preparedLocalFiles)), tempDir);
 
                 deployZipPath = localCtx.system.joinPath(tempDir, "deploy.zip");
 
-                localCtx.local.zip(deployZipPath, Iterables.transform(preparedLocalFiles, new Function<File, String>() {
+                local().zip(deployZipPath, Iterables.transform(preparedLocalFiles, new Function<File, String>() {
                     public String apply(File f) {
                         return f.getAbsolutePath();
                     }
@@ -123,7 +125,7 @@ public abstract class BaseStrategy {
      * @return List of files which will be zipped and copied to the remote hosts. If it is empty, copying is skipped.
      * @param localCtx
      */
-    protected abstract List<File> step_20_prepareLocalFiles(Variables.Context localCtx);
+    protected abstract List<File> step_20_prepareLocalFiles(VarContext localCtx);
 
     private void _step_30_copyFilesToHosts(){
         if(isCopyingZip()){
@@ -151,7 +153,7 @@ public abstract class BaseStrategy {
      *
      * @param localCtx
      */
-    protected abstract void step_50_whenRemoteUpdateFinished(Variables.Context localCtx);
+    protected abstract void step_50_whenRemoteUpdateFinished(VarContext localCtx);
 
     private static boolean isCopyingZip() {
         return deployZipPath != null;

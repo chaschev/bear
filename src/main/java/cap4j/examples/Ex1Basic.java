@@ -1,6 +1,7 @@
 package cap4j.examples;
 
 import cap4j.Stage;
+import cap4j.scm.BaseScm;
 import cap4j.session.*;
 import cap4j.task.Task;
 import cap4j.task.TaskResult;
@@ -14,13 +15,9 @@ import static cap4j.session.GenericUnixRemoteEnvironment.newUnixRemote;
  */
 public class Ex1Basic {
     public static void main(String[] args) {
-        new GenericUnixRemoteEnvironment()
-            .setSshAddress(
-                new GenericUnixRemoteEnvironment.SshAddress("chaschev", "aaaaaa", "192.168.25.66")
-            );
 
         final Stage pacDev = new Stage("pac-dev")
-            .add(newUnixRemote("chaschev", "1", "192.168.25.66"))
+            .add(newUnixRemote("", "chaschev", "1", "192.168.25.66"))
             ;
 
         final Task<TaskResult> testTask = new Task<TaskResult>() {
@@ -34,7 +31,7 @@ public class Ex1Basic {
                 system.runForEnvironment("linux", new SystemEnvironments.EnvRunnable() {
                     @Override
                     public Result run(SystemEnvironment system) {
-                        return system.run("echo blahblahblah").result;
+                        return system.run(new BaseScm.CommandLine().a("echo",  "blahblahblah")).result;
                     }
                 });
 

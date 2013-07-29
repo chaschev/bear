@@ -1,6 +1,5 @@
 package cap4j.session;
 
-import cap4j.GlobalContext;
 import cap4j.Variables;
 
 /**
@@ -10,12 +9,8 @@ import cap4j.Variables;
 public class SessionContext {
     public final Variables variables;
 
-    protected SessionContext(Variables variables) {
+    public SessionContext(Variables variables) {
         this.variables = variables;
-    }
-
-    public SessionContext(GlobalContext global) {
-        variables = new Variables(global);
     }
 
     public SessionContext dup(){

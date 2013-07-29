@@ -1,8 +1,8 @@
 package cap4j.task;
 
+import cap4j.VarContext;
 import cap4j.GlobalContext;
 import cap4j.Nameable;
-import cap4j.Variables;
 import cap4j.session.Result;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,9 +24,9 @@ public class TaskRunner {
 
     LinkedHashSet<Task> tasksExecuted = new LinkedHashSet<Task>();
 
-    Variables.Context context;
+    VarContext context;
 
-    public TaskRunner(Variables.Context context) {
+    public TaskRunner(VarContext context) {
         this.context = context;
     }
 
@@ -64,6 +64,8 @@ public class TaskRunner {
     }
 
     protected Result runWithDependencies(Task<TaskResult> task) {
+        logger.info("starting task {}", task.name);
+
         if (tasksExecuted.contains(task)) {
             return OK;
         }
@@ -71,27 +73,31 @@ public class TaskRunner {
         task.context = context;
 
         return Result.and(
-            runCollectionOfTasks(task.dependsOnTasks),
-            runCollectionOfTasks(task.beforeTasks),
+            runCollectionOfTasks(task.dependsOnTasks, task.name + ": depending tasks", false),
+            runCollectionOfTasks(task.beforeTasks, task.name + ": before tasks", false),
             runMe(task),
-            runCollectionOfTasks(task.afterTasks)
+            runCollectionOfTasks(task.afterTasks, task.name + ": after tasks", false)
         );
     }
 
     private Result runMe(Task<TaskResult> task) {
         task.defineVars(GlobalContext.console());
 
-        return runCollectionOfTasks(Collections.singletonList(task));
+        return runCollectionOfTasks(Collections.singletonList(task), task.name + ": running myself", true);
     }
 
-    private Result runCollectionOfTasks(List<Task<TaskResult>> tasks) {
+    private Result runCollectionOfTasks(List<Task<TaskResult>> tasks, String desc, boolean thisIsMe) {
+        if(!tasks.isEmpty() && !desc.isEmpty()){
+            logger.info(desc);
+        }
+
         Result runResult = OK;
         for (Task<TaskResult> task : tasks) {
             if (!task.roles.isEmpty() && !task.hasRole(context.system.getRoles())) {
                 continue;
             }
 
-            runResult = _runSingleTask(task);
+            runResult = _runSingleTask(task, thisIsMe);
 
             if (runResult != OK) {
                 break;
@@ -100,10 +106,14 @@ public class TaskRunner {
         return runResult;
     }
 
-    private Result _runSingleTask(Task<TaskResult> task) {
+    private Result _runSingleTask(Task<TaskResult> task, boolean thisIsMe) {
         Result result = null;
         try {
-            result = runWithDependencies(task);
+            if(!thisIsMe){
+                result = runWithDependencies(task);
+            }else{
+                result = task.run(this).result;
+            }
         } catch (Exception ignore) {
             logger.error(ignore.toString());
         }
@@ -120,6 +130,6 @@ public class TaskRunner {
     }
 
     public String varS(Nameable varName) {
-        return context.sessionContext.variables.get(varName, null);
+        return context.varS(varName);
     }
 }

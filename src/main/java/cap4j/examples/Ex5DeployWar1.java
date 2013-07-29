@@ -3,10 +3,9 @@ package cap4j.examples;
 import cap4j.CapConstants;
 import cap4j.Nameable;
 import cap4j.Stage;
-import cap4j.Variables;
+import cap4j.VarContext;
 import cap4j.scm.BaseScm;
 import cap4j.session.DynamicVariable;
-import cap4j.session.GenericUnixRemoteEnvironment;
 import cap4j.session.Result;
 import cap4j.strategy.BaseStrategy;
 import cap4j.task.Task;
@@ -33,8 +32,8 @@ public class Ex5DeployWar1 {
         public static final DynamicVariable<String>
             tomcatWebappsUnix = strVar("tomcatWebappsWin", "/var/lib/tomcat6/webapps").defaultTo("/var/lib/tomcat6/webapps"),
             tomcatWebappsWin = dynamicNotSet("tomcatWebappsWin", ""),
-            tomcatWebapps = strVar("tomcatHome", "").setDynamic(new Function<Variables.Context, String>() {
-                public String apply( Variables.Context ctx) {
+            tomcatWebapps = strVar("tomcatHome", "").setDynamic(new Function<VarContext, String>() {
+                public String apply( VarContext ctx) {
                     return ctx.system.isUnix() ? ctx.varS(tomcatWebappsUnix) : ctx.varS(tomcatWebappsWin);
                 }
             });
@@ -42,7 +41,7 @@ public class Ex5DeployWar1 {
     }
 
     public static class GrailsBuilder{
-        Variables.Context localCtx;
+        VarContext localCtx;
 
         public static enum GrailsConf implements Nameable{
             grailsPath,
@@ -52,7 +51,7 @@ public class Ex5DeployWar1 {
 
         public static final DynamicVariable<String> warName = strVar("warName", "i.e. ROOT.war").defaultTo("ROOT.war");
 
-        public GrailsBuilder(Variables.Context localCtx) {
+        public GrailsBuilder(VarContext localCtx) {
             this.localCtx = localCtx;
         }
 
@@ -98,17 +97,12 @@ public class Ex5DeployWar1 {
     }
 
     public static void main(String[] args) {
-        new GenericUnixRemoteEnvironment()
-            .setSshAddress(
-                new GenericUnixRemoteEnvironment.SshAddress("chaschev", "aaaaaa", "192.168.25.66")
-            );
-
         final Stage pacDev = new Stage("pac-dev")
-            .add(newUnixRemote("chaschev", "1", "192.168.25.66"))
+            .add(newUnixRemote("server1", "chaschev", "1", "192.168.25.66"))
             ;
 
-        CapConstants.newStrategy.setDynamic(new Function<Variables.Context, BaseStrategy>() {
-            public BaseStrategy apply(@Nullable Variables.Context input) {
+        CapConstants.newStrategy.setDynamic(new Function<VarContext, BaseStrategy>() {
+            public BaseStrategy apply(@Nullable VarContext input) {
                 return new BaseStrategy() {
                     @Override
                     protected void step_10_getPrepareRemoteData() {
@@ -116,12 +110,10 @@ public class Ex5DeployWar1 {
                     }
 
                     @Override
-                    protected List<File> step_20_prepareLocalFiles(Variables.Context localCtx) {
+                    protected List<File> step_20_prepareLocalFiles(VarContext localCtx) {
                         final GrailsBuilder.GrailsBuildResult r = new GrailsBuilder(localCtx).build();
 
-
-
-                        if(r.result.nok()){
+                            if(r.result.nok()){
                             throw new IllegalStateException("failed to build WAR");
                         }
 
@@ -142,7 +134,7 @@ public class Ex5DeployWar1 {
                     }
 
                     @Override
-                    protected void step_50_whenRemoteUpdateFinished(Variables.Context localCtx) {
+                    protected void step_50_whenRemoteUpdateFinished(VarContext localCtx) {
 
                     }
 
@@ -151,13 +143,16 @@ public class Ex5DeployWar1 {
             }
         });
 
-        Tasks.RESTART_APP.addBeforeTask(new Task(){
+        Tasks.restartApp.addBeforeTask(new Task(){
             @Override
             protected TaskResult run(TaskRunner runner) {
                 //todo restart tomcat
+                system.run(new BaseScm.CommandLine().a("service", "tomcat6", "restart"));
+
+                return new TaskResult(Result.OK);
             }
         });
 
-        pacDev.runTask(Tasks.DEPLOY);
+        pacDev.runTask(Tasks.deploy);
     }
 }
