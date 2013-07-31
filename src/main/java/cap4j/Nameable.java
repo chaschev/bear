@@ -5,6 +5,6 @@ package cap4j;
 * Date: 7/24/13
 */
 
-public interface Nameable{
+public interface Nameable<T>{
     String name();
 }

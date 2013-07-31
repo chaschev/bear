@@ -16,6 +16,9 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
+import static cap4j.GlobalContext.local;
+import static cap4j.session.VariableUtils.joinPath;
+
 /**
  * User: ACHASCHEV
  * Date: 7/27/13
@@ -39,112 +42,95 @@ public class CapConstants {
 
     public static final DynamicVariable<String>
 
-        applicationsPath = strVar("applicationsPath", "System apps folder").setDynamic(new Function<Variables.Context, String>() {
-        public String apply(Variables.Context input) {
+        applicationsPath = strVar("applicationsPath", "System apps folder").setDynamic(new Function<VarContext, String>() {
+        public String apply(VarContext input) {
             return SystemUtils.IS_OS_WINDOWS ? "c:" : "/var/lib";
         }
-    });
+    }),
 
-    public static final DynamicVariable<String> applicationName = strVar("applicationName", "Your app name");
+    applicationName = strVar("applicationName", "Your app name"),
 
-    public static final DynamicVariable<String> repositoryURI = strVar("repository", "Project VCS URI");
+    repositoryURI = strVar("repository", "Project VCS URI"),
 
-    public static final DynamicVariable<String> scm = enumConstant("Your VCS type", "svn");
+    scm = enumConstant("Your VCS type", "svn"),
 
-    public static final DynamicVariable<String> deployTo = strVar("deployTo", "Current release dir")
-        .setDynamic(new Function<Variables.Context, String>() {
-            public String apply(Variables.Context ctx) {
-                return ctx.system.joinPath(ctx.varS(applicationsPath), ctx.varS(applicationName));
-            }
-        });
+    deployTo = joinPath("deployTo", applicationsPath, applicationName).setDesc("Current release dir"),
 
-    public static final DynamicVariable<String> currentDirName = strVar("currentDirName", "Current release dir").defaultTo("current");
-    public static final DynamicVariable<String> releasesDirName = strVar("releasesDirName", "").defaultTo("releases");
-    public static final DynamicVariable<String> releaseName = strVar("releaseName", "I.e. 20140216").defaultTo(new SimpleDateFormat("yyyyMMdd.HHmmss").format(new Date()));
+    currentDirName = strVar("currentDirName", "Current release dir").defaultTo("current"),
 
-    public static final DynamicVariable<String> devEnvironment = enumConstant("Development environment", "dev", "test", "prod").defaultTo("prod");
+    releasesDirName = strVar("releasesDirName", "").defaultTo("releases"),
 
-    public static final DynamicVariable<String> revision = strVar("revision", "Get head revision").setDynamic(new Function<Variables.Context, String>() {
-        public String apply(Variables.Context ctx) {
+    releaseName = strVar("releaseName", "I.e. 20140216").defaultTo(new SimpleDateFormat("yyyyMMdd.HHmmss").format(new Date())),
+
+    devEnvironment = enumConstant("Development environment", "dev", "test", "prod").defaultTo("prod"),
+
+    revision = strVar("revision", "Get head revision").setDynamic(new Function<VarContext, String>() {
+        public String apply(VarContext ctx) {
             return vcs.apply(ctx).head();
         }
-    });
+    }),
 
-    public static final DynamicVariable<String> realRevision = strVar("realRevision", "Update revision from vcs").setDynamic(new Function<Variables.Context, String>() {
-        public String apply(Variables.Context ctx) {
-            BaseScm.StringResult r = ctx.local.runVCS(ctx.gvar(vcs).queryRevision(ctx.varS(revision), Collections.<String, String>emptyMap()));
+   realRevision = strVar("realRevision", "Update revision from vcs").setDynamic(new Function<VarContext, String>() {
+        public String apply(VarContext ctx) {
+            BaseScm.StringResult r = local().runVCS(ctx.gvar(vcs).queryRevision(ctx.varS(revision), Collections.<String, String>emptyMap()));
 
             return r.value;
         }
-    });
+    }),
 
-    public static final DynamicVariable<String> releasesPath = strVar("releasesPath", "").setDynamic(new Function<Variables.Context, String>() {
-        public String apply(Variables.Context ctx) {
-            return ctx.system.joinPath(ctx.varS(deployTo), ctx.varS(releasesDirName));
-        }
-    });
+    releasesPath = joinPath("releasesPath", deployTo, releasesDirName),
+    currentPath = joinPath("currentPath", deployTo, currentDirName),
+    releasePath = joinPath("releasesPath", releasesPath, releaseName),
 
-    public static final DynamicVariable<String> currentPath = strVar("currentPath", "").setDynamic(new Function<Variables.Context, String>() {
-        public String apply(Variables.Context ctx) {
-            return ctx.system.joinPath(ctx.varS(deployTo), ctx.varS(currentDirName));
-        }
-    });
-
-    public static final DynamicVariable<String> releasePath = strVar("releasePath", "").setDynamic(new Function<Variables.Context, String>() {
-        public String apply(Variables.Context ctx) {
-            return ctx.system.joinPath(ctx.varS(releasesPath), ctx.varS(releaseName));
-        }
-    });
-
-    public static final DynamicVariable<String> getLatestReleasePath = strVar("getLatestReleasePath", "").setDynamic(new Function<Variables.Context, String>() {
-        public String apply(Variables.Context input) {
+    getLatestReleasePath = strVar("getLatestReleasePath", "").setDynamic(new Function<VarContext, String>() {
+        public String apply(VarContext input) {
             final Releases r = input.gvar(getReleases);
 
             if (r.releases.isEmpty()) return null;
 
             return input.system.joinPath(input.gvar(releasesPath), r.last());
         }
-    }).memoize(true);
+    }).memoize(true),
 
-    public static final DynamicVariable<String> getPreviousReleasePath = strVar("getPreviousReleasePath", "").setDynamic(new Function<Variables.Context, String>() {
-        public String apply(Variables.Context input) {
+     getPreviousReleasePath = strVar("getPreviousReleasePath", "").setDynamic(new Function<VarContext, String>() {
+        public String apply(VarContext input) {
             final Releases r = input.gvar(getReleases);
 
             if (r.releases.size() < 2) return null;
 
             return input.system.joinPath(input.gvar(releasesPath), r.previous());
         }
-    }).memoize(true);
+    }).memoize(true),
 
-    public static final DynamicVariable<String> getCurrentRevision = strVar("getCurrentRevision", "").setDynamic(new Function<Variables.Context, String>() {
-        public String apply(Variables.Context ctx) {
+     getCurrentRevision = strVar("getCurrentRevision", "").setDynamic(new Function<VarContext, String>() {
+        public String apply(VarContext ctx) {
             return ctx.system.readString(ctx.joinPath(currentPath, "REVISION"), null);
         }
-    }).memoize(true);
+    }).memoize(true),
 
-    public static final DynamicVariable<String> getLatestReleaseRevision = strVar("getLatestReleaseRevision", "").setDynamic(new Function<Variables.Context, String>() {
-        public String apply(Variables.Context ctx) {
+    getLatestReleaseRevision = strVar("getLatestReleaseRevision", "").setDynamic(new Function<VarContext, String>() {
+        public String apply(VarContext ctx) {
             return ctx.system.readString(ctx.joinPath(getLatestReleasePath, "REVISION"), null);
         }
-    }).memoize(true);
+    }).memoize(true),
 
-    public static final DynamicVariable<String> getPreviousReleaseRevision = strVar("getPreviousReleaseRevision", "").setDynamic(new Function<Variables.Context, String>() {
-        public String apply(Variables.Context ctx) {
+     getPreviousReleaseRevision = strVar("getPreviousReleaseRevision", "").setDynamic(new Function<VarContext, String>() {
+        public String apply(VarContext ctx) {
             return ctx.system.readString(ctx.joinPath(getPreviousReleasePath, "REVISION"), null);
         }
     }).memoize(true);
 
     DynamicVariable<Boolean> useSudo = bool("useSudo", "").defaultTo(true);
 
-    public static final DynamicVariable<Releases> getReleases = new DynamicVariable<Releases>("getReleases", "").setDynamic(new Function<Variables.Context, Releases>() {
-        public Releases apply(Variables.Context ctx) {
+    public static final DynamicVariable<Releases> getReleases = new DynamicVariable<Releases>("getReleases", "").setDynamic(new Function<VarContext, Releases>() {
+        public Releases apply(VarContext ctx) {
             return new Releases(ctx.system.ls(ctx.gvar(releasesPath)));
         }
     });
 
 
-    public static final DynamicVariable<BaseScm> vcs = new DynamicVariable<BaseScm>("vcs", "VCS adapter").setDynamic(new Function<Variables.Context, BaseScm>() {
-        public BaseScm apply(Variables.Context ctx) {
+    public static final DynamicVariable<BaseScm> vcs = new DynamicVariable<BaseScm>("vcs", "VCS adapter").setDynamic(new Function<VarContext, BaseScm>() {
+        public BaseScm apply(VarContext ctx) {
             final String scm = ctx.varS(CapConstants.scm);
 
             if ("svn".equals(scm)) {
@@ -157,15 +143,15 @@ public class CapConstants {
 
     public static final DynamicVariable<BaseStrategy> newStrategy = dynamicNotSet("strategy", "Deployment strategy: how app files copied and built");
 
-    public static <T> DynamicVariable<T> dynamicNotSet(final String name, String desc){
-        return dynamic(name, desc, new Function<Variables.Context, T>() {
-            public T apply(@Nullable Variables.Context input) {
+    public static <T> DynamicVariable<T> dynamicNotSet(final String name, String desc) {
+        return dynamic(name, desc, new Function<VarContext, T>() {
+            public T apply(@Nullable VarContext input) {
                 throw new UnsupportedOperationException("you need to set the :" + name + " variable");
             }
         });
     }
 
-    public static <T> DynamicVariable<T> dynamic(String name, String desc, Function<Variables.Context, T> function){
+    public static <T> DynamicVariable<T> dynamic(String name, String desc, Function<VarContext, T> function) {
         return new DynamicVariable<T>(name, desc).setDynamic(function);
     }
 
@@ -180,7 +166,7 @@ public class CapConstants {
                 }
             }
         };
-    };
+    }
 
     public static DynamicVariable<String> strVar(String name, String desc) {
         return new DynamicVariable<String>(name, desc);

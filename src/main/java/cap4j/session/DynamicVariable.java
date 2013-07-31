@@ -1,43 +1,46 @@
 package cap4j.session;
 
+import cap4j.VarContext;
 import cap4j.Nameable;
-import cap4j.Variables;
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nonnull;
+
 /**
 * User: chaschev
 * Date: 7/21/13
 */
-public class DynamicVariable<T> implements Nameable {
+public class DynamicVariable<T> implements Nameable<T> {
     private static final Logger logger = LoggerFactory.getLogger(DynamicVariable.class);
 
     public boolean frozen;
 
+    @Nonnull
     public final String name;
-    public final String title;
+    public String desc;
 
-    protected Function<Variables.Context, T> dynamicImplementation;
+    protected Function<VarContext, T> dynamicImplementation;
 
     T defaultValue;
 
     private boolean memoize;
 
-    public DynamicVariable(String name, String title) {
+    public DynamicVariable(String name, String desc) {
         this.name = name;
-        this.title = title;
+        this.desc = desc;
     }
 
-    public DynamicVariable(String title) {
+    public DynamicVariable(String desc) {
         this.name = "-";
-        this.title = title;
+        this.desc = desc;
     }
 
-    public DynamicVariable(Nameable varName, String title) {
+    public DynamicVariable(Nameable varName, String desc) {
         this.name = varName.name();
-        this.title = title;
+        this.desc = desc;
     }
 
     public boolean isFrozen() {
@@ -57,7 +60,7 @@ public class DynamicVariable<T> implements Nameable {
         return name;
     }
 
-    public final T apply(Variables.Context context) {
+    public final T apply(VarContext context) {
         if(defaultValue == null && dynamicImplementation == null){
             throw new UnsupportedOperationException("you should implement dynamic variable :" + name + " or set its default value");
         }
@@ -93,7 +96,7 @@ public class DynamicVariable<T> implements Nameable {
         return this;
     }
 
-    public DynamicVariable<T> setDynamic(Function<Variables.Context, T> dynamicImplementation) {
+    public DynamicVariable<T> setDynamic(Function<VarContext, T> dynamicImplementation) {
         this.dynamicImplementation = dynamicImplementation;
         defaultValue = null;
         return this;
@@ -104,5 +107,37 @@ public class DynamicVariable<T> implements Nameable {
 
         this.memoize = memoize;
         return this;
+    }
+
+    public DynamicVariable<T> setDesc(String desc) {
+        this.desc = desc;
+        return this;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        DynamicVariable that = (DynamicVariable) o;
+
+        if (!name.equals(that.name)) return false;
+
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        return name.hashCode();
+    }
+
+    @Override
+    public String toString() {
+        final StringBuilder sb = new StringBuilder("DynamicVariable{");
+        sb.append("name='").append(name).append('\'');
+        sb.append(", defaultValue=").append(defaultValue);
+        sb.append(", memoize=").append(memoize);
+        sb.append('}');
+        return sb.toString();
     }
 }

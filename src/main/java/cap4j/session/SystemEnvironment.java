@@ -1,12 +1,9 @@
 package cap4j.session;
 
 import cap4j.Role;
-import cap4j.Variables;
 import cap4j.scm.BaseScm;
 import cap4j.scm.SvnScm;
-import com.google.common.base.Function;
 import com.google.common.base.Joiner;
-import com.google.common.collect.Iterables;
 
 import javax.annotation.Nullable;
 import java.io.File;
@@ -20,26 +17,28 @@ import java.util.Set;
  * Date: 7/21/13
  */
 public abstract class SystemEnvironment {
-    private boolean unixType = true;
+
+    String name;
+    String desc;
+
+    protected SystemEnvironment(String name) {
+        this.name = name;
+    }
+
+    protected SystemEnvironment(String name, String desc) {
+        this.name = name;
+        this.desc = desc;
+    }
 
     protected Set<Role> roles = new LinkedHashSet<Role>();
 
     public DynamicVariable joinPath(final DynamicVariable... vars) {
         final List<DynamicVariable> fromIterable = Arrays.asList(vars);
 
-        return new DynamicVariable() {
-            public Object apply(Variables.Context input) {
-                final Iterable<String> strings = Iterables.transform(fromIterable, new Function<DynamicVariable, String>() {
-                    public String apply(@Nullable DynamicVariable input) {
-                        return input.toString();
-                    }
-                });
-                return input.system.joinPath(strings);
-            }
-        };
+        return null;
     }
 
-    public String diskRoot(){return unixType ? "" : "c:";}
+    public String diskRoot(){return isUnix() ? "" : "c:";}
 
     public String joinPath(String... strings) {
         return joinPath(Arrays.asList(strings));
@@ -50,7 +49,7 @@ public abstract class SystemEnvironment {
     }
 
     public char dirSeparator() {
-        return unixType ? '/' : '\\';
+        return isUnix() ? '/' : '\\';
     }
 
 
@@ -115,15 +114,8 @@ public abstract class SystemEnvironment {
     public abstract String readString(String path, String _default);
     public abstract boolean exists(String path);
 
-    public abstract String getName();
     public abstract String readLink(String path);
     public abstract Result rm(String... paths);
-
-
-    public DynamicVariable appsDirVar(Variables vars){
-        //return vars.
-    }
-
 
     public Result copy(String src, String dest){
         return copyOperation(src, dest, CopyCommandType.COPY, false);
@@ -139,5 +131,13 @@ public abstract class SystemEnvironment {
 
     public Set<Role> getRoles() {
         return roles;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public String getDesc() {
+        return desc;
     }
 }

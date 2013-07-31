@@ -4,6 +4,7 @@ import cap4j.Console;
 import cap4j.GlobalContext;
 import cap4j.Nameable;
 import cap4j.Stage;
+import cap4j.scm.BaseScm;
 import cap4j.session.Result;
 import cap4j.session.SystemEnvironment;
 import cap4j.session.SystemEnvironments;
@@ -25,7 +26,7 @@ public class Ex4ConsoleVars {
 
     public static void main(String[] args) {
         final Stage pacDev = new Stage("pac-dev")
-            .add(newUnixRemote("chaschev", "aaaaaa", "192.168.25.66"))
+            .add(newUnixRemote("", "chaschev", "aaaaaa", "192.168.25.66"))
             ;
 
         final Task<TaskResult> testTask = new Task<TaskResult>() {
@@ -40,7 +41,7 @@ public class Ex4ConsoleVars {
                 system.runForEnvironment("linux", new SystemEnvironments.EnvRunnable() {
                     @Override
                     public Result run(SystemEnvironment system) {
-                        return system.run("echo blahblahblah").result;
+                        return system.run(new BaseScm.CommandLine().a("echo", "blahblahblah")).result;
                     }
                 });
 

@@ -11,20 +11,20 @@ import static cap4j.VariableName.releasesPath;
  * Date: 7/24/13
  */
 public class Tasks {
-    public static final Task<TaskResult> RESTART_APP = new Task<TaskResult>() {
+    public static final Task<TaskResult> restartApp = new Task<TaskResult>() {
 
     };
 
-    public static final Task<TaskResult> DEPLOY = new Task<TaskResult>() {
+    public static final Task<TaskResult> deploy = new Task<TaskResult>("deploy") {
         @Override
         protected TaskResult run(TaskRunner runner) {
             return new TaskResult(runner.run(
-                UPDATE,
-                RESTART_APP));
+                update,
+                restartApp));
         }
     };
 
-    public static final Task<TaskResult> SETUP = new Task<TaskResult>() {
+    public static final Task<TaskResult> setup = new Task<TaskResult>("setup") {
         @Override
         protected TaskResult run(TaskRunner runner) {
             final String[] dirs = {varS(deployTo), varS(releasesPath)};
@@ -36,20 +36,24 @@ public class Tasks {
         }
     };
 
-    public static final Task<TaskResult> UPDATE = new Task<TaskResult>() {
+    public static final Task<TaskResult> update = new Task<TaskResult>("update") {
         @Override
         protected TaskResult run(TaskRunner runner) {
             return new TaskResult(runner.run(new TransactionTask(
-                UPDATE_CODE,
-                CREATE_SYMLINK
+                updateCode,
+                createSymlink
             )));
         }
     };
 
-    public static final Task<TaskResult> UPDATE_CODE = new Task<TaskResult>() {
+    public static final Task<TaskResult> updateCode = new Task<TaskResult>("updateCode") {
         @Override
         protected TaskResult run(TaskRunner runner) {
-            return new TaskResult(runner.run(FINALIZE_TOUCH_FILES));
+            return new TaskResult(
+                Result.and(var(newStrategy).deploy(),
+                    runner.run(finalizeTouchCode)
+                    )
+                );
         }
 
         @Override
@@ -59,7 +63,7 @@ public class Tasks {
     };
 
 
-    public static final Task<TaskResult> FINALIZE_TOUCH_FILES = new Task<TaskResult>() {
+    public static final Task<TaskResult> finalizeTouchCode = new Task<TaskResult>("finalizeTouchCode") {
         @Override
         protected TaskResult run(TaskRunner runner) {
             system.chmod("g+w", true, varS(latestRelease));
@@ -69,7 +73,7 @@ public class Tasks {
         }
     };
 
-    public static final Task<TaskResult> CREATE_SYMLINK = new Task<TaskResult>() {
+    public static final Task<TaskResult> createSymlink = new Task<TaskResult>("createSymlink") {
         @Override
         protected TaskResult run(TaskRunner runner) {
             return new TaskResult(system.link(varS(getLatestReleasePath), varS(currentPath)));

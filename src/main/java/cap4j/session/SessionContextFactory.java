@@ -10,8 +10,8 @@ import cap4j.Variables;
 public class SessionContextFactory {
     public SessionContext create(final GlobalContext globalContext){
         Variables variables =
-            new Variables(globalContext)
-                .fallbackTo(globalContext.variables, "deployTo", "deployVia");
+            new Variables("session vars", globalContext.variables);
+//                .fallbackTo(globalContext.variables, "deployTo", "deployVia");
 
         return new SessionContext(variables) {
         };

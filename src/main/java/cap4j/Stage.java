@@ -9,7 +9,7 @@ import cap4j.task.Task;
 import cap4j.task.TaskResult;
 import cap4j.task.TaskRunner;
 
-import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 /**
@@ -20,10 +20,10 @@ public class Stage {
     String name;
     String description;
 
-    SystemEnvironments environments;
-    GlobalContextFactory globalContextFactory;
+    SystemEnvironments environments = new SystemEnvironments(null);
+    GlobalContextFactory globalContextFactory = new GlobalContextFactory();
 
-    Executor executor = Executors.newCachedThreadPool();
+    ExecutorService executor;
 
     public Stage(String name) {
         this.name = name;
@@ -32,17 +32,21 @@ public class Stage {
     public void runTask(final Task<TaskResult> task){
         final GlobalContext globalContext = globalContextFactory.create(environments);
 
-        BaseStrategy.setBarriers(this, new Variables.Context(globalContext, null, null));
+        executor = Executors.newCachedThreadPool();
+
+        BaseStrategy.setBarriers(this, new VarContext(null, null));
 
         for (final SystemEnvironment environment : environments.getImplementations()) {
-            final SessionContext sessionContext = new SessionContext(globalContext);
+            final SessionContext sessionContext = new SessionContext(
+                new Variables(environment.getName() + " vars", globalContext.variables)
+            );
 
             executor.execute(new Runnable() {
                 @Override
                 public void run() {
 
-                    final Variables.Context ctx = new Variables.Context(
-                        globalContext, sessionContext, environment
+                    final VarContext ctx = new VarContext(
+                        sessionContext.variables, environment
                     );
 
                     Thread.currentThread().setName(ctx.threadName());
@@ -53,6 +57,8 @@ public class Stage {
                 }
             });
         }
+
+        executor.shutdown();
     }
 
     public Stage add(SystemEnvironment environment) {
