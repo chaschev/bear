@@ -19,18 +19,22 @@ public class VarContext {
 
 
     public <T> T gvar(DynamicVariable<T> var) {
-        return GlobalContext.gvars().get(var, null);
+        return GlobalContext.gvars().get(this, var, null);
     }
 
-    public String varS(Nameable varName) {
-        return sessionVariables.get(varName, null);
+    public String varS(Nameable<String> varName) {
+        return sessionVariables.get(this, varName, null);
     }
 
-    public Object var(Nameable varName) {
-        return sessionVariables.get(varName, null);
+    public <T> T var(Nameable<T> varName) {
+        return sessionVariables.get(this, varName, null);
     }
 
-    public String joinPath(Nameable var, String path){
+    public <T> T var(DynamicVariable<T> varName) {
+        return sessionVariables.get(this, varName);
+    }
+
+    public String joinPath(Nameable<String> var, String path){
         return system.joinPath(varS(var), path);
     }
 
@@ -42,7 +46,8 @@ public class VarContext {
         return system.getName();
     }
 
-    public boolean varB(Nameable var) {
-        return sessionVariables.get(var, null);
+    public boolean varB(Nameable<Boolean> var) {
+        return sessionVariables.get(this, var, null);
     }
+
 }

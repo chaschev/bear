@@ -1,6 +1,7 @@
 package cap4j.task;
 
 import cap4j.*;
+import cap4j.session.DynamicVariable;
 import cap4j.session.Result;
 import cap4j.session.SystemEnvironments;
 import com.google.common.collect.Sets;
@@ -51,7 +52,12 @@ public abstract class Task<T extends TaskResult> {
         return new TaskResult(Result.OK);
     }
 
-    public Object var(Nameable varName){
+
+    public <T> T var(DynamicVariable<T> varName){
+        return context.var(varName);
+    }
+
+    public <T> T var(Nameable<T> varName){
         return context.var(varName);
     }
 

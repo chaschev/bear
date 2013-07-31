@@ -7,17 +7,20 @@ import com.google.common.base.Preconditions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nonnull;
+
 /**
 * User: chaschev
 * Date: 7/21/13
 */
-public class DynamicVariable<T> implements Nameable {
+public class DynamicVariable<T> implements Nameable<T> {
     private static final Logger logger = LoggerFactory.getLogger(DynamicVariable.class);
 
     public boolean frozen;
 
+    @Nonnull
     public final String name;
-    public final String title;
+    public String desc;
 
     protected Function<VarContext, T> dynamicImplementation;
 
@@ -25,19 +28,19 @@ public class DynamicVariable<T> implements Nameable {
 
     private boolean memoize;
 
-    public DynamicVariable(String name, String title) {
+    public DynamicVariable(String name, String desc) {
         this.name = name;
-        this.title = title;
+        this.desc = desc;
     }
 
-    public DynamicVariable(String title) {
+    public DynamicVariable(String desc) {
         this.name = "-";
-        this.title = title;
+        this.desc = desc;
     }
 
-    public DynamicVariable(Nameable varName, String title) {
+    public DynamicVariable(Nameable varName, String desc) {
         this.name = varName.name();
-        this.title = title;
+        this.desc = desc;
     }
 
     public boolean isFrozen() {
@@ -104,5 +107,37 @@ public class DynamicVariable<T> implements Nameable {
 
         this.memoize = memoize;
         return this;
+    }
+
+    public DynamicVariable<T> setDesc(String desc) {
+        this.desc = desc;
+        return this;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        DynamicVariable that = (DynamicVariable) o;
+
+        if (!name.equals(that.name)) return false;
+
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        return name.hashCode();
+    }
+
+    @Override
+    public String toString() {
+        final StringBuilder sb = new StringBuilder("DynamicVariable{");
+        sb.append("name='").append(name).append('\'');
+        sb.append(", defaultValue=").append(defaultValue);
+        sb.append(", memoize=").append(memoize);
+        sb.append('}');
+        return sb.toString();
     }
 }

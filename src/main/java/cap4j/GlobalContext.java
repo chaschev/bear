@@ -11,7 +11,7 @@ import org.apache.commons.lang3.SystemUtils;
  */
 public abstract class GlobalContext {
     public static GlobalContext INSTANCE;
-    public final Variables variables = new Variables(null);
+    public final Variables variables = new Variables("global vars", null);
     public final Console console = new Console();
 
     public final SystemEnvironment local = SystemUtils.IS_OS_WINDOWS ?
@@ -27,11 +27,11 @@ public abstract class GlobalContext {
         return INSTANCE.variables;
     }
 
-    public static String var(Nameable varName){
+    public static String var(Nameable<String> varName){
         return INSTANCE.variables.get(varName, null);
     }
 
-    public static <T> T var(Nameable varName, T _default){
+    public static <T> T var(Nameable<T> varName, T _default){
         return INSTANCE.variables.get(varName, _default);
     }
 

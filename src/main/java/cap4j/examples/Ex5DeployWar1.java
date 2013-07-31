@@ -7,7 +7,9 @@ import cap4j.VarContext;
 import cap4j.scm.BaseScm;
 import cap4j.session.DynamicVariable;
 import cap4j.session.Result;
+import cap4j.session.VariableUtils;
 import cap4j.strategy.BaseStrategy;
+import cap4j.strategy.SymlinkEntry;
 import cap4j.task.Task;
 import cap4j.task.TaskResult;
 import cap4j.task.TaskRunner;
@@ -21,29 +23,31 @@ import java.util.List;
 
 import static cap4j.CapConstants.*;
 import static cap4j.examples.Ex5DeployWar1.GrailsBuilder.warName;
+import static cap4j.examples.Ex5DeployWar1.TomcatConstants.tomcatWebapps;
 import static cap4j.session.GenericUnixRemoteEnvironment.newUnixRemote;
+import static cap4j.session.VariableUtils.joinPath;
 
 /**
  * User: chaschev
  * Date: 7/21/13
  */
 public class Ex5DeployWar1 {
-    public static class TomcatConstants{
+    public static class TomcatConstants {
         public static final DynamicVariable<String>
             tomcatWebappsUnix = strVar("tomcatWebappsWin", "/var/lib/tomcat6/webapps").defaultTo("/var/lib/tomcat6/webapps"),
             tomcatWebappsWin = dynamicNotSet("tomcatWebappsWin", ""),
             tomcatWebapps = strVar("tomcatHome", "").setDynamic(new Function<VarContext, String>() {
-                public String apply( VarContext ctx) {
+                public String apply(VarContext ctx) {
                     return ctx.system.isUnix() ? ctx.varS(tomcatWebappsUnix) : ctx.varS(tomcatWebappsWin);
                 }
             });
 
     }
 
-    public static class GrailsBuilder{
+    public static class GrailsBuilder {
         VarContext localCtx;
 
-        public static enum GrailsConf implements Nameable{
+        public static enum GrailsConf implements Nameable {
             grailsPath,
             projectPath,
             clean
@@ -55,7 +59,7 @@ public class Ex5DeployWar1 {
             this.localCtx = localCtx;
         }
 
-        public static class GrailsBuildResult{
+        public static class GrailsBuildResult {
             Result result;
             String path;
 
@@ -65,7 +69,7 @@ public class Ex5DeployWar1 {
             }
         }
 
-        public GrailsBuildResult build(){
+        public GrailsBuildResult build() {
             final String grailsExecPath = localCtx.joinPath(
                 localCtx.varS(GrailsConf.grailsPath),
                 "bin", "grails"
@@ -76,7 +80,7 @@ public class Ex5DeployWar1 {
             final BaseScm.Script script = new BaseScm.Script()
                 .cd(projectPath);
 
-            if(localCtx.varB(GrailsConf.clean)){
+            if (localCtx.varB(GrailsConf.clean)) {
                 script
                     .add(new BaseScm.CommandLine().a(
                         grailsExecPath,
@@ -98,12 +102,11 @@ public class Ex5DeployWar1 {
 
     public static void main(String[] args) {
         final Stage pacDev = new Stage("pac-dev")
-            .add(newUnixRemote("server1", "chaschev", "1", "192.168.25.66"))
-            ;
+            .add(newUnixRemote("server1", "chaschev", "1", "192.168.25.66"));
 
         CapConstants.newStrategy.setDynamic(new Function<VarContext, BaseStrategy>() {
             public BaseStrategy apply(@Nullable VarContext input) {
-                return new BaseStrategy() {
+                final BaseStrategy strategy = new BaseStrategy() {
                     @Override
                     protected void step_10_getPrepareRemoteData() {
 
@@ -113,7 +116,7 @@ public class Ex5DeployWar1 {
                     protected List<File> step_20_prepareLocalFiles(VarContext localCtx) {
                         final GrailsBuilder.GrailsBuildResult r = new GrailsBuilder(localCtx).build();
 
-                            if(r.result.nok()){
+                        if (r.result.nok()) {
                             throw new IllegalStateException("failed to build WAR");
                         }
 
@@ -129,21 +132,27 @@ public class Ex5DeployWar1 {
                     protected void step_40_updateRemoteFiles() {
                         //todo stop tomcat, delete files
                         ctx.system.link(
-                            ctx.joinPath(ctx.gvar(currentPath), ctx.gvar(warName)),
-                            ctx.joinPath(ctx.varS(TomcatConstants.tomcatWebapps), ctx.gvar(warName)));
+                            ctx.varS(VariableUtils.joinPath("current/war", currentPath, warName)),
+                            ctx.varS(VariableUtils.joinPath("tomcatWebapps/war", tomcatWebapps, warName)));
                     }
 
                     @Override
                     protected void step_50_whenRemoteUpdateFinished(VarContext localCtx) {
 
                     }
-
-
                 };
+
+                strategy.getSymlinkRules()
+                    .add(new SymlinkEntry(
+                        joinPath("$releasePath/ROOT.war", releasePath, "ROOT.war"), joinPath("webapps/ROOT.war", tomcatWebapps, "ROOT.war")
+                    ));
+
+
+                return strategy;
             }
         });
 
-        Tasks.restartApp.addBeforeTask(new Task(){
+        Tasks.restartApp.addBeforeTask(new Task() {
             @Override
             protected TaskResult run(TaskRunner runner) {
                 //todo restart tomcat

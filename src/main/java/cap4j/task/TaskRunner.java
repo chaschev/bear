@@ -64,7 +64,7 @@ public class TaskRunner {
     }
 
     protected Result runWithDependencies(Task<TaskResult> task) {
-        logger.info("starting task {}", task.name);
+        logger.info("starting task '{}'", task.name);
 
         if (tasksExecuted.contains(task)) {
             return OK;

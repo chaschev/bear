@@ -1,8 +1,8 @@
 package cap4j.strategy;
 
 import cap4j.GlobalContext;
-import cap4j.VarContext;
 import cap4j.Stage;
+import cap4j.VarContext;
 import cap4j.session.Result;
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
@@ -26,6 +26,10 @@ import static org.apache.commons.io.FileUtils.byteCountToDisplaySize;
  * Date: 7/24/13
  * Time: 1:21 AM
  */
+
+/**
+ * mapping $releasePath/ROOT.war -> $tomcatWebapps/ROOT.war
+ */
 public abstract class BaseStrategy {
     private static final Logger logger = LoggerFactory.getLogger(BaseStrategy.class);
 
@@ -38,6 +42,11 @@ public abstract class BaseStrategy {
     private static String deployZipPath;
 
     protected VarContext ctx;
+
+    /**
+     * Symlink rules.
+     */
+    protected SymlinkRules symlinkRules = new SymlinkRules();
 
     public static void setBarriers(Stage stage, final VarContext localCtx) {
         prepareRemoteDataBarrier = new CyclicBarrier(stage.getEnvironments().size(), new Runnable() {
@@ -144,6 +153,12 @@ public abstract class BaseStrategy {
             );
         }
 
+        logger.info("creating {} symlinks...", symlinkRules.entries.size());
+
+        for (SymlinkEntry entry : symlinkRules.entries) {
+            ctx.system.link(ctx.varS(entry.sourcePath), ctx.varS(entry.destPath));
+        }
+
         step_40_updateRemoteFiles();
     }
 
@@ -159,5 +174,7 @@ public abstract class BaseStrategy {
         return deployZipPath != null;
     }
 
-
+    public SymlinkRules getSymlinkRules() {
+        return symlinkRules;
+    }
 }

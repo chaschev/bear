@@ -37,7 +37,9 @@ public class Stage {
         BaseStrategy.setBarriers(this, new VarContext(null, null));
 
         for (final SystemEnvironment environment : environments.getImplementations()) {
-            final SessionContext sessionContext = new SessionContext(globalContext.variables);
+            final SessionContext sessionContext = new SessionContext(
+                new Variables(environment.getName() + " vars", globalContext.variables)
+            );
 
             executor.execute(new Runnable() {
                 @Override

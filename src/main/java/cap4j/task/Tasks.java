@@ -49,7 +49,11 @@ public class Tasks {
     public static final Task<TaskResult> updateCode = new Task<TaskResult>("updateCode") {
         @Override
         protected TaskResult run(TaskRunner runner) {
-            return new TaskResult(runner.run(finalizeTouchCode));
+            return new TaskResult(
+                Result.and(var(newStrategy).deploy(),
+                    runner.run(finalizeTouchCode)
+                    )
+                );
         }
 
         @Override
