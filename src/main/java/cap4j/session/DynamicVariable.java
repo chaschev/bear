@@ -76,11 +76,11 @@ public class DynamicVariable<T> implements Nameable<T> {
                 defaultValue = r;
             }
 
-            logger.debug("returning dynamic value for :{}: {}", r);
+            logger.trace(":{} (dynamic): {}", name, r);
             return r;
         }
 
-        logger.debug("returning default value for :{}: {}", defaultValue);
+        logger.trace(":{} (default): {}", name, defaultValue);
 
         return defaultValue;
     }
@@ -90,9 +90,21 @@ public class DynamicVariable<T> implements Nameable<T> {
     }
 
     public DynamicVariable<T> defaultTo(T defaultValue) {
+        return defaultTo(defaultValue, false);
+    }
+
+    public DynamicVariable<T> defaultTo(T defaultValue, boolean force) {
+        if(dynamicImplementation !=null) {
+            if (force) {
+                dynamicImplementation = null;
+                memoize = false;
+            }else{
+                throw new IllegalStateException("use force to override dynamic implementation");
+            }
+        }
+
         this.defaultValue = defaultValue;
-        dynamicImplementation = null;
-        memoize = false;
+
         return this;
     }
 

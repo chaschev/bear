@@ -3,6 +3,7 @@ package cap4j.task;
 import cap4j.*;
 import cap4j.session.DynamicVariable;
 import cap4j.session.Result;
+import cap4j.session.SystemEnvironment;
 import cap4j.session.SystemEnvironments;
 import com.google.common.collect.Sets;
 
@@ -31,7 +32,7 @@ public abstract class Task<T extends TaskResult> {
 
     protected transient VarContext context;
 
-    protected SystemEnvironments system;
+    protected SystemEnvironment system;
 
     public boolean hasRole(Set<Role> roles) {
         return !Sets.intersection(this.roles, roles).isEmpty();
@@ -83,5 +84,10 @@ public abstract class Task<T extends TaskResult> {
         sb.append(", roles=").append(roles);
         sb.append('}');
         return sb.toString();
+    }
+
+    public void setContext(VarContext context) {
+        this.context = context;
+        this.system = context.system;
     }
 }

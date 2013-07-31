@@ -2,15 +2,21 @@ package cap4j;
 
 import cap4j.session.DynamicVariable;
 import cap4j.session.SessionContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.LinkedHashMap;
 
+import static cap4j.CapConstants.bool;
+
 public class Variables {
+    private static final Logger logger = LoggerFactory.getLogger(Variables.class);
+
 
     String name;
     private final Variables fallbackVariables;
 
-    public LinkedHashMap<Nameable, DynamicVariable> variables = new LinkedHashMap<Nameable, DynamicVariable>();
+    public LinkedHashMap<String, DynamicVariable> variables = new LinkedHashMap<String, DynamicVariable>();
 
     public Variables(String name, Variables fallbackVariables) {
         this.name = name;
@@ -21,13 +27,14 @@ public class Variables {
         putUnlessFrozen(name, new DynamicVariable<String>(name, "").defaultTo(value));
     }
 
-    private DynamicVariable putUnlessFrozen(Nameable name, DynamicVariable val) {
-        final DynamicVariable variable = variables.get(name);
+    private void putUnlessFrozen(Nameable name, DynamicVariable val) {
+        final DynamicVariable variable = variables.get(name.name());
 
-        boolean frozen = variable.isFrozen();
-
-        if(!frozen){
-            return variables.put(name, val);
+        if(variable == null){
+            variables.put(name.name(), val);
+        }else
+        if(!variable.isFrozen()){
+            variables.put(name.name(), val);
         }else{
             throw new IllegalStateException("can't assign to " + name + ": it is frozen");
         }
@@ -35,6 +42,16 @@ public class Variables {
 
     public Variables put(Nameable key, DynamicVariable value) {
         putUnlessFrozen(key, value);
+        return this;
+    }
+
+    public Variables putS(Nameable key, String value) {
+        put(key, CapConstants.strVar(key.name(), "external var").defaultTo(value));
+        return this;
+    }
+
+    public Variables putB(Nameable key, boolean b) {
+        put(key, bool(key.name(), "external var").defaultTo(b));
         return this;
     }
 
@@ -65,13 +82,15 @@ public class Variables {
     public <T> T get(VarContext context, Nameable<T> name, T _default) {
         final Object result;
 
-        final DynamicVariable r = variables.get(name);
+        final DynamicVariable r = variables.get(name.name());
 
         if (r == null) {
             result = _default;
         } else {
             result = r.apply(context);
         }
+
+        logger.debug(":{} -> {} (by name)", name.name(), result);
 
         return (T) result;
     }
@@ -83,7 +102,7 @@ public class Variables {
     public <T> T get(VarContext context, DynamicVariable<T> var, T _default) {
         final T result;
 
-        DynamicVariable<T> r = variables.get(var);
+        DynamicVariable<T> r = variables.get(var.name());
 
         if (r == null && fallbackVariables != null) {
             r = fallbackVariables.getClosure(var);
@@ -101,11 +120,13 @@ public class Variables {
             result = r.apply(context);
         }
 
-        return (T) result;
+        logger.debug(":{} -> {}", var.name(), result);
+
+        return result;
     }
 
     public <T> DynamicVariable<T> getClosure(Nameable<T> name) {
-        return variables.get(name);
+        return variables.get(name.name());
     }
 
 //    public Variables fallbackTo(final Variables srcVariables, Nameable... names){
@@ -127,7 +148,7 @@ public class Variables {
     public Variables dup(){
         final Variables v = new Variables("dup of " + name, fallbackVariables);
 
-        v.variables = new LinkedHashMap<Nameable, DynamicVariable>(variables);
+        v.variables = new LinkedHashMap<String, DynamicVariable>(variables);
 
         return v;
     }

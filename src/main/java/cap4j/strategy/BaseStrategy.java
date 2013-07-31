@@ -4,6 +4,7 @@ import cap4j.GlobalContext;
 import cap4j.Stage;
 import cap4j.VarContext;
 import cap4j.session.Result;
+import cap4j.session.VariableUtils;
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Iterables;
@@ -16,6 +17,7 @@ import java.util.List;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.TimeUnit;
 
+import static cap4j.CapConstants.currentPath;
 import static cap4j.CapConstants.newStrategy;
 import static cap4j.CapConstants.releasePath;
 import static cap4j.GlobalContext.local;
@@ -118,6 +120,7 @@ public abstract class BaseStrategy {
 
             return Result.OK;
         } catch (Exception e) {
+            logger.warn("", e);
             return Result.ERROR;
         }
     }
@@ -156,7 +159,11 @@ public abstract class BaseStrategy {
         logger.info("creating {} symlinks...", symlinkRules.entries.size());
 
         for (SymlinkEntry entry : symlinkRules.entries) {
-            ctx.system.link(ctx.varS(entry.sourcePath), ctx.varS(entry.destPath));
+            String srcPath;
+
+            srcPath = ctx.varS(VariableUtils.joinPath("symlinkSrc", currentPath, ctx.varS(entry.destPath)));
+
+            ctx.system.link(srcPath, ctx.varS(entry.destPath));
         }
 
         step_40_updateRemoteFiles();

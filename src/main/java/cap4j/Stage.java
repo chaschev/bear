@@ -21,7 +21,6 @@ public class Stage {
     String description;
 
     SystemEnvironments environments = new SystemEnvironments(null);
-    GlobalContextFactory globalContextFactory = new GlobalContextFactory();
 
     ExecutorService executor;
 
@@ -30,15 +29,15 @@ public class Stage {
     }
 
     public void runTask(final Task<TaskResult> task){
-        final GlobalContext globalContext = globalContextFactory.create(environments);
+        final GlobalContext globalContext = GlobalContextFactory.INSTANCE.configure(environments);
 
         executor = Executors.newCachedThreadPool();
 
-        BaseStrategy.setBarriers(this, new VarContext(null, null));
+        BaseStrategy.setBarriers(this, GlobalContext.INSTANCE.localCtx);
 
         for (final SystemEnvironment environment : environments.getImplementations()) {
             final SessionContext sessionContext = new SessionContext(
-                new Variables(environment.getName() + " vars", globalContext.variables)
+                newSessionVars(globalContext, environment)
             );
 
             executor.execute(new Runnable() {
@@ -59,6 +58,10 @@ public class Stage {
         }
 
         executor.shutdown();
+    }
+
+    public static Variables newSessionVars(GlobalContext globalContext, SystemEnvironment environment) {
+        return new Variables(environment.getName() + " vars", globalContext.variables);
     }
 
     public Stage add(SystemEnvironment environment) {

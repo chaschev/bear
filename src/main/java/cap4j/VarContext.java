@@ -26,6 +26,10 @@ public class VarContext {
         return sessionVariables.get(this, varName, null);
     }
 
+    public String varS(DynamicVariable<String> varName) {
+        return sessionVariables.get(this, varName);
+    }
+
     public <T> T var(Nameable<T> varName) {
         return sessionVariables.get(this, varName, null);
     }
@@ -48,6 +52,10 @@ public class VarContext {
 
     public boolean varB(Nameable<Boolean> var) {
         return sessionVariables.get(this, var, null);
+    }
+
+    public boolean varB(DynamicVariable<Boolean> var) {
+        return sessionVariables.get(this, var);
     }
 
 }

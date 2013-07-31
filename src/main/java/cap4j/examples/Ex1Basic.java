@@ -28,12 +28,12 @@ public class Ex1Basic {
             @Override
             protected TaskResult run(TaskRunner runner) {
                 system.copy("src", "dest");
-                system.runForEnvironment("linux", new SystemEnvironments.EnvRunnable() {
-                    @Override
-                    public Result run(SystemEnvironment system) {
-                        return system.run(new BaseScm.CommandLine().a("echo",  "blahblahblah")).result;
-                    }
-                });
+//                system.runForEnvironment("linux", new SystemEnvironments.EnvRunnable() {
+//                    @Override
+//                    public Result run(SystemEnvironment system) {
+//                        return system.run(new BaseScm.CommandLine().a("echo",  "blahblahblah")).result;
+//                    }
+//                });
 
                 return new TaskResult(Result.OK);
             }

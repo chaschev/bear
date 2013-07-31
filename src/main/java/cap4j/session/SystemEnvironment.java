@@ -64,6 +64,7 @@ public abstract class SystemEnvironment {
     public abstract String newTempDir();
 
     public abstract boolean isUnix();
+    public abstract boolean isNativeUnix();
 
 
     public static class CopyResult{
@@ -89,6 +90,10 @@ public abstract class SystemEnvironment {
         Result r = Result.OK;
 
         for (BaseScm.CommandLine line : script.lines) {
+            if(script.cd != null){
+                line.cd = script.cd;
+            }
+
             final BaseScm.CommandLineResult result = run(line);
             sb.append(result.text);
             sb.append("\n");
@@ -101,7 +106,7 @@ public abstract class SystemEnvironment {
 
         return new BaseScm.CommandLineResult(sb.toString(), r);
     }
-    public abstract <T extends SvnScm.CommandLineResult> T run(BaseScm.CommandLine commandLine) ;
+    public abstract <T extends SvnScm.CommandLineResult> T run(BaseScm.CommandLine<T> commandLine) ;
     public abstract <T extends SvnScm.CommandLineResult> T runVCS(SvnScm.CommandLine<T> stringResultCommandLine);
 
     public abstract Result sftp(String dest, String host, String path, String user, String pw);

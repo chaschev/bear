@@ -39,7 +39,12 @@ public class GenericUnixRemoteEnvironment extends SystemEnvironment {
     }
 
     @Override
-    public <T extends SvnScm.CommandLineResult> T run(BaseScm.CommandLine commandLine) {
+    public boolean isNativeUnix() {
+        return true;
+    }
+
+    @Override
+    public <T extends SvnScm.CommandLineResult> T run(BaseScm.CommandLine<T> line) {
         throw new UnsupportedOperationException("todo GenericUnixRemoteEnvironment.run");
     }
 

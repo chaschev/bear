@@ -10,16 +10,32 @@ import org.slf4j.LoggerFactory;
 */
 public class GlobalContextFactory {
     private static final Logger logger = LoggerFactory.getLogger(GlobalContextFactory.class);
-    public GlobalContext create(SystemEnvironments system){
-        GlobalContext globalContext = new GlobalContext() {
 
-        };
+    public static GlobalContextFactory INSTANCE = new GlobalContextFactory();
 
-        configure(globalContext, system);
+
+    public GlobalContextFactory() {
+    }
+
+    public void init() {
+        GlobalContext globalContext = new GlobalContext();
 
         GlobalContext.INSTANCE = globalContext;
 
-        return globalContext;
+        if(globalVarsInitPhase != null){
+            globalVarsInitPhase.setVars(globalContext.variables);
+        }
+    }
+
+    public static interface GlobalVarsInitPhase {
+        void setVars(Variables vars);
+    }
+
+    public GlobalVarsInitPhase globalVarsInitPhase;
+
+    public GlobalContext configure(SystemEnvironments system){
+        configure(GlobalContext.INSTANCE, system);
+        return GlobalContext.INSTANCE;
     }
 
     protected  GlobalContext configure(GlobalContext gc, SystemEnvironments system){

@@ -2,6 +2,7 @@ package cap4j.scm;
 
 import cap4j.session.Result;
 import com.google.common.base.Function;
+import com.google.common.base.Joiner;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -104,7 +105,7 @@ public abstract class BaseScm {
     public static class CommandLine<T extends CommandLineResult>{
         public String cd = ".";
 
-        List<String> strings = new ArrayList<String>(4);
+        public List<String> strings = new ArrayList<String>(4);
 
         protected Function<String, T> parser;
 
@@ -127,7 +128,9 @@ public abstract class BaseScm {
         public T parseResult(String text){
             if(parser != null){return parser.apply(text);}
 
-            return (T) new CommandLineResult(text);
+
+
+            return (T) new CommandLineResult(text, Result.OK);
         }
 
         public CommandLine<T> setParser(Function<String, T> parser) {
@@ -138,6 +141,14 @@ public abstract class BaseScm {
         public CommandLine<T> cd(String cd) {
             this.cd = cd;
             return this;
+        }
+
+        @Override
+        public String toString() {
+            final StringBuilder sb = new StringBuilder("run \"");
+            Joiner.on("\" \"").appendTo(sb, strings);
+            sb.append("\" in dir '").append(cd).append('\'');
+            return sb.toString();
         }
     }
 }

@@ -112,6 +112,7 @@ public class TaskRunner {
             if(!thisIsMe){
                 result = runWithDependencies(task);
             }else{
+                task.setContext(context);
                 result = task.run(this).result;
             }
         } catch (Exception ignore) {

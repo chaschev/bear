@@ -17,7 +17,7 @@ import java.util.Date;
 import java.util.List;
 
 import static cap4j.GlobalContext.local;
-import static cap4j.session.VariableUtils.joinPath;
+import static cap4j.session.VariableUtils.*;
 
 /**
  * User: ACHASCHEV
@@ -120,7 +120,12 @@ public class CapConstants {
         }
     }).memoize(true);
 
-    DynamicVariable<Boolean> useSudo = bool("useSudo", "").defaultTo(true);
+    public static DynamicVariable<Boolean>
+        useSudo = bool("useSudo", "").defaultTo(true),
+        productionDeployment = bool("productionDeployment", "").defaultTo(true),
+        clean = eql("clean", productionDeployment),
+        speedUpBuild = and("speedUpBuild", not("", productionDeployment), not("", clean))
+    ;
 
     public static final DynamicVariable<Releases> getReleases = new DynamicVariable<Releases>("getReleases", "").setDynamic(new Function<VarContext, Releases>() {
         public Releases apply(VarContext ctx) {

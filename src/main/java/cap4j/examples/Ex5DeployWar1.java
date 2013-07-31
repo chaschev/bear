@@ -1,9 +1,6 @@
 package cap4j.examples;
 
-import cap4j.CapConstants;
-import cap4j.Nameable;
-import cap4j.Stage;
-import cap4j.VarContext;
+import cap4j.*;
 import cap4j.scm.BaseScm;
 import cap4j.session.DynamicVariable;
 import cap4j.session.Result;
@@ -15,6 +12,8 @@ import cap4j.task.TaskResult;
 import cap4j.task.TaskRunner;
 import cap4j.task.Tasks;
 import com.google.common.base.Function;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
 import java.io.File;
@@ -45,12 +44,28 @@ public class Ex5DeployWar1 {
     }
 
     public static class GrailsBuilder {
+        private static final Logger logger = LoggerFactory.getLogger(GrailsBuilder.class);
+
         VarContext localCtx;
 
-        public static enum GrailsConf implements Nameable {
-            grailsPath,
-            projectPath,
-            clean
+        public static class GrailsConf {
+            public static final DynamicVariable<String>
+                grailsPath = CapConstants.dynamicNotSet("grailsPath", "Grails root dir"),
+                grailsBin = VariableUtils.joinPath("grailsBin", grailsPath, "bin"),
+                projectPath = CapConstants.dynamicNotSet("projectPath", "Project root dir"),
+                grailsExecName = CapConstants.dynamic("grailsExec", "grails or grails.bat", new Function<VarContext, String>() {
+                    public String apply(VarContext varContext) {
+                        return "grails" + (varContext.system.isNativeUnix() ? "" : ".bat");
+                    }
+                }),
+                grailsExecPath = VariableUtils.joinPath("grailsExecPath", grailsBin, grailsExecName)
+                ;
+
+            public static final DynamicVariable<Boolean>
+                grailsClean = VariableUtils.eql("grailsClean", CapConstants.clean).setDesc("clean project")
+            ;
+//            projectPath,
+//            clean
         }
 
         public static final DynamicVariable<String> warName = strVar("warName", "i.e. ROOT.war").defaultTo("ROOT.war");
@@ -70,17 +85,17 @@ public class Ex5DeployWar1 {
         }
 
         public GrailsBuildResult build() {
-            final String grailsExecPath = localCtx.joinPath(
-                localCtx.varS(GrailsConf.grailsPath),
-                "bin", "grails"
-            );
+            logger.info("building Grails WAR...");
+
+            final String s = localCtx.varS(GrailsConf.grailsPath);
+            final String grailsExecPath = localCtx.varS(GrailsConf.grailsExecPath);
 
             String projectPath = localCtx.varS(GrailsConf.projectPath);
 
             final BaseScm.Script script = new BaseScm.Script()
                 .cd(projectPath);
 
-            if (localCtx.varB(GrailsConf.clean)) {
+            if (localCtx.varB(GrailsConf.grailsClean)) {
                 script
                     .add(new BaseScm.CommandLine().a(
                         grailsExecPath,
@@ -96,11 +111,28 @@ public class Ex5DeployWar1 {
                     "war",
                     warName));
 
-            return new GrailsBuildResult(localCtx.system.run(script).result, localCtx.joinPath(projectPath, warName));
+            final BaseScm.CommandLineResult clResult = localCtx.system.run(script);
+
+            return new GrailsBuildResult(clResult.result, localCtx.joinPath(projectPath, warName));
         }
     }
 
     public static void main(String[] args) {
+
+        GlobalContextFactory.INSTANCE.globalVarsInitPhase = new GlobalContextFactory.GlobalVarsInitPhase() {
+            @Override
+            public void setVars(Variables vars) {
+                vars
+                    .putS(GrailsBuilder.GrailsConf.grailsPath, "c:/dev/grails-2.1.0")
+                    .putS(GrailsBuilder.GrailsConf.projectPath, "c:/Users/achaschev/prj/atocha")
+                    .putB(productionDeployment, false)
+                    .putB(speedUpBuild, true)
+                ;
+            }
+        };
+
+        GlobalContextFactory.INSTANCE.init();
+
         final Stage pacDev = new Stage("pac-dev")
             .add(newUnixRemote("server1", "chaschev", "1", "192.168.25.66"));
 
@@ -142,11 +174,7 @@ public class Ex5DeployWar1 {
                     }
                 };
 
-                strategy.getSymlinkRules()
-                    .add(new SymlinkEntry(
-                        joinPath("$releasePath/ROOT.war", releasePath, "ROOT.war"), joinPath("webapps/ROOT.war", tomcatWebapps, "ROOT.war")
-                    ));
-
+                strategy.getSymlinkRules().add(new SymlinkEntry("/ROOT.war", joinPath("tomcatWebapps/ROOT.war", tomcatWebapps, "ROOT.war")));
 
                 return strategy;
             }
