@@ -1,7 +1,10 @@
 package cap4j.task;
 
+import cap4j.session.GenericUnixRemoteEnvironment;
 import cap4j.session.Result;
 import com.google.common.collect.Lists;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -11,6 +14,8 @@ import java.util.List;
  * Date: 7/27/13
  */
 public class TransactionTask extends Task{
+    private static final Logger logger = LoggerFactory.getLogger(GenericUnixRemoteEnvironment.class);
+
     List<Task<TaskResult>> tasks;
 
     public TransactionTask(List<Task<TaskResult>> tasks) {
@@ -29,6 +34,7 @@ public class TransactionTask extends Task{
         try{
             result = runner.run(tasks);
         }catch (Exception e){
+            logger.warn("", e);
             result = Result.ERROR;
         }
 

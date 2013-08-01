@@ -4,6 +4,8 @@ import cap4j.session.SystemEnvironments;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.concurrent.Executors;
+
 /**
 * User: ACHASCHEV
 * Date: 7/23/13
@@ -21,6 +23,8 @@ public class GlobalContextFactory {
         GlobalContext globalContext = new GlobalContext();
 
         GlobalContext.INSTANCE = globalContext;
+
+
 
         if(globalVarsInitPhase != null){
             globalVarsInitPhase.setVars(globalContext.variables);

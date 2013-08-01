@@ -1,13 +1,11 @@
 package cap4j.examples;
 
-import cap4j.Console;
-import cap4j.GlobalContext;
-import cap4j.Nameable;
-import cap4j.Stage;
+import cap4j.*;
 import cap4j.scm.BaseScm;
 import cap4j.session.Result;
 import cap4j.session.SystemEnvironment;
 import cap4j.session.SystemEnvironments;
+import cap4j.session.VariableUtils;
 import cap4j.task.Task;
 import cap4j.task.TaskResult;
 import cap4j.task.TaskRunner;
@@ -32,7 +30,8 @@ public class Ex4ConsoleVars {
         final Task<TaskResult> testTask = new Task<TaskResult>() {
             @Override
             protected void defineVars(Console console) {
-                console.askIfUnset("Deploy quickly?", ProjectVars.quickDeploy, !"prod".equals(GlobalContext.var(devEnvironment)));
+//                console.askIfUnset("Clean build?", CapConstants.clean,
+//                    !"prod".equals(GlobalContext.var(devEnvironment)));
             }
 
             @Override

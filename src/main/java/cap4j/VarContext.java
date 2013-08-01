@@ -22,23 +22,15 @@ public class VarContext {
         return GlobalContext.gvars().get(this, var, null);
     }
 
-    public String varS(Nameable<String> varName) {
-        return sessionVariables.get(this, varName, null);
-    }
-
     public String varS(DynamicVariable<String> varName) {
         return sessionVariables.get(this, varName);
-    }
-
-    public <T> T var(Nameable<T> varName) {
-        return sessionVariables.get(this, varName, null);
     }
 
     public <T> T var(DynamicVariable<T> varName) {
         return sessionVariables.get(this, varName);
     }
 
-    public String joinPath(Nameable<String> var, String path){
+    public String joinPath(DynamicVariable<String> var, String path){
         return system.joinPath(varS(var), path);
     }
 

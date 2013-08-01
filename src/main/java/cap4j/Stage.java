@@ -9,9 +9,6 @@ import cap4j.task.Task;
 import cap4j.task.TaskResult;
 import cap4j.task.TaskRunner;
 
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-
 /**
  * User: ACHASCHEV
  * Date: 7/23/13
@@ -22,28 +19,25 @@ public class Stage {
 
     SystemEnvironments environments = new SystemEnvironments(null);
 
-    ExecutorService executor;
-
     public Stage(String name) {
         this.name = name;
     }
 
     public void runTask(final Task<TaskResult> task){
-        final GlobalContext globalContext = GlobalContextFactory.INSTANCE.configure(environments);
+        GlobalContextFactory.INSTANCE.configure(environments);
 
-        executor = Executors.newCachedThreadPool();
+        final GlobalContext global = GlobalContext.INSTANCE;
 
-        BaseStrategy.setBarriers(this, GlobalContext.INSTANCE.localCtx);
+        BaseStrategy.setBarriers(this, global.localCtx);
 
         for (final SystemEnvironment environment : environments.getImplementations()) {
             final SessionContext sessionContext = new SessionContext(
-                newSessionVars(globalContext, environment)
+                newSessionVars(global, environment)
             );
 
-            executor.execute(new Runnable() {
+            global.taskExecutor.execute(new Runnable() {
                 @Override
                 public void run() {
-
                     final VarContext ctx = new VarContext(
                         sessionContext.variables, environment
                     );
@@ -58,8 +52,6 @@ public class Stage {
                 }
             });
         }
-
-        executor.shutdown();
     }
 
     public static Variables newSessionVars(GlobalContext globalContext, SystemEnvironment environment) {

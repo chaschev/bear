@@ -43,18 +43,29 @@ public class CapConstants {
     public static final DynamicVariable<String>
 
     applicationsPath = strVar("applicationsPath", "System apps folder").setDynamic(new Function<VarContext, String>() {
-        public String apply(VarContext input) {
-            return input.system.isNativeUnix() ? "/var/lib" : "c:";
+        public String apply(VarContext ctx) {
+            return ctx.system.isNativeUnix() ? "/var/lib" : "c:";
+        }
+    }),
+
+    logsPath = strVar("applicationsPath", "System apps folder").setDynamic(new Function<VarContext, String>() {
+        public String apply(VarContext ctx) {
+            return ctx.system.isNativeUnix() ? "/var/log" : "c:";
         }
     }),
 
     applicationName = strVar("applicationName", "Your app name"),
+    appLogsPath = joinPath("appLogsPath", logsPath, applicationName),
     sshUsername = strVar("sshUsername", ""),
+    appUsername = eql("appUsername", sshUsername),
     sshPassword = strVar("sshPassword", ""),
 
     repositoryURI = strVar("repository", "Project VCS URI"),
 
-    scm = enumConstant("Your VCS type", "svn"),
+    scm = enumConstant("scm", "Your VCS type", "svn"),
+        scmUsername = eql("scmUsername", sshUsername),
+        scmPassword = eql("sshPassword", sshPassword),
+        scmRepository = dynamicNotSet("scmRepository", ""),
 
     deployTo = joinPath("deployTo", applicationsPath, applicationName).setDesc("Current release dir"),
 
@@ -64,7 +75,7 @@ public class CapConstants {
 
     releaseName = strVar("releaseName", "I.e. 20140216").defaultTo(new SimpleDateFormat("yyyyMMdd.HHmmss").format(new Date())),
 
-    devEnvironment = enumConstant("Development environment", "dev", "test", "prod").defaultTo("prod"),
+    devEnvironment = enumConstant("devEnvironment", "Development environment", "dev", "test", "prod").defaultTo("prod"),
 
     revision = strVar("revision", "Get head revision").setDynamic(new Function<VarContext, String>() {
         public String apply(VarContext ctx) {
@@ -126,7 +137,9 @@ public class CapConstants {
         useSudo = bool("useSudo", "").defaultTo(true),
         productionDeployment = bool("productionDeployment", "").defaultTo(true),
         clean = eql("clean", productionDeployment),
-        speedUpBuild = and("speedUpBuild", not("", productionDeployment), not("", clean))
+        speedUpBuild = and("speedUpBuild", not("", productionDeployment), not("", clean)),
+        scmAuthCache = dynamicNotSet("scmAuthCache", ""),
+        scmPreferPrompt = dynamicNotSet("scmPreferPrompt", "")
     ;
 
     public static final DynamicVariable<Releases> getReleases = new DynamicVariable<Releases>("getReleases", "").setDynamic(new Function<VarContext, Releases>() {
@@ -163,8 +176,8 @@ public class CapConstants {
     }
 
 
-    private static DynamicVariable<String> enumConstant(final String desc, final String... options) {
-        return new DynamicVariable<String>("devEnv", desc) {
+    private static DynamicVariable<String> enumConstant(String name, final String desc, final String... options) {
+        return new DynamicVariable<String>(name, desc) {
             @Override
             public void validate(String value) {
                 if (!ArrayUtils.contains(options, value)) {

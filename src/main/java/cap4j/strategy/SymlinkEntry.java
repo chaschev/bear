@@ -9,9 +9,16 @@ import cap4j.session.DynamicVariable;
 public class SymlinkEntry {
     String sourcePath;
     DynamicVariable<String> destPath;
+    String owner;
 
     public SymlinkEntry(String sourcePath, DynamicVariable<String> destPath) {
         this.sourcePath = sourcePath;
         this.destPath = destPath;
+    }
+
+    public SymlinkEntry(String sourcePath, DynamicVariable<String> destPath, String owner) {
+        this.sourcePath = sourcePath;
+        this.destPath = destPath;
+        this.owner = owner;
     }
 }

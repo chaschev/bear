@@ -153,10 +153,5 @@ public class Variables {
         return v;
     }
 
-    public void freeze(VariableName variable){
-        getClosure(variable).setFrozen(true);
-    }
-
-
 
 }

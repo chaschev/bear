@@ -7,7 +7,6 @@ import cap4j.session.Result;
 import cap4j.session.VariableUtils;
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
-import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -161,7 +160,7 @@ public abstract class BaseStrategy {
     private void _step_40_updateRemoteFiles(){
         if(isCopyingZip()){
             ctx.system.unzip(
-                ctx.joinPath(ctx.gvar(releasePath), "deploy.zip"), null
+                ctx.joinPath(ctx.var(releasePath), "deploy.zip"), null
             );
         }
 
@@ -170,9 +169,9 @@ public abstract class BaseStrategy {
         for (SymlinkEntry entry : symlinkRules.entries) {
             String srcPath;
 
-            srcPath = ctx.varS(VariableUtils.joinPath("symlinkSrc", currentPath, ctx.varS(entry.destPath)));
+            srcPath = ctx.varS(VariableUtils.joinPath("symlinkSrc", currentPath, entry.sourcePath));
 
-            ctx.system.link(srcPath, ctx.varS(entry.destPath));
+            ctx.system.link(srcPath, ctx.varS(entry.destPath), entry.owner);
         }
 
         writeRevision();

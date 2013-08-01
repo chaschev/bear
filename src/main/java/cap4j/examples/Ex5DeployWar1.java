@@ -15,10 +15,10 @@ import com.google.common.base.Function;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.Nullable;
 import java.io.File;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import static cap4j.CapConstants.*;
 import static cap4j.examples.Ex5DeployWar1.TomcatConstants.tomcatWebapps;
@@ -123,7 +123,7 @@ public class Ex5DeployWar1 {
         }
     }
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws InterruptedException {
 
         GlobalContextFactory.INSTANCE.globalVarsInitPhase = new GlobalContextFactory.GlobalVarsInitPhase() {
             @Override
@@ -135,8 +135,12 @@ public class Ex5DeployWar1 {
                     .putB(productionDeployment, false)
                     .putB(speedUpBuild, true)
                     .putB(AtochaConstants.reuseWar, true)
+                    .putS(scm, "svn")
+                    .putS(repositoryURI, "svn+ssh://dev.afoundria.com/var/svn/repos/atocha/trunk")
+
                     .putS(sshUsername, "chaschev")
                     .putS(sshPassword, "aaaaaa")
+                    .putS(appUsername, "tomcat")
                 ;
             }
         };
@@ -146,7 +150,7 @@ public class Ex5DeployWar1 {
         final Stage pacDev = new Stage("pac-dev")
 //            .add(newUnixRemote("server1", "chaschev", "1", "192.168.25.66"))
             .add(newUnixRemote("server1", "192.168.25.66"))
-//            .add(newUnixRemote("server1", "ihseus", "ihs3Us3r2", "10.22.13.4"))
+
             ;
 
         CapConstants.newStrategy.setDynamic(new Function<VarContext, BaseStrategy>() {
@@ -179,10 +183,6 @@ public class Ex5DeployWar1 {
 
                     @Override
                     protected void step_40_updateRemoteFiles() {
-                        //todo stop tomcat, delete files
-                        ctx.system.link(
-                            ctx.varS(VariableUtils.joinPath("current/war", currentPath, GrailsBuilder.GrailsConf.warName)),
-                            ctx.varS(VariableUtils.joinPath("tomcatWebapps/war", tomcatWebapps, GrailsBuilder.GrailsConf.warName)));
                     }
 
                     @Override
@@ -191,22 +191,36 @@ public class Ex5DeployWar1 {
                     }
                 };
 
-                strategy.getSymlinkRules().add(new SymlinkEntry("/ROOT.war", joinPath("tomcatWebapps/ROOT.war", tomcatWebapps, "ROOT.war")));
+                strategy.getSymlinkRules().add(
+                    new SymlinkEntry("ROOT.war", joinPath("tomcatWebapps/ROOT.war", tomcatWebapps, "ROOT.war"),
+                        ctx.var(appUsername) + "." + ctx.var(appUsername)
+                        )
+                );
 
                 return strategy;
             }
         });
 
-        Tasks.restartApp.addBeforeTask(new Task() {
+//        Tasks.setup.addBeforeTask(new Task() {
+//            @Override
+//            protected TaskResult run(TaskRunner runner) {
+//                return OK;
+//            }
+//        });
+
+        Tasks.restartApp.addBeforeTask(new Task("restart tomcat") {
             @Override
             protected TaskResult run(TaskRunner runner) {
                 //todo restart tomcat
-                system.run(new BaseScm.CommandLine().a("service", "tomcat6", "restart"));
+                system.sudo().run(new BaseScm.CommandLine().a("service", "tomcat6", "restart"));
 
                 return new TaskResult(Result.OK);
             }
         });
 
         pacDev.runTask(Tasks.deploy);
+
+        GlobalContext.INSTANCE.taskExecutor.shutdown();
+        GlobalContext.INSTANCE.taskExecutor.awaitTermination(10, TimeUnit.SECONDS);
     }
 }

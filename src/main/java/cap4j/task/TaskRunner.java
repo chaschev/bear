@@ -2,7 +2,6 @@ package cap4j.task;
 
 import cap4j.VarContext;
 import cap4j.GlobalContext;
-import cap4j.Nameable;
 import cap4j.session.Result;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,10 +23,10 @@ public class TaskRunner {
 
     LinkedHashSet<Task> tasksExecuted = new LinkedHashSet<Task>();
 
-    VarContext context;
+    VarContext ctx;
 
-    public TaskRunner(VarContext context) {
-        this.context = context;
+    public TaskRunner(VarContext ctx) {
+        this.ctx = ctx;
     }
 
     public Result run(Task<TaskResult> task) {
@@ -70,7 +69,7 @@ public class TaskRunner {
             return OK;
         }
 
-        task.context = context;
+        task.ctx = ctx;
 
         return Result.and(
             runCollectionOfTasks(task.dependsOnTasks, task.name + ": depending tasks", false),
@@ -93,7 +92,7 @@ public class TaskRunner {
 
         Result runResult = OK;
         for (Task<TaskResult> task : tasks) {
-            if (!task.roles.isEmpty() && !task.hasRole(context.system.getRoles())) {
+            if (!task.roles.isEmpty() && !task.hasRole(ctx.system.getRoles())) {
                 continue;
             }
 
@@ -112,7 +111,7 @@ public class TaskRunner {
             if(!thisIsMe){
                 result = runWithDependencies(task);
             }else{
-                task.setContext(context);
+                task.setCtx(ctx);
                 result = task.run(this).result;
             }
         } catch (Exception ignore) {
@@ -130,7 +129,4 @@ public class TaskRunner {
         return runResult;
     }
 
-    public String varS(Nameable varName) {
-        return context.varS(varName);
-    }
 }

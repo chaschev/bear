@@ -102,10 +102,23 @@ public abstract class BaseScm {
         }
     }
 
+    public static class CommandLineOperator{
+        String s;
+
+        public CommandLineOperator(String s) {
+            this.s = s;
+        }
+
+        @Override
+        public String toString() {
+            return s;
+        }
+    }
+
     public static class CommandLine<T extends CommandLineResult>{
         public String cd = ".";
 
-        public List<String> strings = new ArrayList<String>(4);
+        public List strings = new ArrayList(4);
 
         protected Function<String, T> parser;
 
@@ -128,8 +141,6 @@ public abstract class BaseScm {
         public T parseResult(String text){
             if(parser != null){return parser.apply(text);}
 
-
-
             return (T) new CommandLineResult(text, Result.OK);
         }
 
@@ -149,6 +160,14 @@ public abstract class BaseScm {
             Joiner.on("\" \"").appendTo(sb, strings);
             sb.append("\" in dir '").append(cd).append('\'');
             return sb.toString();
+        }
+
+        public void semicolon() {
+            strings.add(new CommandLineOperator(";"));
+        }
+
+        public void sudo() {
+            strings.add(new CommandLineOperator("stty -echo; sudo"));
         }
     }
 }

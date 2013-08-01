@@ -1,5 +1,6 @@
 package cap4j;
 
+import cap4j.session.DynamicVariable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -16,12 +17,12 @@ public class Console {
 
     protected boolean recordingMode = true;
 
-    public boolean askIfUnset(Nameable name, boolean _default) {
-        return askIfUnset(defaultPrompt(name, _default ? "y" : "n"), name, _default);
+    public boolean askIfUnset(DynamicVariable<String> var, boolean _default) {
+        return askIfUnset(defaultPrompt(var, _default ? "y" : "n"), var, _default);
     }
 
-    public boolean askIfUnset(String prompt, Nameable name, boolean _default){
-        final String s = askIfUnset(prompt, name, _default ? "y" : "n").toLowerCase();
+    public boolean askIfUnset(String prompt, DynamicVariable<String> var, boolean _default){
+        final String s = askIfUnset(prompt, var, _default ? "y" : "n").toLowerCase();
 
         if(!"y".equals(s) || !"n".equals(s)){
             throw new RuntimeException("expecting 'y' or 'n'");
@@ -30,8 +31,10 @@ public class Console {
         return "y".equals(s);
     }
 
-    public String askIfUnset(Nameable variableName, String _default) {
-        return askIfUnset(defaultPrompt(variableName, _default), variableName, _default);
+
+
+    public String askIfUnset(DynamicVariable<String> var, String _default) {
+        return askIfUnset(defaultPrompt(var, _default), var, _default);
     }
 
     private static String defaultPrompt(Nameable variableName, String _default) {
@@ -40,8 +43,8 @@ public class Console {
             ": ";
     }
 
-    public String askIfUnset(String prompt, Nameable variableName, String _default){
-        Object o = GlobalContext.var(variableName, null);
+    public String askIfUnset(String prompt, DynamicVariable<String> var, String _default){
+        Object o = GlobalContext.var(var);
 
         if(o == null){
 
@@ -53,10 +56,10 @@ public class Console {
                 text = _default;
             }
 
-            GlobalContext.gvars().set(variableName, text);
+            GlobalContext.gvars().set(var, text);
 
             if(recordingMode){
-                recordedVars.add(new AbstractMap.SimpleEntry<Nameable, String>(variableName, text));
+                recordedVars.add(new AbstractMap.SimpleEntry<Nameable, String>(var, text));
             }
 
             o = text;

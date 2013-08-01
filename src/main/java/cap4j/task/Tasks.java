@@ -26,12 +26,25 @@ public class Tasks {
     public static final Task<TaskResult> setup = new Task<TaskResult>("setup") {
         @Override
         protected TaskResult run(TaskRunner runner) {
-            final String[] dirs = {var(deployTo), var(releasesPath)};
+            final String appLogs = var(appLogsPath);
+            final String[] dirs = {
+                var(deployTo), var(releasesPath),
+                appLogs
+            };
 
             system.sudo().ls("/var/lib");
+
             system.sudo().mkdirs(dirs);
-            system.sudo().chown(var(sshUsername) + "." + var(sshUsername), true, dirs);
+
+            final String sshUser = var(sshUsername);
+            final String appUser = var(appUsername);
+
+            system.sudo().chown(sshUser + "." + sshUser, true, dirs);
             system.sudo().chmod("g+w", true, dirs);
+
+            if(!appUser.equals(sshUser)){
+                system.sudo().chown(appUser + "." + appUser, true, appLogs);
+            }
 
             return new TaskResult(Result.OK);
         }

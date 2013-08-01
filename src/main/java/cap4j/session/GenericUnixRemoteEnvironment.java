@@ -5,7 +5,6 @@ import cap4j.GlobalContext;
 import cap4j.scm.BaseScm;
 import cap4j.scm.SvnScm;
 import cap4j.ssh.MyStreamCopier;
-import com.google.common.base.Joiner;
 import com.google.common.collect.Lists;
 import net.schmizz.sshj.SSHClient;
 import net.schmizz.sshj.common.IOUtils;
@@ -14,6 +13,8 @@ import net.schmizz.sshj.connection.channel.direct.Session;
 import net.schmizz.sshj.transport.TransportException;
 import net.schmizz.sshj.xfer.FileSystemFile;
 import net.schmizz.sshj.xfer.scp.SCPFileTransfer;
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -52,7 +53,19 @@ public class GenericUnixRemoteEnvironment extends SystemEnvironment {
 
     @Override
     public void unzip(String file, @Nullable String destDir) {
-        throw new UnsupportedOperationException("todo GenericUnixRemoteEnvironment.unzip");
+        final BaseScm.CommandLine line = new BaseScm.CommandLine<BaseScm.CommandLineResult>()
+            .a("unzip");
+
+        if(destDir != null){
+            line.a("-d", destDir);
+        }else{
+            line.a("-d", StringUtils.substringBeforeLast(file, "/")
+                );
+        }
+
+        line.a("-o", file);
+
+        run(line);
     }
 
     @Override
@@ -92,12 +105,19 @@ public class GenericUnixRemoteEnvironment extends SystemEnvironment {
                     sb.append("stty -echo && sudo ");
                 }
 
+                List strings = line.strings;
 
-                sb.append('\"');
+                for (int i = 0; i < strings.size(); i++) {
+                    Object string = strings.get(i);
 
-                Joiner.on("\" \"").appendTo(sb, line.strings);
+                    if (string instanceof BaseScm.CommandLineOperator) {
+                        sb.append(string);
+                    } else {
+                        sb.append('"').append(string).append('"');
+                    }
 
-                sb.append('\"');
+                    sb.append(" ");
+                }
 
                 final Session.Command exec = session.exec(sb.toString());
 
@@ -114,8 +134,9 @@ public class GenericUnixRemoteEnvironment extends SystemEnvironment {
                     .listener(new MyStreamCopier.Listener() {
                         @Override
                         public void reportProgress(long transferred) throws IOException {
-                            System.out.printf("trans: %d%n", transferred);
+                            System.out.printf("transferred: %d%n", transferred);
                             final String text = baos.toString();
+                            System.out.println(text);
                             if (inputCallback != null) {
                                 inputCallback.text = text;
                                 try {
@@ -136,7 +157,7 @@ public class GenericUnixRemoteEnvironment extends SystemEnvironment {
                             }
                         }
                     })
-                    .spawn(GlobalContext.INSTANCE.localExecutors);
+                    .spawn(GlobalContext.INSTANCE.localExecutor);
 
                 exec.join(getTimeout(), TimeUnit.MILLISECONDS);
 
@@ -155,7 +176,7 @@ public class GenericUnixRemoteEnvironment extends SystemEnvironment {
 //                    future.cancel(true);
 //                }
 
-                text = baos.toString().substring(myResponseStartsAt[0]);
+                text = baos.toString().substring(myResponseStartsAt[0]).trim();
 
                 logger.info("response: {}", text);
 
@@ -191,8 +212,13 @@ public class GenericUnixRemoteEnvironment extends SystemEnvironment {
         final SCPFileTransfer transfer = sshSession.getSsh().newSCPFileTransfer();
 
         try {
-            for (File file : files) {
-                transfer.upload(new FileSystemFile(file), dest + "/" + file.getName());
+
+            if(files.length == 1){
+                transfer.upload(new FileSystemFile(files[0]), dest);
+            } else {
+                for (File file : files) {
+                    transfer.upload(new FileSystemFile(file), dest + "/" + file.getName());
+                }
             }
 
             return Result.OK;
@@ -211,8 +237,31 @@ public class GenericUnixRemoteEnvironment extends SystemEnvironment {
     }
 
     @Override
-    protected Result copyOperation(String src, String dest, CopyCommandType type, boolean folder) {
-        throw new UnsupportedOperationException("todo GenericUnixRemoteEnvironment.copyOperation");
+    protected Result copyOperation(String src, String dest, CopyCommandType type, boolean folder, @Nullable String owner) {
+        final BaseScm.CommandLine<BaseScm.CommandLineResult> line = new BaseScm.CommandLine<BaseScm.CommandLineResult>();
+
+        switch (type) {
+            case COPY:
+                line.a("cp", "-R", src, dest);
+                break;
+            case LINK:
+                line.a("rm", dest);
+                line.semicolon();
+                line.sudo();
+                line.a("ln", "-s", src, dest);
+                break;
+            case MOVE:
+                line.a("mv", src, dest);
+                break;
+        }
+
+        if(owner == null){
+            return run(line).result;
+        }else{
+            sudo().run(line);
+        }
+
+        return sudo().chown(owner, true, dest);
     }
 
     @Override
@@ -245,7 +294,15 @@ public class GenericUnixRemoteEnvironment extends SystemEnvironment {
 
     @Override
     public Result writeString(String path, String s) {
-        throw new UnsupportedOperationException("todo GenericUnixRemoteEnvironment.writeString");
+        try {
+            final File tempFile = File.createTempFile("cap4j", "upload");
+            FileUtils.writeStringToFile(tempFile, s, IOUtils.UTF8.name());
+            scpLocal(path, tempFile);
+            tempFile.delete();
+            return Result.OK;
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Override
@@ -265,7 +322,7 @@ public class GenericUnixRemoteEnvironment extends SystemEnvironment {
 
     @Override
     public Result rm(String... paths) {
-        throw new UnsupportedOperationException("todo GenericUnixRemoteEnvironment.rm");
+        return run(new BaseScm.CommandLine().a("rm").a("-r").a(paths)).result;
     }
 
     public static class MySession{
@@ -288,7 +345,7 @@ public class GenericUnixRemoteEnvironment extends SystemEnvironment {
         public SshSession(final SshAddress sshAddress) {
             this.sshAddress = sshAddress;
 
-            sshFuture = GlobalContext.INSTANCE.localExecutors.submit(new Callable<SSHClient>() {
+            sshFuture = GlobalContext.INSTANCE.localExecutor.submit(new Callable<SSHClient>() {
                 @Override
                 public SSHClient call() throws Exception {
                     SSHClient ssh = new SSHClient();
@@ -369,6 +426,5 @@ public class GenericUnixRemoteEnvironment extends SystemEnvironment {
     public static GenericUnixRemoteEnvironment newUnixRemote(String name, String username, String password, String address){
         return new GenericUnixRemoteEnvironment(name, new SshAddress(username, password, address));
     }
-
 
 }

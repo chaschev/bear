@@ -1,13 +1,15 @@
 package cap4j.scm;
 
+import cap4j.CapConstants;
 import cap4j.GlobalContext;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import static cap4j.CapConstants.scmRepository;
 import static cap4j.GlobalContext.gvars;
-import static cap4j.VariableName.*;
+import static cap4j.GlobalContext.var;
 import static cap4j.scm.BaseScm.CommandLine.commandLine;
 
 /**
@@ -71,14 +73,14 @@ public class SvnScm extends BaseScm {
     }
 
     private static String scmRepository() {
-        return GlobalContext.var(scmRepository, (String) null);
+        return var(CapConstants.scmRepository);
     }
 
     protected String[] auth(){
-        final String user = gvars().getString(scmUsername, null);
-        final String pw = gvars().getString(scmPassword, null);
-        final boolean preferPrompt = gvars().get(scmPreferPrompt, true);
-        final boolean authCache = gvars().get(scmAuthCache, true);
+        final String user = var(CapConstants.scmUsername, null);
+        final String pw = var(CapConstants.scmPassword, null);
+        final boolean preferPrompt = var(CapConstants.scmPreferPrompt, true);
+        final boolean authCache = var(CapConstants.scmAuthCache, true);
 
         List<String> r = new ArrayList<String>(4);
 

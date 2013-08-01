@@ -145,7 +145,7 @@ public class GenericUnixLocalEnvironment extends SystemEnvironment {
 
                 final Process finalProcess = process;
 
-                GlobalContext.INSTANCE.localExecutors.execute(new Runnable() {
+                GlobalContext.INSTANCE.localExecutor.execute(new Runnable() {
                     @Override
                     public void run() {
                         long now = -1;
@@ -227,7 +227,7 @@ public class GenericUnixLocalEnvironment extends SystemEnvironment {
     }
 
     @Override
-    protected Result copyOperation(String src, String dest, CopyCommandType type, boolean folder) {
+    protected Result copyOperation(String src, String dest, CopyCommandType type, boolean folder, String owner) {
         throw new UnsupportedOperationException("todo GenericUnixLocalEnvironment.copyOperation");
     }
 

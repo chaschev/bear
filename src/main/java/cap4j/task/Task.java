@@ -4,7 +4,6 @@ import cap4j.*;
 import cap4j.session.DynamicVariable;
 import cap4j.session.Result;
 import cap4j.session.SystemEnvironment;
-import cap4j.session.SystemEnvironments;
 import com.google.common.collect.Sets;
 
 import java.util.*;
@@ -19,6 +18,8 @@ public abstract class Task<T extends TaskResult> {
 
     Set<Role> roles = new HashSet<Role>();
 
+    protected transient VarContext ctx;
+
     List<Task<TaskResult>> beforeTasks = new ArrayList<Task<TaskResult>>();
     List<Task<TaskResult>> afterTasks = new ArrayList<Task<TaskResult>>();
     List<Task<TaskResult>> dependsOnTasks = new ArrayList<Task<TaskResult>>();
@@ -29,8 +30,6 @@ public abstract class Task<T extends TaskResult> {
     public Task(String name) {
         this.name = name;
     }
-
-    protected transient VarContext context;
 
     protected SystemEnvironment system;
 
@@ -55,13 +54,8 @@ public abstract class Task<T extends TaskResult> {
 
 
     public <T> T var(DynamicVariable<T> varName){
-        return context.var(varName);
+        return ctx.var(varName);
     }
-
-    public <T> T var(Nameable<T> varName){
-        return context.var(varName);
-    }
-
 
     protected void onRollback(){
         //todo use it
@@ -82,8 +76,8 @@ public abstract class Task<T extends TaskResult> {
         return sb.toString();
     }
 
-    public void setContext(VarContext context) {
-        this.context = context;
-        this.system = context.system;
+    public void setCtx(VarContext ctx) {
+        this.ctx = ctx;
+        this.system = ctx.system;
     }
 }

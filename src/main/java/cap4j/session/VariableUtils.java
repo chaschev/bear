@@ -7,6 +7,7 @@ import com.google.common.collect.Iterables;
 import java.util.Arrays;
 
 import static cap4j.CapConstants.bool;
+import static cap4j.CapConstants.dynamic;
 import static cap4j.CapConstants.strVar;
 
 /**
@@ -42,10 +43,19 @@ public class VariableUtils {
         });
     }
 
-    public static DynamicVariable<Boolean> eql(String name, final DynamicVariable<Boolean> b){
-        return bool(name, "").setDynamic(new Function<VarContext, Boolean>() {
+    public static <T> DynamicVariable<Boolean> eql(String name, final DynamicVariable<T> var, final String to){
+        return dynamic(name, "", new Function<VarContext, Boolean>() {
             public Boolean apply(final VarContext ctx) {
-                return ctx.varB(b);
+                final T v = ctx.var(var);
+                return v == null ? to == v : String.valueOf(v).equals(to);
+            }
+        });
+    }
+
+    public static <T> DynamicVariable<T> eql(String name, final DynamicVariable<T> var){
+        return dynamic(name, "", new Function<VarContext, T>() {
+            public T apply(final VarContext ctx) {
+                return ctx.var(var);
             }
         });
     }

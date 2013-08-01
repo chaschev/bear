@@ -50,7 +50,7 @@ public class SystemEnvironments  {
 
     
     public Result copyOperation(String src, String dest, SystemEnvironment.CopyCommandType type, boolean folder) {
-        return getCurrent().copyOperation(src, dest, type, folder);
+        return getCurrent().copyOperation(src, dest, type, folder, null);
     }
 
     
@@ -103,7 +103,7 @@ public class SystemEnvironments  {
      */
     
     public Result link(String src, String dest) {
-        return getCurrent().link(src, dest);
+        return getCurrent().link(src, dest, null);
     }
 
     public static interface EnvRunnable {

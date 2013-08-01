@@ -135,7 +135,7 @@ public abstract class SystemEnvironment {
     public abstract Result sftp(String dest, String host, String path, String user, String pw);
     public abstract Result scpLocal(String dest, File... files);
     public abstract Result mkdirs(String... dirs);
-    protected abstract Result copyOperation(String src, String dest, CopyCommandType type, boolean folder);
+    protected abstract Result copyOperation(String src, String dest, CopyCommandType type, boolean folder, String owner);
     public abstract Result chown(String user, boolean recursive, String... dest);
     public abstract Result chmod(String octal, boolean recursive, String... files);
     public abstract Result writeString(String path, String s);
@@ -145,16 +145,28 @@ public abstract class SystemEnvironment {
     public abstract String readLink(String path);
     public abstract Result rm(String... paths);
 
-    public Result copy(String src, String dest){
-        return copyOperation(src, dest, CopyCommandType.COPY, false);
+    public Result copy(String src, String dest) {
+        return copy(src, dest, null);
     }
 
-    public Result move(String src, String dest){
-        return copyOperation(src, dest, CopyCommandType.MOVE, false);
+    public Result copy(String src, String dest, String owner){
+        return copyOperation(src, dest, CopyCommandType.COPY, false, owner);
+    }
+
+    public Result move(String src, String dest) {
+        return move(src, dest, null);
+    }
+
+    public Result move(String src, String dest, String owner){
+        return copyOperation(src, dest, CopyCommandType.MOVE, false, owner);
     }
 
     public Result link(String src, String dest){
-        return copyOperation(src, dest, CopyCommandType.LINK, false);
+        return link(src, dest, null);
+    }
+
+    public Result link(String src, String dest, @Nullable String owner){
+        return copyOperation(src, dest, CopyCommandType.LINK, false, owner);
     }
 
     public Set<Role> getRoles() {
