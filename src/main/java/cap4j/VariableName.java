@@ -7,8 +7,6 @@ public enum VariableName implements Nameable{
     scmAuthCache,
     scmPreferPrompt,
     scmRepository,
-    releasesPath,
-    latestRelease,
 
     sharedPath,
     devEnvironment;

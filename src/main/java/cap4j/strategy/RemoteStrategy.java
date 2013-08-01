@@ -1,5 +1,6 @@
 package cap4j.strategy;
 
+import cap4j.VarContext;
 import cap4j.session.Result;
 
 import static cap4j.CapConstants.releasePath;
@@ -12,6 +13,9 @@ import static cap4j.CapConstants.revision;
 public abstract class RemoteStrategy extends BaseStrategy {
 
 
+    protected RemoteStrategy(VarContext ctx) {
+        super(ctx);
+    }
 
     public Result deploy(){
         return Result.and(

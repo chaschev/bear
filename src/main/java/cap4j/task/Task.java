@@ -67,10 +67,6 @@ public abstract class Task<T extends TaskResult> {
         //todo use it
     }
 
-    public String varS(Nameable varName) {
-        return context.varS(varName);
-    }
-
     public Task<T> addBeforeTask(Task task) {
         beforeTasks.add(task);
         return this;

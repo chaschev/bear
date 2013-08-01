@@ -2,6 +2,7 @@ features:
 
 Console: saving/loading user input - only in the very beginning
 
+support different auth types
 
 main cycle:
 

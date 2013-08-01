@@ -17,7 +17,7 @@ public class GlobalContext {
     public final Variables variables = new Variables("global vars", null);
     public final Console console = new Console();
 
-    public final ExecutorService localExecutors = Executors.newFixedThreadPool(4);
+    public final ExecutorService localExecutors = Executors.newCachedThreadPool();
 
     public final SystemEnvironment local = SystemUtils.IS_OS_WINDOWS ?
         new GenericUnixLocalEnvironment("local") : new GenericUnixLocalEnvironment("local");

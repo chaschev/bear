@@ -3,9 +3,12 @@ package cap4j.session;
 import cap4j.GlobalContext;
 import cap4j.scm.BaseScm;
 import cap4j.scm.SvnScm;
-import net.schmizz.sshj.SSHClient;
-import org.apache.commons.io.IOUtils;
+import com.google.common.base.Preconditions;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.SystemUtils;
+import org.apache.tools.ant.Project;
+import org.apache.tools.ant.taskdefs.Zip;
+import org.apache.tools.ant.types.ZipFileSet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -14,6 +17,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -32,9 +36,45 @@ public class GenericUnixLocalEnvironment extends SystemEnvironment {
         throw new UnsupportedOperationException("todo GenericUnixLocalEnvironment.ls");
     }
 
+    /**
+     * Single files a treated in a different way.
+     * @param dest
+     * @param paths
+     */
     @Override
-    public void zip(String dest, Iterable<String> paths) {
-        throw new UnsupportedOperationException("todo GenericUnixLocalEnvironment.zip");
+    public void zip(String dest, Collection<String> paths) {
+        final Zip zip = new Zip();
+
+        zip.setCompress(false);
+        zip.setDestFile(new File(dest));
+        zip.setProject(new Project());
+
+        if(paths.size() != 1){
+        for (String path : paths) {
+            final ZipFileSet set = new ZipFileSet();
+
+            final File file = new File(path);
+
+            set.setDir(file.getParentFile());
+            set.setIncludes(file.getName());
+
+            zip.addZipfileset(set);
+        }
+        }else{
+            final ZipFileSet set = new ZipFileSet();
+
+            final File toAdd = new File(paths.iterator().next());
+
+            if(toAdd.isDirectory()){
+                set.setDir(toAdd);
+            }else{
+                set.setFile(toAdd);
+            }
+
+            zip.addZipfileset(set);
+        }
+
+        zip.execute();
     }
 
     @Override
@@ -44,7 +84,19 @@ public class GenericUnixLocalEnvironment extends SystemEnvironment {
 
     @Override
     public String newTempDir() {
-        throw new UnsupportedOperationException("todo GenericUnixLocalEnvironment.newTempDir");
+        final File cap4jDir = new File(FileUtils.getTempDirectory(), "cap4j");
+
+        if(cap4jDir.exists()){
+            try {
+                FileUtils.deleteDirectory(cap4jDir);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        Preconditions.checkArgument(cap4jDir.mkdir(), "could not create temp dir");
+
+        return cap4jDir.getAbsolutePath();
     }
 
     @Override
@@ -142,7 +194,7 @@ public class GenericUnixLocalEnvironment extends SystemEnvironment {
     }
 
     @Override
-    public <T extends SvnScm.CommandLineResult> T run(BaseScm.CommandLine<T> line) {
+    public <T extends SvnScm.CommandLineResult> T run(BaseScm.CommandLine<T> line, final GenericUnixRemoteEnvironment.SshSession.WithSession inputCallback) {
         logger.debug("command: {}", line);
 
         final ProcessRunner.ProcessResult r = new ProcessRunner<T>(line).run();
@@ -180,7 +232,7 @@ public class GenericUnixLocalEnvironment extends SystemEnvironment {
     }
 
     @Override
-    public Result chown(String dest, String octal, String user, boolean recursive) {
+    public Result chown(String user, boolean recursive, String... dest) {
         throw new UnsupportedOperationException("todo GenericUnixLocalEnvironment.chown");
     }
 

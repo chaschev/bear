@@ -1,25 +1,27 @@
 package cap4j.session;
 
 import cap4j.Role;
+import cap4j.VarContext;
 import cap4j.scm.BaseScm;
 import cap4j.scm.SvnScm;
 import com.google.common.base.Joiner;
 
 import javax.annotation.Nullable;
 import java.io.File;
-import java.util.Arrays;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * User: chaschev
  * Date: 7/21/13
  */
 public abstract class SystemEnvironment {
-
+    protected boolean sudo;
     String name;
     String desc;
+    private int defaultTimeout = 5000;
+    private int singleTimeout = -1;
+
+    public VarContext ctx;
 
     protected SystemEnvironment(String name) {
         this.name = name;
@@ -58,13 +60,29 @@ public abstract class SystemEnvironment {
     public void zip(String dest, String... paths){
         zip(dest, Arrays.asList(paths));
     }
-    public abstract void zip(String dest, Iterable<String> paths);
+    public abstract void zip(String dest, Collection<String> paths);
     public abstract void unzip(String file, @Nullable String destDir);
 
     public abstract String newTempDir();
 
     public abstract boolean isUnix();
     public abstract boolean isNativeUnix();
+
+    protected int getTimeout() {
+        int r = singleTimeout == -1 ? defaultTimeout : singleTimeout;
+        singleTimeout = -1;
+        return r;
+    }
+
+    public SystemEnvironment setDefaultTimeout(int defaultTimeout) {
+        this.defaultTimeout = defaultTimeout;
+        return this;
+    }
+
+    public SystemEnvironment setSingleTimeout(int singleTimeout) {
+        this.singleTimeout = singleTimeout;
+        return this;
+    }
 
 
     public static class CopyResult{
@@ -106,14 +124,19 @@ public abstract class SystemEnvironment {
 
         return new BaseScm.CommandLineResult(sb.toString(), r);
     }
-    public abstract <T extends SvnScm.CommandLineResult> T run(BaseScm.CommandLine<T> commandLine) ;
+
+    public <T extends SvnScm.CommandLineResult> T run(BaseScm.CommandLine<T> commandLine) {
+        return run(commandLine, null);
+    }
+
+    public abstract <T extends SvnScm.CommandLineResult> T run(BaseScm.CommandLine<T> commandLine, final GenericUnixRemoteEnvironment.SshSession.WithSession inputCallback) ;
     public abstract <T extends SvnScm.CommandLineResult> T runVCS(SvnScm.CommandLine<T> stringResultCommandLine);
 
     public abstract Result sftp(String dest, String host, String path, String user, String pw);
     public abstract Result scpLocal(String dest, File... files);
     public abstract Result mkdirs(String... dirs);
     protected abstract Result copyOperation(String src, String dest, CopyCommandType type, boolean folder);
-    public abstract Result chown(String dest, String octal, String user, boolean recursive);
+    public abstract Result chown(String user, boolean recursive, String... dest);
     public abstract Result chmod(String octal, boolean recursive, String... files);
     public abstract Result writeString(String path, String s);
     public abstract String readString(String path, String _default);
@@ -144,5 +167,10 @@ public abstract class SystemEnvironment {
 
     public String getDesc() {
         return desc;
+    }
+
+    public SystemEnvironment sudo() {
+        this.sudo = true;
+        return this;
     }
 }

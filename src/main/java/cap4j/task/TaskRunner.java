@@ -116,7 +116,7 @@ public class TaskRunner {
                 result = task.run(this).result;
             }
         } catch (Exception ignore) {
-            logger.error(ignore.toString());
+            logger.error("", ignore);
         }
 
         Result runResult;

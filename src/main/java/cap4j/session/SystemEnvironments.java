@@ -55,7 +55,7 @@ public class SystemEnvironments  {
 
     
     public Result chown(String dest, String octal, String user, boolean recursive) {
-        return getCurrent().chown(dest, octal, user, recursive);
+        return getCurrent().chown(user, recursive);
     }
 
     

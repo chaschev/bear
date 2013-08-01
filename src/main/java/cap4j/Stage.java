@@ -48,6 +48,8 @@ public class Stage {
                         sessionContext.variables, environment
                     );
 
+                    environment.ctx = ctx;
+
                     Thread.currentThread().setName(ctx.threadName());
 
                     final Result run = new TaskRunner(

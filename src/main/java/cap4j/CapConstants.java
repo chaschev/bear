@@ -42,13 +42,15 @@ public class CapConstants {
 
     public static final DynamicVariable<String>
 
-        applicationsPath = strVar("applicationsPath", "System apps folder").setDynamic(new Function<VarContext, String>() {
+    applicationsPath = strVar("applicationsPath", "System apps folder").setDynamic(new Function<VarContext, String>() {
         public String apply(VarContext input) {
-            return SystemUtils.IS_OS_WINDOWS ? "c:" : "/var/lib";
+            return input.system.isNativeUnix() ? "/var/lib" : "c:";
         }
     }),
 
     applicationName = strVar("applicationName", "Your app name"),
+    sshUsername = strVar("sshUsername", ""),
+    sshPassword = strVar("sshPassword", ""),
 
     repositoryURI = strVar("repository", "Project VCS URI"),
 
@@ -120,7 +122,7 @@ public class CapConstants {
         }
     }).memoize(true);
 
-    public static DynamicVariable<Boolean>
+    public static final DynamicVariable<Boolean>
         useSudo = bool("useSudo", "").defaultTo(true),
         productionDeployment = bool("productionDeployment", "").defaultTo(true),
         clean = eql("clean", productionDeployment),
