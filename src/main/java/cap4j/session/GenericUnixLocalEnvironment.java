@@ -1,8 +1,8 @@
 package cap4j.session;
 
 import cap4j.GlobalContext;
-import cap4j.scm.BaseScm;
-import cap4j.scm.SvnScm;
+import cap4j.scm.CommandLine;
+import cap4j.scm.CommandLineResult;
 import com.google.common.base.Preconditions;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.SystemUtils;
@@ -109,12 +109,17 @@ public class GenericUnixLocalEnvironment extends SystemEnvironment {
         return SystemUtils.IS_OS_UNIX;
     }
 
-    public static class ProcessRunner<T extends SvnScm.CommandLineResult> {
-        BaseScm.CommandLine<T> line;
+    @Override
+    public <T extends CommandLineResult> CommandLine<T> newCommandLine(Class<T> aClass) {
+        throw new UnsupportedOperationException("todo");
+    }
+
+    public static class ProcessRunner<T extends CommandLineResult> {
+        CommandLine<T> line;
 
         int processTimeoutMs = 60000;
 
-        public ProcessRunner(BaseScm.CommandLine<T> line) {
+        public ProcessRunner(CommandLine<T> line) {
             this.line = line;
         }
 
@@ -194,20 +199,20 @@ public class GenericUnixLocalEnvironment extends SystemEnvironment {
     }
 
     @Override
-    public <T extends SvnScm.CommandLineResult> T run(BaseScm.CommandLine<T> line, final GenericUnixRemoteEnvironment.SshSession.WithSession inputCallback) {
+    public <T extends CommandLineResult> T run(CommandLine<T> line, final GenericUnixRemoteEnvironment.SshSession.WithSession inputCallback) {
         logger.debug("command: {}", line);
 
         final ProcessRunner.ProcessResult r = new ProcessRunner<T>(line).run();
 
         if (r.exitCode == -1) {
-            return (T) new BaseScm.CommandLineResult(null, Result.ERROR);
+            return (T) new CommandLineResult(null, Result.ERROR);
         }
 
         return line.parseResult(r.text);
     }
 
     @Override
-    public <T extends SvnScm.CommandLineResult> T runVCS(BaseScm.CommandLine<T> stringResultCommandLine) {
+    public <T extends CommandLineResult> T runVCS(CommandLine<T> stringResultCommandLine) {
         throw new UnsupportedOperationException("todo GenericUnixLocalEnvironment.runVCS");
     }
 
@@ -262,7 +267,7 @@ public class GenericUnixLocalEnvironment extends SystemEnvironment {
     }
 
     @Override
-    public Result rm(String... paths) {
+    public Result rmCd(String dir, String... paths) {
         throw new UnsupportedOperationException("todo GenericUnixLocalEnvironment.rm");
     }
 }

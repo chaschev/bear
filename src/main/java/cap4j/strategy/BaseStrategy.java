@@ -1,5 +1,6 @@
 package cap4j.strategy;
 
+import cap4j.CapConstants;
 import cap4j.GlobalContext;
 import cap4j.Stage;
 import cap4j.VarContext;
@@ -13,6 +14,7 @@ import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
 import java.io.File;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.TimeUnit;
@@ -135,7 +137,9 @@ public abstract class BaseStrategy {
     /**
      * Chance to ask all the hosts for the data. Waits until everyone is ready
      */
-    protected abstract void step_10_getPrepareRemoteData();
+    protected void step_10_getPrepareRemoteData(){
+        logger.info("10: skipping customization");
+    }
 
     /**
      * This operation is single0threaded.
@@ -143,19 +147,37 @@ public abstract class BaseStrategy {
      * @return List of files which will be zipped and copied to the remote hosts. If it is empty, copying is skipped.
      * @param localCtx
      */
-    protected abstract List<File> step_20_prepareLocalFiles(VarContext localCtx);
+    protected List<File> step_20_prepareLocalFiles(VarContext localCtx){
+        logger.info("20: skipping customization");
+        return Collections.emptyList();
+    }
 
     private void _step_30_copyFilesToHosts(){
-        ctx.system.mkdirs(ctx.gvar(releasePath));
+        updateReleasesDirs();
 
         if(isCopyingZip()){
-            ctx.system.scpLocal(ctx.gvar(releasePath), new File(deployZipPath));
+            ctx.system.scpLocal(ctx.var(releasePath), new File(deployZipPath));
         }
 
         step_30_copyFilesToHosts();
     }
 
-    protected abstract void step_30_copyFilesToHosts();
+    private void updateReleasesDirs() {
+        ctx.system.mkdirs(ctx.var(releasePath));
+        int keepX = ctx.var(keepXReleases);
+
+        if(keepX > 0){
+            final Releases releases = ctx.var(getReleases);
+            List<String> toDelete = releases.listToDelete(keepX);
+
+            ctx.system.rmCd(ctx.var(releasesPath),
+                toDelete.toArray(new String[toDelete.size()]));
+        }
+    }
+
+    protected void step_30_copyFilesToHosts(){
+        logger.info("30: skipping customization");
+    }
 
     private void _step_40_updateRemoteFiles(){
         if(isCopyingZip()){
@@ -164,32 +186,36 @@ public abstract class BaseStrategy {
             );
         }
 
+        step_40_updateRemoteFiles();
+
         logger.info("creating {} symlinks...", symlinkRules.entries.size());
 
         for (SymlinkEntry entry : symlinkRules.entries) {
             String srcPath;
 
-            srcPath = ctx.varS(VariableUtils.joinPath("symlinkSrc", currentPath, entry.sourcePath));
+            srcPath = ctx.var(VariableUtils.joinPath("symlinkSrc", currentPath, entry.sourcePath));
 
-            ctx.system.link(srcPath, ctx.varS(entry.destPath), entry.owner);
+            ctx.system.link(srcPath, ctx.var(entry.destPath), entry.owner);
         }
 
         writeRevision();
-
-        step_40_updateRemoteFiles();
     }
 
     protected Result writeRevision(){
-        return ctx.system.writeString(ctx.joinPath(releasePath, "REVISION"), ctx.gvar(revision));
+        return ctx.system.writeString(ctx.joinPath(releasePath, "REVISION"), ctx.gvar(realRevision));
     }
 
-    protected abstract void step_40_updateRemoteFiles();
+    protected void step_40_updateRemoteFiles(){
+        logger.info("40: skipping customization");
+    }
 
     /**
      *
      * @param localCtx
      */
-    protected abstract void step_50_whenRemoteUpdateFinished(VarContext localCtx);
+    protected void step_50_whenRemoteUpdateFinished(VarContext localCtx){
+        logger.info("50: skipping customization");
+    }
 
     private static boolean isCopyingZip() {
         return deployZipPath != null;

@@ -47,8 +47,8 @@ public class GlobalContext {
         return INSTANCE.variables;
     }
 
-    public static String var(Nameable<String> varName){
-        return INSTANCE.variables.get(varName, null);
+    public static <T> T var(DynamicVariable<T> varName){
+        return INSTANCE.variables.get((VarContext)null, varName);
     }
 
     public static <T> T var(DynamicVariable<T> varName, T _default){
@@ -64,4 +64,8 @@ public class GlobalContext {
     }
 
 
+    public void shutdown() throws InterruptedException {
+        GlobalContext.INSTANCE.taskExecutor.shutdown();
+        GlobalContext.INSTANCE.taskExecutor.awaitTermination(10, TimeUnit.SECONDS);
+    }
 }

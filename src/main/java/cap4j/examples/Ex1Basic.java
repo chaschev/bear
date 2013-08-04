@@ -1,7 +1,6 @@
 package cap4j.examples;
 
 import cap4j.Stage;
-import cap4j.scm.BaseScm;
 import cap4j.session.*;
 import cap4j.task.Task;
 import cap4j.task.TaskResult;

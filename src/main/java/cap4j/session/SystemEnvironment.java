@@ -2,8 +2,9 @@ package cap4j.session;
 
 import cap4j.Role;
 import cap4j.VarContext;
-import cap4j.scm.BaseScm;
-import cap4j.scm.SvnScm;
+import cap4j.scm.CommandLine;
+import cap4j.scm.CommandLineResult;
+import cap4j.scm.Vcs;
 import com.google.common.base.Joiner;
 
 import javax.annotation.Nullable;
@@ -84,6 +85,16 @@ public abstract class SystemEnvironment {
         return this;
     }
 
+    public boolean isRemote() {
+        throw new UnsupportedOperationException("todo");
+    }
+
+    public CommandLine newCommandLine(){
+        return newCommandLine(CommandLineResult.class);
+    }
+
+    public abstract <T extends CommandLineResult> CommandLine<T> newCommandLine(Class<T> aClass);
+
 
     public static class CopyResult{
 
@@ -103,16 +114,16 @@ public abstract class SystemEnvironment {
         COPY, LINK, MOVE;
     }
 
-    public SvnScm.CommandLineResult run(BaseScm.Script script){
+    public CommandLineResult run(Vcs.Script script){
         StringBuilder sb = new StringBuilder(1024);
         Result r = Result.OK;
 
-        for (BaseScm.CommandLine line : script.lines) {
+        for (CommandLine line : script.lines) {
             if(script.cd != null){
                 line.cd = script.cd;
             }
 
-            final BaseScm.CommandLineResult result = run(line);
+            final CommandLineResult result = run(line);
             sb.append(result.text);
             sb.append("\n");
 
@@ -122,15 +133,15 @@ public abstract class SystemEnvironment {
             }
         }
 
-        return new BaseScm.CommandLineResult(sb.toString(), r);
+        return new CommandLineResult(sb.toString(), r);
     }
 
-    public <T extends SvnScm.CommandLineResult> T run(BaseScm.CommandLine<T> commandLine) {
+    public <T extends CommandLineResult> T run(CommandLine<T> commandLine) {
         return run(commandLine, null);
     }
 
-    public abstract <T extends SvnScm.CommandLineResult> T run(BaseScm.CommandLine<T> commandLine, final GenericUnixRemoteEnvironment.SshSession.WithSession inputCallback) ;
-    public abstract <T extends SvnScm.CommandLineResult> T runVCS(SvnScm.CommandLine<T> stringResultCommandLine);
+    public abstract <T extends CommandLineResult> T run(CommandLine<T> commandLine, final GenericUnixRemoteEnvironment.SshSession.WithSession inputCallback) ;
+    public abstract <T extends CommandLineResult> T runVCS(CommandLine<T> stringResultCommandLine);
 
     public abstract Result sftp(String dest, String host, String path, String user, String pw);
     public abstract Result scpLocal(String dest, File... files);
@@ -143,7 +154,11 @@ public abstract class SystemEnvironment {
     public abstract boolean exists(String path);
 
     public abstract String readLink(String path);
-    public abstract Result rm(String... paths);
+
+    public abstract Result rmCd(String dir, String... paths);
+    public Result rm(String... paths){
+        return rmCd(".", paths);
+    }
 
     public Result copy(String src, String dest) {
         return copy(src, dest, null);

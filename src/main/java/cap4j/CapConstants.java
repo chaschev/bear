@@ -1,22 +1,23 @@
 package cap4j;
 
-import cap4j.scm.BaseScm;
-import cap4j.scm.SvnScm;
+import cap4j.scm.BranchInfoResult;
+import cap4j.scm.CommandLine;
+import cap4j.scm.Vcs;
+import cap4j.scm.SvnVcs;
 import cap4j.session.DynamicVariable;
 import cap4j.strategy.BaseStrategy;
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import org.apache.commons.lang3.ArrayUtils;
-import org.apache.commons.lang3.SystemUtils;
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
+import org.joda.time.format.DateTimeFormat;
+import org.joda.time.format.DateTimeFormatter;
 
 import javax.annotation.Nullable;
-import java.text.SimpleDateFormat;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 
-import static cap4j.GlobalContext.local;
+import static cap4j.GlobalContext.var;
 import static cap4j.session.VariableUtils.*;
 
 /**
@@ -24,6 +25,9 @@ import static cap4j.session.VariableUtils.*;
  * Date: 7/27/13
  */
 public class CapConstants {
+    public static final DateTimeZone GMT = DateTimeZone.forTimeZone(TimeZone.getTimeZone("GMT"));
+    public static final DateTimeFormatter RELEASE_FORMATTER = DateTimeFormat.forPattern("yyyyMMdd.HHmmss").withZone(GMT);
+
     public static class Releases {
         List<String> releases;
 
@@ -37,6 +41,12 @@ public class CapConstants {
 
         public String previous() {
             return releases.get(releases.size() - 2);
+        }
+
+        public List<String> listToDelete(int keepX) {
+            if(releases.size() <= keepX) return Collections.emptyList();
+
+            return releases.subList(0, releases.size() - keepX);
         }
     }
 
@@ -62,18 +72,18 @@ public class CapConstants {
 
     repositoryURI = strVar("repository", "Project VCS URI"),
 
-    scm = enumConstant("scm", "Your VCS type", "svn"),
-        scmUsername = eql("scmUsername", sshUsername),
-        scmPassword = eql("sshPassword", sshPassword),
-        scmRepository = dynamicNotSet("scmRepository", ""),
+    vcsType = enumConstant("vcsType", "Your VCS type", "svn"),
+    vcsUserName = eql("vcsUserName", sshUsername),
+    vcsPassword = eql("vcsPassword", sshPassword),
 
     deployTo = joinPath("deployTo", applicationsPath, applicationName).setDesc("Current release dir"),
 
     currentDirName = strVar("currentDirName", "Current release dir").defaultTo("current"),
+    sharedDirName = strVar("sharedDirName", "").defaultTo("shared"),
 
     releasesDirName = strVar("releasesDirName", "").defaultTo("releases"),
 
-    releaseName = strVar("releaseName", "I.e. 20140216").defaultTo(new SimpleDateFormat("yyyyMMdd.HHmmss").format(new Date())),
+    releaseName = strVar("releaseName", "I.e. 20140216").defaultTo(RELEASE_FORMATTER.print(new DateTime()) + ".GMT"),
 
     devEnvironment = enumConstant("devEnvironment", "Development environment", "dev", "test", "prod").defaultTo("prod"),
 
@@ -85,15 +95,27 @@ public class CapConstants {
 
    realRevision = strVar("realRevision", "Update revision from vcs").setDynamic(new Function<VarContext, String>() {
         public String apply(VarContext ctx) {
-            BaseScm.StringResult r = local().runVCS(ctx.gvar(vcs).queryRevision(ctx.varS(revision), Collections.<String, String>emptyMap()));
+            final Vcs vcs = ctx.var(CapConstants.vcs);
+            final CommandLine<BranchInfoResult> line = vcs.queryRevision(ctx.var(revision), Collections.<String, String>emptyMap());
 
-            return r.value;
+            line.timeoutMs(20000);
+
+            BranchInfoResult r = ctx.system.run(line, vcs.runCallback());
+
+            return r.revision;
         }
     }),
 
     releasesPath = joinPath("releasesPath", deployTo, releasesDirName),
     currentPath = joinPath("currentPath", deployTo, currentDirName),
+    sharedPath = joinPath("sharedPath", deployTo, sharedDirName),
+
     releasePath = joinPath("releasesPath", releasesPath, releaseName),
+
+    vcsCheckoutPath = joinPath("vcsCheckoutPath", sharedPath, "vcs"),
+    vcsBranchName = strVar("vcsBranchName", "").defaultTo("trunk"),
+    vcsBranchLocalPath = joinPath("vcsBranchLocalPath", vcsCheckoutPath, vcsBranchName),
+    vcsBranchURI = joinPath("vcsProjectURI", repositoryURI, vcsBranchName),
 
     getLatestReleasePath = strVar("getLatestReleasePath", "").setDynamic(new Function<VarContext, String>() {
         public String apply(VarContext input) {
@@ -139,8 +161,16 @@ public class CapConstants {
         clean = eql("clean", productionDeployment),
         speedUpBuild = and("speedUpBuild", not("", productionDeployment), not("", clean)),
         scmAuthCache = dynamicNotSet("scmAuthCache", ""),
-        scmPreferPrompt = dynamicNotSet("scmPreferPrompt", "")
+        scmPreferPrompt = dynamicNotSet("scmPreferPrompt", ""),
+        isRemoteEnv = dynamic("isRemoteEnv", "", new Function<VarContext, Boolean>() {
+            public Boolean apply(VarContext input) {
+                return input.system.isRemote();
+            }
+        })
     ;
+
+    public static final DynamicVariable<Integer>
+        keepXReleases = CapConstants.<Integer>dynamic("keepXReleases", "").defaultTo(8);
 
     public static final DynamicVariable<Releases> getReleases = new DynamicVariable<Releases>("getReleases", "").setDynamic(new Function<VarContext, Releases>() {
         public Releases apply(VarContext ctx) {
@@ -149,17 +179,17 @@ public class CapConstants {
     });
 
 
-    public static final DynamicVariable<BaseScm> vcs = new DynamicVariable<BaseScm>("vcs", "VCS adapter").setDynamic(new Function<VarContext, BaseScm>() {
-        public BaseScm apply(VarContext ctx) {
-            final String scm = ctx.varS(CapConstants.scm);
+    public static final DynamicVariable<Vcs> vcs = new DynamicVariable<Vcs>("vcs", "VCS adapter").setDynamic(new Function<VarContext, Vcs>() {
+        public Vcs apply(VarContext ctx) {
+            final String scm = ctx.var(CapConstants.vcsType);
 
             if ("svn".equals(scm)) {
-                return new SvnScm();
+                return new SvnVcs(ctx);
             }
 
             throw new UnsupportedOperationException(scm + " is not yet supported");
         }
-    }).memoize(true);
+    });
 
     public static final DynamicVariable<BaseStrategy> newStrategy = dynamicNotSet("strategy", "Deployment strategy: how app files copied and built");
 
@@ -169,6 +199,10 @@ public class CapConstants {
                 throw new UnsupportedOperationException("you need to set the :" + name + " variable");
             }
         });
+    }
+
+    public static <T> DynamicVariable<T> dynamic(String name, String desc){
+        return new DynamicVariable<T>(name, desc);
     }
 
     public static <T> DynamicVariable<T> dynamic(String name, String desc, Function<VarContext, T> function) {

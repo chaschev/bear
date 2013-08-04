@@ -1,16 +1,11 @@
 package cap4j.examples;
 
 import cap4j.*;
-import cap4j.scm.BaseScm;
 import cap4j.session.Result;
-import cap4j.session.SystemEnvironment;
-import cap4j.session.SystemEnvironments;
-import cap4j.session.VariableUtils;
 import cap4j.task.Task;
 import cap4j.task.TaskResult;
 import cap4j.task.TaskRunner;
 
-import static cap4j.CapConstants.devEnvironment;
 import static cap4j.session.GenericUnixRemoteEnvironment.newUnixRemote;
 
 /**

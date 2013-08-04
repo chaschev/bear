@@ -1,7 +1,7 @@
 package cap4j.session;
 
-import cap4j.scm.BaseScm;
-import cap4j.scm.SvnScm;
+import cap4j.scm.CommandLine;
+import cap4j.scm.CommandLineResult;
 import com.google.common.base.Predicate;
 
 import javax.annotation.Nullable;
@@ -154,12 +154,12 @@ public class SystemEnvironments  {
     }
 
     
-    public <T extends SvnScm.CommandLineResult> T run(BaseScm.CommandLine commandLine) {
+    public <T extends CommandLineResult> T run(CommandLine commandLine) {
         throw new UnsupportedOperationException("todo SystemEnvironments.run");
     }
 
     
-    public <T extends SvnScm.CommandLineResult> T runVCS(BaseScm.CommandLine<T> stringResultCommandLine) {
+    public <T extends CommandLineResult> T runVCS(CommandLine<T> stringResultCommandLine) {
         throw new UnsupportedOperationException("todo SystemEnvironments.runVCS");
     }
 

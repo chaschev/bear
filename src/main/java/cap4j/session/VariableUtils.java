@@ -15,12 +15,21 @@ import static cap4j.CapConstants.strVar;
  * Date: 7/31/13
  */
 public class VariableUtils {
+    public static DynamicVariable<String> joinPath(final DynamicVariable<String> root, final String... folders){
+        return joinPath(null, root, folders);
+    }
+
+
     public static DynamicVariable<String> joinPath(String name, final DynamicVariable<String> root, final String... folders){
         return strVar(name, "").setDynamic(new Function<VarContext, String>() {
             public String apply(VarContext ctx) {
-                return ctx.system.joinPath(ctx.varS(root), ctx.joinPath(folders));
+                return ctx.system.joinPath(ctx.var(root), ctx.joinPath(folders));
             }
         });
+    }
+
+    public static DynamicVariable<String> joinPath(final DynamicVariable... folders){
+        return joinPath(null, folders);
     }
 
     public static DynamicVariable<String> joinPath(String name,final DynamicVariable... folders){
@@ -28,7 +37,7 @@ public class VariableUtils {
             public String apply(final VarContext ctx) {
                 return ctx.system.joinPath(Iterables.transform(Arrays.asList(folders), new Function<DynamicVariable, String>() {
                     public String apply(DynamicVariable var) {
-                        return ctx.varS(var);
+                        return ctx.var((DynamicVariable<String>)var);
                     }
                 }));
             }
@@ -48,6 +57,33 @@ public class VariableUtils {
             public Boolean apply(final VarContext ctx) {
                 final T v = ctx.var(var);
                 return v == null ? to == v : String.valueOf(v).equals(to);
+            }
+        });
+    }
+
+    public static <T> DynamicVariable<Boolean> isSet(final DynamicVariable<T> var){
+        return isSet(null, var);
+    }
+
+    public static <T> DynamicVariable<Boolean> isSet(String name, final DynamicVariable<T> var){
+        return dynamic(name, "", new Function<VarContext, Boolean>() {
+            public Boolean apply(final VarContext ctx) {
+                final DynamicVariable<T> x = ctx.sessionVariables.getClosure(var);
+
+                return x != null && x.isSet();
+
+            }
+        });
+    }
+
+    public static <T> DynamicVariable<T> condition(final DynamicVariable<Boolean> condition, final DynamicVariable<T> trueVar, final DynamicVariable<T> falseVar){
+        return condition(condition, trueVar, falseVar);
+    }
+
+    public static <T> DynamicVariable<T> condition(String name, final DynamicVariable<Boolean> condition, final DynamicVariable<T> trueVar, final DynamicVariable<T> falseVar){
+        return dynamic(name, "", new Function<VarContext, T>() {
+            public T apply(final VarContext ctx) {
+                return ctx.varB(condition) ? ctx.var(trueVar) : ctx.var(falseVar);
             }
         });
     }

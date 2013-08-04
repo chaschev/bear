@@ -1,16 +1,21 @@
 features:
 
-Console: saving/loading user input - only in the very beginning
+- add svn revision to the build
+- console: saving/loading user input - only in the very beginning
+- variables registry (to list, to validate)
+- validate variables (required variables)
+- list available variables
+- configure variables from
+- keepLastX
+- dependencies
+- installation
 
-support different auth types
+- support different auth types
 
-main cycle:
-
-changing main cycle
-rollbacks
-transactions
-caching
-releases dir
-dependencies
-ex:
+- refactor remote console
+- add bash prompt?
+- (ok) rollbacks
+- (ok) transactions
+- (ok) caching
+- (ok) releases dir
 

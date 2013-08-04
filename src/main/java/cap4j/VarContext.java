@@ -1,5 +1,6 @@
 package cap4j;
 
+import cap4j.scm.CommandLine;
 import cap4j.session.DynamicVariable;
 import cap4j.session.SystemEnvironment;
 
@@ -22,16 +23,12 @@ public class VarContext {
         return GlobalContext.gvars().get(this, var, null);
     }
 
-    public String varS(DynamicVariable<String> varName) {
-        return sessionVariables.get(this, varName);
-    }
-
     public <T> T var(DynamicVariable<T> varName) {
         return sessionVariables.get(this, varName);
     }
 
     public String joinPath(DynamicVariable<String> var, String path){
-        return system.joinPath(varS(var), path);
+        return system.joinPath(var(var), path);
     }
 
     public String joinPath(String... paths){
@@ -50,4 +47,7 @@ public class VarContext {
         return sessionVariables.get(this, var);
     }
 
+    public CommandLine newCommandLine() {
+        return system.newCommandLine();
+    }
 }

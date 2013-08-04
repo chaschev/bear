@@ -126,7 +126,13 @@ public class Variables {
     }
 
     public <T> DynamicVariable<T> getClosure(Nameable<T> name) {
-        return variables.get(name.name());
+        DynamicVariable var = variables.get(name.name());
+
+        if(var  == null && fallbackVariables != null){
+            var = fallbackVariables.getClosure(name);
+        }
+
+        return var;
     }
 
 //    public Variables fallbackTo(final Variables srcVariables, Nameable... names){

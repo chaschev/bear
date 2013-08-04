@@ -2,8 +2,7 @@ package cap4j.session;
 
 import cap4j.CapConstants;
 import cap4j.GlobalContext;
-import cap4j.scm.BaseScm;
-import cap4j.scm.SvnScm;
+import cap4j.scm.*;
 import cap4j.ssh.MyStreamCopier;
 import com.google.common.collect.Lists;
 import net.schmizz.sshj.SSHClient;
@@ -18,10 +17,12 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.*;
@@ -39,9 +40,9 @@ public class GenericUnixRemoteEnvironment extends SystemEnvironment {
 
     @Override
     public List<String> ls(String path) {
-        final BaseScm.CommandLineResult r = run(new BaseScm.CommandLine<BaseScm.CommandLineResult>().a("ls", "-w", "1", path));
+        final CommandLineResult r = run(newCommandLine().a("ls", "-w", "1", path));
 
-        final String[] lines = r.text.split("\n");
+        final String[] lines = r.text.split("[\r\n]+");
 
         return Lists.newArrayList(lines);
     }
@@ -53,7 +54,7 @@ public class GenericUnixRemoteEnvironment extends SystemEnvironment {
 
     @Override
     public void unzip(String file, @Nullable String destDir) {
-        final BaseScm.CommandLine line = new BaseScm.CommandLine<BaseScm.CommandLineResult>()
+        final CommandLine line = newCommandLine()
             .a("unzip");
 
         if(destDir != null){
@@ -84,13 +85,27 @@ public class GenericUnixRemoteEnvironment extends SystemEnvironment {
     }
 
     @Override
-    public <T extends SvnScm.CommandLineResult> T run(final BaseScm.CommandLine<T> line) {
+    public boolean isRemote() {
+        return true;
+    }
+
+    @Override
+    public <T extends CommandLineResult> CommandLine<T> newCommandLine(Class<T> aClass) {
+        return new RemoteCommandLine();
+    }
+
+    @Override
+    public <T extends CommandLineResult> T run(final CommandLine<T> line) {
         return run(line, null);
     }
 
     @Override
-    public <T extends SvnScm.CommandLineResult> T run(final BaseScm.CommandLine<T> line, @Nullable final SshSession.WithSession inputCallback) {
+    public <T extends CommandLineResult> T run(final CommandLine<T> line, @Nullable final SshSession.WithSession inputCallback) {
 //        final String[] s = new String[2];
+        final int[] exitStatus = {0};
+
+        //todo REFACTOR THIS, OK
+
         final Result[] result = {Result.ERROR};
         final SshSession.WithSession withSession = new SshSession.WithSession() {
             @Override
@@ -110,7 +125,7 @@ public class GenericUnixRemoteEnvironment extends SystemEnvironment {
                 for (int i = 0; i < strings.size(); i++) {
                     Object string = strings.get(i);
 
-                    if (string instanceof BaseScm.CommandLineOperator) {
+                    if (string instanceof Vcs.CommandLineOperator) {
                         sb.append(string);
                     } else {
                         sb.append('"').append(string).append('"');
@@ -148,25 +163,23 @@ public class GenericUnixRemoteEnvironment extends SystemEnvironment {
                                 if (text.contains("sudo") && text.contains("password")) {
                                     myResponseStartsAt[0] = text.length();
                                     System.out.println(text);
-                                    final String psw = ctx.var(CapConstants.sshPassword) + "\n";
-                                    session.getOutputStream().write(
-                                        psw.getBytes(IOUtils.UTF8)
-                                    );
-                                    session.getOutputStream().flush();
+                                    final OutputStream os = session.getOutputStream();
+                                    os.write((ctx.var(CapConstants.sshPassword) + "\n").getBytes(IOUtils.UTF8));
+                                    os.flush();
                                 }
                             }
                         }
                     })
                     .spawn(GlobalContext.INSTANCE.localExecutor);
 
-                exec.join(getTimeout(), TimeUnit.MILLISECONDS);
+                exec.join(getTimeout(line), TimeUnit.MILLISECONDS);
 
                 copier.stop();
                 future.cancel(true);
 
-                final int exitStatus = exec.getExitStatus();
+                exitStatus[0] = exec.getExitStatus();
 
-                if(exitStatus == 0){
+                if(exitStatus[0] == 0){
                     result[0] = Result.OK;
                 }
 //                try {
@@ -190,13 +203,20 @@ public class GenericUnixRemoteEnvironment extends SystemEnvironment {
 //        if(text.contains("ouldn") || s[0].contains("rror")){
 //            return (T) new SvnScm.CommandLineResult(text, Result.ERROR);
 //        }
+        final T t = line.parseResult(withSession.text);
 
-        return (T) new SvnScm.CommandLineResult(withSession.text, result[0]);
+        t.result = result[0];
+
+        return t;
 
     }
 
+    private <T extends CommandLineResult> int getTimeout(CommandLine<T> line) {
+        return line.timeoutMs == 0 ? getTimeout() : line.timeoutMs;
+    }
+
     @Override
-    public <T extends SvnScm.CommandLineResult> T runVCS(BaseScm.CommandLine<T> stringResultCommandLine) {
+    public <T extends CommandLineResult> T runVCS(CommandLine<T> stringResultCommandLine) {
         throw new UnsupportedOperationException("todo GenericUnixRemoteEnvironment.runVCS");
     }
 
@@ -229,7 +249,7 @@ public class GenericUnixRemoteEnvironment extends SystemEnvironment {
 
     @Override
     public Result mkdirs(final String... dirs) {
-        run(new BaseScm.CommandLine<BaseScm.CommandLineResult>()
+        run(newCommandLine()
             .a("mkdir", "-p")
             .a(dirs)
         );
@@ -238,7 +258,7 @@ public class GenericUnixRemoteEnvironment extends SystemEnvironment {
 
     @Override
     protected Result copyOperation(String src, String dest, CopyCommandType type, boolean folder, @Nullable String owner) {
-        final BaseScm.CommandLine<BaseScm.CommandLineResult> line = new BaseScm.CommandLine<BaseScm.CommandLineResult>();
+        final CommandLine line = newCommandLine();
 
         switch (type) {
             case COPY:
@@ -266,28 +286,28 @@ public class GenericUnixRemoteEnvironment extends SystemEnvironment {
 
     @Override
     public Result chown(String user, boolean recursive, String... files) {
-        final BaseScm.CommandLine<BaseScm.CommandLineResult> line = new BaseScm.CommandLine<BaseScm.CommandLineResult>();
+        final CommandLine<CommandLineResult> line = newCommandLine();
 
         line.a("chown");
         if(recursive) line.a("-R");
         line.a(user);
         line.a(files);
 
-        final BaseScm.CommandLineResult run = run(line);
+        final CommandLineResult run = run(line);
 
         return run.result;
     }
 
     @Override
     public Result chmod(String octal, boolean recursive, String... files) {
-        final BaseScm.CommandLine<BaseScm.CommandLineResult> line = new BaseScm.CommandLine<BaseScm.CommandLineResult>();
+        final CommandLine<CommandLineResult> line = newCommandLine();
 
         line.a("chmod");
         if(recursive) line.a("-R");
         line.a(octal);
         line.a(files);
 
-        final BaseScm.CommandLineResult run = run(line);
+        final CommandLineResult run = run(line);
 
         return run.result;
     }
@@ -312,7 +332,11 @@ public class GenericUnixRemoteEnvironment extends SystemEnvironment {
 
     @Override
     public boolean exists(String path) {
-        throw new UnsupportedOperationException("todo GenericUnixRemoteEnvironment.exists");
+        final CommandLineResult run = run(newCommandLine()
+            .a("ls", "-w", "1", path)
+        );
+
+        return run.exitStatus == 0;
     }
 
     @Override
@@ -321,8 +345,8 @@ public class GenericUnixRemoteEnvironment extends SystemEnvironment {
     }
 
     @Override
-    public Result rm(String... paths) {
-        return run(new BaseScm.CommandLine().a("rm").a("-r").a(paths)).result;
+    public Result rmCd(@Nonnull String dir, String... paths) {
+        return run(newCommandLine().cd(dir).a("rm").a("-r").a(paths)).result;
     }
 
     public static class MySession{

@@ -24,8 +24,6 @@ public class GlobalContextFactory {
 
         GlobalContext.INSTANCE = globalContext;
 
-
-
         if(globalVarsInitPhase != null){
             globalVarsInitPhase.setVars(globalContext.variables);
         }

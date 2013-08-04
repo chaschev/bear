@@ -8,6 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 /**
 * User: chaschev
@@ -151,5 +152,18 @@ public class DynamicVariable<T> implements Nameable<T> {
         sb.append(", memoize=").append(memoize);
         sb.append('}');
         return sb.toString();
+    }
+
+    public boolean isSet() {
+        return dynamicImplementation != null || defaultValue != null;
+    }
+
+    public DynamicVariable<T> setEqualTo(final DynamicVariable<T> var) {
+        setDynamic(new Function<VarContext, T>() {
+            public T apply(VarContext input) {
+                return var.apply(input);
+            }
+        });
+        return this;
     }
 }

@@ -28,11 +28,9 @@ public class Tasks {
         protected TaskResult run(TaskRunner runner) {
             final String appLogs = var(appLogsPath);
             final String[] dirs = {
-                var(deployTo), var(releasesPath),
+                var(deployTo), var(releasesPath), var(vcsCheckoutPath),
                 appLogs
             };
-
-            system.sudo().ls("/var/lib");
 
             system.sudo().mkdirs(dirs);
 
