@@ -1,4 +1,4 @@
-package cap4j;
+package cap4j.core;
 
 import cap4j.session.DynamicVariable;
 import org.slf4j.Logger;
@@ -43,29 +43,28 @@ public class Console {
             ": ";
     }
 
-    public String askIfUnset(String prompt, DynamicVariable<String> var, String _default){
-        Object o = GlobalContext.var(var);
-
-        if(o == null){
-
-            System.out.printf(prompt);
-
-            String text = readText();
-
-            if(text.equals("") && _default != null) {
-                text = _default;
-            }
-
-            GlobalContext.gvars().set(var, text);
-
-            if(recordingMode){
-                recordedVars.add(new AbstractMap.SimpleEntry<Nameable, String>(var, text));
-            }
-
-            o = text;
+    public String askIfUnset(String prompt, DynamicVariable<String> var, String _default) {
+        if(GlobalContext.var(var) == null){
+            ask(prompt, var, _default);
         }
 
-        return o.toString();
+        return GlobalContext.var(var);
+    }
+
+    public void ask(String prompt, DynamicVariable<String> var, String _default) {
+        System.out.printf(prompt);
+
+        String text = readText();
+
+        if(text.equals("") && _default != null) {
+            text = _default;
+        }
+
+        GlobalContext.gvars().set(var, text);
+
+        if(recordingMode){
+            recordedVars.add(new AbstractMap.SimpleEntry<Nameable, String>(var, text));
+        }
     }
 
     public void stopRecording(){

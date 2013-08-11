@@ -1,14 +1,13 @@
 package cap4j.session;
 
-import cap4j.VarContext;
-import cap4j.Nameable;
+import cap4j.core.VarContext;
+import cap4j.core.Nameable;
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 
 /**
 * User: chaschev

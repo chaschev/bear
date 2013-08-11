@@ -1,10 +1,13 @@
 package cap4j.session;
 
-import cap4j.GlobalContext;
+import cap4j.core.GlobalContext;
 import cap4j.scm.CommandLine;
 import cap4j.scm.CommandLineResult;
+import cap4j.scm.LocalCommandLine;
+import cap4j.scm.RemoteCommandLine;
 import com.google.common.base.Preconditions;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.SystemUtils;
 import org.apache.tools.ant.Project;
 import org.apache.tools.ant.taskdefs.Zip;
@@ -111,16 +114,26 @@ public class GenericUnixLocalEnvironment extends SystemEnvironment {
 
     @Override
     public <T extends CommandLineResult> CommandLine<T> newCommandLine(Class<T> aClass) {
-        throw new UnsupportedOperationException("todo");
+        return new LocalCommandLine<T>();
     }
 
     public static class ProcessRunner<T extends CommandLineResult> {
         CommandLine<T> line;
 
         int processTimeoutMs = 60000;
+        private GenericUnixRemoteEnvironment.SshSession.WithSession inputCallback;
 
         public ProcessRunner(CommandLine<T> line) {
             this.line = line;
+        }
+
+        public ProcessRunner<T> setInputCallback(GenericUnixRemoteEnvironment.SshSession.WithSession inputCallback) {
+            this.inputCallback = inputCallback;
+            return this;
+        }
+
+        public GenericUnixRemoteEnvironment.SshSession.WithSession getInputCallback() {
+            return inputCallback;
         }
 
         public static class ProcessResult {
@@ -133,16 +146,27 @@ public class GenericUnixLocalEnvironment extends SystemEnvironment {
             }
         }
 
+        public ProcessRunner<T> setProcessTimeoutMs(int processTimeoutMs) {
+            this.processTimeoutMs = processTimeoutMs;
+            return this;
+        }
+
         public ProcessResult run() {
             Process process = null;
-            final StringBuilder sb = new StringBuilder(1024);
+            final StringBuffer sb = new StringBuffer(1024);
 
             try {
-                process = new ProcessBuilder(line.strings).directory(new File(line.cd)).start();
+//                process = new ProcessBuilder(line.strings).directory(new File(line.cd)).start();
+                process = new ProcessBuilder("svn", "ls")
+                    .directory(new File("c:\\Users\\achaschev\\prj\\atocha"))
+                    .redirectErrorStream(true)
+                    .redirectOutput(new File("c:\\users\\achaschev\\temp.txt"))
+                    .start();
+
+
 
                 final InputStream is = process.getInputStream();
                 final OutputStream os = process.getOutputStream();
-                final InputStream es = process.getErrorStream();
 
                 final long startedAt = System.currentTimeMillis();
 
@@ -172,6 +196,7 @@ public class GenericUnixLocalEnvironment extends SystemEnvironment {
                                 if (processFinished[0] || now - startedAt > processTimeoutMs) {
                                     break;
                                 }
+
                             } catch (Exception e) {
                                 logger.info("", e);
                                 break;
@@ -185,6 +210,18 @@ public class GenericUnixLocalEnvironment extends SystemEnvironment {
                 });
 
                 final int exitCode = process.waitFor();
+
+                processFinished[0] = true;
+
+                //wait while output pipes to our streams
+                Thread.sleep(100);
+
+                while (is.available() > 0) {
+                    sb.append((char) is.read());
+                }
+
+//                sb.append(IOUtils.toString(is));
+//                sb.append(IOUtils.toString(es));
 
                 return new ProcessResult(exitCode, sb.toString());
             } catch (Exception e) {
@@ -202,13 +239,20 @@ public class GenericUnixLocalEnvironment extends SystemEnvironment {
     public <T extends CommandLineResult> T run(CommandLine<T> line, final GenericUnixRemoteEnvironment.SshSession.WithSession inputCallback) {
         logger.debug("command: {}", line);
 
-        final ProcessRunner.ProcessResult r = new ProcessRunner<T>(line).run();
+        final ProcessRunner.ProcessResult r = new ProcessRunner<T>(line)
+            .setInputCallback(inputCallback)
+            .setProcessTimeoutMs(line.timeoutMs)
+            .run();
 
         if (r.exitCode == -1) {
-            return (T) new CommandLineResult(null, Result.ERROR);
+            return (T) new CommandLineResult(r.text, Result.ERROR);
         }
 
-        return line.parseResult(r.text);
+        final T t = line.parseResult(r.text);
+
+        t.result = Result.OK;
+
+        return t;
     }
 
     @Override

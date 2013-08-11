@@ -1,10 +1,9 @@
 package cap4j.session;
 
-import cap4j.Role;
-import cap4j.VarContext;
+import cap4j.core.*;
 import cap4j.scm.CommandLine;
 import cap4j.scm.CommandLineResult;
-import cap4j.scm.Vcs;
+import cap4j.scm.VcsCLI;
 import com.google.common.base.Joiner;
 
 import javax.annotation.Nullable;
@@ -22,7 +21,8 @@ public abstract class SystemEnvironment {
     private int defaultTimeout = 5000;
     private int singleTimeout = -1;
 
-    public VarContext ctx;
+    private VarContext ctx;
+    private SessionContext sessionContext;
 
     protected SystemEnvironment(String name) {
         this.name = name;
@@ -34,6 +34,10 @@ public abstract class SystemEnvironment {
     }
 
     protected Set<Role> roles = new LinkedHashSet<Role>();
+
+    public static Variables newSessionVars(GlobalContext globalContext, SystemEnvironment environment) {
+        return new Variables(environment.getName() + " vars", globalContext.variables);
+    }
 
     public DynamicVariable joinPath(final DynamicVariable... vars) {
         final List<DynamicVariable> fromIterable = Arrays.asList(vars);
@@ -95,6 +99,20 @@ public abstract class SystemEnvironment {
 
     public abstract <T extends CommandLineResult> CommandLine<T> newCommandLine(Class<T> aClass);
 
+    public synchronized SessionContext getSessionCtx() {
+        if(sessionContext == null){
+            sessionContext = new SessionContext(newSessionVars(GlobalContext.INSTANCE, this));
+        }
+        return sessionContext;
+    }
+
+    public synchronized VarContext ctx() {
+        if(ctx == null){
+            ctx = new VarContext(getSessionCtx().variables, this);
+        }
+        return ctx;
+    }
+
 
     public static class CopyResult{
 
@@ -114,7 +132,7 @@ public abstract class SystemEnvironment {
         COPY, LINK, MOVE;
     }
 
-    public CommandLineResult run(Vcs.Script script){
+    public CommandLineResult run(VcsCLI.Script script){
         StringBuilder sb = new StringBuilder(1024);
         Result r = Result.OK;
 
@@ -200,4 +218,6 @@ public abstract class SystemEnvironment {
         this.sudo = true;
         return this;
     }
+
+
 }

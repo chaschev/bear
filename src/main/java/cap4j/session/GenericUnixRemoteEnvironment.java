@@ -1,7 +1,7 @@
 package cap4j.session;
 
-import cap4j.CapConstants;
-import cap4j.GlobalContext;
+import cap4j.core.CapConstants;
+import cap4j.core.GlobalContext;
 import cap4j.scm.*;
 import cap4j.ssh.MyStreamCopier;
 import com.google.common.collect.Lists;
@@ -27,8 +27,8 @@ import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.*;
 
-import static cap4j.CapConstants.sshPassword;
-import static cap4j.CapConstants.sshUsername;
+import static cap4j.core.CapConstants.sshPassword;
+import static cap4j.core.CapConstants.sshUsername;
 
 /**
  * User: ACHASCHEV
@@ -36,7 +36,6 @@ import static cap4j.CapConstants.sshUsername;
  */
 public class GenericUnixRemoteEnvironment extends SystemEnvironment {
     private static final Logger logger = LoggerFactory.getLogger(GenericUnixRemoteEnvironment.class);
-
 
     @Override
     public List<String> ls(String path) {
@@ -125,7 +124,7 @@ public class GenericUnixRemoteEnvironment extends SystemEnvironment {
                 for (int i = 0; i < strings.size(); i++) {
                     Object string = strings.get(i);
 
-                    if (string instanceof Vcs.CommandLineOperator) {
+                    if (string instanceof VcsCLI.CommandLineOperator) {
                         sb.append(string);
                     } else {
                         sb.append('"').append(string).append('"');
@@ -164,7 +163,7 @@ public class GenericUnixRemoteEnvironment extends SystemEnvironment {
                                     myResponseStartsAt[0] = text.length();
                                     System.out.println(text);
                                     final OutputStream os = session.getOutputStream();
-                                    os.write((ctx.var(CapConstants.sshPassword) + "\n").getBytes(IOUtils.UTF8));
+                                    os.write((ctx().var(CapConstants.sshPassword) + "\n").getBytes(IOUtils.UTF8));
                                     os.flush();
                                 }
                             }
@@ -336,7 +335,7 @@ public class GenericUnixRemoteEnvironment extends SystemEnvironment {
             .a("ls", "-w", "1", path)
         );
 
-        return run.exitStatus == 0;
+        return !(run.text.contains("cannot access") || run.text.contains("o such file"));
     }
 
     @Override
@@ -451,4 +450,12 @@ public class GenericUnixRemoteEnvironment extends SystemEnvironment {
         return new GenericUnixRemoteEnvironment(name, new SshAddress(username, password, address));
     }
 
+    @Override
+    public String toString() {
+        final StringBuilder sb = new StringBuilder("Remote{");
+        sb.append("name=").append(name);
+        sb.append(", sshAddress=").append(sshSession.sshAddress);
+        sb.append('}');
+        return sb.toString();
+    }
 }

@@ -1,6 +1,6 @@
 package cap4j.plugins.tomcat;
 
-import cap4j.VarContext;
+import cap4j.core.VarContext;
 import cap4j.session.DynamicVariable;
 import cap4j.session.Result;
 import cap4j.session.VariableUtils;
@@ -11,9 +11,9 @@ import cap4j.task.Tasks;
 import com.google.common.base.Function;
 import org.apache.commons.io.FilenameUtils;
 
-import static cap4j.CapConstants.dynamic;
-import static cap4j.CapConstants.dynamicNotSet;
-import static cap4j.CapConstants.strVar;
+import static cap4j.core.CapConstants.dynamic;
+import static cap4j.core.CapConstants.dynamicNotSet;
+import static cap4j.core.CapConstants.strVar;
 
 /**
 * User: achaschev
@@ -31,7 +31,7 @@ public class TomcatPlugin {
                     .semicolon()
                     .sudo()
                     .a("service", "tomcat6", "start")
-                    .timeoutMs(30000)
+                    .timeoutMs(60000)
                 );
 
                 return new TaskResult(Result.OK);

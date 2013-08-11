@@ -1,7 +1,7 @@
 package cap4j.scm;
 
-import cap4j.CapConstants;
-import cap4j.VarContext;
+import cap4j.core.CapConstants;
+import cap4j.core.VarContext;
 import cap4j.session.GenericUnixRemoteEnvironment;
 import net.schmizz.sshj.common.IOUtils;
 import net.schmizz.sshj.connection.channel.direct.Session;
@@ -16,10 +16,10 @@ import java.util.Map;
  * User: ACHASCHEV
  * Date: 7/24/13
  */
-public abstract class Vcs {
+public abstract class VcsCLI {
     protected VarContext ctx;
 
-    protected Vcs(VarContext ctx) {
+    protected VcsCLI(VarContext ctx) {
         this.ctx = ctx;
     }
 
@@ -68,6 +68,10 @@ public abstract class Vcs {
         throw new UnsupportedOperationException("todo");
     }
 
+    public CommandLine ls(String path, Map<String, String> params){
+        throw new UnsupportedOperationException("todo");
+    }
+
     public abstract String head();
 
     public GenericUnixRemoteEnvironment.SshSession.WithSession runCallback() {
@@ -82,6 +86,10 @@ public abstract class Vcs {
                 }
             }
         };
+    }
+
+    public CommandLine<SvnVcsCLI.LsResult> ls(String path){
+        return ls(path, emptyParams());
     }
 
     public static class StringResult extends CommandLineResult{

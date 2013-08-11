@@ -1,13 +1,14 @@
-package cap4j;
+package cap4j.core;
 
-import cap4j.scm.BranchInfoResult;
-import cap4j.scm.CommandLine;
-import cap4j.scm.Vcs;
-import cap4j.scm.SvnVcs;
+import cap4j.scm.*;
+import cap4j.scm.SvnVcsCLI;
+import cap4j.scm.VcsCLI;
 import cap4j.session.DynamicVariable;
 import cap4j.strategy.BaseStrategy;
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Predicate;
+import com.google.common.collect.Iterables;
 import org.apache.commons.lang3.ArrayUtils;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
@@ -17,7 +18,7 @@ import org.joda.time.format.DateTimeFormatter;
 import javax.annotation.Nullable;
 import java.util.*;
 
-import static cap4j.GlobalContext.var;
+import static cap4j.core.GlobalContext.var;
 import static cap4j.session.VariableUtils.*;
 
 /**
@@ -27,28 +28,6 @@ import static cap4j.session.VariableUtils.*;
 public class CapConstants {
     public static final DateTimeZone GMT = DateTimeZone.forTimeZone(TimeZone.getTimeZone("GMT"));
     public static final DateTimeFormatter RELEASE_FORMATTER = DateTimeFormat.forPattern("yyyyMMdd.HHmmss").withZone(GMT);
-
-    public static class Releases {
-        List<String> releases;
-
-        public Releases(List<String> releases) {
-            this.releases = releases;
-        }
-
-        public String last() {
-            return releases.get(releases.size() - 1);
-        }
-
-        public String previous() {
-            return releases.get(releases.size() - 2);
-        }
-
-        public List<String> listToDelete(int keepX) {
-            if(releases.size() <= keepX) return Collections.emptyList();
-
-            return releases.subList(0, releases.size() - keepX);
-        }
-    }
 
     public static final DynamicVariable<String>
 
@@ -64,17 +43,22 @@ public class CapConstants {
         }
     }),
 
+    task = strVar("task", "A task to run").defaultTo("deploy"),
+
     applicationName = strVar("applicationName", "Your app name"),
     appLogsPath = joinPath("appLogsPath", logsPath, applicationName),
     sshUsername = strVar("sshUsername", ""),
     appUsername = eql("appUsername", sshUsername),
     sshPassword = strVar("sshPassword", ""),
-
+    stage = strVar("stage", "Stage to deploy to"),
     repositoryURI = strVar("repository", "Project VCS URI"),
-
     vcsType = enumConstant("vcsType", "Your VCS type", "svn"),
     vcsUserName = eql("vcsUserName", sshUsername),
     vcsPassword = eql("vcsPassword", sshPassword),
+
+    tempUserInput = strVar("tempUserInput", ""),
+
+    deployScript = strVar("deployScript", "Script to use"),
 
     deployTo = joinPath("deployTo", applicationsPath, applicationName).setDesc("Current release dir"),
 
@@ -95,12 +79,12 @@ public class CapConstants {
 
    realRevision = strVar("realRevision", "Update revision from vcs").setDynamic(new Function<VarContext, String>() {
         public String apply(VarContext ctx) {
-            final Vcs vcs = ctx.var(CapConstants.vcs);
-            final CommandLine<BranchInfoResult> line = vcs.queryRevision(ctx.var(revision), Collections.<String, String>emptyMap());
+            final VcsCLI vcsCLI = ctx.var(CapConstants.vcs);
+            final CommandLine<BranchInfoResult> line = vcsCLI.queryRevision(ctx.var(revision), Collections.<String, String>emptyMap());
 
             line.timeoutMs(20000);
 
-            BranchInfoResult r = ctx.system.run(line, vcs.runCallback());
+            BranchInfoResult r = ctx.system.run(line, vcsCLI.runCallback());
 
             return r.revision;
         }
@@ -178,13 +162,24 @@ public class CapConstants {
         }
     });
 
+    public static final DynamicVariable<Stages> stages = new DynamicVariable<Stages>("stages", "List of stages. Stage is collection of servers with roles and auth defined for each of the server.");
+    public static final DynamicVariable<Stage> getStage = dynamic("getStage", "", new Function<VarContext, Stage>() {
+        public Stage apply(VarContext ctx) {
+            final String stage = ctx.var(CapConstants.stage);
+            return Iterables.find(ctx.var(stages).stages, new Predicate<Stage>() {
+                public boolean apply(Stage s) {
+                    return s.name.equals(stage);
+                }
+            });
+        }
+    });
 
-    public static final DynamicVariable<Vcs> vcs = new DynamicVariable<Vcs>("vcs", "VCS adapter").setDynamic(new Function<VarContext, Vcs>() {
-        public Vcs apply(VarContext ctx) {
+    public static final DynamicVariable<VcsCLI> vcs = new DynamicVariable<VcsCLI>("vcs", "VCS adapter").setDynamic(new Function<VarContext, VcsCLI>() {
+        public VcsCLI apply(VarContext ctx) {
             final String scm = ctx.var(CapConstants.vcsType);
 
             if ("svn".equals(scm)) {
-                return new SvnVcs(ctx);
+                return new SvnVcsCLI(ctx);
             }
 
             throw new UnsupportedOperationException(scm + " is not yet supported");

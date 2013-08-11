@@ -1,4 +1,4 @@
-package cap4j;
+package cap4j.core;
 
 import cap4j.session.DynamicVariable;
 import cap4j.session.GenericUnixLocalEnvironment;
@@ -35,7 +35,7 @@ public class GlobalContext {
     public final SystemEnvironment local = SystemUtils.IS_OS_WINDOWS ?
         new GenericUnixLocalEnvironment("local") : new GenericUnixLocalEnvironment("local");
 
-    public final Variables localVars = Stage.newSessionVars(this, local);
+    public final Variables localVars = SystemEnvironment.newSessionVars(this, local);
 
     public final VarContext localCtx = new VarContext(localVars, local);
 
@@ -48,7 +48,7 @@ public class GlobalContext {
     }
 
     public static <T> T var(DynamicVariable<T> varName){
-        return INSTANCE.variables.get((VarContext)null, varName);
+        return INSTANCE.variables.get((VarContext) null, varName);
     }
 
     public static <T> T var(DynamicVariable<T> varName, T _default){
@@ -63,9 +63,13 @@ public class GlobalContext {
         return INSTANCE.local;
     }
 
+    public static VarContext localCtx(){
+        return INSTANCE.localCtx;
+    }
 
     public void shutdown() throws InterruptedException {
         GlobalContext.INSTANCE.taskExecutor.shutdown();
         GlobalContext.INSTANCE.taskExecutor.awaitTermination(10, TimeUnit.SECONDS);
     }
+
 }

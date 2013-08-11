@@ -1,6 +1,6 @@
 package cap4j.session;
 
-import cap4j.Variables;
+import cap4j.core.Variables;
 
 /**
  * User: chaschev

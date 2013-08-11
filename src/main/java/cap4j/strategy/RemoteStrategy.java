@@ -1,10 +1,10 @@
 package cap4j.strategy;
 
-import cap4j.VarContext;
+import cap4j.core.VarContext;
 import cap4j.session.Result;
 
-import static cap4j.CapConstants.releasePath;
-import static cap4j.CapConstants.revision;
+import static cap4j.core.CapConstants.releasePath;
+import static cap4j.core.CapConstants.revision;
 
 /**
  * User: ACHASCHEV

@@ -1,6 +1,6 @@
 package cap4j.plugins.java;
 
-import cap4j.CapConstants;
+import cap4j.core.CapConstants;
 import cap4j.session.DynamicVariable;
 
 /**

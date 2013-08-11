@@ -1,14 +1,14 @@
 package cap4j.session;
 
-import cap4j.VarContext;
+import cap4j.core.VarContext;
 import com.google.common.base.Function;
 import com.google.common.collect.Iterables;
 
 import java.util.Arrays;
 
-import static cap4j.CapConstants.bool;
-import static cap4j.CapConstants.dynamic;
-import static cap4j.CapConstants.strVar;
+import static cap4j.core.CapConstants.bool;
+import static cap4j.core.CapConstants.dynamic;
+import static cap4j.core.CapConstants.strVar;
 
 /**
  * User: chaschev

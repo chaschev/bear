@@ -62,21 +62,22 @@ public abstract class CommandLine<T extends CommandLineResult>{
         final StringBuilder sb = new StringBuilder("run \"");
         Joiner.on("\" \"").appendTo(sb, strings);
         sb.append("\" in dir '").append(cd).append('\'');
+        sb.append(", timeout: ").append(timeoutMs).append("ms");
         return sb.toString();
     }
 
     public CommandLine<T> semicolon() {
-        strings.add(new Vcs.CommandLineOperator(";"));
+        strings.add(new VcsCLI.CommandLineOperator(";"));
         return this;
     }
 
     public CommandLine<T> stty() {
-        strings.add(new Vcs.CommandLineOperator("stty -echo;"));
+        strings.add(new VcsCLI.CommandLineOperator("stty -echo;"));
         return this;
     }
 
     public CommandLine<T> sudo() {
-        strings.add(new Vcs.CommandLineOperator("stty -echo; sudo "));
+        strings.add(new VcsCLI.CommandLineOperator("stty -echo; sudo "));
         return this;
     }
 
@@ -87,12 +88,12 @@ public abstract class CommandLine<T extends CommandLineResult>{
     }
 
     public CommandLine<T> bash() {
-        strings.add(new Vcs.CommandLineOperator("bash -c"));
+        strings.add(new VcsCLI.CommandLineOperator("bash -c"));
         return this;
     }
 
     public CommandLine<T> setVar(String k, String v) {
-        strings.add(new Vcs.CommandLineOperator("export " + k + "=" + v +"; "));
+        strings.add(new VcsCLI.CommandLineOperator("export " + k + "=" + v +"; "));
         return this;
     }
 }

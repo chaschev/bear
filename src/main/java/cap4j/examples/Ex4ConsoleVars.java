@@ -1,6 +1,8 @@
 package cap4j.examples;
 
-import cap4j.*;
+import cap4j.core.Console;
+import cap4j.core.Nameable;
+import cap4j.core.Stage;
 import cap4j.session.Result;
 import cap4j.task.Task;
 import cap4j.task.TaskResult;
@@ -13,7 +15,7 @@ import static cap4j.session.GenericUnixRemoteEnvironment.newUnixRemote;
  * Date: 7/27/13
  */
 public class Ex4ConsoleVars {
-    static enum ProjectVars implements Nameable{
+    static enum ProjectVars implements Nameable {
         quickDeploy
     }
 

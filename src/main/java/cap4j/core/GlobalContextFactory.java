@@ -1,10 +1,8 @@
-package cap4j;
+package cap4j.core;
 
 import cap4j.session.SystemEnvironments;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.concurrent.Executors;
 
 /**
 * User: ACHASCHEV

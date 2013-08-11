@@ -1,20 +1,19 @@
-package cap4j;
+package cap4j.core;
 
-import cap4j.session.Result;
-import cap4j.session.SessionContext;
-import cap4j.session.SystemEnvironment;
-import cap4j.session.SystemEnvironments;
+import cap4j.session.*;
 import cap4j.strategy.BaseStrategy;
 import cap4j.task.Task;
 import cap4j.task.TaskResult;
 import cap4j.task.TaskRunner;
+import com.google.common.base.Predicates;
+import com.google.common.collect.Iterables;
 
 /**
  * User: ACHASCHEV
  * Date: 7/23/13
  */
 public class Stage {
-    String name;
+    public String name;
     String description;
 
     SystemEnvironments environments = new SystemEnvironments(null);
@@ -31,31 +30,15 @@ public class Stage {
         BaseStrategy.setBarriers(this, global.localCtx);
 
         for (final SystemEnvironment environment : environments.getImplementations()) {
-            final SessionContext sessionContext = new SessionContext(
-                newSessionVars(global, environment)
-            );
-
             global.taskExecutor.execute(new Runnable() {
                 @Override
                 public void run() {
-                    final VarContext ctx = new VarContext(
-                        sessionContext.variables, environment
-                    );
+                    Thread.currentThread().setName(environment.ctx().threadName());
 
-                    environment.ctx = ctx;
-
-                    Thread.currentThread().setName(ctx.threadName());
-
-                    final Result run = new TaskRunner(
-                        ctx
-                    ).run(task);
+                    final Result run = new TaskRunner(environment.ctx()).run(task);
                 }
             });
         }
-    }
-
-    public static Variables newSessionVars(GlobalContext globalContext, SystemEnvironment environment) {
-        return new Variables(environment.getName() + " vars", globalContext.variables);
     }
 
     public Stage add(SystemEnvironment environment) {
@@ -66,5 +49,21 @@ public class Stage {
 
     public SystemEnvironments getEnvironments() {
         return environments;
+    }
+
+    @Override
+    public String toString() {
+        final StringBuilder sb = new StringBuilder("Stage{");
+        sb.append("name='").append(name).append('\'');
+        if(description != null)
+            sb.append(", description='").append(description).append('\'');
+        sb.append(", environments=").append(environments);
+        sb.append('}');
+        return sb.toString();
+    }
+
+    public SystemEnvironment findRemoteEnvironment() {
+        return Iterables.find(environments.getImplementations(), Predicates.instanceOf(GenericUnixRemoteEnvironment.class));
+
     }
 }

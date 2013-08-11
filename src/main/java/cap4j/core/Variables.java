@@ -1,4 +1,4 @@
-package cap4j;
+package cap4j.core;
 
 import cap4j.session.DynamicVariable;
 import cap4j.session.SessionContext;
@@ -7,7 +7,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.LinkedHashMap;
 
-import static cap4j.CapConstants.bool;
+import static cap4j.core.CapConstants.bool;
 
 public class Variables {
     private static final Logger logger = LoggerFactory.getLogger(Variables.class);
@@ -63,7 +63,7 @@ public class Variables {
         return result.toString();
     }
 
-    public String getString(Nameable name, String _default) {
+    public String getString(DynamicVariable name, String _default) {
         final Object result = get(name, _default);
 
         if (result == null) return null;
@@ -75,7 +75,7 @@ public class Variables {
         return get(new VarContext(context.variables, null), name, _default);
     }
 
-    public <T> T get(Nameable<T> name, T _default) {
+    public <T> T get(DynamicVariable<T> name, T _default) {
         return get(new VarContext(this, null), name, _default);
     }
 
@@ -109,7 +109,13 @@ public class Variables {
         }
 
         if(r == null){
-            final T temp = var.apply(context);
+            T temp;
+
+            try{
+                temp = var.apply(context);
+            }catch (Exception e){
+                temp = null;
+            }
 
             if(temp == null){
                 result = _default;

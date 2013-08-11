@@ -1,6 +1,5 @@
-package cap4j.examples;
-
 import cap4j.core.*;
+import cap4j.examples.Ex5DeployWar1;
 import cap4j.plugins.grails.GrailsBuildResult;
 import cap4j.plugins.grails.GrailsBuilder;
 import cap4j.plugins.grails.GrailsPlugin;
@@ -10,26 +9,29 @@ import cap4j.scm.CommandLine;
 import cap4j.scm.VcsCLI;
 import cap4j.strategy.BaseStrategy;
 import cap4j.strategy.SymlinkEntry;
-import cap4j.task.Tasks;
 import com.google.common.base.Function;
 import org.apache.commons.lang3.time.StopWatch;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.concurrent.Callable;
+
 import static cap4j.core.CapConstants.*;
 import static cap4j.core.GlobalContext.INSTANCE;
+import static cap4j.core.GlobalContext.var;
 import static cap4j.plugins.tomcat.TomcatPlugin.tomcatWarPath;
 import static cap4j.session.GenericUnixRemoteEnvironment.newUnixRemote;
-import static cap4j.session.VariableUtils.joinPath;
 
 /**
  * User: achaschev
- * Date: 8/3/13
+ * Date: 8/5/13
  */
-public class Ex6DeployWarViaCache1 {
+public class Settings implements Callable<Void> {
     private static final Logger logger = LoggerFactory.getLogger(BaseStrategy.class);
 
-    public static void main(String[] args) throws InterruptedException {
+
+    @Override
+    public Void call() throws Exception{
         GlobalContextFactory.INSTANCE.globalVarsInitPhase = Ex5DeployWar1.newAtochaSettings();
         GlobalContextFactory.INSTANCE.init();
 
@@ -38,15 +40,10 @@ public class Ex6DeployWarViaCache1 {
         vars
             .putS(GrailsPlugin.grailsPath, "/opt/grails")
             .putS(JavaPlugin.javaHomePath, "/usr/java/jdk1.6.0_43")
-//            .putS(GrailsConf.projectPath, null)
             .putS(sshUsername, "ihseus")
-            .putS(sshPassword, "ihs3Us3r2")
             .putS(vcsPassword, "ihs3Us3r1")
-            .putS(stage, "pac-dev")
-//            .putS(vcsBranchName, "branches/rc3_r1201")
+            .putS(sshPassword, "ihs3Us3r2")
         ;
-
-
 
         TomcatPlugin.tomcatWarName.setEqualTo(GrailsPlugin.warName);
 
@@ -99,16 +96,15 @@ public class Ex6DeployWarViaCache1 {
 
                         String warPath = ctx.var(GrailsPlugin.releaseWarPath);
 
-                        final boolean warExists = ctx.system.exists(warPath);
-                        if (!warExists || !ctx.var(Ex5DeployWar1.AtochaConstants.reuseWar)) {
+                        if (!ctx.system.exists(warPath) || !ctx.var(Ex5DeployWar1.AtochaConstants.reuseWar)) {
                             final GrailsBuildResult r = new GrailsBuilder(ctx).build();
 
                             if (r.result.nok()) {
                                 throw new IllegalStateException("failed to build WAR");
                             }
-                        }else{
-                            logger.info("war exists and will be reused");
                         }
+
+
                     }
 
                     @Override
@@ -125,7 +121,6 @@ public class Ex6DeployWarViaCache1 {
             }
         });
 
-        INSTANCE.localCtx.var(getStage).runTask(Tasks.deploy);
-        INSTANCE.shutdown();
+        return null;
     }
 }

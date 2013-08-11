@@ -1,19 +1,54 @@
+utils:
+
+- (ok) remote WAR deploy
+- sql dumps
+-
+
 features:
 
-- add svn revision to the build
 - console: saving/loading user input - only in the very beginning
+- configure variables from ENV
+- add running from scripts
+- dependencies
+- installation
+- interactive mode
+- local console
+- revert command
+- proguard
+- basic operations should be available from console (revert, show revision, show log)
 - variables registry (to list, to validate)
 - validate variables (required variables)
 - list available variables
-- configure variables from
-- keepLastX
-- dependencies
-- installation
+
+cap4j script:
+
+Settings.java:
+
+- Defines stages
+- Configures plugins
+- Sets roles for servers and tasks
+- Sets common vars
+
+Script is a slight modification of Settings to support the most common scenarios
+When launching with no params:
+
+0) run script? (if there are scripts - list them)
+1) choose stage: pac-dev
+2) choose branch: trunk
+3) define common options: interactive, dry
+4) choose a task
+5) console/deploy
+6)
+7) ready to deploy - save your input to reuse? Saved as a script with name
+
+
 
 - support different auth types
 
 - refactor remote console
 - add bash prompt?
+- (ok) add svn revision to the build
+- (ok) keepLastX
 - (ok) rollbacks
 - (ok) transactions
 - (ok) caching

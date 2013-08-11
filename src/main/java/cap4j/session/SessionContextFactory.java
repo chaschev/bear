@@ -1,7 +1,7 @@
 package cap4j.session;
 
-import cap4j.GlobalContext;
-import cap4j.Variables;
+import cap4j.core.GlobalContext;
+import cap4j.core.Variables;
 
 /**
  * User: chaschev

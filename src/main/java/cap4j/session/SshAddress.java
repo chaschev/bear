@@ -14,4 +14,13 @@ public class SshAddress {
         this.password = password;
         this.address = address;
     }
+
+    @Override
+    public String toString() {
+        final StringBuilder sb = new StringBuilder("{");
+        sb.append("username='").append(username).append('\'');
+        sb.append(", address='").append(address).append('\'');
+        sb.append('}');
+        return sb.toString();
+    }
 }

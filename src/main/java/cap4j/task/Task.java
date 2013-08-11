@@ -1,6 +1,8 @@
 package cap4j.task;
 
-import cap4j.*;
+import cap4j.core.Console;
+import cap4j.core.Role;
+import cap4j.core.VarContext;
 import cap4j.session.DynamicVariable;
 import cap4j.session.Result;
 import cap4j.session.SystemEnvironment;

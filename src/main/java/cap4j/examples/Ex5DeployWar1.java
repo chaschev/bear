@@ -1,6 +1,6 @@
 package cap4j.examples;
 
-import cap4j.*;
+import cap4j.core.*;
 import cap4j.plugins.grails.GrailsBuildResult;
 import cap4j.plugins.grails.GrailsBuilder;
 import cap4j.plugins.grails.GrailsPlugin;
@@ -15,9 +15,8 @@ import java.io.File;
 import java.util.Collections;
 import java.util.List;
 
-import static cap4j.CapConstants.*;
+import static cap4j.core.CapConstants.*;
 import static cap4j.plugins.tomcat.TomcatPlugin.tomcatWarPath;
-import static cap4j.plugins.tomcat.TomcatPlugin.tomcatWebapps;
 import static cap4j.session.GenericUnixRemoteEnvironment.newUnixRemote;
 import static cap4j.session.VariableUtils.joinPath;
 
@@ -92,6 +91,7 @@ public class Ex5DeployWar1 {
                     .putB(speedUpBuild, true)
                     .putB(AtochaConstants.reuseWar, true)
                     .putS(vcsType, "svn")
+                    .putS(repositoryURI, "svn+ssh://dev.afoundria.com/var/svn/repos/atocha")
                     .putS(sshUsername, "chaschev")
                     .putS(sshPassword, "aaaaaa")
                     .putS(appUsername, "tomcat")

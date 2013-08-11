@@ -1,9 +1,9 @@
 package cap4j.task;
 
-import cap4j.CapConstants;
+import cap4j.core.CapConstants;
 import cap4j.session.Result;
 
-import static cap4j.CapConstants.*;
+import static cap4j.core.CapConstants.*;
 
 /**
  * User: ACHASCHEV

@@ -1,9 +1,9 @@
 package cap4j.strategy;
 
-import cap4j.CapConstants;
-import cap4j.GlobalContext;
-import cap4j.Stage;
-import cap4j.VarContext;
+import cap4j.core.GlobalContext;
+import cap4j.core.Releases;
+import cap4j.core.Stage;
+import cap4j.core.VarContext;
 import cap4j.session.Result;
 import cap4j.session.VariableUtils;
 import com.google.common.base.Function;
@@ -19,8 +19,8 @@ import java.util.List;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.TimeUnit;
 
-import static cap4j.CapConstants.*;
-import static cap4j.GlobalContext.local;
+import static cap4j.core.CapConstants.*;
+import static cap4j.core.GlobalContext.local;
 import static org.apache.commons.io.FileUtils.byteCountToDisplaySize;
 
 /**

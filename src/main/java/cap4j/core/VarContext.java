@@ -1,4 +1,4 @@
-package cap4j;
+package cap4j.core;
 
 import cap4j.scm.CommandLine;
 import cap4j.session.DynamicVariable;
@@ -50,4 +50,6 @@ public class VarContext {
     public CommandLine newCommandLine() {
         return system.newCommandLine();
     }
+
+
 }

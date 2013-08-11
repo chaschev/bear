@@ -1,4 +1,4 @@
-package cap4j;
+package cap4j.core;
 
 /**
  * User: chaschev

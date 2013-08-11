@@ -1,7 +1,7 @@
 package cap4j.task;
 
-import cap4j.VarContext;
-import cap4j.GlobalContext;
+import cap4j.core.VarContext;
+import cap4j.core.GlobalContext;
 import cap4j.session.Result;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

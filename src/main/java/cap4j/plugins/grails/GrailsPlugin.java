@@ -1,12 +1,12 @@
 package cap4j.plugins.grails;
 
-import cap4j.CapConstants;
-import cap4j.VarContext;
+import cap4j.core.CapConstants;
+import cap4j.core.VarContext;
 import cap4j.session.DynamicVariable;
 import cap4j.session.VariableUtils;
 import com.google.common.base.Function;
 
-import static cap4j.CapConstants.*;
+import static cap4j.core.CapConstants.*;
 import static cap4j.session.VariableUtils.condition;
 import static cap4j.session.VariableUtils.isSet;
 import static cap4j.session.VariableUtils.joinPath;
