@@ -1,5 +1,6 @@
 package cap4j.examples;
 
+import cap4j.core.GlobalContext;
 import cap4j.core.Stage;
 import cap4j.session.*;
 import cap4j.task.Task;
@@ -15,8 +16,8 @@ import static cap4j.session.GenericUnixRemoteEnvironment.newUnixRemote;
 public class Ex1Basic {
     public static void main(String[] args) {
 
-        final Stage pacDev = new Stage("pac-dev")
-            .add(newUnixRemote("", "chaschev", "1", "192.168.25.66"))
+        final Stage pacDev = new Stage("pac-dev", GlobalContext.getInstance())
+            .add(newUnixRemote("", "chaschev", "1", "192.168.25.66", GlobalContext.getInstance()))
             ;
 
         final Task<TaskResult> testTask = new Task<TaskResult>() {

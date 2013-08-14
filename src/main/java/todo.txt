@@ -6,9 +6,9 @@ utils:
 
 features:
 
-- console: saving/loading user input - only in the very beginning
+- (ok) console: saving/loading user input - only in the very beginning
 - configure variables from ENV
-- add running from scripts
+- (ok) add running from scripts
 - dependencies
 - installation
 - interactive mode

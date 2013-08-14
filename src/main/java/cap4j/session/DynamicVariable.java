@@ -1,6 +1,6 @@
 package cap4j.session;
 
-import cap4j.core.VarContext;
+import cap4j.core.SessionContext;
 import cap4j.core.Nameable;
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
@@ -19,10 +19,10 @@ public class DynamicVariable<T> implements Nameable<T> {
     public boolean frozen;
 
     @Nonnull
-    public final String name;
+    public String name;
     public String desc;
 
-    protected Function<VarContext, T> dynamicImplementation;
+    protected Function<SessionContext, T> dynamicImplementation;
 
     T defaultValue;
 
@@ -60,7 +60,7 @@ public class DynamicVariable<T> implements Nameable<T> {
         return name;
     }
 
-    public final T apply(VarContext context) {
+    public final T apply(SessionContext context) {
         if(defaultValue == null && dynamicImplementation == null){
             throw new UnsupportedOperationException("you should implement dynamic variable :" + name + " or set its default value");
         }
@@ -108,7 +108,7 @@ public class DynamicVariable<T> implements Nameable<T> {
         return this;
     }
 
-    public DynamicVariable<T> setDynamic(Function<VarContext, T> dynamicImplementation) {
+    public DynamicVariable<T> setDynamic(Function<SessionContext, T> dynamicImplementation) {
         this.dynamicImplementation = dynamicImplementation;
         defaultValue = null;
         return this;
@@ -158,11 +158,15 @@ public class DynamicVariable<T> implements Nameable<T> {
     }
 
     public DynamicVariable<T> setEqualTo(final DynamicVariable<T> var) {
-        setDynamic(new Function<VarContext, T>() {
-            public T apply(VarContext input) {
+        setDynamic(new Function<SessionContext, T>() {
+            public T apply(SessionContext input) {
                 return var.apply(input);
             }
         });
         return this;
+    }
+
+    public void setName(String name) {
+        this.name = name;
     }
 }

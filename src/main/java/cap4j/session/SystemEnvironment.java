@@ -21,16 +21,21 @@ public abstract class SystemEnvironment {
     private int defaultTimeout = 5000;
     private int singleTimeout = -1;
 
-    private VarContext ctx;
-    private SessionContext sessionContext;
+    private SessionContext ctx;
 
-    protected SystemEnvironment(String name) {
+    public CapConstants cap;
+
+    protected GlobalContext global;
+
+    protected SystemEnvironment(String name, GlobalContext global) {
         this.name = name;
+        this.global = global;
     }
 
-    protected SystemEnvironment(String name, String desc) {
+    protected SystemEnvironment(String name, String desc, GlobalContext global) {
         this.name = name;
         this.desc = desc;
+        this.global = global;
     }
 
     protected Set<Role> roles = new LinkedHashSet<Role>();
@@ -99,16 +104,9 @@ public abstract class SystemEnvironment {
 
     public abstract <T extends CommandLineResult> CommandLine<T> newCommandLine(Class<T> aClass);
 
-    public synchronized SessionContext getSessionCtx() {
-        if(sessionContext == null){
-            sessionContext = new SessionContext(newSessionVars(GlobalContext.INSTANCE, this));
-        }
-        return sessionContext;
-    }
-
-    public synchronized VarContext ctx() {
+    public synchronized SessionContext ctx() {
         if(ctx == null){
-            ctx = new VarContext(getSessionCtx().variables, this);
+            ctx = new SessionContext(global, this);
         }
         return ctx;
     }

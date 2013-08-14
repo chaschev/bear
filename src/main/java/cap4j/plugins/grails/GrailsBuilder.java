@@ -1,7 +1,8 @@
 package cap4j.plugins.grails;
 
 import cap4j.core.CapConstants;
-import cap4j.core.VarContext;
+import cap4j.core.GlobalContext;
+import cap4j.core.SessionContext;
 import cap4j.plugins.java.JavaPlugin;
 import cap4j.scm.CommandLine;
 import cap4j.scm.CommandLineResult;
@@ -17,32 +18,37 @@ import org.slf4j.LoggerFactory;
 public class GrailsBuilder {
     private static final Logger logger = LoggerFactory.getLogger(GrailsBuilder.class);
 
-    VarContext ctx;
+    SessionContext ctx;
 
+    GrailsPlugin grails;
+    JavaPlugin java;
+    CapConstants cap;
 
-    public GrailsBuilder(VarContext ctx) {
+    public GrailsBuilder(SessionContext ctx, GlobalContext global) {
         this.ctx = ctx;
+        grails = global.getPlugin(GrailsPlugin.class);
+        java = global.getPlugin(JavaPlugin.class);
+        cap = global.cap;
     }
 
     public GrailsBuildResult build() {
         logger.info("building Grails WAR...");
 
-        System.out.println(ctx.var(CapConstants.realRevision));
-        System.out.println(ctx.var(CapConstants.realRevision));
+        System.out.println(ctx.var(cap.realRevision));
 
-        final String grailsExecPath = ctx.var(GrailsPlugin.grailsExecPath);
+        final String grailsExecPath = ctx.var(grails.grailsExecPath);
 
-        String projectPath = ctx.var(GrailsPlugin.projectPath);
+        String projectPath = ctx.var(grails.projectPath);
 
         final VcsCLI.Script script = new VcsCLI.Script()
             .cd(projectPath);
 
-        if (ctx.varB(GrailsPlugin.grailsClean)) {
+        if (ctx.varB(grails.grailsClean)) {
             script
                 .add(newGrailsCommand(grailsExecPath).a("clean"));
         }
 
-        final String warName = ctx.var(GrailsPlugin.releaseWarPath);
+        final String warName = ctx.var(grails.releaseWarPath);
 
         script.add(
             newGrailsCommand(grailsExecPath).a(
@@ -56,7 +62,7 @@ public class GrailsBuilder {
 
     private CommandLine newGrailsCommand(String grailsExecPath) {
         return ctx.newCommandLine()
-            .setVar("JAVA_HOME", ctx.var(JavaPlugin.javaHomePath))
+            .setVar("JAVA_HOME", ctx.var(java.homePath))
             .a(grailsExecPath)
             .timeoutMs(600000);
     }

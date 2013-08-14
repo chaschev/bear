@@ -1,10 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<configuration>
-
+<configuration debug="false">
     <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
-        <layout class="ch.qos.logback.classic.PatternLayout">
+        <encoder>
             <Pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</Pattern>
-        </layout>
+        </encoder>
+    </appender>
+
+    <appender name="FILE" class="ch.qos.logback.core.FileAppender">
+        <file>.cap/logs/cap4.log</file>
+        <append>true</append>
+        <encoder>
+            <Pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</Pattern>
+        </encoder>
     </appender>
 
     <logger name="net.schmizz.sshj" level="INFO"/>
@@ -12,5 +19,7 @@
 
     <root level="debug">
         <appender-ref ref="STDOUT" />
+        <appender-ref ref="FILE" />
+
     </root>
 </configuration>

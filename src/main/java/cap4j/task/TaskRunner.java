@@ -1,6 +1,6 @@
 package cap4j.task;
 
-import cap4j.core.VarContext;
+import cap4j.core.SessionContext;
 import cap4j.core.GlobalContext;
 import cap4j.session.Result;
 import org.slf4j.Logger;
@@ -23,10 +23,12 @@ public class TaskRunner {
 
     LinkedHashSet<Task> tasksExecuted = new LinkedHashSet<Task>();
 
-    VarContext ctx;
+    SessionContext ctx;
+    GlobalContext global;
 
-    public TaskRunner(VarContext ctx) {
+    public TaskRunner(SessionContext ctx, GlobalContext global) {
         this.ctx = ctx;
+        this.global = global;
     }
 
     public Result run(Task<TaskResult> task) {
@@ -80,7 +82,7 @@ public class TaskRunner {
     }
 
     private Result runMe(Task<TaskResult> task) {
-        task.defineVars(GlobalContext.console());
+        task.defineVars(global.console());
 
         return runCollectionOfTasks(Collections.singletonList(task), task.name + ": running myself", true);
     }

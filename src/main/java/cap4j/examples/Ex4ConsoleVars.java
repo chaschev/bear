@@ -1,6 +1,7 @@
 package cap4j.examples;
 
 import cap4j.core.Console;
+import cap4j.core.GlobalContext;
 import cap4j.core.Nameable;
 import cap4j.core.Stage;
 import cap4j.session.Result;
@@ -20,8 +21,8 @@ public class Ex4ConsoleVars {
     }
 
     public static void main(String[] args) {
-        final Stage pacDev = new Stage("pac-dev")
-            .add(newUnixRemote("", "chaschev", "aaaaaa", "192.168.25.66"))
+        final Stage pacDev = new Stage("pac-dev", GlobalContext.getInstance())
+            .add(newUnixRemote("", "chaschev", "aaaaaa", "192.168.25.66", GlobalContext.getInstance()))
             ;
 
         final Task<TaskResult> testTask = new Task<TaskResult>() {

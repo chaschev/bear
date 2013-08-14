@@ -1,62 +1,71 @@
 package cap4j.examples;
 
+import atocha.AtochaConstants;
 import cap4j.core.*;
+import cap4j.plugins.Plugin;
 import cap4j.plugins.grails.GrailsBuildResult;
 import cap4j.plugins.grails.GrailsBuilder;
 import cap4j.plugins.grails.GrailsPlugin;
+import cap4j.plugins.java.JavaPlugin;
 import cap4j.plugins.tomcat.TomcatPlugin;
-import cap4j.session.DynamicVariable;
 import cap4j.strategy.BaseStrategy;
 import cap4j.strategy.SymlinkEntry;
-import cap4j.task.Tasks;
 import com.google.common.base.Function;
+import com.google.common.collect.Lists;
 
 import java.io.File;
 import java.util.Collections;
 import java.util.List;
 
-import static cap4j.core.CapConstants.*;
-import static cap4j.plugins.tomcat.TomcatPlugin.tomcatWarPath;
+import static cap4j.core.GlobalContext.*;
 import static cap4j.session.GenericUnixRemoteEnvironment.newUnixRemote;
-import static cap4j.session.VariableUtils.joinPath;
 
 /**
  * User: chaschev
  * Date: 7/21/13
  */
 public class Ex5DeployWar1 {
-    public static class AtochaConstants {
-        public static final DynamicVariable<Boolean>
-            reuseWar = CapConstants.bool("reuseWar", "will skip building WAR").defaultTo(false);
-
-    }
 
     public static void main(String[] args) throws InterruptedException {
-        GlobalContextFactory.INSTANCE.globalVarsInitPhase = newAtochaSettings();
+        GlobalContextFactory.INSTANCE.registerPluginsPhase = new GlobalContextFactory.RegisterPluginsPhase() {
+            @Override
+            public List<Class<? extends Plugin>> registerPlugins(Variables vars) {
+                return Lists.<Class<? extends Plugin>>newArrayList(
+                    TomcatPlugin.class,
+                    GrailsPlugin.class
+                );
+            }
+        };
+        GlobalContextFactory.INSTANCE.globalVarsInitPhase = newAtochaSettings(GlobalContextFactory.INSTANCE.getGlobalContext().cap, AtochaConstants.INSTANCE);
         GlobalContextFactory.INSTANCE.init();
 
-        final Variables vars = GlobalContext.INSTANCE.variables;
+        final GlobalContext global = GlobalContext.getInstance();
+        final Variables vars = global.variables;
+
+        final CapConstants cap = global.cap;
+
+        final GrailsPlugin grails = plugin(GrailsPlugin.class);
+        final JavaPlugin java = plugin(JavaPlugin.class);
+        final TomcatPlugin tomcat = plugin(TomcatPlugin.class);
 
         vars
-            .putS(GrailsPlugin.grailsPath, "c:/dev/grails-2.1.0")
-            .putS(GrailsPlugin.projectPath, "c:/Users/achaschev/prj/atocha");
+            .putS(grails.homePath, "c:/dev/grails-2.1.0")
+            .putS(grails.projectPath, "c:/Users/achaschev/prj/atocha");
 
-        TomcatPlugin.init();
-
-        final Stage pacDev = new Stage("pac-dev")
+        final Stage pacDev = new Stage("pac-dev", getInstance())
 //            .add(newUnixRemote("server1", "chaschev", "1", "192.168.25.66"))
-            .add(newUnixRemote("server1", "192.168.25.66"))
+            .add(newUnixRemote("server1", "192.168.25.66", global))
             ;
 
-        CapConstants.newStrategy.setDynamic(new Function<VarContext, BaseStrategy>() {
-            public BaseStrategy apply(VarContext ctx) {
-                final BaseStrategy strategy = new BaseStrategy(ctx) {
+        CapConstants.newStrategy.setDynamic(new Function<SessionContext, BaseStrategy>() {
+            public BaseStrategy apply(SessionContext ctx) {
+                final BaseStrategy strategy = new BaseStrategy(ctx, global) {
                     @Override
-                    protected List<File> step_20_prepareLocalFiles(VarContext localCtx) {
-                        File rootWar = new File(localCtx.var(GrailsPlugin.projectWarPath));
+                    protected List<File> step_20_prepareLocalFiles(SessionContext localCtx) {
+                        File rootWar = new File(localCtx.var(grails.projectWarPath));
 
-                        if (!rootWar.exists() || !localCtx.var(AtochaConstants.reuseWar)) {
-                            final GrailsBuildResult r = new GrailsBuilder(localCtx).build();
+                        if (!rootWar.exists() || !localCtx.var(AtochaConstants.INSTANCE.reuseWar)) {
+                            final GrailsBuildResult r = new GrailsBuilder(localCtx, global).build();
 
                             if (r.result.nok()) {
                                 throw new IllegalStateException("failed to build WAR");
@@ -68,33 +77,35 @@ public class Ex5DeployWar1 {
                 };
 
                 strategy.getSymlinkRules().add(
-                    new SymlinkEntry("ROOT.war", tomcatWarPath, ctx.var(appUsername) + "." + ctx.var(appUsername))
+                    new SymlinkEntry("ROOT.war", tomcat.warPath, ctx.var(cap.appUsername) + "." + ctx.var(cap.appUsername))
                 );
 
                 return strategy;
             }
         });
 
-        pacDev.runTask(Tasks.deploy);
+        pacDev.runTask(tasks().deploy);
 
-        GlobalContext.INSTANCE.shutdown();
+        global.shutdown();
 
     }
 
-    public static GlobalContextFactory.GlobalVarsInitPhase newAtochaSettings() {
+    public static GlobalContextFactory.GlobalVarsInitPhase newAtochaSettings(CapConstants cap1, AtochaConstants atocha) {
+        final CapConstants cap = cap1;
+
         return new GlobalContextFactory.GlobalVarsInitPhase() {
             @Override
             public void setVars(Variables vars) {
                 vars
-                    .putS(applicationName, "atocha")
-                    .putB(productionDeployment, false)
-                    .putB(speedUpBuild, true)
-                    .putB(AtochaConstants.reuseWar, true)
-                    .putS(vcsType, "svn")
-                    .putS(repositoryURI, "svn+ssh://dev.afoundria.com/var/svn/repos/atocha")
-                    .putS(sshUsername, "chaschev")
-                    .putS(sshPassword, "aaaaaa")
-                    .putS(appUsername, "tomcat")
+                    .putS(cap.applicationName, "atocha")
+                    .putB(cap.productionDeployment, false)
+                    .putB(cap.speedUpBuild, true)
+                    .putB(AtochaConstants.INSTANCE.reuseWar, true)
+                    .putS(cap.vcsType, "svn")
+                    .putS(cap.repositoryURI, "svn+ssh://dev.afoundria.com/var/svn/repos/atocha")
+                    .putS(cap.sshUsername, "chaschev")
+                    .putS(cap.sshPassword, "aaaaaa")
+                    .putS(cap.appUsername, "tomcat")
                 ;
             }
         };

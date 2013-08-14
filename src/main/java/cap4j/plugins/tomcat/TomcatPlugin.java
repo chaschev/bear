@@ -1,6 +1,9 @@
 package cap4j.plugins.tomcat;
 
-import cap4j.core.VarContext;
+import cap4j.core.CapConstants;
+import cap4j.core.GlobalContext;
+import cap4j.core.SessionContext;
+import cap4j.plugins.Plugin;
 import cap4j.session.DynamicVariable;
 import cap4j.session.Result;
 import cap4j.session.VariableUtils;
@@ -20,12 +23,19 @@ import static cap4j.core.CapConstants.strVar;
 * Date: 8/3/13
 * Time: 11:24 PM
 */
-public class TomcatPlugin {
-    public static void init(){
-        Tasks.restartApp.addBeforeTask(new Task("restart tomcat") {
+public class TomcatPlugin extends Plugin {
+    Tasks tasks;
+
+    public TomcatPlugin(GlobalContext global) {
+        super(global);
+        this.tasks = global.tasks;
+    }
+
+    public void init(){
+        tasks.restartApp.addBeforeTask(new Task("restart tomcat") {
             @Override
             protected TaskResult run(TaskRunner runner) {
-                system.sudo().rm(ctx.var(tomcatWarCacheDirs));
+                system.sudo().rm(ctx.var(warCacheDirs));
                 system.sudo().run(ctx.newCommandLine()
                     .a("service", "tomcat6", "stop")
                     .semicolon()
@@ -39,25 +49,24 @@ public class TomcatPlugin {
         });
     }
 
-    public static final DynamicVariable<String>
-        tomcatWebappsUnix = strVar("tomcatWebappsWin", "/var/lib/tomcat6/webapps").defaultTo("/var/lib/tomcat6/webapps"),
-        tomcatWebappsWin = dynamicNotSet("tomcatWebappsWin", ""),
-        tomcatWebapps = strVar("tomcatHome", "").setDynamic(new Function<VarContext, String>() {
-            public String apply(VarContext ctx) {
-                return ctx.system.isUnix() ? ctx.var(tomcatWebappsUnix) : ctx.var(tomcatWebappsWin);
+    public final DynamicVariable<String>
+        webappsUnix = strVar("webappsWin", "/var/lib/tomcat6/webapps").defaultTo("/var/lib/tomcat6/webapps"),
+        webappsWin = dynamicNotSet("webappsWin", ""),
+        webapps = strVar("tomcatHome", "").setDynamic(new Function<SessionContext, String>() {
+            public String apply(SessionContext ctx) {
+                return ctx.system.isUnix() ? ctx.var(webappsUnix) : ctx.var(webappsWin);
             }
         }),
-        tomcatWarName = strVar("tomcatWarName", "i.e. ROOT.war"),
-        tomcatWarPath = VariableUtils.joinPath("tomcatWarPath", tomcatWebapps, tomcatWarName)
+        warName = strVar("warName", "i.e. ROOT.war"),
+        warPath = VariableUtils.joinPath("warPath", webapps, warName)
             ;
 
-    public static final DynamicVariable<String[]> tomcatWarCacheDirs = dynamic("tomcatWarCacheDirs", "", new Function<VarContext, String[]>() {
-        public String[] apply(VarContext ctx) {
-            final String name = FilenameUtils.getBaseName(ctx.var(tomcatWarName));
+    public final DynamicVariable<String[]> warCacheDirs = dynamic("warCacheDirs", "", new Function<SessionContext, String[]>() {
+        public String[] apply(SessionContext ctx) {
+            final String name = FilenameUtils.getBaseName(ctx.var(warName));
             return new String[]{
-                ctx.system.joinPath(ctx.var(tomcatWebapps), name)
+                ctx.system.joinPath(ctx.var(webapps), name)
             };
         }
     });
-
 }

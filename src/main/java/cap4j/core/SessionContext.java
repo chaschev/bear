@@ -8,19 +8,19 @@ import cap4j.session.SystemEnvironment;
 * User: chaschev
 * Date: 7/29/13
 */
-public class VarContext {
+public class SessionContext {
 //    public final GlobalContext globalContext;
     public final Variables sessionVariables;
     public final SystemEnvironment system;
 
-    public VarContext(Variables sessionVariables, SystemEnvironment system) {
-        this.sessionVariables = sessionVariables;
+    public SessionContext(GlobalContext global, SystemEnvironment system) {
         this.system = system;
+        this.sessionVariables = SystemEnvironment.newSessionVars(global, system);
     }
 
-
-    public <T> T gvar(DynamicVariable<T> var) {
-        return GlobalContext.gvars().get(this, var, null);
+    public SessionContext(Variables sessionVariables) {
+        this.sessionVariables = sessionVariables;
+        system = null;
     }
 
     public <T> T var(DynamicVariable<T> varName) {

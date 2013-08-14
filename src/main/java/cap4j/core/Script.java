@@ -10,5 +10,14 @@ import java.io.File;
 public abstract class Script {
     public File scriptsDir;
 
+    public GlobalContext global;
+    public CapConstants cap;
+
     public abstract void run() throws Exception;
+
+    public void setProperties(GlobalContext global, File scriptsDir) {
+        this.global = global;
+        this.scriptsDir = scriptsDir;
+        cap = global.cap;
+    }
 }

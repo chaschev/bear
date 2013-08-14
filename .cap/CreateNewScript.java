@@ -11,9 +11,6 @@ import org.apache.commons.io.FileUtils;
 import java.io.*;
 import java.util.List;
 
-import static cap4j.core.CapConstants.*;
-import static cap4j.core.CapConstants.stage;
-import static cap4j.core.GlobalContext.localCtx;
 import static com.google.common.collect.Lists.transform;
 
 /**
@@ -21,90 +18,77 @@ import static com.google.common.collect.Lists.transform;
  * Date: 8/5/13
  */
 public class CreateNewScript extends Script{
-
     @Override
     public void run() throws Exception {
+        final CapConstants cap = global.cap;
+
         new Question("step 1, choose stage: ",
-            transform(localCtx().var(CapConstants.stages).getStages(), new Function<Stage, String>() {
+            transform(global.localCtx().var(cap.stages).getStages(), new Function<Stage, String>() {
             public String apply(Stage s) {
                 return s.name;
             }
         }),
-            stage
+            cap.stage
         ).ask();
 
-        final Stage stage = localCtx().var(CapConstants.getStage);
+        final Stage stage = global.localCtx.var(cap.getStage);
         final SystemEnvironment remoteEnv = stage.findRemoteEnvironment();
 
-        final VarContext ctx = remoteEnv.ctx();
+        final SessionContext ctx = remoteEnv.ctx();
 
         List<String> branches = Lists.newArrayList("trunk/");
 
-        branches.addAll(remoteVcsLs(remoteEnv, ctx, "branches"));
-        branches.addAll(remoteVcsLs(remoteEnv, ctx, "tags"));
+        branches.addAll(remoteVcsLs(cap, remoteEnv, ctx, "branches"));
+        branches.addAll(remoteVcsLs(cap, remoteEnv, ctx, "tags"));
 
         new Question("step 2, choose branch: ",
             branches,
-            vcsBranchName
+            cap.vcsBranchName
         ).ask();
 
         System.out.println("skipping step 3 ('define common options: interactive, dry')");
 
         new Question("step 3, choose a task: ",
             Lists.newArrayList("deploy", "restartApp"),
-            task
+            cap.task
         ).ask();
 
         System.out.printf(
             "please, review your conf: %n" +
-            "stage: %s%n" +
-            "branch: %s%n" +
-            "task: %s%n",
-            localCtx().var(CapConstants.stage),
-            localCtx().var(vcsBranchName),
-            localCtx().var(task)
+                "stage: %s%n" +
+                "branch: %s%n" +
+                "task: %s%n",
+            global.var(cap.stage),
+            global.var(cap.vcsBranchName),
+            global.var(cap.task)
         );
 
-        GlobalContext.console().ask("enter a script name to save to: ", tempUserInput, null);
+        global.console().ask("enter a script name to save to: ", cap.tempUserInput, null);
 
-        final String scriptName = localCtx().var(tempUserInput) + "Script";
+        final String scriptName = global.var(cap.tempUserInput) + "Script";
 
         FileUtils.writeStringToFile(
             new File(scriptsDir, scriptName + ".java"),
-            "import cap4j.core.*;\n" +
-                "import cap4j.scm.CommandLine;\n" +
-                "import cap4j.scm.SvnVcsCLI;\n" +
-                "import cap4j.scm.VcsCLI;\n" +
-                "import cap4j.session.DynamicVariable;\n" +
-                "import cap4j.session.SystemEnvironment;\n" +
-                "import com.chaschev.chutils.util.Exceptions;\n" +
-                "import com.google.common.base.Function;\n" +
-                "import com.google.common.collect.Lists;\n" +
-                "import org.apache.commons.io.FileUtils;\n" +
-                "\n" +
-                "import java.io.*;\n" +
-                "import java.util.List;\n" +
-                "\n" +
-                "import static cap4j.core.CapConstants.*;\n" +
-                "import static cap4j.core.CapConstants.stage;\n" +
-                "import static cap4j.core.GlobalContext.localCtx;\n" +
-                "import static com.google.common.collect.Lists.transform;\n" +
+                "import cap4j.core.Script;\n" +
                 "\n" +
                 "public class " + scriptName + " extends Script{\n" +
                 "\t@Override\n" +
                 "\tpublic void run() throws Exception {\n" +
-                "\t\tstage.defaultTo(\"" + ctx.var(CapConstants.stage) + "\");\n" +
-                "\t\tvcsBranchName.defaultTo(\"" + ctx.var(vcsBranchName) + "\");\n" +
-                "\t\ttask.defaultTo(\"" + ctx.var(task) + "\");\n" +
+                "\t\tcap.stage.defaultTo(\"" + ctx.var(cap.stage) + "\");\n" +
+                "\t\tcap.vcsBranchName.defaultTo(\"" + ctx.var(cap.vcsBranchName) + "\");\n" +
+                "\t\tcap.task.defaultTo(\"" + ctx.var(cap.task) + "\");\n" +
+                "\n" +
+                "\t\tglobal.run();\n" +
+                "\t\tglobal.shutdown();\n" +
                 "\t}\n" +
                 "}\n     "
         );
     }
 
-    private static List<String> remoteVcsLs(SystemEnvironment remoteEnv, VarContext ctx, final String dir) {
-        final VcsCLI vcsCLI = ctx.var(vcs);
+    private static List<String> remoteVcsLs(CapConstants cap, SystemEnvironment remoteEnv, SessionContext ctx, final String dir) {
+        final VcsCLI vcsCLI = ctx.var(cap.vcs);
 
-        final CommandLine<SvnVcsCLI.LsResult> line = vcsCLI.ls(ctx.joinPath(repositoryURI, dir));
+        final CommandLine<SvnVcsCLI.LsResult> line = vcsCLI.ls(ctx.joinPath(cap.repositoryURI, dir));
 
         line.timeoutMs(20000);
 

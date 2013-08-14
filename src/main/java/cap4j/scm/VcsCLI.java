@@ -1,7 +1,8 @@
 package cap4j.scm;
 
 import cap4j.core.CapConstants;
-import cap4j.core.VarContext;
+import cap4j.core.GlobalContext;
+import cap4j.core.SessionContext;
 import cap4j.session.GenericUnixRemoteEnvironment;
 import net.schmizz.sshj.common.IOUtils;
 import net.schmizz.sshj.connection.channel.direct.Session;
@@ -17,10 +18,14 @@ import java.util.Map;
  * Date: 7/24/13
  */
 public abstract class VcsCLI {
-    protected VarContext ctx;
+    protected SessionContext ctx;
+    protected GlobalContext global;
+    protected CapConstants cap;
 
-    protected VcsCLI(VarContext ctx) {
+    protected VcsCLI(SessionContext ctx, GlobalContext global) {
         this.ctx = ctx;
+        this.global = global;
+        this.cap = global.cap;
     }
 
     public CommandLine checkout(String revision, String destination, Map<String, String> params){
@@ -81,7 +86,7 @@ public abstract class VcsCLI {
                 if(text.contains("password")){
                     System.out.println(text);
                     final OutputStream os = session.getOutputStream();
-                    os.write((ctx.var(CapConstants.vcsPassword) + "\n").getBytes(IOUtils.UTF8));
+                    os.write((ctx.var(cap.vcsPassword) + "\n").getBytes(IOUtils.UTF8));
                     os.flush();
                 }
             }

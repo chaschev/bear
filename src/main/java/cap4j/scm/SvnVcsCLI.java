@@ -1,7 +1,7 @@
 package cap4j.scm;
 
-import cap4j.core.CapConstants;
-import cap4j.core.VarContext;
+import cap4j.core.GlobalContext;
+import cap4j.core.SessionContext;
 import com.google.common.base.Function;
 import com.google.common.collect.Lists;
 import org.apache.commons.lang3.StringUtils;
@@ -10,7 +10,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import static cap4j.core.GlobalContext.var;
 
 /**
  * User: ACHASCHEV
@@ -18,8 +17,8 @@ import static cap4j.core.GlobalContext.var;
  */
 public class SvnVcsCLI extends VcsCLI {
 
-    public SvnVcsCLI(VarContext ctx) {
-        super(ctx);
+    public SvnVcsCLI(SessionContext ctx, GlobalContext global) {
+        super(ctx, global);
     }
 
     @Override
@@ -58,7 +57,7 @@ public class SvnVcsCLI extends VcsCLI {
         final CommandLine<BranchInfoResult> r = commandPrefix("info", params)
             .a("-r" + revision,
                 scmRepository())
-            .cd(ctx.var(CapConstants.releasePath))
+            .cd(ctx.var(cap.releasePath))
             .setParser(new Function<String, BranchInfoResult>() {
                 public BranchInfoResult apply(String s) {
                     return new BranchInfoResult(
@@ -130,14 +129,14 @@ public class SvnVcsCLI extends VcsCLI {
     }
 
     private String scmRepository() {
-        return ctx.var(CapConstants.vcsBranchURI);
+        return ctx.var(cap.vcsBranchURI);
     }
 
     protected String[] auth(){
-        final String user = var(CapConstants.vcsUserName, null);
-        final String pw = var(CapConstants.vcsPassword, null);
-        final boolean preferPrompt = var(CapConstants.scmPreferPrompt, false);
-        final boolean authCache = var(CapConstants.scmAuthCache, false);
+        final String user = global.var(cap.vcsUserName, null);
+        final String pw = global.var(cap.vcsPassword, null);
+        final boolean preferPrompt = global.var(cap.scmPreferPrompt, false);
+        final boolean authCache = global.var(cap.scmAuthCache, false);
 
         List<String> r = new ArrayList<String>(4);
 

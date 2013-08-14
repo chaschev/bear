@@ -36,13 +36,13 @@ public class Question {
 
             if(options.size() == 1){
                 newValue = options.get(0);
+                System.out.printf("there is only one option, setting to '%s'%n", newValue);
             }else
             if(!options.isEmpty()){
                 for (int i = 0; i < options.size(); i++) {
                     String s = options.get(i);
                     System.out.printf("%d) %s%n", i+1, s);
                 }
-
 
                 System.out.printf("Your choice%s: ", defValInput);
 

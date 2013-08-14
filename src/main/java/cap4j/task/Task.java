@@ -2,7 +2,7 @@ package cap4j.task;
 
 import cap4j.core.Console;
 import cap4j.core.Role;
-import cap4j.core.VarContext;
+import cap4j.core.SessionContext;
 import cap4j.session.DynamicVariable;
 import cap4j.session.Result;
 import cap4j.session.SystemEnvironment;
@@ -20,7 +20,7 @@ public abstract class Task<T extends TaskResult> {
 
     Set<Role> roles = new HashSet<Role>();
 
-    protected transient VarContext ctx;
+    protected transient SessionContext ctx;
 
     List<Task<TaskResult>> beforeTasks = new ArrayList<Task<TaskResult>>();
     List<Task<TaskResult>> afterTasks = new ArrayList<Task<TaskResult>>();
@@ -78,7 +78,7 @@ public abstract class Task<T extends TaskResult> {
         return sb.toString();
     }
 
-    public void setCtx(VarContext ctx) {
+    public void setCtx(SessionContext ctx) {
         this.ctx = ctx;
         this.system = ctx.system;
     }

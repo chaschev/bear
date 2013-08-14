@@ -1,8 +1,6 @@
 package cap4j.main;
 
-import cap4j.core.CapConstants;
-import cap4j.core.GlobalContext;
-import cap4j.core.Script;
+import cap4j.core.*;
 import cap4j.session.Question;
 import com.chaschev.chutils.util.Exceptions;
 import com.chaschev.chutils.util.JOptOptions;
@@ -12,20 +10,20 @@ import com.google.common.collect.Lists;
 import com.google.common.io.PatternFilenameFilter;
 import joptsimple.OptionSpec;
 import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.io.IOUtils;
 
-import javax.annotation.Nullable;
 import javax.tools.JavaCompiler;
 import javax.tools.ToolProvider;
 import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.Callable;
 
-import static cap4j.core.CapConstants.deployScript;
-import static cap4j.core.GlobalContext.localCtx;
+import static cap4j.core.GlobalContext.*;
 import static cap4j.main.Cap4j.Options.*;
 import static com.google.common.collect.Lists.newArrayList;
 import static com.google.common.collect.Lists.transform;
@@ -39,7 +37,7 @@ public class Cap4j {
     static class Options extends JOptOptions {
         public final static OptionSpec<String> HOST = parser.accepts("host", "set the database host").withRequiredArg().ofType(String.class).describedAs("host").defaultsTo("localhost");
         public final static OptionSpec<String> CAPIFY = parser.accepts("capify", "adds cap4j files to the current dir").withOptionalArg().ofType(String.class).describedAs("dir").defaultsTo(".");
-        public final static OptionSpec<String> SETTINGS_FILE = parser.accepts("settings", "path to Settings.java").withRequiredArg().ofType(String.class).describedAs("path").defaultsTo(".cap/Settings.java");
+        public final static OptionSpec<String> SETTINGS_FILE = parser.accepts("settings", "path to CapSettings.java").withRequiredArg().ofType(String.class).describedAs("path").defaultsTo(".cap/CapSettings.java");
         public final static OptionSpec<String> SCRIPTS_DIR = parser.accepts("scriptsDir", "path to scripts dir").withRequiredArg().ofType(String.class).describedAs("path").defaultsTo(".cap");
 
         public final static OptionSpec<Void> HELP = parser.acceptsAll(newArrayList("h", "help"), "show help");
@@ -58,7 +56,14 @@ public class Cap4j {
         }
 
         if(options.has(CAPIFY)){
-            throw new UnsupportedOperationException("Not implemented yet. Copy the files, please.");
+            final File capDir = new File(options.get(CAPIFY), options.get(SCRIPTS_DIR));
+//            System.out.printf("saving to dir %s%n", capDir.getAbsolutePath());;
+            if(!capDir.exists()) {
+                capDir.mkdirs();
+            }
+            copyResource("CreateNewScript.java", capDir);
+            copyResource("CapSettings.java", capDir);
+            return;
         }
 
         final File settingsFile = new File(options.get(SETTINGS_FILE));
@@ -88,6 +93,8 @@ public class Cap4j {
 
         params.addAll(filePaths);
 
+        System.out.printf("compiling %s%n", params);
+
         final JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
 
         final int r = compiler.run(null, null, null, params.toArray(new String[params.size()]));
@@ -98,12 +105,15 @@ public class Cap4j {
             System.out.printf("compilation failed.%n");
         }
 
-        System.out.printf("configuring with Settings.java...%n");
+        System.out.printf("configuring with CapSettings.java...%n");
         final URLClassLoader classLoader = new URLClassLoader(new URL[]{buildDir.toURI().toURL()});
+        
+        final Class<?> settingsClass = classLoader.loadClass("CapSettings");
+        ICapSettings c = (ICapSettings) settingsClass.newInstance();
 
-        final Class<?> settingsClass = classLoader.loadClass("Settings");
-        Callable c = (Callable) settingsClass.newInstance();
-        c.call();
+        final GlobalContextFactory factory = GlobalContextFactory.INSTANCE;
+
+        c.configure(factory);
 
        List<Class<?>> loadedScriptClasses = Lists.newArrayList(Iterables.filter(Lists.transform(filesList, new Function<File, Class<?>>() {
            public Class<?> apply(File input) {
@@ -120,7 +130,10 @@ public class Cap4j {
            }
        }));
 
-        deployScript.defaultTo("CreateNewScript");
+        final GlobalContext global = factory.getGlobalContext();
+        final CapConstants cap = global.cap;
+
+        cap.deployScript.defaultTo("CreateNewScript");
 
         new Question("Enter a script name to run:",
             transform(loadedScriptClasses, new Function<Class<?>, String>() {
@@ -128,12 +141,12 @@ public class Cap4j {
                     return input.getSimpleName();
                 }
             }),
-            deployScript).ask();
+            cap.deployScript).ask();
 
         final Optional<Class<?>> scriptToRun = Iterables.tryFind(loadedScriptClasses, new Predicate<Class<?>>() {
             @Override
             public boolean apply(Class<?> input) {
-                return input.getName().equals(localCtx().var(deployScript));
+                return input.getName().equals(global.var(cap.deployScript));
             }
         });
 
@@ -142,13 +155,20 @@ public class Cap4j {
 
             final Script script = (Script) scriptToRun.get().newInstance();
 
-            script.scriptsDir = scriptsDir;
+            script.setProperties(global, scriptsDir);
 
             script.run();
         }else{
-            System.err.printf("Didn't find script with name %s. Exiting.%n", localCtx().var(deployScript));
+            System.err.printf("Didn't find script with name %s. Exiting.%n", global.var(cap.deployScript));
             System.exit(-1);
         }
 //        System.out.println(localCtx.var(CapConstants.stages).getStages());
+    }
+
+    private static void copyResource(String resource, File capDir) throws IOException {
+        final File file = new File(capDir, resource);
+        System.out.printf("creating %s%n", file.getAbsolutePath());
+
+        IOUtils.copy(Cap4j.class.getResourceAsStream("/" + resource), new FileOutputStream(file));
     }
 }

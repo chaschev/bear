@@ -1,9 +1,6 @@
 package cap4j.strategy;
 
-import cap4j.core.GlobalContext;
-import cap4j.core.Releases;
-import cap4j.core.Stage;
-import cap4j.core.VarContext;
+import cap4j.core.*;
 import cap4j.session.Result;
 import cap4j.session.VariableUtils;
 import com.google.common.base.Function;
@@ -20,7 +17,6 @@ import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.TimeUnit;
 
 import static cap4j.core.CapConstants.*;
-import static cap4j.core.GlobalContext.local;
 import static org.apache.commons.io.FileUtils.byteCountToDisplaySize;
 
 /**
@@ -30,7 +26,7 @@ import static org.apache.commons.io.FileUtils.byteCountToDisplaySize;
  */
 
 /**
- * mapping $releasePath/ROOT.war -> $tomcatWebapps/ROOT.war
+ * mapping $releasePath/ROOT.war -> $webapps/ROOT.war
  */
 public abstract class BaseStrategy {
     private static final Logger logger = LoggerFactory.getLogger(BaseStrategy.class);
@@ -42,39 +38,45 @@ public abstract class BaseStrategy {
 
     @Nullable
     private static String deployZipPath;
+    private final CapConstants cap;
 
-    protected VarContext ctx;
+    protected SessionContext ctx;
+
+    protected GlobalContext global;
 
     /**
      * Symlink rules.
      */
     protected SymlinkRules symlinkRules = new SymlinkRules();
 
-    protected BaseStrategy(VarContext ctx) {
+    protected BaseStrategy(SessionContext ctx, GlobalContext global) {
         this.ctx = ctx;
+        this.global = global;
+        this.cap = global.cap;
     }
 
-    public static void setBarriers(Stage stage, final VarContext localCtx) {
+    public static void setBarriers(Stage stage, final GlobalContext global) {
+        final SessionContext localCtx = global.localCtx;
         prepareRemoteDataBarrier = new CyclicBarrier(stage.getEnvironments().size(), new Runnable() {
             @Override
             public void run() {
                 deployZipPath = null;
 
-                GlobalContext.console().stopRecording();
+                global.console().stopRecording();
 
                 logger.info("20: preparing local files");
-                preparedLocalFiles = localCtx.gvar(newStrategy).step_20_prepareLocalFiles(localCtx);
+                preparedLocalFiles = global.var(newStrategy).step_20_prepareLocalFiles(localCtx);
 
                 if(preparedLocalFiles.isEmpty()) return;
 
-                String tempDir = local().newTempDir();
+                String tempDir = global.local().newTempDir();
 
                 logger.info("20: zipping {} files of total size {} to: {}", preparedLocalFiles.size(),
                     byteCountToDisplaySize(countSpace(preparedLocalFiles)), tempDir);
 
                 deployZipPath = localCtx.system.joinPath(tempDir, "deploy.zip");
 
-                local().zip(deployZipPath, Lists.transform(preparedLocalFiles, new Function<File, String>() {
+                global.local().zip(deployZipPath, Lists.transform(preparedLocalFiles, new Function<File, String>() {
                     public String apply(File f) {
                         return f.getAbsolutePath();
                     }
@@ -87,7 +89,7 @@ public abstract class BaseStrategy {
             public void run() {
                 logger.info("50: remote update is done now");
 
-                localCtx.gvar(newStrategy).step_50_whenRemoteUpdateFinished(localCtx);
+                global.var(newStrategy).step_50_whenRemoteUpdateFinished(localCtx);
             }
         });
     }
@@ -147,7 +149,7 @@ public abstract class BaseStrategy {
      * @return List of files which will be zipped and copied to the remote hosts. If it is empty, copying is skipped.
      * @param localCtx
      */
-    protected List<File> step_20_prepareLocalFiles(VarContext localCtx){
+    protected List<File> step_20_prepareLocalFiles(SessionContext localCtx){
         logger.info("20: skipping customization");
         return Collections.emptyList();
     }
@@ -156,21 +158,21 @@ public abstract class BaseStrategy {
         updateReleasesDirs();
 
         if(isCopyingZip()){
-            ctx.system.scpLocal(ctx.var(releasePath), new File(deployZipPath));
+            ctx.system.scpLocal(ctx.var(cap.releasePath), new File(deployZipPath));
         }
 
         step_30_copyFilesToHosts();
     }
 
     private void updateReleasesDirs() {
-        ctx.system.mkdirs(ctx.var(releasePath));
+        ctx.system.mkdirs(ctx.var(cap.releasePath));
         int keepX = ctx.var(keepXReleases);
 
         if(keepX > 0){
-            final Releases releases = ctx.var(getReleases);
+            final Releases releases = ctx.var(cap.getReleases);
             List<String> toDelete = releases.listToDelete(keepX);
 
-            ctx.system.rmCd(ctx.var(releasesPath),
+            ctx.system.rmCd(ctx.var(cap.releasesPath),
                 toDelete.toArray(new String[toDelete.size()]));
         }
     }
@@ -182,7 +184,7 @@ public abstract class BaseStrategy {
     private void _step_40_updateRemoteFiles(){
         if(isCopyingZip()){
             ctx.system.unzip(
-                ctx.joinPath(ctx.var(releasePath), "deploy.zip"), null
+                ctx.joinPath(ctx.var(cap.releasePath), "deploy.zip"), null
             );
         }
 
@@ -193,7 +195,7 @@ public abstract class BaseStrategy {
         for (SymlinkEntry entry : symlinkRules.entries) {
             String srcPath;
 
-            srcPath = ctx.var(VariableUtils.joinPath("symlinkSrc", currentPath, entry.sourcePath));
+            srcPath = ctx.var(VariableUtils.joinPath("symlinkSrc", cap.currentPath, entry.sourcePath));
 
             ctx.system.link(srcPath, ctx.var(entry.destPath), entry.owner);
         }
@@ -202,7 +204,7 @@ public abstract class BaseStrategy {
     }
 
     protected Result writeRevision(){
-        return ctx.system.writeString(ctx.joinPath(releasePath, "REVISION"), ctx.gvar(realRevision));
+        return ctx.system.writeString(ctx.joinPath(cap.releasePath, "REVISION"), global.var(cap.realRevision));
     }
 
     protected void step_40_updateRemoteFiles(){
@@ -213,7 +215,7 @@ public abstract class BaseStrategy {
      *
      * @param localCtx
      */
-    protected void step_50_whenRemoteUpdateFinished(VarContext localCtx){
+    protected void step_50_whenRemoteUpdateFinished(SessionContext localCtx){
         logger.info("50: skipping customization");
     }
 

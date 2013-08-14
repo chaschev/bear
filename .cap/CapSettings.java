@@ -1,7 +1,6 @@
-package cap4j.examples;
-
 import atocha.AtochaConstants;
 import cap4j.core.*;
+import cap4j.examples.Ex5DeployWar1;
 import cap4j.plugins.Plugin;
 import cap4j.plugins.grails.GrailsBuildResult;
 import cap4j.plugins.grails.GrailsBuilder;
@@ -20,49 +19,52 @@ import org.slf4j.LoggerFactory;
 
 import java.util.List;
 
-import static cap4j.core.GlobalContext.*;
 import static cap4j.session.GenericUnixRemoteEnvironment.newUnixRemote;
 
 /**
  * User: achaschev
- * Date: 8/3/13
+ * Date: 8/5/13
  */
-public class Ex6DeployWarViaCache1 {
+public class CapSettings implements ICapSettings {
     private static final Logger logger = LoggerFactory.getLogger(BaseStrategy.class);
 
-    public static void main(String[] args) throws InterruptedException {
-        GlobalContextFactory.INSTANCE.registerPluginsPhase = new GlobalContextFactory.RegisterPluginsPhase() {
+    GrailsPlugin grails;
+    JavaPlugin java;
+    CapConstants cap;
+    TomcatPlugin tomcat;
+
+    @Override
+    public GlobalContext configure(GlobalContextFactory factory) throws Exception{
+        final GlobalContext global = factory.getGlobalContext();
+
+        final AtochaConstants atocha = AtochaConstants.INSTANCE;
+        factory.globalVarsInitPhase = Ex5DeployWar1.newAtochaSettings(global.cap, atocha);
+        factory.registerPluginsPhase = new GlobalContextFactory.RegisterPluginsPhase() {
             @Override
             public List<Class<? extends Plugin>> registerPlugins(Variables vars) {
-                return Lists.<Class<? extends Plugin>>newArrayList(
+                return Lists.newArrayList(
                     TomcatPlugin.class,
-                    GrailsPlugin.class
-                );
+                    GrailsPlugin.class,
+                    JavaPlugin.class);
             }
         };
-        //todo this is not good
-        GlobalContextFactory.INSTANCE.globalVarsInitPhase = Ex5DeployWar1.newAtochaSettings(GlobalContextFactory.INSTANCE.getGlobalContext().cap, AtochaConstants.INSTANCE);
-        GlobalContextFactory.INSTANCE.init();
 
-        final GlobalContext global = getInstance();
+        factory.init();
+
+        tomcat = global.getPlugin(TomcatPlugin.class);
+        grails = global.getPlugin(GrailsPlugin.class);
+        java = global.getPlugin(JavaPlugin.class);
+        cap = global.cap;
+
         final Variables vars = global.variables;
-
-        final GrailsPlugin grails = plugin(GrailsPlugin.class);
-        final JavaPlugin java = plugin(JavaPlugin.class);
-        final TomcatPlugin tomcat = plugin(TomcatPlugin.class);
-
-        final CapConstants cap = global.cap;
 
         vars
             .putS(grails.homePath, "/opt/grails")
             .putS(java.homePath, "/usr/java/jdk1.6.0_43")
-//            .putS(GrailsConf.projectPath, null)
             .putS(cap.sshUsername, "ihseus")
-            .putS(cap.stage, "pac-dev")
-//            .putS(vcsBranchName, "branches/rc3_r1201")
         ;
 
-//        vars.putB(clean, true);
+
 
         tomcat.warName.setEqualTo(grails.warName);
 
@@ -113,15 +115,12 @@ public class Ex6DeployWarViaCache1 {
 
                         String warPath = ctx.var(grails.releaseWarPath);
 
-                        final boolean warExists = ctx.system.exists(warPath);
-                        if (!warExists || !ctx.var(AtochaConstants.INSTANCE.reuseWar)) {
+                        if (!ctx.system.exists(warPath) || !ctx.var(atocha.reuseWar)) {
                             final GrailsBuildResult r = new GrailsBuilder(ctx, global).build();
 
                             if (r.result.nok()) {
                                 throw new IllegalStateException("failed to build WAR");
                             }
-                        }else{
-                            logger.info("war exists and will be reused");
                         }
                     }
 
@@ -132,15 +131,15 @@ public class Ex6DeployWarViaCache1 {
                 };
 
                 strategy.getSymlinkRules().add(
-                    new SymlinkEntry("ROOT.war", tomcat.warPath, ctx.var(cap.appUsername) + "." + ctx.var(cap.appUsername))
+                    new SymlinkEntry("ROOT.war", tomcat.warPath, global.var(cap.appUsername) + "." + global.var(cap.appUsername))
                 );
 
                 return strategy;
             }
         });
 
-        global.localCtx.var(cap.getStage).runTask(tasks().deploy);
+        System.out.printf("finished configuring Settings.java%n");
 
-        global.shutdown();
+        return global;
     }
 }

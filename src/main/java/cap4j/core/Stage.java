@@ -5,6 +5,7 @@ import cap4j.strategy.BaseStrategy;
 import cap4j.task.Task;
 import cap4j.task.TaskResult;
 import cap4j.task.TaskRunner;
+import com.chaschev.chutils.util.OpenBean2;
 import com.google.common.base.Predicates;
 import com.google.common.collect.Iterables;
 
@@ -17,17 +18,27 @@ public class Stage {
     String description;
 
     SystemEnvironments environments = new SystemEnvironments(null);
+    
+    GlobalContext global;
 
-    public Stage(String name) {
+    public Stage(String name, GlobalContext global) {
         this.name = name;
+        this.global = global;
+    }
+
+    /**
+     * Runs a task from task variable
+     */
+    public void run(){
+        final String var = global.localCtx.var(global.cap.task);
+        Task task = (Task) OpenBean2.getFieldValue2(global.tasks, var);
+        runTask(task);
     }
 
     public void runTask(final Task<TaskResult> task){
         GlobalContextFactory.INSTANCE.configure(environments);
 
-        final GlobalContext global = GlobalContext.INSTANCE;
-
-        BaseStrategy.setBarriers(this, global.localCtx);
+        BaseStrategy.setBarriers(this, global);
 
         for (final SystemEnvironment environment : environments.getImplementations()) {
             global.taskExecutor.execute(new Runnable() {
@@ -35,7 +46,7 @@ public class Stage {
                 public void run() {
                     Thread.currentThread().setName(environment.ctx().threadName());
 
-                    final Result run = new TaskRunner(environment.ctx()).run(task);
+                    final Result run = new TaskRunner(environment.ctx(), global).run(task);
                 }
             });
         }
@@ -43,6 +54,7 @@ public class Stage {
 
     public Stage add(SystemEnvironment environment) {
         environments.add(environment);
+        environment.cap = global.cap;
 
         return this;
     }

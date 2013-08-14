@@ -8,30 +8,13 @@
     <artifactId>cap4j</artifactId>
     <version>1.0-SNAPSHOT</version>
 
+    <properties>
+        <javaHome>${env.JAVA_HOME}</javaHome>
+        <rt.jar.path>${javaHome}/jre/lib/rt.jar</rt.jar.path>
+        <jsse.jar.path>${javaHome}/jre/lib/jsse.jar</jsse.jar.path>
+    </properties>
+
     <profiles>
-        <profile>
-            <id>billi-web</id>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.codehaus.mojo</groupId>
-                        <artifactId>exec-maven-plugin</artifactId>
-                        <version>1.2.1</version>
-                        <executions>
-                            <execution>
-                                <phase>install</phase>
-                                <goals>
-                                    <goal>java</goal>
-                                </goals>
-                                <configuration>
-                                    <mainClass>ru.kuznech.deploy.BilliDemoDeployment</mainClass>
-                                </configuration>
-                            </execution>
-                        </executions>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
         <profile>
             <id>allow-snapshots</id>
             <activation><activeByDefault>true</activeByDefault></activation>
@@ -107,6 +90,196 @@
 
 
     <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>2.3.2</version>
+                <configuration>
+                    <source>1.6</source>
+                    <target>1.6</target>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <version>2.4</version>
+                <configuration>
+                    <archive>
+                        <manifestEntries>
+                            <Main-Class>cap4j.main.Cap4j</Main-Class>
+                            <implementation-vendor>chaschev</implementation-vendor>
+                            <implementation-title>${project.name}</implementation-title>
+                            <implementation-version>${project.version}</implementation-version>
+                        </manifestEntries>
+                    </archive>
+                </configuration>
+            </plugin>
 
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-shade-plugin</artifactId>
+                <version>2.0</version>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>shade</goal>
+                        </goals>
+                        <configuration>
+                            <artifactSet>
+                                <excludes>
+                                    <exclude>org.apache.poi:poi-ooxml</exclude>
+                                </excludes>
+                            </artifactSet>
+                            <filters>
+<!--
+                                <filter>
+                                    <artifact>org.apache.xmlbeans:xmlbeans</artifact>
+                                    <excludes>
+                                        <exclude>**</exclude>
+                                    </excludes>
+                                </filter>
+                                <filter>
+                                    <artifact>org.apache.tika:tika-core</artifact>
+                                    <excludes>
+                                        <exclude>org/apache/tika/language/*</exclude>
+                                    </excludes>
+                                </filter>
+-->
+                               <!-- <filter>
+                                    <artifact>xpp3:xpp3_min</artifact>
+                                    <excludes>
+                                        <exclude>/META-INF/services/org.xmlpull.v1.XmlPullParserFactory
+                                        </exclude>
+                                    </excludes>
+                                </filter>-->
+
+
+<!--
+                                <filter>
+                                    <artifact>*:*</artifact>
+                                    <excludes>
+                                        <exclude>META-INF/*.SF</exclude>
+                                        <exclude>META-INF/*.DSA</exclude>
+                                        <exclude>META-INF/*.RSA</exclude>
+                                    </excludes>
+                                </filter>
+-->
+                            </filters>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+
+
+            <plugin>
+                <groupId>com.github.wvengen</groupId>
+                <artifactId>proguard-maven-plugin</artifactId>
+                <version>2.0.6</version>
+                <executions>
+                    <execution>
+                        <phase>install</phase>
+                        <goals>
+                            <goal>proguard</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <injar>${project.build.finalName}.jar</injar>
+                    <outjar>${project.build.finalName}-slim.jar</outjar>
+                    <libs>
+                        <lib>${rt.jar.path}</lib>
+                        <lib>${jsse.jar.path}</lib>
+                    </libs>
+                    <attach>true</attach>
+                    <attachArtifactClassifier>min</attachArtifactClassifier>
+                    <obfuscate>false</obfuscate>
+                    <options>
+                        <option>-dontoptimize</option>
+                        <option>-ignorewarnings</option>
+                        <!--<option>-optimizationpasses 2</option>-->
+                        <!--<option>-dontshrink</option>-->
+                        <option>
+                            -keepclassmembers enum * {
+                                public static **[] values();
+                                public static ** valueOf(java.lang.String);
+                            }
+                            -keepparameternames
+                            -keepattributes Exceptions,InnerClasses,Signature,Deprecated,SourceFile,LineNumberTable,*Annotation*,EnclosingMethod
+                        </option>
+                        <!-- -renamesourcefileattribute SourceFile-->
+                        <option>-keep class org.slf4j.**{*;}</option>
+                        <!--<option>-keep class * implements chaschev.conf.ProguardKeep{*;}</option>
+                        <option>-keepclassmembers class * implements chaschev.conf.ProguardKeepNames{*;}</option>-->
+
+                        <option>-keep class cap4j.**{*;}</option>
+                        <option>-keepclassmembers class cap4j.**{*;}</option>
+
+                        <option>-keep class ch.qos.logback.core.FileAppender{*;}</option>
+                        <option>-keepclassmembers class ch.qos.logback.core.FileAppender{*;}</option>
+
+                        <option>-keep class org.apache.commons.io.FileUtils{*;}</option>
+                        <option>-keepclassmembers class org.apache.commons.io.FileUtils{*;}</option>
+
+                        <option>-keep class java.util.concurrent.Callable{*;}</option>
+                        <option>-keepclassmembers class java.util.concurrent.Callable{*;}</option>
+
+                        <option>-keep class com.google.common.collect.AbstractIterator$State {*;}</option>
+                        <!-- can be partially removed -->
+
+                        <option>-dontwarn com.google.common.collect.MinMaxPriorityQueue</option>
+                    </options>
+                </configuration>
+                <dependencies>
+                    <dependency>
+                        <groupId>net.sf.proguard</groupId>
+                        <artifactId>proguard-base</artifactId>
+                        <version>4.10</version>
+                    </dependency>
+                </dependencies>
+            </plugin>
+
+
+<!--
+            <plugin>
+                <artifactId>maven-resources-plugin</artifactId>
+                <version>2.6</version>
+                <executions>
+                    <execution>
+                        <id>copy-resources</id>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <goal>copy-resources</goal>
+                        </goals>
+                        <configuration>
+                            <encoding>UTF-8</encoding>
+                            <outputDirectory>${}</outputDirectory>
+                            <resources>
+                                <resource>
+                                    <filtering>true</filtering>
+                                    <directory>src/main/resources</directory>
+                                    <includes>
+                                        <include>*.java</include>
+                                    </includes>
+                                    &lt;!&ndash;<directory>${dicts.dir}</directory>&ndash;&gt;
+                                </resource>
+                            </resources>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+-->
+        </plugins>
+        <resources>
+            <resource>
+                <directory>src/main/resources</directory>
+                <filtering>true</filtering>
+            </resource>
+            <resource>
+                <directory>.cap</directory>
+            </resource>
+        </resources>
     </build>
 </project>

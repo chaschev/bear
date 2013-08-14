@@ -16,6 +16,11 @@ public class Console {
     protected List<Map.Entry<Nameable, String>> recordedVars = new ArrayList<Map.Entry<Nameable, String>>();
 
     protected boolean recordingMode = true;
+    private GlobalContext global;
+
+    public Console(GlobalContext global) {
+        this.global = global;
+    }
 
     public boolean askIfUnset(DynamicVariable<String> var, boolean _default) {
         return askIfUnset(defaultPrompt(var, _default ? "y" : "n"), var, _default);
@@ -44,11 +49,11 @@ public class Console {
     }
 
     public String askIfUnset(String prompt, DynamicVariable<String> var, String _default) {
-        if(GlobalContext.var(var) == null){
+        if(global.var(var) == null){
             ask(prompt, var, _default);
         }
 
-        return GlobalContext.var(var);
+        return global.var(var);
     }
 
     public void ask(String prompt, DynamicVariable<String> var, String _default) {
@@ -60,7 +65,7 @@ public class Console {
             text = _default;
         }
 
-        GlobalContext.gvars().set(var, text);
+        global.gvars().set(var, text);
 
         if(recordingMode){
             recordedVars.add(new AbstractMap.SimpleEntry<Nameable, String>(var, text));

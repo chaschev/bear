@@ -1,13 +1,12 @@
 package cap4j.session;
 
+import cap4j.core.CapConstants;
 import cap4j.core.GlobalContext;
 import cap4j.scm.CommandLine;
 import cap4j.scm.CommandLineResult;
 import cap4j.scm.LocalCommandLine;
-import cap4j.scm.RemoteCommandLine;
 import com.google.common.base.Preconditions;
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.SystemUtils;
 import org.apache.tools.ant.Project;
 import org.apache.tools.ant.taskdefs.Zip;
@@ -30,8 +29,12 @@ import java.util.List;
 public class GenericUnixLocalEnvironment extends SystemEnvironment {
     private static final Logger logger = LoggerFactory.getLogger(GenericUnixLocalEnvironment.class);
 
-    public GenericUnixLocalEnvironment(String name) {
-        super(name);
+    public GenericUnixLocalEnvironment(String name, GlobalContext global) {
+        super(name, global);
+    }
+
+    public GenericUnixLocalEnvironment(String name, String desc, GlobalContext global) {
+        super(name, desc, global);
     }
 
     @Override
@@ -174,7 +177,7 @@ public class GenericUnixLocalEnvironment extends SystemEnvironment {
 
                 final Process finalProcess = process;
 
-                GlobalContext.INSTANCE.localExecutor.execute(new Runnable() {
+                GlobalContext.getInstance().localExecutor.execute(new Runnable() {
                     @Override
                     public void run() {
                         long now = -1;

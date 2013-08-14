@@ -27,9 +27,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.*;
 
-import static cap4j.core.CapConstants.sshPassword;
-import static cap4j.core.CapConstants.sshUsername;
-
 /**
  * User: ACHASCHEV
  * Date: 7/23/13
@@ -163,13 +160,13 @@ public class GenericUnixRemoteEnvironment extends SystemEnvironment {
                                     myResponseStartsAt[0] = text.length();
                                     System.out.println(text);
                                     final OutputStream os = session.getOutputStream();
-                                    os.write((ctx().var(CapConstants.sshPassword) + "\n").getBytes(IOUtils.UTF8));
+                                    os.write((ctx().var(cap.sshPassword) + "\n").getBytes(IOUtils.UTF8));
                                     os.flush();
                                 }
                             }
                         }
                     })
-                    .spawn(GlobalContext.INSTANCE.localExecutor);
+                    .spawn(global.localExecutor);
 
                 exec.join(getTimeout(line), TimeUnit.MILLISECONDS);
 
@@ -365,10 +362,10 @@ public class GenericUnixRemoteEnvironment extends SystemEnvironment {
         boolean reuseSession = false;
         private Session session;
 
-        public SshSession(final SshAddress sshAddress) {
+        public SshSession(final SshAddress sshAddress, GlobalContext global) {
             this.sshAddress = sshAddress;
 
-            sshFuture = GlobalContext.INSTANCE.localExecutor.submit(new Callable<SSHClient>() {
+            sshFuture = global.localExecutor.submit(new Callable<SSHClient>() {
                 @Override
                 public SSHClient call() throws Exception {
                     SSHClient ssh = new SSHClient();
@@ -437,17 +434,17 @@ public class GenericUnixRemoteEnvironment extends SystemEnvironment {
 
     SshSession sshSession;
 
-    public GenericUnixRemoteEnvironment(String name, SshAddress sshAddress) {
-        super(name);
 
-        sshSession = new SshSession(sshAddress);
+    public GenericUnixRemoteEnvironment(String name, SshAddress sshAddress, GlobalContext global) {
+        super(name, global);
+        sshSession = new SshSession(sshAddress, global);
     }
 
-    public static GenericUnixRemoteEnvironment newUnixRemote(String name, String address){
-        return newUnixRemote(name, GlobalContext.var(sshUsername), GlobalContext.var(sshPassword), address);
+    public static GenericUnixRemoteEnvironment newUnixRemote(String name, String address, GlobalContext g){
+        return newUnixRemote(name, g.var(g.cap.sshUsername), g.var(g.cap.sshPassword), address, g);
     }
-    public static GenericUnixRemoteEnvironment newUnixRemote(String name, String username, String password, String address){
-        return new GenericUnixRemoteEnvironment(name, new SshAddress(username, password, address));
+    public static GenericUnixRemoteEnvironment newUnixRemote(String name, String username, String password, String address, GlobalContext global){
+        return new GenericUnixRemoteEnvironment(name, new SshAddress(username, password, address), global);
     }
 
     @Override

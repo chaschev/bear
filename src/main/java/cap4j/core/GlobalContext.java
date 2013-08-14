@@ -1,10 +1,14 @@
 package cap4j.core;
 
+import cap4j.plugins.Plugin;
 import cap4j.session.DynamicVariable;
 import cap4j.session.GenericUnixLocalEnvironment;
 import cap4j.session.SystemEnvironment;
+import cap4j.task.Tasks;
 import org.apache.commons.lang3.SystemUtils;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.*;
 
 /**
@@ -12,9 +16,14 @@ import java.util.concurrent.*;
  * Date: 7/21/13
  */
 public class GlobalContext {
-    public static GlobalContext INSTANCE;
+//    public static final GlobalContext INSTANCE = new GlobalContext();
+    private static final GlobalContext INSTANCE = new GlobalContext();
+
     public final Variables variables = new Variables("global vars", null);
-    public final Console console = new Console();
+    public final Console console = new Console(this);
+    public final Tasks tasks;
+
+    public final Map<Class<? extends Plugin>, Plugin> pluginMap = new HashMap<Class<? extends Plugin>, Plugin>();
 
     public final ExecutorService taskExecutor = new ThreadPoolExecutor(2, 32,
         5L, TimeUnit.SECONDS,
@@ -32,44 +41,78 @@ public class GlobalContext {
             }
         });
 
-    public final SystemEnvironment local = SystemUtils.IS_OS_WINDOWS ?
-        new GenericUnixLocalEnvironment("local") : new GenericUnixLocalEnvironment("local");
+    public final SystemEnvironment local;
 
-    public final Variables localVars = SystemEnvironment.newSessionVars(this, local);
+    public final Variables localVars;
 
-    public final VarContext localCtx = new VarContext(localVars, local);
+    public final SessionContext localCtx;
+    public final CapConstants cap;
 
-    protected GlobalContext() {
-
+    private GlobalContext() {
+        local = SystemUtils.IS_OS_WINDOWS ?
+            new GenericUnixLocalEnvironment("local", this) : new GenericUnixLocalEnvironment("local", this);
+        localVars = SystemEnvironment.newSessionVars(this, local);
+        localCtx = new SessionContext(this, local);
+        cap = new CapConstants(this);
+        tasks = new Tasks(this);
     }
 
-    public static Variables gvars(){
-        return INSTANCE.variables;
+//    protected GlobalContext() {
+//
+//    }
+
+    public Variables gvars(){
+        return variables;
     }
 
-    public static <T> T var(DynamicVariable<T> varName){
-        return INSTANCE.variables.get((VarContext) null, varName);
+    public <T> T var(DynamicVariable<T> varName){
+        return variables.get(this.localCtx, varName);
     }
 
-    public static <T> T var(DynamicVariable<T> varName, T _default){
-        return INSTANCE.variables.get(varName, _default);
+    public <T> T var(DynamicVariable<T> varName, T _default){
+        return variables.get(varName, _default);
     }
 
-    public static Console console(){
-        return INSTANCE.console;
+    public Console console(){
+        return console;
     }
 
-    public static SystemEnvironment local(){
-        return INSTANCE.local;
+    public SystemEnvironment local(){
+        return local;
     }
 
-    public static VarContext localCtx(){
-        return INSTANCE.localCtx;
+    public SessionContext localCtx(){
+        return getInstance().localCtx;
     }
 
     public void shutdown() throws InterruptedException {
-        GlobalContext.INSTANCE.taskExecutor.shutdown();
-        GlobalContext.INSTANCE.taskExecutor.awaitTermination(10, TimeUnit.SECONDS);
+        getInstance().taskExecutor.shutdown();
+        getInstance().taskExecutor.awaitTermination(10, TimeUnit.SECONDS);
     }
 
+    public <T extends Plugin> T getPlugin(Class<T> pluginClass) {
+        return (T) pluginMap.get(pluginClass);
+    }
+
+    public static <T extends Plugin> T plugin(Class<T> pluginClass) {
+        return getInstance().getPlugin(pluginClass);
+    }
+
+    public CapConstants cap(){
+        return cap;
+    }
+
+    public static GlobalContext getInstance() {
+        System.out.printf("static!");
+        return INSTANCE;
+    }
+
+    public static Tasks tasks(){
+        return getInstance().tasks;
+    }
+
+    public void run() {
+        System.out.println("running on stage...");
+        localCtx.var(cap.getStage).run();
+    }
 }

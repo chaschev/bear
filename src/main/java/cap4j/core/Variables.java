@@ -1,7 +1,6 @@
 package cap4j.core;
 
 import cap4j.session.DynamicVariable;
-import cap4j.session.SessionContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -55,14 +54,6 @@ public class Variables {
         return this;
     }
 
-    public String getString(SessionContext context, Nameable name, String _default) {
-        final Object result = get(context, name, _default);
-
-        if (result == null) return null;
-
-        return result.toString();
-    }
-
     public String getString(DynamicVariable name, String _default) {
         final Object result = get(name, _default);
 
@@ -71,15 +62,11 @@ public class Variables {
         return result.toString();
     }
 
-    public <T> T get(SessionContext context, Nameable<T> name, T _default) {
-        return get(new VarContext(context.variables, null), name, _default);
-    }
-
     public <T> T get(DynamicVariable<T> name, T _default) {
-        return get(new VarContext(this, null), name, _default);
+        return get(new SessionContext(this), name, _default);
     }
 
-    public <T> T get(VarContext context, Nameable<T> name, T _default) {
+    public <T> T get(SessionContext context, Nameable<T> name, T _default) {
         final Object result;
 
         final DynamicVariable r = variables.get(name.name());
@@ -95,11 +82,11 @@ public class Variables {
         return (T) result;
     }
 
-    public <T> T get(VarContext context, DynamicVariable<T> var) {
+    public <T> T get(SessionContext context, DynamicVariable<T> var) {
         return get(context, var, (T)null);
     }
 
-    public <T> T get(VarContext context, DynamicVariable<T> var, T _default) {
+    public <T> T get(SessionContext context, DynamicVariable<T> var, T _default) {
         final T result;
 
         DynamicVariable<T> r = variables.get(var.name());
