@@ -5,10 +5,15 @@ import cap4j.session.DynamicVariable;
 import cap4j.session.GenericUnixLocalEnvironment;
 import cap4j.session.SystemEnvironment;
 import cap4j.task.Tasks;
+import com.chaschev.chutils.util.Exceptions;
 import org.apache.commons.lang3.SystemUtils;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Properties;
 import java.util.concurrent.*;
 
 /**
@@ -47,14 +52,16 @@ public class GlobalContext {
 
     public final SessionContext localCtx;
     public final CapConstants cap;
+    protected Properties properties = new Properties();
 
     private GlobalContext() {
+        cap = new CapConstants(this);
         local = SystemUtils.IS_OS_WINDOWS ?
             new GenericUnixLocalEnvironment("local", this) : new GenericUnixLocalEnvironment("local", this);
         localVars = SystemEnvironment.newSessionVars(this, local);
         localCtx = new SessionContext(this, local);
-        cap = new CapConstants(this);
         tasks = new Tasks(this);
+
     }
 
 //    protected GlobalContext() {
@@ -86,8 +93,8 @@ public class GlobalContext {
     }
 
     public void shutdown() throws InterruptedException {
-        getInstance().taskExecutor.shutdown();
-        getInstance().taskExecutor.awaitTermination(10, TimeUnit.SECONDS);
+        taskExecutor.shutdown();
+        taskExecutor.awaitTermination(10, TimeUnit.SECONDS);
     }
 
     public <T extends Plugin> T getPlugin(Class<T> pluginClass) {
@@ -103,7 +110,6 @@ public class GlobalContext {
     }
 
     public static GlobalContext getInstance() {
-        System.out.printf("static!");
         return INSTANCE;
     }
 
@@ -114,5 +120,18 @@ public class GlobalContext {
     public void run() {
         System.out.println("running on stage...");
         localCtx.var(cap.getStage).run();
+    }
+
+    public String getProperty(String s) {
+        return properties.getProperty(s);
+    }
+
+    public void loadProperties(File file) {
+        try {
+            properties.load(new FileInputStream(file));
+        } catch (IOException e) {
+            throw Exceptions.runtime(e);
+        }
+
     }
 }

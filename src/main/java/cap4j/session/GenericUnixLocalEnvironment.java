@@ -21,6 +21,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Collection;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
 
 /**
  * User: ACHASCHEV
@@ -121,13 +122,15 @@ public class GenericUnixLocalEnvironment extends SystemEnvironment {
     }
 
     public static class ProcessRunner<T extends CommandLineResult> {
+        ExecutorService executor;
         CommandLine<T> line;
 
         int processTimeoutMs = 60000;
         private GenericUnixRemoteEnvironment.SshSession.WithSession inputCallback;
 
-        public ProcessRunner(CommandLine<T> line) {
+        public ProcessRunner(CommandLine<T> line, ExecutorService executor) {
             this.line = line;
+            this.executor = executor;
         }
 
         public ProcessRunner<T> setInputCallback(GenericUnixRemoteEnvironment.SshSession.WithSession inputCallback) {
@@ -177,7 +180,7 @@ public class GenericUnixLocalEnvironment extends SystemEnvironment {
 
                 final Process finalProcess = process;
 
-                GlobalContext.getInstance().localExecutor.execute(new Runnable() {
+                executor.execute(new Runnable() {
                     @Override
                     public void run() {
                         long now = -1;
@@ -242,7 +245,7 @@ public class GenericUnixLocalEnvironment extends SystemEnvironment {
     public <T extends CommandLineResult> T run(CommandLine<T> line, final GenericUnixRemoteEnvironment.SshSession.WithSession inputCallback) {
         logger.debug("command: {}", line);
 
-        final ProcessRunner.ProcessResult r = new ProcessRunner<T>(line)
+        final ProcessRunner.ProcessResult r = new ProcessRunner<T>(line, global.localExecutor)
             .setInputCallback(inputCallback)
             .setProcessTimeoutMs(line.timeoutMs)
             .run();

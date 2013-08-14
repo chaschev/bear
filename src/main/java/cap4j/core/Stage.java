@@ -46,6 +46,8 @@ public class Stage {
                 public void run() {
                     Thread.currentThread().setName(environment.ctx().threadName());
 
+                    environment.ctx().system.connect();
+
                     final Result run = new TaskRunner(environment.ctx(), global).run(task);
                 }
             });

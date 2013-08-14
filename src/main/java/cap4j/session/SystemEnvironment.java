@@ -21,7 +21,7 @@ public abstract class SystemEnvironment {
     private int defaultTimeout = 5000;
     private int singleTimeout = -1;
 
-    private SessionContext ctx;
+    public SessionContext ctx;
 
     public CapConstants cap;
 
@@ -109,6 +109,10 @@ public abstract class SystemEnvironment {
             ctx = new SessionContext(global, this);
         }
         return ctx;
+    }
+
+    public void connect(){
+
     }
 
 

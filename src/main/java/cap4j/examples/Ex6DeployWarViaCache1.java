@@ -58,6 +58,8 @@ public class Ex6DeployWarViaCache1 {
             .putS(java.homePath, "/usr/java/jdk1.6.0_43")
 //            .putS(GrailsConf.projectPath, null)
             .putS(cap.sshUsername, "ihseus")
+            .putS(cap.sshPassword, global.getProperty("pac-dev.password"))
+            .putS(cap.vcsPassword, global.getProperty("svn.password"))
             .putS(cap.stage, "pac-dev")
 //            .putS(vcsBranchName, "branches/rc3_r1201")
         ;

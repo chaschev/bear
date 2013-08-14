@@ -61,6 +61,7 @@ public class CapConstants {
     vcsType = enumConstant("vcsType", "Your VCS type", "svn"),
     vcsUserName = eql("vcsUserName", sshUsername),
     vcsPassword = eql("vcsPassword", sshPassword),
+    sessionHostname = strVar("", "internal variable containing the name of the current session"),
 
     tempUserInput = strVar("tempUserInput", ""),
 
@@ -210,12 +211,9 @@ public class CapConstants {
         return new DynamicVariable<T>(name, desc);
     }
 
-
-
     public static <T> DynamicVariable<T> dynamic(String name, String desc, Function<SessionContext, T> function) {
         return new DynamicVariable<T>(name, desc).setDynamic(function);
     }
-
 
     private static DynamicVariable<String> enumConstant(String name, final String desc, final String... options) {
         return new DynamicVariable<String>(name, desc) {

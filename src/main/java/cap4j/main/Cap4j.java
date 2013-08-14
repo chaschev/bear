@@ -33,6 +33,7 @@ import static com.google.common.collect.Lists.transform;
  * Date: 8/5/13
  */
 public class Cap4j {
+
     @SuppressWarnings("unchecked")
     static class Options extends JOptOptions {
         public final static OptionSpec<String> HOST = parser.accepts("host", "set the database host").withRequiredArg().ofType(String.class).describedAs("host").defaultsTo("localhost");
@@ -112,7 +113,7 @@ public class Cap4j {
         ICapSettings c = (ICapSettings) settingsClass.newInstance();
 
         final GlobalContextFactory factory = GlobalContextFactory.INSTANCE;
-
+        factory.getGlobalContext().loadProperties(new File(scriptsDir, "settings.properties"));
         c.configure(factory);
 
        List<Class<?>> loadedScriptClasses = Lists.newArrayList(Iterables.filter(Lists.transform(filesList, new Function<File, Class<?>>() {
@@ -132,6 +133,8 @@ public class Cap4j {
 
         final GlobalContext global = factory.getGlobalContext();
         final CapConstants cap = global.cap;
+
+
 
         cap.deployScript.defaultTo("CreateNewScript");
 

@@ -17,6 +17,7 @@ import org.apache.commons.lang3.time.StopWatch;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nullable;
 import java.util.List;
 
 import static cap4j.session.GenericUnixRemoteEnvironment.newUnixRemote;
@@ -62,7 +63,15 @@ public class CapSettings implements ICapSettings {
             .putS(grails.homePath, "/opt/grails")
             .putS(java.homePath, "/usr/java/jdk1.6.0_43")
             .putS(cap.sshUsername, "ihseus")
+            .putS(cap.vcsPassword, global.getProperty("svn.password"))
         ;
+
+        cap.sshPassword.setDynamic(new Function<SessionContext, String>() {
+            @Override
+            public String apply(SessionContext ctx) {
+                return global.getProperty(ctx.var(cap.sessionHostname) + ".password");
+            }
+        });
 
 
 
@@ -72,6 +81,8 @@ public class CapSettings implements ICapSettings {
             new Stages()
                 .add(new Stage("pac-dev", global)
                     .add(newUnixRemote("pac-dev", "10.22.13.4", global)))
+                .add(new Stage("pac-test", global)
+                    .add(newUnixRemote("pac-test", "10.22.13.6", global)))
         );
 
         CapConstants.newStrategy.setDynamic(new Function<SessionContext, BaseStrategy>() {

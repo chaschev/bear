@@ -204,7 +204,7 @@ public abstract class BaseStrategy {
     }
 
     protected Result writeRevision(){
-        return ctx.system.writeString(ctx.joinPath(cap.releasePath, "REVISION"), global.var(cap.realRevision));
+        return ctx.system.writeString(ctx.joinPath(cap.releasePath, "REVISION"), ctx.var(cap.realRevision));
     }
 
     protected void step_40_updateRemoteFiles(){

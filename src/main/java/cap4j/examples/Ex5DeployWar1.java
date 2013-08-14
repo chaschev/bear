@@ -103,8 +103,6 @@ public class Ex5DeployWar1 {
                     .putB(AtochaConstants.INSTANCE.reuseWar, true)
                     .putS(cap.vcsType, "svn")
                     .putS(cap.repositoryURI, "svn+ssh://dev.afoundria.com/var/svn/repos/atocha")
-                    .putS(cap.sshUsername, "chaschev")
-                    .putS(cap.sshPassword, "aaaaaa")
                     .putS(cap.appUsername, "tomcat")
                 ;
             }

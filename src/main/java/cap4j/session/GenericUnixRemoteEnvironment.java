@@ -33,6 +33,7 @@ import java.util.concurrent.*;
  */
 public class GenericUnixRemoteEnvironment extends SystemEnvironment {
     private static final Logger logger = LoggerFactory.getLogger(GenericUnixRemoteEnvironment.class);
+    private SshAddress sshAddress;
 
     @Override
     public List<String> ls(String path) {
@@ -97,6 +98,9 @@ public class GenericUnixRemoteEnvironment extends SystemEnvironment {
 
     @Override
     public <T extends CommandLineResult> T run(final CommandLine<T> line, @Nullable final SshSession.WithSession inputCallback) {
+        if(sshSession == null){
+            connect();
+        }
 //        final String[] s = new String[2];
         final int[] exitStatus = {0};
 
@@ -192,6 +196,7 @@ public class GenericUnixRemoteEnvironment extends SystemEnvironment {
                 sudo = false;
             }
         };
+
         sshSession.withSession(withSession);
 
 //        String text = s[0] + s[1];
@@ -437,7 +442,17 @@ public class GenericUnixRemoteEnvironment extends SystemEnvironment {
 
     public GenericUnixRemoteEnvironment(String name, SshAddress sshAddress, GlobalContext global) {
         super(name, global);
-        sshSession = new SshSession(sshAddress, global);
+        this.sshAddress = sshAddress;
+
+    }
+
+    @Override
+    public void connect(){
+        if(sshSession == null){
+            sshAddress.username = ctx.var(cap.sshUsername);
+            sshAddress.password = ctx.var(cap.sshPassword);
+            sshSession = new SshSession(sshAddress, global);
+        }
     }
 
     public static GenericUnixRemoteEnvironment newUnixRemote(String name, String address, GlobalContext g){
@@ -451,7 +466,7 @@ public class GenericUnixRemoteEnvironment extends SystemEnvironment {
     public String toString() {
         final StringBuilder sb = new StringBuilder("Remote{");
         sb.append("name=").append(name);
-        sb.append(", sshAddress=").append(sshSession.sshAddress);
+        sb.append(", sshAddress=").append(sshAddress);
         sb.append('}');
         return sb.toString();
     }

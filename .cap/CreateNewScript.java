@@ -22,7 +22,7 @@ public class CreateNewScript extends Script{
     public void run() throws Exception {
         final CapConstants cap = global.cap;
 
-        new Question("step 1, choose stage: ",
+        new Question("step 1, choose the stage: ",
             transform(global.localCtx().var(cap.stages).getStages(), new Function<Stage, String>() {
             public String apply(Stage s) {
                 return s.name;
@@ -41,7 +41,7 @@ public class CreateNewScript extends Script{
         branches.addAll(remoteVcsLs(cap, remoteEnv, ctx, "branches"));
         branches.addAll(remoteVcsLs(cap, remoteEnv, ctx, "tags"));
 
-        new Question("step 2, choose branch: ",
+        new Question("step 2, choose a branch: ",
             branches,
             cap.vcsBranchName
         ).ask();
@@ -67,8 +67,9 @@ public class CreateNewScript extends Script{
 
         final String scriptName = global.var(cap.tempUserInput) + "Script";
 
+        final File newScriptFile = new File(scriptsDir, scriptName + ".java");
         FileUtils.writeStringToFile(
-            new File(scriptsDir, scriptName + ".java"),
+            newScriptFile,
                 "import cap4j.core.Script;\n" +
                 "\n" +
                 "public class " + scriptName + " extends Script{\n" +
@@ -83,6 +84,9 @@ public class CreateNewScript extends Script{
                 "\t}\n" +
                 "}\n     "
         );
+
+        System.out.printf("your script has been saved to %s%n", newScriptFile.getAbsolutePath());
+        System.out.printf("you may now restart cap4j to run it%n");
     }
 
     private static List<String> remoteVcsLs(CapConstants cap, SystemEnvironment remoteEnv, SessionContext ctx, final String dir) {
