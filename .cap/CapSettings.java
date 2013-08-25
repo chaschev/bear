@@ -1,4 +1,4 @@
-import atocha.AtochaConstants;
+import atocha.Atocha;
 import cap4j.core.*;
 import cap4j.examples.Ex5DeployWar1;
 import cap4j.plugins.Plugin;
@@ -17,7 +17,6 @@ import org.apache.commons.lang3.time.StopWatch;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.Nullable;
 import java.util.List;
 
 import static cap4j.session.GenericUnixRemoteEnvironment.newUnixRemote;
@@ -38,8 +37,7 @@ public class CapSettings implements ICapSettings {
     public GlobalContext configure(GlobalContextFactory factory) throws Exception{
         final GlobalContext global = factory.getGlobalContext();
 
-        final AtochaConstants atocha = AtochaConstants.INSTANCE;
-        factory.globalVarsInitPhase = Ex5DeployWar1.newAtochaSettings(global.cap, atocha);
+        factory.globalVarsInitPhase = Ex5DeployWar1.newAtochaSettings(global.cap);
         factory.registerPluginsPhase = new GlobalContextFactory.RegisterPluginsPhase() {
             @Override
             public List<Class<? extends Plugin>> registerPlugins(Variables vars) {
@@ -126,7 +124,7 @@ public class CapSettings implements ICapSettings {
 
                         String warPath = ctx.var(grails.releaseWarPath);
 
-                        if (!ctx.system.exists(warPath) || !ctx.var(atocha.reuseWar)) {
+                        if (!ctx.system.exists(warPath) || !ctx.var(global.getPlugin(Atocha.class).reuseWar)) {
                             final GrailsBuildResult r = new GrailsBuilder(ctx, global).build();
 
                             if (r.result.nok()) {

@@ -65,7 +65,7 @@ public class CapConstants {
 
     tempUserInput = strVar("tempUserInput", ""),
 
-    deployScript = strVar("deployScript", "Script to use"),
+    deployScript = strVar("deployScript", "Script to use").defaultTo("CreateNewScript"),
 
     deployTo = joinPath("deployTo", applicationsPath, applicationName).setDesc("Current release dir"),
 
@@ -109,22 +109,22 @@ public class CapConstants {
     vcsBranchURI = joinPath("vcsProjectURI", repositoryURI, vcsBranchName),
 
     getLatestReleasePath = strVar("getLatestReleasePath", "").setDynamic(new Function<SessionContext, String>() {
-        public String apply(SessionContext input) {
-            final Releases r = global.var(getReleases);
+        public String apply(SessionContext ctx) {
+            final Releases r = ctx.var(getReleases);
 
             if (r.releases.isEmpty()) return null;
 
-            return input.system.joinPath(global.var(releasesPath), r.last());
+            return ctx.system.joinPath(ctx.var(releasesPath), r.last());
         }
     }).memoize(true),
 
      getPreviousReleasePath = strVar("getPreviousReleasePath", "").setDynamic(new Function<SessionContext, String>() {
-        public String apply(SessionContext input) {
-            final Releases r = global.var(getReleases);
+        public String apply(SessionContext ctx) {
+            final Releases r = ctx.var(getReleases);
 
             if (r.releases.size() < 2) return null;
 
-            return input.system.joinPath(global.var(releasesPath), r.previous());
+            return ctx.system.joinPath(ctx.var(releasesPath), r.previous());
         }
     }).memoize(true),
 
@@ -165,7 +165,7 @@ public class CapConstants {
 
     public final DynamicVariable<Releases> getReleases = new DynamicVariable<Releases>("getReleases", "").setDynamic(new Function<SessionContext, Releases>() {
         public Releases apply(SessionContext ctx) {
-            return new Releases(ctx.system.ls(global.var(releasesPath)));
+            return new Releases(ctx.system.ls(ctx.var(releasesPath)));
         }
     });
 

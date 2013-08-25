@@ -14,11 +14,13 @@ features:
 - interactive mode
 - local console
 - revert command
-- proguard
+- (ok) proguard
 - basic operations should be available from console (revert, show revision, show log)
 - variables registry (to list, to validate)
 - validate variables (required variables)
 - list available variables
+- events, listeners & notifications
+- check live status
 
 cap4j script:
 
@@ -40,7 +42,6 @@ When launching with no params:
 5) console/deploy
 6)
 7) ready to deploy - save your input to reuse? Saved as a script with name
-
 
 
 - support different auth types

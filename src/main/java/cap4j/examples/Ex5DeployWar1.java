@@ -1,6 +1,6 @@
 package cap4j.examples;
 
-import atocha.AtochaConstants;
+import atocha.Atocha;
 import cap4j.core.*;
 import cap4j.plugins.Plugin;
 import cap4j.plugins.grails.GrailsBuildResult;
@@ -36,7 +36,7 @@ public class Ex5DeployWar1 {
                 );
             }
         };
-        GlobalContextFactory.INSTANCE.globalVarsInitPhase = newAtochaSettings(GlobalContextFactory.INSTANCE.getGlobalContext().cap, AtochaConstants.INSTANCE);
+        GlobalContextFactory.INSTANCE.globalVarsInitPhase = newAtochaSettings(GlobalContextFactory.INSTANCE.getGlobalContext().cap);
         GlobalContextFactory.INSTANCE.init();
 
         final GlobalContext global = GlobalContext.getInstance();
@@ -64,7 +64,7 @@ public class Ex5DeployWar1 {
                     protected List<File> step_20_prepareLocalFiles(SessionContext localCtx) {
                         File rootWar = new File(localCtx.var(grails.projectWarPath));
 
-                        if (!rootWar.exists() || !localCtx.var(AtochaConstants.INSTANCE.reuseWar)) {
+                        if (!rootWar.exists() || !localCtx.var(global.getPlugin(Atocha.class).reuseWar)) {
                             final GrailsBuildResult r = new GrailsBuilder(localCtx, global).build();
 
                             if (r.result.nok()) {
@@ -90,7 +90,7 @@ public class Ex5DeployWar1 {
 
     }
 
-    public static GlobalContextFactory.GlobalVarsInitPhase newAtochaSettings(CapConstants cap1, AtochaConstants atocha) {
+    public static GlobalContextFactory.GlobalVarsInitPhase newAtochaSettings(CapConstants cap1) {
         final CapConstants cap = cap1;
 
         return new GlobalContextFactory.GlobalVarsInitPhase() {
@@ -100,7 +100,6 @@ public class Ex5DeployWar1 {
                     .putS(cap.applicationName, "atocha")
                     .putB(cap.productionDeployment, false)
                     .putB(cap.speedUpBuild, true)
-                    .putB(AtochaConstants.INSTANCE.reuseWar, true)
                     .putS(cap.vcsType, "svn")
                     .putS(cap.repositoryURI, "svn+ssh://dev.afoundria.com/var/svn/repos/atocha")
                     .putS(cap.appUsername, "tomcat")

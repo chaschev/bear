@@ -11,6 +11,8 @@ import com.google.common.io.PatternFilenameFilter;
 import joptsimple.OptionSpec;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.tools.JavaCompiler;
 import javax.tools.ToolProvider;
@@ -23,7 +25,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import static cap4j.core.GlobalContext.*;
 import static cap4j.main.Cap4j.Options.*;
 import static com.google.common.collect.Lists.newArrayList;
 import static com.google.common.collect.Lists.transform;
@@ -33,6 +34,7 @@ import static com.google.common.collect.Lists.transform;
  * Date: 8/5/13
  */
 public class Cap4j {
+    public static final Logger logger = LoggerFactory.getLogger(Cap4j.class);
 
     @SuppressWarnings("unchecked")
     static class Options extends JOptOptions {
@@ -40,6 +42,7 @@ public class Cap4j {
         public final static OptionSpec<String> CAPIFY = parser.accepts("capify", "adds cap4j files to the current dir").withOptionalArg().ofType(String.class).describedAs("dir").defaultsTo(".");
         public final static OptionSpec<String> SETTINGS_FILE = parser.accepts("settings", "path to CapSettings.java").withRequiredArg().ofType(String.class).describedAs("path").defaultsTo(".cap/CapSettings.java");
         public final static OptionSpec<String> SCRIPTS_DIR = parser.accepts("scriptsDir", "path to scripts dir").withRequiredArg().ofType(String.class).describedAs("path").defaultsTo(".cap");
+        public final static OptionSpec<String> SCRIPT = parser.accepts("script", "script to run").withRequiredArg().ofType(String.class).describedAs("path");
 
         public final static OptionSpec<Void> HELP = parser.acceptsAll(newArrayList("h", "help"), "show help");
 
@@ -52,7 +55,7 @@ public class Cap4j {
         final Options options = new Options(args);
 
         if(options.has(HELP)){
-            options.printHelpOn(System.out);
+            System.out.println(options.printHelpOn());
             return;
         }
 
@@ -64,8 +67,10 @@ public class Cap4j {
             }
             copyResource("CreateNewScript.java", capDir);
             copyResource("CapSettings.java", capDir);
+            copyResource("settings.properties.rename", "settings.properties", capDir);
             return;
         }
+
 
         final File settingsFile = new File(options.get(SETTINGS_FILE));
         final File scriptsDir = new File(options.get(SCRIPTS_DIR));
@@ -134,17 +139,18 @@ public class Cap4j {
         final GlobalContext global = factory.getGlobalContext();
         final CapConstants cap = global.cap;
 
-
-
-        cap.deployScript.defaultTo("CreateNewScript");
-
-        new Question("Enter a script name to run:",
-            transform(loadedScriptClasses, new Function<Class<?>, String>() {
-                public String apply(Class<?> input) {
-                    return input.getSimpleName();
-                }
-            }),
-            cap.deployScript).ask();
+        if(options.has(SCRIPT)){
+            logger.info("script is set in the command line to {}", options.get(SCRIPT));
+            cap.deployScript.defaultTo(options.get(SCRIPT));
+        }else {
+            new Question("Enter a script name to run:",
+                transform(loadedScriptClasses, new Function<Class<?>, String>() {
+                    public String apply(Class<?> input) {
+                        return input.getSimpleName();
+                    }
+                }),
+                cap.deployScript).ask();
+        }
 
         final Optional<Class<?>> scriptToRun = Iterables.tryFind(loadedScriptClasses, new Predicate<Class<?>>() {
             @Override
@@ -154,7 +160,7 @@ public class Cap4j {
         });
 
         if(scriptToRun.isPresent()){
-            System.out.printf("running %s%n", scriptToRun.get().getSimpleName());
+            System.out.printf("running script %s...%n", scriptToRun.get().getSimpleName());
 
             final Script script = (Script) scriptToRun.get().newInstance();
 
@@ -169,7 +175,11 @@ public class Cap4j {
     }
 
     private static void copyResource(String resource, File capDir) throws IOException {
-        final File file = new File(capDir, resource);
+        copyResource(resource, resource, capDir);
+    }
+
+    private static void copyResource(String resource, String destName, File capDir) throws IOException {
+        final File file = new File(capDir, destName);
         System.out.printf("creating %s%n", file.getAbsolutePath());
 
         IOUtils.copy(Cap4j.class.getResourceAsStream("/" + resource), new FileOutputStream(file));

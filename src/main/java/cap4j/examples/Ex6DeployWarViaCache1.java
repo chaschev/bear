@@ -1,6 +1,6 @@
 package cap4j.examples;
 
-import atocha.AtochaConstants;
+import atocha.Atocha;
 import cap4j.core.*;
 import cap4j.plugins.Plugin;
 import cap4j.plugins.grails.GrailsBuildResult;
@@ -41,7 +41,7 @@ public class Ex6DeployWarViaCache1 {
             }
         };
         //todo this is not good
-        GlobalContextFactory.INSTANCE.globalVarsInitPhase = Ex5DeployWar1.newAtochaSettings(GlobalContextFactory.INSTANCE.getGlobalContext().cap, AtochaConstants.INSTANCE);
+        GlobalContextFactory.INSTANCE.globalVarsInitPhase = Ex5DeployWar1.newAtochaSettings(GlobalContextFactory.INSTANCE.getGlobalContext().cap);
         GlobalContextFactory.INSTANCE.init();
 
         final GlobalContext global = getInstance();
@@ -116,7 +116,7 @@ public class Ex6DeployWarViaCache1 {
                         String warPath = ctx.var(grails.releaseWarPath);
 
                         final boolean warExists = ctx.system.exists(warPath);
-                        if (!warExists || !ctx.var(AtochaConstants.INSTANCE.reuseWar)) {
+                        if (!warExists || !ctx.var(global.getPlugin(Atocha.class).reuseWar)) {
                             final GrailsBuildResult r = new GrailsBuilder(ctx, global).build();
 
                             if (r.result.nok()) {
