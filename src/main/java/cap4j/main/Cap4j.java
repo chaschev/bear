@@ -118,7 +118,7 @@ public class Cap4j {
         ICapSettings c = (ICapSettings) settingsClass.newInstance();
 
         final GlobalContextFactory factory = GlobalContextFactory.INSTANCE;
-        factory.getGlobalContext().loadProperties(new File(scriptsDir, "settings.properties"));
+        factory.getGlobal().loadProperties(new File(scriptsDir, "settings.properties"));
         c.configure(factory);
 
        List<Class<?>> loadedScriptClasses = Lists.newArrayList(Iterables.filter(Lists.transform(filesList, new Function<File, Class<?>>() {
@@ -136,7 +136,7 @@ public class Cap4j {
            }
        }));
 
-        final GlobalContext global = factory.getGlobalContext();
+        final GlobalContext global = factory.getGlobal();
         final CapConstants cap = global.cap;
 
         if(options.has(SCRIPT)){

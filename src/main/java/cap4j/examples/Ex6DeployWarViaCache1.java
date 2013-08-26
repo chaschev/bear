@@ -7,6 +7,7 @@ import cap4j.plugins.grails.GrailsBuildResult;
 import cap4j.plugins.grails.GrailsBuilder;
 import cap4j.plugins.grails.GrailsPlugin;
 import cap4j.plugins.java.JavaPlugin;
+import cap4j.plugins.mysql.MySqlPlugin;
 import cap4j.plugins.tomcat.TomcatPlugin;
 import cap4j.scm.CommandLine;
 import cap4j.scm.VcsCLI;
@@ -36,12 +37,14 @@ public class Ex6DeployWarViaCache1 {
             public List<Class<? extends Plugin>> registerPlugins(Variables vars) {
                 return Lists.<Class<? extends Plugin>>newArrayList(
                     TomcatPlugin.class,
-                    GrailsPlugin.class
+                    GrailsPlugin.class,
+                    MySqlPlugin.class,
+                    JavaPlugin.class
                 );
             }
         };
         //todo this is not good
-        GlobalContextFactory.INSTANCE.globalVarsInitPhase = Ex5DeployWar1.newAtochaSettings(GlobalContextFactory.INSTANCE.getGlobalContext().cap);
+        GlobalContextFactory.INSTANCE.globalVarsInitPhase = Ex5DeployWar1.newAtochaSettings(GlobalContextFactory.INSTANCE.getGlobal().cap);
         GlobalContextFactory.INSTANCE.init();
 
         final GlobalContext global = getInstance();
@@ -50,17 +53,17 @@ public class Ex6DeployWarViaCache1 {
         final GrailsPlugin grails = plugin(GrailsPlugin.class);
         final JavaPlugin java = plugin(JavaPlugin.class);
         final TomcatPlugin tomcat = plugin(TomcatPlugin.class);
+        final MySqlPlugin mysql = plugin(MySqlPlugin.class);
 
         final CapConstants cap = global.cap;
 
         vars
             .putS(grails.homePath, "/opt/grails")
             .putS(java.homePath, "/usr/java/jdk1.6.0_43")
-//            .putS(GrailsConf.projectPath, null)
-            .putS(cap.sshUsername, "ihseus")
-            .putS(cap.sshPassword, global.getProperty("pac-dev.password"))
+            .putS(cap.sshUsername, "andrey")
             .putS(cap.vcsPassword, global.getProperty("svn.password"))
-            .putS(cap.stage, "pac-dev")
+            .putS(cap.stage, "vms")
+            .putS(mysql.dbName, "demodb")
 //            .putS(vcsBranchName, "branches/rc3_r1201")
         ;
 
@@ -70,8 +73,8 @@ public class Ex6DeployWarViaCache1 {
 
         cap.stages.defaultTo(
             new Stages()
-                .add(new Stage("pac-dev", global)
-                    .add(newUnixRemote("pac-dev", "10.22.13.4", global)))
+                .add(new Stage("vms", global)
+                    .add(newUnixRemote("vm02", "vm02", global)))
         );
 
         CapConstants.newStrategy.setDynamic(new Function<SessionContext, BaseStrategy>() {
@@ -141,7 +144,7 @@ public class Ex6DeployWarViaCache1 {
             }
         });
 
-        global.localCtx.var(cap.getStage).runTask(tasks().deploy);
+        global.localCtx.var(cap.getStage).runTask(tasks().setup);
 
         global.shutdown();
     }

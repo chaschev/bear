@@ -23,8 +23,8 @@ public class TaskRunner {
 
     LinkedHashSet<Task> tasksExecuted = new LinkedHashSet<Task>();
 
-    SessionContext ctx;
-    GlobalContext global;
+    public SessionContext ctx;
+    public GlobalContext global;
 
     public TaskRunner(SessionContext ctx, GlobalContext global) {
         this.ctx = ctx;

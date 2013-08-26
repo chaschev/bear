@@ -133,7 +133,7 @@ public class SvnVcsCLI extends VcsCLI {
     }
 
     protected String[] auth(){
-        final String user = global.var(cap.vcsUserName, null);
+        final String user = global.var(cap.vcsUsername, null);
         final String pw = global.var(cap.vcsPassword, null);
         final boolean preferPrompt = global.var(cap.scmPreferPrompt, false);
         final boolean authCache = global.var(cap.scmAuthCache, false);

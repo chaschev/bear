@@ -5,6 +5,8 @@ import cap4j.scm.CommandLine;
 import cap4j.scm.CommandLineResult;
 import cap4j.scm.VcsCLI;
 import com.google.common.base.Joiner;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
 import java.io.File;
@@ -15,6 +17,8 @@ import java.util.*;
  * Date: 7/21/13
  */
 public abstract class SystemEnvironment {
+    private static final Logger logger = LoggerFactory.getLogger(SystemEnvironment.class);
+
     protected boolean sudo;
     String name;
     String desc;
@@ -26,6 +30,7 @@ public abstract class SystemEnvironment {
     public CapConstants cap;
 
     protected GlobalContext global;
+    private UnixFlavour unixFlavour;
 
     protected SystemEnvironment(String name, GlobalContext global) {
         this.name = name;
@@ -221,5 +226,86 @@ public abstract class SystemEnvironment {
         return this;
     }
 
+    public static enum UnixFlavour {
+        CENTOS, UBUNTU
+    }
 
+    protected UnixFlavour computeUnixFlavour(){
+        final String text = run(newCommandLine().a("cat", "/etc/issue")).text;
+
+        if(text == null) return null;
+
+        if(text.contains("CentOS")) return UnixFlavour.CENTOS;
+        if(text.contains("Ubuntu")) return UnixFlavour.UBUNTU;
+
+        return null;
+    }
+
+    public UnixFlavour getUnixFlavour(){
+        if(unixFlavour == null) {
+            unixFlavour = computeUnixFlavour();
+        }
+
+        return unixFlavour;
+    }
+
+    public static class PackageInfo{
+        String name;
+        String desc;
+        final Version version;
+
+        public PackageInfo(String name, Version version) {
+            this.name = name;
+            this.version = version;
+        }
+
+        public PackageInfo(String name) {
+            this.name = name;
+            version = Version.ANY;
+        }
+
+        public String getCompleteName(){
+            return name + ((version == null || version.isAny()) ? "" : "-" + version);
+        }
+
+        @Override
+        public String toString() {
+            return getCompleteName();
+        }
+    }
+
+    public static abstract class PackageManager{
+        public abstract CommandLineResult installPackage(PackageInfo pi);
+    }
+
+    public PackageManager getPackageManager(){
+        switch (getUnixFlavour()) {
+            case CENTOS:
+                return new PackageManager() {
+                    @Override
+                    public CommandLineResult installPackage(PackageInfo pi) {
+                        final CommandLineResult result = SystemEnvironment.this.run(newCommandLine().timeoutMin(5).sudo().a("yum", "install", pi.getCompleteName(), "-y"));
+                        final String text = result.text;
+
+                        if(text.contains("Complete!") ||
+                            text.contains("nothing to do")
+                            ) {
+                            result.result = Result.OK;
+                        }else {
+                            result.result = Result.ERROR;
+                        }
+
+
+                        if(result.result.nok()){
+                            logger.error("could not install {}", pi);
+                        }
+
+                        return result;
+                    }
+                };
+            case UBUNTU:
+                default:
+                throw new UnsupportedOperationException("todo support" + getUnixFlavour() + " !");
+        }
+    }
 }

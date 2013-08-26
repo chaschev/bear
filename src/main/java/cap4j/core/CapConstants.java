@@ -1,7 +1,8 @@
 package cap4j.core;
 
 import cap4j.plugins.Plugin;
-import cap4j.scm.*;
+import cap4j.scm.BranchInfoResult;
+import cap4j.scm.CommandLine;
 import cap4j.scm.SvnVcsCLI;
 import cap4j.scm.VcsCLI;
 import cap4j.session.DynamicVariable;
@@ -17,7 +18,10 @@ import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
 
 import javax.annotation.Nullable;
-import java.util.*;
+import java.io.File;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.TimeZone;
 
 import static cap4j.session.VariableUtils.*;
 
@@ -51,15 +55,19 @@ public class CapConstants {
 
     task = strVar("task", "A task to run").defaultTo("deploy"),
 
-    applicationName = strVar("applicationName", "Your app name"),
+    applicationName = strVar().setDesc("Your app name"),
     appLogsPath = joinPath("appLogsPath", logsPath, applicationName),
     sshUsername = strVar("sshUsername", ""),
     appUsername = eql("appUsername", sshUsername),
-    sshPassword = strVar("sshPassword", ""),
+    sshPassword = dynamic(new Function<SessionContext, String>() {
+        public String apply(SessionContext ctx) {
+            return global.getProperty(ctx.var(sessionHostname) + ".password");
+        }
+    }),
     stage = strVar("stage", "Stage to deploy to"),
     repositoryURI = strVar("repository", "Project VCS URI"),
     vcsType = enumConstant("vcsType", "Your VCS type", "svn"),
-    vcsUserName = eql("vcsUserName", sshUsername),
+    vcsUsername = eql("vcsUserName", sshUsername),
     vcsPassword = eql("vcsPassword", sshPassword),
     sessionHostname = strVar("", "internal variable containing the name of the current session"),
 
@@ -118,7 +126,7 @@ public class CapConstants {
         }
     }).memoize(true),
 
-     getPreviousReleasePath = strVar("getPreviousReleasePath", "").setDynamic(new Function<SessionContext, String>() {
+    getPreviousReleasePath = strVar("getPreviousReleasePath", "").setDynamic(new Function<SessionContext, String>() {
         public String apply(SessionContext ctx) {
             final Releases r = ctx.var(getReleases);
 
@@ -128,7 +136,7 @@ public class CapConstants {
         }
     }).memoize(true),
 
-     getCurrentRevision = strVar("getCurrentRevision", "").setDynamic(new Function<SessionContext, String>() {
+   getCurrentRevision = strVar("getCurrentRevision", "").setDynamic(new Function<SessionContext, String>() {
         public String apply(SessionContext ctx) {
             return ctx.system.readString(ctx.joinPath(currentPath, "REVISION"), null);
         }
@@ -197,6 +205,15 @@ public class CapConstants {
         }
     });
 
+    public final DynamicVariable<File>
+        scriptsDir = newVar(new File(".cap")),
+        settingsFile = dynamic(new Function<SessionContext, File>() {
+            public File apply(SessionContext ctx) {
+                return new File(ctx.var(scriptsDir), "settings.properties");
+            }
+        })
+    ;
+
     public static final DynamicVariable<BaseStrategy> newStrategy = dynamicNotSet("strategy", "Deployment strategy: how app files copied and built");
 
     public static <T> DynamicVariable<T> dynamicNotSet(final String name, String desc) {
@@ -205,6 +222,14 @@ public class CapConstants {
                 throw new UnsupportedOperationException("you need to set the :" + name + " variable");
             }
         });
+    }
+
+    public static <T> DynamicVariable<T> newVar(T _default){
+        return new DynamicVariable<T>("").defaultTo(_default);
+    }
+
+    public static <T> DynamicVariable<T> dynamic(Function<SessionContext, T> function){
+        return dynamic(null, "", function);
     }
 
     public static <T> DynamicVariable<T> dynamic(String name, String desc){
@@ -225,6 +250,10 @@ public class CapConstants {
                 }
             }
         };
+    }
+
+    public static DynamicVariable<String> strVar() {
+        return new DynamicVariable<String>((String) null, "");
     }
 
     public static DynamicVariable<String> strVar(String name, String desc) {

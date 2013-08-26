@@ -35,7 +35,7 @@ public class CapSettings implements ICapSettings {
 
     @Override
     public GlobalContext configure(GlobalContextFactory factory) throws Exception{
-        final GlobalContext global = factory.getGlobalContext();
+        final GlobalContext global = factory.getGlobal();
 
         factory.globalVarsInitPhase = Ex5DeployWar1.newAtochaSettings(global.cap);
         factory.registerPluginsPhase = new GlobalContextFactory.RegisterPluginsPhase() {
@@ -63,15 +63,6 @@ public class CapSettings implements ICapSettings {
             .putS(cap.sshUsername, "ihseus")
             .putS(cap.vcsPassword, global.getProperty("svn.password"))
         ;
-
-        cap.sshPassword.setDynamic(new Function<SessionContext, String>() {
-            @Override
-            public String apply(SessionContext ctx) {
-                return global.getProperty(ctx.var(cap.sessionHostname) + ".password");
-            }
-        });
-
-
 
         tomcat.warName.setEqualTo(grails.warName);
 

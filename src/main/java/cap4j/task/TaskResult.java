@@ -1,5 +1,6 @@
 package cap4j.task;
 
+import cap4j.scm.CommandLineResult;
 import cap4j.session.Result;
 
 /**
@@ -8,6 +9,13 @@ import cap4j.session.Result;
 */
 public class TaskResult {
     Result result;
+    CommandLineResult cliResult;
+
+
+    public TaskResult(CommandLineResult cliResult) {
+        this.cliResult = cliResult;
+        this.result = cliResult.result;
+    }
 
     public TaskResult(Result result) {
         this.result = result;

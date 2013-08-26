@@ -17,27 +17,27 @@ public class GlobalContextFactory {
 
     public static GlobalContextFactory INSTANCE = new GlobalContextFactory();
 
-    private final GlobalContext globalContext = GlobalContext.getInstance();
-
+    private final GlobalContext global = GlobalContext.getInstance();
 
     public GlobalContextFactory() {
+        global.loadProperties(global.localCtx.var(global.cap.settingsFile));
     }
 
     public void init() {
         if(globalVarsInitPhase != null){
-            globalVarsInitPhase.setVars(globalContext.variables);
+            globalVarsInitPhase.setVars(global.variables);
         }
 
         if(registerPluginsPhase != null){
-            final List<Class<? extends Plugin>> list = registerPluginsPhase.registerPlugins(globalContext.variables);
+            final List<Class<? extends Plugin>> list = registerPluginsPhase.registerPlugins(global.variables);
 
             for (Class<? extends Plugin> aClass : list) {
                 try {
-                    final Plugin plugin = aClass.getConstructor(GlobalContext.class).newInstance(globalContext);
+                    final Plugin plugin = aClass.getConstructor(GlobalContext.class).newInstance(global);
                     Plugin.nameVars(plugin);
                     plugin.init();
 
-                    globalContext.pluginMap.put(aClass, plugin);
+                    global.pluginMap.put(aClass, plugin);
                 } catch (Exception e) {
                     throw Exceptions.runtime(e);
                 }
@@ -57,8 +57,8 @@ public class GlobalContextFactory {
     public RegisterPluginsPhase registerPluginsPhase;
 
     public GlobalContext configure(SystemEnvironments system){
-        configure(globalContext, system);
-        return globalContext;
+        configure(global, system);
+        return global;
     }
 
     protected  GlobalContext configure(GlobalContext gc, SystemEnvironments system){
@@ -66,7 +66,7 @@ public class GlobalContextFactory {
         return gc;
     }
 
-    public GlobalContext getGlobalContext() {
-        return globalContext;
+    public GlobalContext getGlobal() {
+        return global;
     }
 }

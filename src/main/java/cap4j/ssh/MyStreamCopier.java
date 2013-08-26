@@ -16,8 +16,6 @@
 package cap4j.ssh;
 
 import cap4j.session.Result;
-import net.schmizz.concurrent.Event;
-import net.schmizz.concurrent.ExceptionChainer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -30,16 +28,22 @@ import java.util.concurrent.Future;
 
 public class MyStreamCopier {
 
-    public interface Listener {
+    private long periodMs;
+    private int periodNano;
+    private volatile boolean finished;
 
-        void reportProgress(long transferred)
-                throws IOException;
+    public boolean isStdErr;
+    private long count;
+
+    public interface Listener {
+        void reportProgress(long transferred, byte[] buf, int read)
+                throws Exception;
 
     }
 
     private static final Listener NULL_LISTENER = new Listener() {
         @Override
-        public void reportProgress(long transferred) {
+        public void reportProgress(long transferred, byte[] buf, int read) {
         }
     };
 
@@ -50,13 +54,19 @@ public class MyStreamCopier {
 
     private Listener listener = NULL_LISTENER;
 
-    private int bufSize = 1;
+    private int bufSize = 1024;
     private boolean keepFlushing = true;
     private final long length = -1;
 
     public MyStreamCopier(InputStream in, OutputStream out) {
         this.in = in;
         this.out = out;
+    }
+
+    public MyStreamCopier(InputStream in, OutputStream out, boolean stdErr) {
+        this.in = in;
+        this.out = out;
+        isStdErr = stdErr;
     }
 
     public MyStreamCopier bufSize(int bufSize) {
@@ -83,45 +93,46 @@ public class MyStreamCopier {
     }
 
     public Future<Result> spawn(ExecutorService service) {
-        final Future<Result> submit = service.submit(new Callable<Result>() {
+        return service.submit(new Callable<Result>() {
             @Override
             public Result call() {
                 while (!stopFlag) {
                     try {
                         nonBlockingCopy();
+
+                        listener.reportProgress(count, null, -1);
+
+                        if(!(periodMs <= 0 && periodNano <=0)){
+                            Thread.sleep(periodMs, periodNano);
+                        }
                     } catch (Exception e) {
                         log.error("", e);
                         return Result.ERROR;
                     }
                 }
 
+                finished = true;
+
                 return Result.OK;
             }
         });
-
-        return submit;
     }
 
-    public long nonBlockingCopy()
-            throws IOException {
+    public long nonBlockingCopy() throws Exception {
         final byte[] buf = new byte[bufSize];
-        long count = 0;
-        int read = 0;
+        count = 0;
+        int read;
+        int avaliable;
 
-        final long startTime = System.currentTimeMillis();
-
-        while (in.available() > 0 && (read = in.read(buf)) != -1){
+        while ((avaliable = in.available()) > 0 && (read = in.read(buf, 0, Math.min(avaliable, buf.length))) != -1){
             if(read > 0){
                 count = write(buf, count, read);
             }
         }
 
-        if (!keepFlushing)
+        if (!keepFlushing){
             out.flush();
-
-//        final double timeSeconds = (System.currentTimeMillis() - startTime) / 1000.0;
-//        final double sizeKiB = count / 1024.0;
-//        log.debug("{} KiB transferred  in {} seconds ({} KiB/s)", new Object[] { sizeKiB, timeSeconds, (sizeKiB / timeSeconds) });
+        }
 
         if (length != -1 && read == -1)
             throw new IOException("Encountered EOF, could not transfer " + length + " bytes");
@@ -129,14 +140,34 @@ public class MyStreamCopier {
         return count;
     }
 
-    private long write(byte[] buf, long count, int read)
-            throws IOException {
+    private long write(byte[] buf, long count, int read) throws Exception {
         out.write(buf, 0, read);
         count += read;
         if (keepFlushing)
             out.flush();
-        listener.reportProgress(count);
+        listener.reportProgress(count, buf, read);
         return count;
     }
 
+
+    public InputStream getIn() {
+        return in;
+    }
+
+    public OutputStream getOut() {
+        return out;
+    }
+
+    public void setPeriodMs(long periodMs) {
+        this.periodMs = periodMs;
+    }
+
+    public void setPeriodNano(int periodNano) {
+        this.periodNano = periodNano;
+    }
+
+
+    public boolean isFinished() {
+        return finished;
+    }
 }

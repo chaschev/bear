@@ -30,6 +30,11 @@ public abstract class CommandLine<T extends CommandLineResult>{
         return this;
     }
 
+    public CommandLine addSplit(String s){
+        Collections.addAll(strings, s.split("\\s+"));
+        return this;
+    }
+
     public CommandLine p(Map<String, String> params) {
         for (Map.Entry<String, String> e : params.entrySet()) {
             strings.add(" --" + e.getKey() + "=" + e.getValue() + " ");
@@ -71,6 +76,16 @@ public abstract class CommandLine<T extends CommandLineResult>{
         return this;
     }
 
+    public CommandLine<T> redirectFrom(String path) {
+        strings.add(new VcsCLI.CommandLineOperator("<" + path));
+        return this;
+    }
+
+    public CommandLine<T> addRaw(String s) {
+        strings.add(new VcsCLI.CommandLineOperator(s));
+        return this;
+    }
+
     public CommandLine<T> stty() {
         strings.add(new VcsCLI.CommandLineOperator("stty -echo;"));
         return this;
@@ -85,6 +100,14 @@ public abstract class CommandLine<T extends CommandLineResult>{
         this.timeoutMs = timeoutMs;
 
         return this;
+    }
+
+    public CommandLine<T> timeoutSec(int timeoutSec) {
+        return timeoutMs(1000 * timeoutSec);
+    }
+
+    public CommandLine<T> timeoutMin(int timeoutMin) {
+        return timeoutSec(60 * timeoutMin);
     }
 
     public CommandLine<T> bash() {

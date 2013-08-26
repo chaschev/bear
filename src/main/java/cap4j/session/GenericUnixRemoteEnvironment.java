@@ -1,9 +1,12 @@
 package cap4j.session;
 
-import cap4j.core.CapConstants;
+import cap4j.core.AbstractConsole;
 import cap4j.core.GlobalContext;
-import cap4j.scm.*;
-import cap4j.ssh.MyStreamCopier;
+import cap4j.core.MarkedBuffer;
+import cap4j.scm.CommandLine;
+import cap4j.scm.CommandLineResult;
+import cap4j.scm.RemoteCommandLine;
+import cap4j.scm.VcsCLI;
 import com.google.common.collect.Lists;
 import net.schmizz.sshj.SSHClient;
 import net.schmizz.sshj.common.IOUtils;
@@ -14,18 +17,20 @@ import net.schmizz.sshj.xfer.FileSystemFile;
 import net.schmizz.sshj.xfer.scp.SCPFileTransfer;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.SystemUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.Collection;
 import java.util.List;
-import java.util.concurrent.*;
+import java.util.concurrent.Callable;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 /**
  * User: ACHASCHEV
@@ -34,6 +39,20 @@ import java.util.concurrent.*;
 public class GenericUnixRemoteEnvironment extends SystemEnvironment {
     private static final Logger logger = LoggerFactory.getLogger(GenericUnixRemoteEnvironment.class);
     private SshAddress sshAddress;
+
+    public static class RemoteConsole extends AbstractConsole{
+        Session.Command command;
+
+        public RemoteConsole(Session.Command command, Listener listener) {
+            super(listener);
+            this.command = command;
+
+            super.addInputStream(command.getInputStream());
+            super.addInputStream(command.getErrorStream(), true);
+            super.setOut(command.getOutputStream());
+        }
+
+    }
 
     @Override
     public List<String> ls(String path) {
@@ -104,8 +123,6 @@ public class GenericUnixRemoteEnvironment extends SystemEnvironment {
 //        final String[] s = new String[2];
         final int[] exitStatus = {0};
 
-        //todo REFACTOR THIS, OK
-
         final Result[] result = {Result.ERROR};
         final SshSession.WithSession withSession = new SshSession.WithSession() {
             @Override
@@ -136,60 +153,46 @@ public class GenericUnixRemoteEnvironment extends SystemEnvironment {
 
                 final Session.Command exec = session.exec(sb.toString());
 
-                final ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                RemoteConsole remoteConsole = (RemoteConsole) new RemoteConsole(exec, new AbstractConsole.Listener() {
+                    @Override
+                    public void textAdded(String textAdded, MarkedBuffer buffer) throws Exception{
+                        System.out.print(textAdded);
 
-                //todo we should also grab error output
+                        final String text = buffer.wholeText();
 
-                final MyStreamCopier copier = new MyStreamCopier(exec.getInputStream(), baos);
+                        if (inputCallback != null) {
+                            inputCallback.text = text;
+                            try {
+                                inputCallback.act(session, shell);
+                            } catch (Exception e) {
+                                logger.error("", e);
+                            }
+                        } else {
+                            if (text.contains("sudo") && text.contains("password")) {
+                                buffer.markStart();
 
-                final int[] myResponseStartsAt = {0};
-
-                final Future<Result> future = copier
-                    .bufSize(session.getRemoteMaxPacketSize())
-                    .listener(new MyStreamCopier.Listener() {
-                        @Override
-                        public void reportProgress(long transferred) throws IOException {
-                            System.out.printf("transferred: %d%n", transferred);
-                            final String text = baos.toString();
-                            System.out.println(text);
-                            if (inputCallback != null) {
-                                inputCallback.text = text;
-                                try {
-                                    inputCallback.act(session, shell);
-                                } catch (Exception e) {
-                                    logger.error("", e);
-                                }
-                            } else {
-                                if (text.contains("sudo") && text.contains("password")) {
-                                    myResponseStartsAt[0] = text.length();
-                                    System.out.println(text);
-                                    final OutputStream os = session.getOutputStream();
-                                    os.write((ctx().var(cap.sshPassword) + "\n").getBytes(IOUtils.UTF8));
-                                    os.flush();
-                                }
+                                final OutputStream os = session.getOutputStream();
+                                os.write((ctx().var(cap.sshPassword) + "\n").getBytes(IOUtils.UTF8));
+                                os.flush();
                             }
                         }
-                    })
+                    }
+                })
+                    .bufSize(session.getRemoteMaxPacketSize())
                     .spawn(global.localExecutor);
 
                 exec.join(getTimeout(line), TimeUnit.MILLISECONDS);
 
-                copier.stop();
-                future.cancel(true);
+                remoteConsole.stopStreamCopiers();
+                remoteConsole.awaitStreamCopiers(5, TimeUnit.MILLISECONDS);
 
                 exitStatus[0] = exec.getExitStatus();
 
                 if(exitStatus[0] == 0){
                     result[0] = Result.OK;
                 }
-//                try {
-//                    result = future.get(getTimeout(), TimeUnit.MILLISECONDS);
-//                } catch (Exception e) {
-//                    copier.stop();
-//                    future.cancel(true);
-//                }
 
-                text = baos.toString().substring(myResponseStartsAt[0]).trim();
+                text = remoteConsole.concatOutputs().toString().trim();
 
                 logger.info("response: {}", text);
 
@@ -373,11 +376,24 @@ public class GenericUnixRemoteEnvironment extends SystemEnvironment {
             sshFuture = global.localExecutor.submit(new Callable<SSHClient>() {
                 @Override
                 public SSHClient call() throws Exception {
-                    SSHClient ssh = new SSHClient();
-                    ssh.loadKnownHosts();
-                    ssh.connect(sshAddress.address);
-                    ssh.authPassword(sshAddress.username, sshAddress.password);
-                    return ssh;
+                    try {
+                        SSHClient ssh = new SSHClient();
+                        ssh.loadKnownHosts(new File(SystemUtils.getUserHome(), ".ssh/known_hosts"));
+                        ssh.connect(sshAddress.address);
+                        ssh.authPassword(sshAddress.username, sshAddress.password);
+                        return ssh;
+                    } catch (Exception e) {
+                        final String fingerprint = StringUtils.substringBetween(
+                            e.toString(), "fingerprint `", "`");
+
+                        SSHClient ssh = new SSHClient();
+
+                        ssh.loadKnownHosts(new File(SystemUtils.getUserHome(), ".ssh/known_hosts"));
+                        ssh.addHostKeyVerifier(fingerprint);
+                        ssh.connect(sshAddress.address);
+                        ssh.authPassword(sshAddress.username, sshAddress.password);
+                        return ssh;
+                    }
                 }
             });
         }

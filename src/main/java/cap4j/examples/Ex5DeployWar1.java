@@ -36,7 +36,7 @@ public class Ex5DeployWar1 {
                 );
             }
         };
-        GlobalContextFactory.INSTANCE.globalVarsInitPhase = newAtochaSettings(GlobalContextFactory.INSTANCE.getGlobalContext().cap);
+        GlobalContextFactory.INSTANCE.globalVarsInitPhase = newAtochaSettings(GlobalContextFactory.INSTANCE.getGlobal().cap);
         GlobalContextFactory.INSTANCE.init();
 
         final GlobalContext global = GlobalContext.getInstance();
@@ -54,7 +54,7 @@ public class Ex5DeployWar1 {
 
         final Stage pacDev = new Stage("pac-dev", getInstance())
 //            .add(newUnixRemote("server1", "chaschev", "1", "192.168.25.66"))
-            .add(newUnixRemote("server1", "192.168.25.66", global))
+            .add(newUnixRemote("server1", "vm02", global))
             ;
 
         CapConstants.newStrategy.setDynamic(new Function<SessionContext, BaseStrategy>() {
@@ -101,7 +101,7 @@ public class Ex5DeployWar1 {
                     .putB(cap.productionDeployment, false)
                     .putB(cap.speedUpBuild, true)
                     .putS(cap.vcsType, "svn")
-                    .putS(cap.repositoryURI, "svn+ssh://dev.afoundria.com/var/svn/repos/atocha")
+                    .putS(cap.repositoryURI, "svn://vm02/svnrepos/atocha")
                     .putS(cap.appUsername, "tomcat")
                 ;
             }
