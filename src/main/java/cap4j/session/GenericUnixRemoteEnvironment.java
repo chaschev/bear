@@ -16,6 +16,7 @@ import net.schmizz.sshj.transport.TransportException;
 import net.schmizz.sshj.xfer.FileSystemFile;
 import net.schmizz.sshj.xfer.scp.SCPFileTransfer;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.SystemUtils;
 import org.slf4j.Logger;
@@ -353,14 +354,6 @@ public class GenericUnixRemoteEnvironment extends SystemEnvironment {
         return run(newCommandLine().cd(dir).a("rm").a("-r").a(paths)).result;
     }
 
-    public static class MySession{
-        Session session;
-
-        public MySession(Session session) {
-            this.session = session;
-        }
-    }
-
     public static class SshSession {
         private SSHClient ssh;
         private Future<SSHClient> sshFuture;
@@ -468,6 +461,27 @@ public class GenericUnixRemoteEnvironment extends SystemEnvironment {
             sshAddress.username = ctx.var(cap.sshUsername);
             sshAddress.password = ctx.var(cap.sshPassword);
             sshSession = new SshSession(sshAddress, global);
+        }
+    }
+
+    @Override
+    public Result download(List<String> paths, DownloadMethod method, File destParentDir) {
+        logger.info("downloading {} files to {} from {}", paths.size(),
+            destParentDir.getAbsolutePath(), name);
+
+        final SCPFileTransfer transfer = sshSession.getSsh().newSCPFileTransfer();
+
+        try {
+            for (String path : paths) {
+                final File destFile = new File(destParentDir, FilenameUtils.getName(path));
+
+                logger.info("transferring {} to {}", path, destFile.getAbsolutePath());
+                transfer.download(path, new FileSystemFile(destFile));
+            }
+
+            return Result.OK;
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         }
     }
 

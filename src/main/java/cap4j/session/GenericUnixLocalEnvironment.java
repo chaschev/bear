@@ -1,6 +1,5 @@
 package cap4j.session;
 
-import cap4j.core.CapConstants;
 import cap4j.core.GlobalContext;
 import cap4j.scm.CommandLine;
 import cap4j.scm.CommandLineResult;
@@ -119,6 +118,11 @@ public class GenericUnixLocalEnvironment extends SystemEnvironment {
     @Override
     public <T extends CommandLineResult> CommandLine<T> newCommandLine(Class<T> aClass) {
         return new LocalCommandLine<T>();
+    }
+
+    @Override
+    public Result download(List<String> paths, DownloadMethod method, File destParentDir) {
+        return Result.OK;
     }
 
     public static class ProcessRunner<T extends CommandLineResult> {

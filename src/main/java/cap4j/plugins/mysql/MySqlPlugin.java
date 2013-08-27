@@ -1,5 +1,6 @@
 package cap4j.plugins.mysql;
 
+import cap4j.core.CapConstants;
 import cap4j.core.GlobalContext;
 import cap4j.core.SessionContext;
 import cap4j.plugins.Plugin;
@@ -13,6 +14,7 @@ import com.google.common.base.Function;
 import net.schmizz.sshj.common.IOUtils;
 import net.schmizz.sshj.connection.channel.direct.Session;
 import org.apache.commons.lang3.StringUtils;
+import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -21,9 +23,7 @@ import java.text.MessageFormat;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static cap4j.core.CapConstants.dynamic;
-import static cap4j.core.CapConstants.newVar;
-import static cap4j.core.CapConstants.strVar;
+import static cap4j.core.CapConstants.*;
 
 /**
 * User: achaschev
@@ -114,14 +114,14 @@ public class MySqlPlugin extends Plugin {
     }
 
 
-    public Task getUsers = new Task() {
+    public final Task getUsers = new Task() {
         @Override
         protected TaskResult run(TaskRunner runner) {
             return new TaskResult(runScript(runner, "SELECT User FROM mysql.user;"));
         }
     };
 
-    public Task runScript = new Task() {
+    public final Task runScript = new Task() {
         @Override
         protected TaskResult run(TaskRunner runner) {
             final String s = Question.freeQuestion("Enter sql to execute: ");
@@ -129,6 +129,52 @@ public class MySqlPlugin extends Plugin {
             return new TaskResult(runScript(runner, s));
         }
     };
+
+    public final Task createDump = new Task("create dump") {
+        @Override
+        protected TaskResult run(TaskRunner runner) {
+            Question.freeQuestionWithOption("Enter a filename", ctx.var(dumpName), dumpName);
+
+            system.mkdirs(ctx.var(dumpsDirPath));
+
+            system.run(system.newCommandLine()
+                .stty()
+                .addSplit(String.format("mysqldump --user=%s -p %s", ctx.var(user), ctx.var(dbName)))
+                .pipe()
+                .addSplit("bzip2 --best")
+                .redirectTo(ctx.var(dumpPath))
+                , mysqlPasswordCallback(ctx.var(password)));
+
+            return new TaskResult(Result.OK);
+        }
+    };
+
+    public final Task createAndFetchDump = new Task("create & fetch a dump") {
+        @Override
+        protected TaskResult run(TaskRunner runner) {
+            runner.run(createDump);
+
+            system.download(ctx.var(dumpPath));
+
+            return new TaskResult(Result.OK);
+        }
+    };
+
+    public final Task restoreDump = new Task("create & fetch a dump") {
+        @Override
+        protected TaskResult run(TaskRunner runner) {
+            Question.freeQuestionWithOption("Enter a filepath", ctx.var(dumpName), dumpName);
+
+            final CommandLineResult r = system.run(system.newCommandLine()
+                .addSplit(String.format("bzcat %s", ctx.var(dumpPath)))
+                .pipe()
+                .addSplit(String.format("mysql --user=%s -p %s", ctx.var(user), ctx.var(dbName))),
+                mysqlPasswordCallback(ctx.var(password)));
+
+            return new TaskResult(r);
+        }
+    };
+
 
     public CommandLineResult runScript(TaskRunner runner, String sql) {
         return runScript(runner, sql, runner.ctx.var(user), runner.ctx.var(password));
@@ -140,9 +186,11 @@ public class MySqlPlugin extends Plugin {
         final SystemEnvironment sys = runner.ctx.system;
         sys.writeString(filePath, sql);
 
-        return sys.run(sys.newCommandLine().stty().a("mysql",
-            "-u", user, "-p"
-        ).redirectFrom(filePath), new GenericUnixRemoteEnvironment.SshSession.WithSession() {
+        return sys.run(sys.newCommandLine().stty().a("mysql", "-u", user, "-p").redirectFrom(filePath), mysqlPasswordCallback(pw));
+    }
+
+    private static GenericUnixRemoteEnvironment.SshSession.WithSession mysqlPasswordCallback(final String pw) {
+        return new GenericUnixRemoteEnvironment.SshSession.WithSession() {
             @Override
             public void act(Session session, Session.Shell shell) throws Exception {
                 if(text.contains("Enter password:")){
@@ -151,7 +199,7 @@ public class MySqlPlugin extends Plugin {
                     os.flush();
                 }
             }
-        });
+        };
     }
 
     public final DynamicVariable<String>
@@ -170,6 +218,19 @@ public class MySqlPlugin extends Plugin {
                 final GlobalContext global = ctx.getGlobal();
 
                 return ctx.system.joinPath(ctx.var(global.cap.sharedPath), ctx.var(mysqlTempScriptName));
+            }
+        }),
+        dumpName = dynamic(new Function<SessionContext, String>() {
+            @Override
+            public String apply(SessionContext ctx) {
+                return String.format("dump_%s_%s.GMT_%s.sql",
+                    ctx.var(cap.applicationName), CapConstants.RELEASE_FORMATTER.print(new DateTime()), ctx.var(cap.sessionHostname));
+            }
+        }),
+        dumpsDirPath = VariableUtils.joinPath(cap.sharedPath, "dumps"),
+        dumpPath = dynamic(new Function<SessionContext, String>() {
+            public String apply(SessionContext ctx) {
+                return ctx.system.joinPath(ctx.var(dumpsDirPath), ctx.var(dumpName) + ".bz2");
             }
         });
 

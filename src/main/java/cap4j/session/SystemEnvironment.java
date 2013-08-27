@@ -120,19 +120,19 @@ public abstract class SystemEnvironment {
 
     }
 
-
-    public static class CopyResult{
-
-    }
-    public static class MakeDirResult{
-
+    public static enum DownloadMethod{
+        SCP, SFTP
     }
 
-    public static class GetStringResult{
-
-        Result result;
-        String s;
+    public void download(String path){
+        download(Collections.singletonList(path), new File("."));
     }
+
+    public void download(List<String> paths, File destParentDir){
+        download(paths, DownloadMethod.SCP, destParentDir);
+    }
+
+    public abstract Result download(List<String> paths, DownloadMethod method, File destParentDir);
 
 
     public enum CopyCommandType{

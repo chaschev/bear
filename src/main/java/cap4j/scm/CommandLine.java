@@ -81,6 +81,11 @@ public abstract class CommandLine<T extends CommandLineResult>{
         return this;
     }
 
+    public CommandLine<T> redirectTo(String path) {
+        strings.add(new VcsCLI.CommandLineOperator(">" + path));
+        return this;
+    }
+
     public CommandLine<T> addRaw(String s) {
         strings.add(new VcsCLI.CommandLineOperator(s));
         return this;
@@ -118,5 +123,9 @@ public abstract class CommandLine<T extends CommandLineResult>{
     public CommandLine<T> setVar(String k, String v) {
         strings.add(new VcsCLI.CommandLineOperator("export " + k + "=" + v +"; "));
         return this;
+    }
+
+    public CommandLine pipe() {
+        return addRaw(" | ");
     }
 }

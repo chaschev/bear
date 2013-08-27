@@ -144,7 +144,7 @@ public class Ex6DeployWarViaCache1 {
             }
         });
 
-        global.localCtx.var(cap.getStage).runTask(tasks().setup);
+        global.localCtx.var(cap.getStage).runTask(mysql.createAndFetchDump);
 
         global.shutdown();
     }
