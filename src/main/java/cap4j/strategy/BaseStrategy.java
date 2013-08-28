@@ -158,7 +158,7 @@ public abstract class BaseStrategy {
         updateReleasesDirs();
 
         if(isCopyingZip()){
-            ctx.system.scpLocal(ctx.var(cap.releasePath), new File(deployZipPath));
+            ctx.system.upload(ctx.var(cap.releasePath), new File(deployZipPath));
         }
 
         step_30_copyFilesToHosts();

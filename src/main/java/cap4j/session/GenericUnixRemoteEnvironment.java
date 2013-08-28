@@ -1,6 +1,7 @@
 package cap4j.session;
 
 import cap4j.core.AbstractConsole;
+import cap4j.core.CapConstants;
 import cap4j.core.GlobalContext;
 import cap4j.core.MarkedBuffer;
 import cap4j.scm.CommandLine;
@@ -125,7 +126,7 @@ public class GenericUnixRemoteEnvironment extends SystemEnvironment {
         final int[] exitStatus = {0};
 
         final Result[] result = {Result.ERROR};
-        final SshSession.WithSession withSession = new SshSession.WithSession() {
+        final SshSession.WithSession withSession = new SshSession.WithSession(cap) {
             @Override
             public void act(final Session session, final Session.Shell shell) throws Exception {
                 StringBuilder sb = new StringBuilder(128);
@@ -221,17 +222,12 @@ public class GenericUnixRemoteEnvironment extends SystemEnvironment {
     }
 
     @Override
-    public <T extends CommandLineResult> T runVCS(CommandLine<T> stringResultCommandLine) {
-        throw new UnsupportedOperationException("todo GenericUnixRemoteEnvironment.runVCS");
-    }
-
-    @Override
     public Result sftp(String dest, String host, String path, String user, String pw) {
         throw new UnsupportedOperationException("todo GenericUnixRemoteEnvironment.sftp");
     }
 
     @Override
-    public Result scpLocal(String dest, File... files) {
+    public Result upload(String dest, File... files) {
         logger.info("uploading {} files to {}", files.length, dest);
 
         final SCPFileTransfer transfer = sshSession.getSsh().newSCPFileTransfer();
@@ -322,7 +318,7 @@ public class GenericUnixRemoteEnvironment extends SystemEnvironment {
         try {
             final File tempFile = File.createTempFile("cap4j", "upload");
             FileUtils.writeStringToFile(tempFile, s, IOUtils.UTF8.name());
-            scpLocal(path, tempFile);
+            upload(path, tempFile);
             tempFile.delete();
             return Result.OK;
         } catch (IOException e) {
@@ -351,7 +347,7 @@ public class GenericUnixRemoteEnvironment extends SystemEnvironment {
 
     @Override
     public Result rmCd(@Nonnull String dir, String... paths) {
-        return run(newCommandLine().cd(dir).a("rm").a("-r").a(paths)).result;
+        return run(newCommandLine().cd(dir).a("rm", "-rf").a(paths)).result;
     }
 
     public static class SshSession {
@@ -404,7 +400,18 @@ public class GenericUnixRemoteEnvironment extends SystemEnvironment {
         }
 
         public abstract static class WithSession{
+            public CapConstants cap;
             public String text;
+
+            protected WithSession(CapConstants cap) {
+                this.cap = cap;
+            }
+
+            protected WithSession(CapConstants cap, String text) {
+                this.cap = cap;
+                this.text = text;
+            }
+
             public abstract void act(Session session, Session.Shell shell) throws Exception;
         }
 

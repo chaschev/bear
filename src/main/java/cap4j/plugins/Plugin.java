@@ -4,6 +4,7 @@ import cap4j.core.CapConstants;
 import cap4j.core.GlobalContext;
 import cap4j.session.DynamicVariable;
 import com.chaschev.chutils.util.OpenBean2;
+import com.google.common.base.Preconditions;
 
 import java.lang.reflect.Field;
 
@@ -13,8 +14,8 @@ import java.lang.reflect.Field;
  */
 public class Plugin {
     public String name;
-    public CapConstants cap;
-    private GlobalContext global;
+    public final CapConstants cap;
+    protected GlobalContext global;
 
     public Plugin(GlobalContext global) {
         this.global = global;
@@ -33,6 +34,7 @@ public class Plugin {
                 }
 
                 final DynamicVariable var = (DynamicVariable) field.get(obj);
+                Preconditions.checkNotNull(var, field.getName() +" is null!");
                 var.setName(className + "." + field.getName());
             }
         } catch (IllegalAccessException e) {

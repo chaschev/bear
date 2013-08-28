@@ -86,6 +86,11 @@ public abstract class CommandLine<T extends CommandLineResult>{
         return this;
     }
 
+    public CommandLine<T> addRaw(String format, String... args) {
+        strings.add(new VcsCLI.CommandLineOperator(String.format(format, args)));
+        return this;
+    }
+
     public CommandLine<T> addRaw(String s) {
         strings.add(new VcsCLI.CommandLineOperator(s));
         return this;

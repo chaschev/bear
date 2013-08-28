@@ -64,6 +64,7 @@ public class Ex6DeployWarViaCache1 {
             .putS(cap.vcsPassword, global.getProperty("svn.password"))
             .putS(cap.stage, "vms")
             .putS(mysql.dbName, "demodb")
+            .putS(java.javaLinuxDistributionName, "jdk-7u25-linux-x64.gz")
 //            .putS(vcsBranchName, "branches/rc3_r1201")
         ;
 
@@ -110,7 +111,7 @@ public class Ex6DeployWarViaCache1 {
 
                         line.timeoutMs(600 * 1000);
 
-                        ctx.system.run(line, vcsCLI.runCallback());
+                        ctx.system.run(line, vcsCLI.passwordCallback());
 
                         logger.info("done updating in {}", sw);
 
@@ -144,7 +145,7 @@ public class Ex6DeployWarViaCache1 {
             }
         });
 
-        global.localCtx.var(cap.getStage).runTask(mysql.createAndFetchDump);
+        global.localCtx.var(cap.getStage).runTask(java.setup);
 
         global.shutdown();
     }

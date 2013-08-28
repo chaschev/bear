@@ -99,7 +99,7 @@ public class CapConstants {
 
             line.timeoutMs(20000);
 
-            BranchInfoResult r = ctx.system.run(line, vcsCLI.runCallback());
+            BranchInfoResult r = ctx.system.run(line, vcsCLI.passwordCallback());
 
             return r.revision;
         }
@@ -161,9 +161,14 @@ public class CapConstants {
         speedUpBuild = and("speedUpBuild", not("", productionDeployment), not("", clean)),
         scmAuthCache = dynamicNotSet("scmAuthCache", ""),
         scmPreferPrompt = dynamicNotSet("scmPreferPrompt", ""),
-        isRemoteEnv = dynamic("isRemoteEnv", "", new Function<SessionContext, Boolean>() {
+        isRemoteEnv = dynamic(new Function<SessionContext, Boolean>() {
             public Boolean apply(SessionContext input) {
                 return input.system.isRemote();
+            }
+        }),
+        isNativeUnix = dynamic(new Function<SessionContext, Boolean>() {
+            public Boolean apply(SessionContext input) {
+                return input.system.isNativeUnix();
             }
         })
     ;
@@ -230,6 +235,10 @@ public class CapConstants {
 
     public static <T> DynamicVariable<T> dynamic(Function<SessionContext, T> function){
         return dynamic(null, "", function);
+    }
+
+    public static <T> DynamicVariable<T> dynamic(String desc){
+        return dynamic(null, desc);
     }
 
     public static <T> DynamicVariable<T> dynamic(String name, String desc){

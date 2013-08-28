@@ -9,7 +9,6 @@ import cap4j.session.*;
 import cap4j.task.Task;
 import cap4j.task.TaskResult;
 import cap4j.task.TaskRunner;
-import cap4j.task.Tasks;
 import com.google.common.base.Function;
 import net.schmizz.sshj.common.IOUtils;
 import net.schmizz.sshj.connection.channel.direct.Session;
@@ -33,56 +32,92 @@ import static cap4j.core.CapConstants.*;
 public class MySqlPlugin extends Plugin {
     private static final Logger logger = LoggerFactory.getLogger(MySqlPlugin.class);
 
-    Tasks tasks;
+    public final DynamicVariable<String>
+        version = strVar().setDesc("null means ANY").defaultTo(null),
+        adminUser = strVar().setDesc("admin user").defaultTo("root"),
+        adminPassword = strVar().setDesc("admin password").defaultTo("root"),
+        dbName = strVar().setDesc("database name"),
+        user = strVar().setDesc("default user for operations").setEqualTo(adminUser),
+        password = strVar().setDesc("pw").setEqualTo(adminPassword),
+        serverPackage = newVar("mysql55-server"),
+        clientPackage = newVar("mysql55"),
+        mysqlTempScriptName = strVar().defaultTo("temp.sql"),
+        mysqlTempScriptPath = dynamic(new Function<SessionContext, String>() {
+            @Override
+            public String apply(SessionContext ctx) {
+                return ctx.system.joinPath(ctx.var(cap.sharedPath), ctx.var(mysqlTempScriptName));
+            }
+        }),
+        dumpName = dynamic(new Function<SessionContext, String>() {
+            @Override
+            public String apply(SessionContext ctx) {
+                return String.format("dump_%s_%s.GMT_%s.sql",
+                    ctx.var(cap.applicationName), CapConstants.RELEASE_FORMATTER.print(new DateTime()), ctx.var(cap.sessionHostname));
+            }
+        }),
+        dumpsDirPath = VariableUtils.joinPath(cap.sharedPath, "dumps"),
+        dumpPath = dynamic(new Function<SessionContext, String>() {
+            public String apply(SessionContext ctx) {
+                return ctx.system.joinPath(ctx.var(dumpsDirPath), ctx.var(dumpName) + ".bz2");
+            }
+        });
+
+    public final DynamicVariable<Version> getVersion = dynamic(new Function<SessionContext, Version>() {
+        @Override
+        public Version apply(SessionContext ctx) {
+            return Version.fromString(ctx.var(version));
+        }
+    });
 
     public MySqlPlugin(GlobalContext global) {
         super(global);
-        this.tasks = global.tasks;
     }
 
-    public void init(){
-        tasks.setup.addBeforeTask(new Task("setup mysql") {
-            @Override
-            protected TaskResult run(TaskRunner runner) {
-                final Version version = computeRealClientVersion(system);
+    public final Task setup = new Task("setup mysql") {
+        @Override
+        protected TaskResult run(TaskRunner runner) {
+            final Version version = computeRealClientVersion(system);
 
-                final boolean installedVersionOk = version != null && ctx.var(getVersion).matches(version);
+            final boolean installedVersionOk = version != null && ctx.var(getVersion).matches(version);
 
-                Result r = Result.OK;
+            Result r = Result.OK;
 
-                if(!installedVersionOk){
-                    system.sudo().run(system.newCommandLine().sudo().addSplit("rpm -Uvh http://mirror.webtatic.com/yum/el6/latest.rpm"));
-                    r = system.getPackageManager().installPackage(new SystemEnvironment.PackageInfo(ctx.var(clientPackage))).result;
-                }
-
-                Version serverVersion = computeRealServerVersion(runner);
-
-                if(serverVersion == null){
-                    r = system.getPackageManager().installPackage(new SystemEnvironment.PackageInfo(ctx.var(serverPackage))).result;
-                }
-
-                system.sudo().run(system.newCommandLine().timeoutSec(30).sudo().addSplit("service mysqld start"));
-
-                system.sudo().run(system.newCommandLine().sudo().addSplit(MessageFormat.format("mysqladmin -u {0} password", ctx.var(MySqlPlugin.this.adminUser))).addRaw("'" + ctx.var(MySqlPlugin.this.adminPassword) + "'"));
-                system.sudo().run(system.newCommandLine().sudo().addSplit(MessageFormat.format("mysqladmin -u {0} -h {1} password",
-                    ctx.var(MySqlPlugin.this.adminUser), ctx.var(cap.sessionHostname))).addRaw("'" + ctx.var(MySqlPlugin.this.adminPassword) + "'"));
-
-                final String createDatabaseSql = MessageFormat.format(
-                    "CREATE DATABASE {0};\n" +
-                    "GRANT ALL PRIVILEGES ON {0}.* TO {1}@localhost IDENTIFIED BY '{2}';\n",
-                    ctx.var(MySqlPlugin.this.dbName),
-                    ctx.var(MySqlPlugin.this.user),
-                    ctx.var(MySqlPlugin.this.password)
-                    );
-
-                r = Result.and(r, runScript(runner, createDatabaseSql,
-                    ctx.var(MySqlPlugin.this.adminUser),
-                    ctx.var(MySqlPlugin.this.adminPassword)
-                ).result);
-
-                return new TaskResult(r);
+            if(!installedVersionOk){
+                system.sudo().run(system.newCommandLine().sudo().addSplit("rpm -Uvh http://mirror.webtatic.com/yum/el6/latest.rpm"));
+                r = system.getPackageManager().installPackage(new SystemEnvironment.PackageInfo(ctx.var(clientPackage))).result;
             }
-        });
+
+            Version serverVersion = computeRealServerVersion(runner);
+
+            if(serverVersion == null){
+                r = system.getPackageManager().installPackage(new SystemEnvironment.PackageInfo(ctx.var(serverPackage))).result;
+            }
+
+            system.sudo().run(system.newCommandLine().timeoutSec(30).sudo().addSplit("service mysqld start"));
+
+            system.sudo().run(system.newCommandLine().sudo().addSplit(MessageFormat.format("mysqladmin -u {0} password", ctx.var(MySqlPlugin.this.adminUser))).addRaw("'" + ctx.var(MySqlPlugin.this.adminPassword) + "'"));
+            system.sudo().run(system.newCommandLine().sudo().addSplit(MessageFormat.format("mysqladmin -u {0} -h {1} password",
+                ctx.var(MySqlPlugin.this.adminUser), ctx.var(cap.sessionHostname))).addRaw("'" + ctx.var(MySqlPlugin.this.adminPassword) + "'"));
+
+            final String createDatabaseSql = MessageFormat.format(
+                "CREATE DATABASE {0};\n" +
+                    "GRANT ALL PRIVILEGES ON {0}.* TO {1}@localhost IDENTIFIED BY '{2}';\n",
+                ctx.var(MySqlPlugin.this.dbName),
+                ctx.var(MySqlPlugin.this.user),
+                ctx.var(MySqlPlugin.this.password)
+            );
+
+            r = Result.and(r, runScript(runner, createDatabaseSql,
+                ctx.var(MySqlPlugin.this.adminUser),
+                ctx.var(MySqlPlugin.this.adminPassword)
+            ).result);
+
+            return new TaskResult(r);
+        }
+    };
+
+    public void init(){
+
     }
 
     private Version computeRealServerVersion(TaskRunner runner) {
@@ -190,7 +225,7 @@ public class MySqlPlugin extends Plugin {
     }
 
     private static GenericUnixRemoteEnvironment.SshSession.WithSession mysqlPasswordCallback(final String pw) {
-        return new GenericUnixRemoteEnvironment.SshSession.WithSession() {
+        return new GenericUnixRemoteEnvironment.SshSession.WithSession(null, pw) {
             @Override
             public void act(Session session, Session.Shell shell) throws Exception {
                 if(text.contains("Enter password:")){
@@ -202,43 +237,6 @@ public class MySqlPlugin extends Plugin {
         };
     }
 
-    public final DynamicVariable<String>
-        version = strVar().setDesc("null means ANY").defaultTo(null),
-        adminUser = strVar().setDesc("admin user").defaultTo("root"),
-        adminPassword = strVar().setDesc("admin password").defaultTo("root"),
-        dbName = strVar().setDesc("database name"),
-        user = strVar().setDesc("default user for operations").setEqualTo(adminUser),
-        password = strVar().setDesc("pw").setEqualTo(adminPassword),
-        serverPackage = newVar("mysql55-server"),
-        clientPackage = newVar("mysql55"),
-        mysqlTempScriptName = strVar().defaultTo("temp.sql"),
-        mysqlTempScriptPath = dynamic(new Function<SessionContext, String>() {
-            @Override
-            public String apply(SessionContext ctx) {
-                final GlobalContext global = ctx.getGlobal();
 
-                return ctx.system.joinPath(ctx.var(global.cap.sharedPath), ctx.var(mysqlTempScriptName));
-            }
-        }),
-        dumpName = dynamic(new Function<SessionContext, String>() {
-            @Override
-            public String apply(SessionContext ctx) {
-                return String.format("dump_%s_%s.GMT_%s.sql",
-                    ctx.var(cap.applicationName), CapConstants.RELEASE_FORMATTER.print(new DateTime()), ctx.var(cap.sessionHostname));
-            }
-        }),
-        dumpsDirPath = VariableUtils.joinPath(cap.sharedPath, "dumps"),
-        dumpPath = dynamic(new Function<SessionContext, String>() {
-            public String apply(SessionContext ctx) {
-                return ctx.system.joinPath(ctx.var(dumpsDirPath), ctx.var(dumpName) + ".bz2");
-            }
-        });
-
-    public final DynamicVariable<Version> getVersion = dynamic(new Function<SessionContext, Version>() {
-        @Override
-        public Version apply(SessionContext ctx) {
-            return Version.fromString(ctx.var(version));
-        }
-    });
 
 }

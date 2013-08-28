@@ -77,7 +77,7 @@ public class VariableUtils {
     }
 
     public static <T> DynamicVariable<T> condition(final DynamicVariable<Boolean> condition, final DynamicVariable<T> trueVar, final DynamicVariable<T> falseVar){
-        return condition(condition, trueVar, falseVar);
+        return condition(null, condition, trueVar, falseVar);
     }
 
     public static <T> DynamicVariable<T> condition(String name, final DynamicVariable<Boolean> condition, final DynamicVariable<T> trueVar, final DynamicVariable<T> falseVar){

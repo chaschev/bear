@@ -103,6 +103,10 @@ public abstract class SystemEnvironment {
         throw new UnsupportedOperationException("todo");
     }
 
+    public CommandLine line(){
+        return newCommandLine();
+    }
+
     public CommandLine newCommandLine(){
         return newCommandLine(CommandLineResult.class);
     }
@@ -118,6 +122,10 @@ public abstract class SystemEnvironment {
 
     public void connect(){
 
+    }
+
+    public String capture(String s) {
+        return run(line().addRaw(s)).text;
     }
 
     public static enum DownloadMethod{
@@ -139,7 +147,11 @@ public abstract class SystemEnvironment {
         COPY, LINK, MOVE;
     }
 
-    public CommandLineResult run(VcsCLI.Script script){
+    public CommandLineResult run(VcsCLI.Script script) {
+        return run(script, null);
+    }
+
+    public CommandLineResult run(VcsCLI.Script script, GenericUnixRemoteEnvironment.SshSession.WithSession callback){
         StringBuilder sb = new StringBuilder(1024);
         Result r = Result.OK;
 
@@ -148,14 +160,14 @@ public abstract class SystemEnvironment {
                 line.cd = script.cd;
             }
 
-            final CommandLineResult result = run(line);
+            final CommandLineResult result = run(line, callback);
             sb.append(result.text);
             sb.append("\n");
 
-            if(result.result != Result.OK){
-                r = result.result;
-                break;
-            }
+//            if(result.result != Result.OK){
+//                r = result.result;
+//                break;
+//            }
         }
 
         return new CommandLineResult(sb.toString(), r);
@@ -166,10 +178,9 @@ public abstract class SystemEnvironment {
     }
 
     public abstract <T extends CommandLineResult> T run(CommandLine<T> commandLine, final GenericUnixRemoteEnvironment.SshSession.WithSession inputCallback) ;
-    public abstract <T extends CommandLineResult> T runVCS(CommandLine<T> stringResultCommandLine);
 
     public abstract Result sftp(String dest, String host, String path, String user, String pw);
-    public abstract Result scpLocal(String dest, File... files);
+    public abstract Result upload(String dest, File... files);
     public abstract Result mkdirs(String... dirs);
     protected abstract Result copyOperation(String src, String dest, CopyCommandType type, boolean folder, String owner);
     public abstract Result chown(String user, boolean recursive, String... dest);

@@ -107,7 +107,7 @@ public class CapSettings implements ICapSettings {
 
                         line.timeoutMs(600 * 1000);
 
-                        ctx.system.run(line, vcsCLI.runCallback());
+                        ctx.system.run(line, vcsCLI.passwordCallback());
 
                         logger.info("done updating in {}", sw);
 

@@ -79,14 +79,19 @@ public abstract class VcsCLI {
 
     public abstract String head();
 
-    public GenericUnixRemoteEnvironment.SshSession.WithSession runCallback() {
-        return new GenericUnixRemoteEnvironment.SshSession.WithSession() {
+    public GenericUnixRemoteEnvironment.SshSession.WithSession passwordCallback() {
+        return passwordCallback(null, ctx.var(cap.vcsPassword));
+    }
+
+    public static GenericUnixRemoteEnvironment.SshSession.WithSession passwordCallback(final String text, final String password) {
+        return new GenericUnixRemoteEnvironment.SshSession.WithSession(null, text) {
             @Override
             public void act(Session session, Session.Shell shell) throws Exception {
                 if(text.contains("password")){
-                    System.out.println(text);
+                    //todo fixme: this is called too many times
+//                    System.out.println(text);
                     final OutputStream os = session.getOutputStream();
-                    os.write((ctx.var(cap.vcsPassword) + "\n").getBytes(IOUtils.UTF8));
+                    os.write((password + "\n").getBytes(IOUtils.UTF8));
                     os.flush();
                 }
             }

@@ -266,17 +266,12 @@ public class GenericUnixLocalEnvironment extends SystemEnvironment {
     }
 
     @Override
-    public <T extends CommandLineResult> T runVCS(CommandLine<T> stringResultCommandLine) {
-        throw new UnsupportedOperationException("todo GenericUnixLocalEnvironment.runVCS");
-    }
-
-    @Override
     public Result sftp(String dest, String host, String path, String user, String pw) {
         throw new UnsupportedOperationException("todo GenericUnixLocalEnvironment.sftp");
     }
 
     @Override
-    public Result scpLocal(String dest, File... files) {
+    public Result upload(String dest, File... files) {
         throw new UnsupportedOperationException("todo GenericUnixLocalEnvironment.scpLocal");
     }
 

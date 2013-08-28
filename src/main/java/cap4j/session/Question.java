@@ -50,7 +50,7 @@ public class Question {
                         newValue = options.get(0);
                         System.out.printf("there is only one option, setting to '%s'%n", newValue);
                     }else{
-                        System.out.printf("%s [ENTER=%s]%n", question, options.get(0));
+                        System.out.printf("%s [ENTER=%s]: ", question, options.get(0));
 
                         String temp = br.readLine().trim();
 
@@ -116,8 +116,15 @@ public class Question {
     }
 
     public static String freeQuestionWithOption(String question, String _default, DynamicVariable<String> strVar) {
-        new Question(question, Lists.newArrayList(_default), strVar).ask();
+        new Question(question, Lists.newArrayList(_default), strVar)
+            .freeInputOption(true)
+            .ask();
 
         return strVar.defaultValue;
+    }
+
+    private Question freeInputOption(boolean b) {
+        freeInputOption = b;
+        return this;
     }
 }
