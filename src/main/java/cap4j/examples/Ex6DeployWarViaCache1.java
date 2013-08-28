@@ -58,13 +58,14 @@ public class Ex6DeployWarViaCache1 {
         final CapConstants cap = global.cap;
 
         vars
-            .putS(grails.homePath, "/opt/grails")
-            .putS(java.homePath, "/usr/java/jdk1.6.0_43")
+//            .putS(grails.homePath, "/opt/grails")
+//            .putS(java.homePath, "/usr/java/jdk1.6.0_43")
             .putS(cap.sshUsername, "andrey")
             .putS(cap.vcsPassword, global.getProperty("svn.password"))
             .putS(cap.stage, "vms")
             .putS(mysql.dbName, "demodb")
             .putS(java.javaLinuxDistributionName, "jdk-7u25-linux-x64.gz")
+            .putS(grails.version, "2.2.4")
 //            .putS(vcsBranchName, "branches/rc3_r1201")
         ;
 
@@ -145,7 +146,7 @@ public class Ex6DeployWarViaCache1 {
             }
         });
 
-        global.localCtx.var(cap.getStage).runTask(java.setup);
+        global.localCtx.var(cap.getStage).runTask(grails.setup);
 
         global.shutdown();
     }

@@ -5,6 +5,7 @@ import cap4j.plugins.Plugin;
 import cap4j.scm.VcsCLI;
 import cap4j.session.DynamicVariable;
 import cap4j.session.Result;
+import cap4j.session.SystemEnvironment;
 import cap4j.session.VariableUtils;
 import cap4j.task.Task;
 import cap4j.task.TaskResult;
@@ -12,6 +13,7 @@ import cap4j.task.TaskRunner;
 
 import java.io.File;
 
+import static cap4j.core.CapConstants.newVar;
 import static cap4j.core.CapConstants.strVar;
 
 /**
@@ -21,7 +23,7 @@ import static cap4j.core.CapConstants.strVar;
 public class JavaPlugin extends Plugin {
     public DynamicVariable<String>
 
-    homePath = strVar(null, ""),
+    homePath = newVar("/var/lib/java"),
 
     javaSharedDirPath,
     javaSharedBuildDirPath,
@@ -66,7 +68,7 @@ public class JavaPlugin extends Plugin {
                 .add(system.line().sudo().addRaw("chmod u+x,g+x,o+x /var/lib/java/bin/*"))
                 .add(system.line().sudo().addRaw("ln -s /var/lib/java/bin/java /usr/bin/java"))
                 .add(system.line().sudo().addRaw("ln -s /var/lib/java/bin/javac /usr/bin/javac")),
-                VcsCLI.passwordCallback(null, ctx.var(cap.sshPassword))
+                SystemEnvironment.passwordCallback(null, ctx.var(cap.sshPassword))
             );
 
             return new TaskResult(Result.OK);

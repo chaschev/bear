@@ -160,6 +160,10 @@ public class GenericUnixRemoteEnvironment extends SystemEnvironment {
                     public void textAdded(String textAdded, MarkedBuffer buffer) throws Exception{
                         System.out.print(textAdded);
 
+                        if(StringUtils.isBlank(textAdded)) {
+                            return;
+                        }
+
                         final String text = buffer.wholeText();
 
                         if (inputCallback != null) {

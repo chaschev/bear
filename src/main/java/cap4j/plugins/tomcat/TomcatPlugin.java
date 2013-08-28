@@ -1,6 +1,5 @@
 package cap4j.plugins.tomcat;
 
-import cap4j.core.CapConstants;
 import cap4j.core.GlobalContext;
 import cap4j.core.SessionContext;
 import cap4j.plugins.Plugin;
@@ -14,9 +13,7 @@ import cap4j.task.Tasks;
 import com.google.common.base.Function;
 import org.apache.commons.io.FilenameUtils;
 
-import static cap4j.core.CapConstants.dynamic;
-import static cap4j.core.CapConstants.dynamicNotSet;
-import static cap4j.core.CapConstants.strVar;
+import static cap4j.core.CapConstants.*;
 
 /**
 * User: achaschev
@@ -61,7 +58,7 @@ public class TomcatPlugin extends Plugin {
         warPath = VariableUtils.joinPath("warPath", webapps, warName)
             ;
 
-    public final DynamicVariable<String[]> warCacheDirs = dynamic("warCacheDirs", "", new Function<SessionContext, String[]>() {
+    public final DynamicVariable<String[]> warCacheDirs = dynamic(new Function<SessionContext, String[]>() {
         public String[] apply(SessionContext ctx) {
             final String name = FilenameUtils.getBaseName(ctx.var(warName));
             return new String[]{

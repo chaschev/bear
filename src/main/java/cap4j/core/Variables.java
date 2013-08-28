@@ -1,6 +1,7 @@
 package cap4j.core;
 
 import cap4j.session.DynamicVariable;
+import com.chaschev.chutils.util.Exceptions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -101,7 +102,7 @@ public class Variables {
             try{
                 temp = var.apply(context);
             }catch (Exception e){
-                temp = null;
+                throw Exceptions.runtime(e);
             }
 
             if(temp == null){

@@ -4,10 +4,8 @@ import cap4j.core.CapConstants;
 import cap4j.core.GlobalContext;
 import cap4j.core.SessionContext;
 import cap4j.session.GenericUnixRemoteEnvironment;
-import net.schmizz.sshj.common.IOUtils;
-import net.schmizz.sshj.connection.channel.direct.Session;
+import cap4j.session.SystemEnvironment;
 
-import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -80,22 +78,7 @@ public abstract class VcsCLI {
     public abstract String head();
 
     public GenericUnixRemoteEnvironment.SshSession.WithSession passwordCallback() {
-        return passwordCallback(null, ctx.var(cap.vcsPassword));
-    }
-
-    public static GenericUnixRemoteEnvironment.SshSession.WithSession passwordCallback(final String text, final String password) {
-        return new GenericUnixRemoteEnvironment.SshSession.WithSession(null, text) {
-            @Override
-            public void act(Session session, Session.Shell shell) throws Exception {
-                if(text.contains("password")){
-                    //todo fixme: this is called too many times
-//                    System.out.println(text);
-                    final OutputStream os = session.getOutputStream();
-                    os.write((password + "\n").getBytes(IOUtils.UTF8));
-                    os.flush();
-                }
-            }
-        };
+        return SystemEnvironment.passwordCallback(null, ctx.var(cap.vcsPassword));
     }
 
     public CommandLine<SvnVcsCLI.LsResult> ls(String path){

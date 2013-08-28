@@ -17,7 +17,6 @@ import org.joda.time.DateTimeZone;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
 
-import javax.annotation.Nullable;
 import java.io.File;
 import java.util.Arrays;
 import java.util.Collections;
@@ -174,7 +173,7 @@ public class CapConstants {
     ;
 
     public static final DynamicVariable<Integer>
-        keepXReleases = CapConstants.<Integer>dynamic("keepXReleases", "").defaultTo(8);
+        keepXReleases = newVar(5);
 
     public final DynamicVariable<Releases> getReleases = new DynamicVariable<Releases>("getReleases", "").setDynamic(new Function<SessionContext, Releases>() {
         public Releases apply(SessionContext ctx) {
@@ -221,10 +220,14 @@ public class CapConstants {
 
     public static final DynamicVariable<BaseStrategy> newStrategy = dynamicNotSet("strategy", "Deployment strategy: how app files copied and built");
 
+    public static <T> DynamicVariable<T> dynamicNotSet(String desc) {
+        return dynamicNotSet(null, desc);
+    }
+
     public static <T> DynamicVariable<T> dynamicNotSet(final String name, String desc) {
         return dynamic(name, desc, new Function<SessionContext, T>() {
-            public T apply(@Nullable SessionContext input) {
-                throw new UnsupportedOperationException("you need to set the :" + name + " variable");
+            public T apply(SessionContext ctx) {
+                throw new UnsupportedOperationException("you need to set the :!todo-link-function-to-var-to-get-it's-name!");
             }
         });
     }
@@ -241,8 +244,12 @@ public class CapConstants {
         return dynamic(null, desc);
     }
 
-    public static <T> DynamicVariable<T> dynamic(String name, String desc){
+    static <T> DynamicVariable<T> dynamic(String name, String desc){
         return new DynamicVariable<T>(name, desc);
+    }
+
+    public static <T> DynamicVariable<T> dynamic(String desc, Function<SessionContext, T> function) {
+        return new DynamicVariable<T>((String)null, desc).setDynamic(function);
     }
 
     public static <T> DynamicVariable<T> dynamic(String name, String desc, Function<SessionContext, T> function) {

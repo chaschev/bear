@@ -10,6 +10,7 @@ features:
 - configure variables from ENV
 - (ok) add running from scripts
 - dependencies
+- verify installation by checking version installed
 - installation
 - interactive mode
 - local console
@@ -21,6 +22,7 @@ features:
 - list available variables
 - events, listeners & notifications
 - check live status
+
 
 cap4j script:
 
