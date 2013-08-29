@@ -10,7 +10,6 @@ import cap4j.plugins.java.JavaPlugin;
 import cap4j.plugins.tomcat.TomcatPlugin;
 import cap4j.strategy.BaseStrategy;
 import cap4j.strategy.SymlinkEntry;
-import com.google.common.base.Function;
 import com.google.common.collect.Lists;
 
 import java.io.File;
@@ -57,8 +56,8 @@ public class Ex5DeployWar1 {
             .add(newUnixRemote("server1", "vm02", global))
             ;
 
-        CapConstants.newStrategy.setDynamic(new Function<SessionContext, BaseStrategy>() {
-            public BaseStrategy apply(SessionContext ctx) {
+        CapConstants.newStrategy.setDynamic(new VarFun<BaseStrategy>() {
+            public BaseStrategy apply() {
                 final BaseStrategy strategy = new BaseStrategy(ctx, global) {
                     @Override
                     protected List<File> step_20_prepareLocalFiles(SessionContext localCtx) {

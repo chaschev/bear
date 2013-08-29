@@ -1,7 +1,6 @@
 package cap4j.plugins.tomcat;
 
 import cap4j.core.GlobalContext;
-import cap4j.core.SessionContext;
 import cap4j.core.VarFun;
 import cap4j.plugins.ZippedToolPlugin;
 import cap4j.scm.CommandLineResult;
@@ -26,14 +25,14 @@ public class MavenPlugin extends ZippedToolPlugin {
         toolDistrName.defaultTo("apache-maven", true);
         distrFilename.setDynamic(new VarFun<String>() {
             @Override
-            public String apply(SessionContext ctx) {
+            public String apply() {
                 return concat(versionName, "-bin.tar.gz");
             }
         });
 
         distrWwwAddress.setDynamic(new VarFun<String>() {
             @Override
-            public String apply(SessionContext ctx) {
+            public String apply() {
                 return concat("http://apache-mirror.rbc.ru/pub/apache/maven/maven-3/", version,
                     "/binaries/apache-maven-", version, "-bin.tar.gz");
             }

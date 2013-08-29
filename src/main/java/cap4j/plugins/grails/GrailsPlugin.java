@@ -1,7 +1,7 @@
 package cap4j.plugins.grails;
 
 import cap4j.core.GlobalContext;
-import cap4j.core.SessionContext;
+import cap4j.core.VarFun;
 import cap4j.plugins.Plugin;
 import cap4j.plugins.java.JavaPlugin;
 import cap4j.scm.CommandLineResult;
@@ -12,7 +12,6 @@ import cap4j.session.VariableUtils;
 import cap4j.task.Task;
 import cap4j.task.TaskResult;
 import cap4j.task.TaskRunner;
-import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import org.apache.commons.lang3.StringUtils;
 
@@ -29,20 +28,20 @@ import static cap4j.session.VariableUtils.*;
 public class GrailsPlugin extends Plugin {
     public final DynamicVariable<String>
         homePath = newVar("/var/lib/grails").setDesc("Grails root dir"),
-        homeParentPath = dynamic(new Function<SessionContext, String>() {
-            public String apply(SessionContext ctx) {
+        homeParentPath = dynamic(new VarFun<String>() {
+            public String apply() {
                 return StringUtils.substringBeforeLast(ctx.var(homePath), "/");
             }
         }),
-        currentVersionPath = dynamic(new Function<SessionContext, String>() {
-            public String apply(SessionContext ctx) {
+        currentVersionPath = dynamic(new VarFun<String>() {
+            public String apply() {
                 return ctx.system.joinPath(ctx.var(homeParentPath), "grails-" + ctx.var(version));
             }
         }),
         grailsBin = joinPath(homePath, "bin"),
         projectPath = dynamicNotSet("Project root dir"),
-        grailsExecName = dynamic("grails or grails.bat", new Function<SessionContext, String>() {
-            public String apply(SessionContext ctx) {
+        grailsExecName = dynamic("grails or grails.bat", new VarFun<String>() {
+            public String apply() {
                 return "grails" + (ctx.system.isNativeUnix() ? "" : ".bat");
             }
         }),
@@ -54,13 +53,13 @@ public class GrailsPlugin extends Plugin {
         version = dynamicNotSet(""),
         myDirPath,
         buildPath,
-        distrFilename = dynamic(new Function<SessionContext, String>() {
-            public String apply(SessionContext ctx) {
+        distrFilename = dynamic(new VarFun<String>() {
+            public String apply() {
                 return "grails-" + ctx.var(version) + ".zip";
             }
         }),
-        distrWwwAddress = dynamic(new Function<SessionContext, String>() {
-            public String apply(SessionContext ctx) {
+        distrWwwAddress = dynamic(new VarFun<String>() {
+            public String apply() {
                 return MessageFormat.format("http://dist.springframework.org.s3.amazonaws.com/release/GRAILS/%s", ctx.var(distrFilename));
             }
         })
@@ -99,7 +98,7 @@ public class GrailsPlugin extends Plugin {
 
             System.out.println("verifying version...");
             final String installedVersion = StringUtils.substringAfter(
-                system.run(system.line().setVar("JAVA_HOME", ctx.var(global.getPlugin(JavaPlugin.class).homePath)).addRaw("grails --version")).text.trim(),
+                system.run(system.line().timeoutSec(20).setVar("JAVA_HOME", ctx.var(global.getPlugin(JavaPlugin.class).homePath)).addRaw("grails --version")).text.trim(),
                 "version: ");
 
             Preconditions.checkArgument(ctx.var(version).equals(installedVersion),

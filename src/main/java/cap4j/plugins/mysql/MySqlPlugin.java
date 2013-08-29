@@ -2,14 +2,13 @@ package cap4j.plugins.mysql;
 
 import cap4j.core.CapConstants;
 import cap4j.core.GlobalContext;
-import cap4j.core.SessionContext;
+import cap4j.core.VarFun;
 import cap4j.plugins.Plugin;
 import cap4j.scm.CommandLineResult;
 import cap4j.session.*;
 import cap4j.task.Task;
 import cap4j.task.TaskResult;
 import cap4j.task.TaskRunner;
-import com.google.common.base.Function;
 import net.schmizz.sshj.common.IOUtils;
 import net.schmizz.sshj.connection.channel.direct.Session;
 import org.apache.commons.lang3.StringUtils;
@@ -42,29 +41,29 @@ public class MySqlPlugin extends Plugin {
         serverPackage = newVar("mysql55-server"),
         clientPackage = newVar("mysql55"),
         mysqlTempScriptName = strVar().defaultTo("temp.sql"),
-        mysqlTempScriptPath = dynamic(new Function<SessionContext, String>() {
+        mysqlTempScriptPath = dynamic(new VarFun<String>() {
             @Override
-            public String apply(SessionContext ctx) {
+            public String apply() {
                 return ctx.system.joinPath(ctx.var(cap.sharedPath), ctx.var(mysqlTempScriptName));
             }
         }),
-        dumpName = dynamic(new Function<SessionContext, String>() {
+        dumpName = dynamic(new VarFun<String>() {
             @Override
-            public String apply(SessionContext ctx) {
+            public String apply() {
                 return String.format("dump_%s_%s.GMT_%s.sql",
                     ctx.var(cap.applicationName), CapConstants.RELEASE_FORMATTER.print(new DateTime()), ctx.var(cap.sessionHostname));
             }
         }),
         dumpsDirPath = VariableUtils.joinPath(cap.sharedPath, "dumps"),
-        dumpPath = dynamic(new Function<SessionContext, String>() {
-            public String apply(SessionContext ctx) {
+        dumpPath = dynamic(new VarFun<String>() {
+            public String apply() {
                 return ctx.system.joinPath(ctx.var(dumpsDirPath), ctx.var(dumpName) + ".bz2");
             }
         });
 
-    public final DynamicVariable<Version> getVersion = dynamic(new Function<SessionContext, Version>() {
+    public final DynamicVariable<Version> getVersion = dynamic(new VarFun<Version>() {
         @Override
-        public Version apply(SessionContext ctx) {
+        public Version apply() {
             return Version.fromString(ctx.var(version));
         }
     });

@@ -14,7 +14,6 @@ import cap4j.scm.CommandLine;
 import cap4j.scm.VcsCLI;
 import cap4j.strategy.BaseStrategy;
 import cap4j.strategy.SymlinkEntry;
-import com.google.common.base.Function;
 import com.google.common.collect.Lists;
 import org.apache.commons.lang3.time.StopWatch;
 import org.slf4j.Logger;
@@ -22,7 +21,8 @@ import org.slf4j.LoggerFactory;
 
 import java.util.List;
 
-import static cap4j.core.GlobalContext.*;
+import static cap4j.core.GlobalContext.getInstance;
+import static cap4j.core.GlobalContext.plugin;
 import static cap4j.session.GenericUnixRemoteEnvironment.newUnixRemote;
 
 /**
@@ -82,9 +82,8 @@ public class Ex6DeployWarViaCache1 {
                     .add(newUnixRemote("vm02", "vm02", global)))
         );
 
-        CapConstants.newStrategy.setDynamic(new Function<SessionContext, BaseStrategy>() {
-
-            public BaseStrategy apply(SessionContext ctx) {
+        CapConstants.newStrategy.setDynamic(new VarFun<BaseStrategy>() {
+            public BaseStrategy apply() {
 //                GrailsConf.projectWarPath.setEqualTo(
 //                    joinPath(vcsBranchLocalPath, GrailsConf.warName)
 //                );
@@ -107,9 +106,9 @@ public class Ex6DeployWarViaCache1 {
 
                         final CommandLine line;
 
-                        if(!ctx.system.exists(destPath)){
+                        if (!ctx.system.exists(destPath)) {
                             line = vcsCLI.checkout(ctx.var(cap.revision), destPath, VcsCLI.emptyParams());
-                        }else{
+                        } else {
                             line = vcsCLI.sync(ctx.var(cap.revision), destPath, VcsCLI.emptyParams());
                         }
 
@@ -130,7 +129,7 @@ public class Ex6DeployWarViaCache1 {
                             if (r.result.nok()) {
                                 throw new IllegalStateException("failed to build WAR");
                             }
-                        }else{
+                        } else {
                             logger.info("war exists and will be reused");
                         }
                     }
@@ -149,7 +148,7 @@ public class Ex6DeployWarViaCache1 {
             }
         });
 
-        global.localCtx.var(cap.getStage).runTask(maven.setup);
+        global.localCtx.var(cap.getStage).runTask(grails.setup);
 
         global.shutdown();
     }

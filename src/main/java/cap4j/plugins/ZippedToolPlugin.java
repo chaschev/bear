@@ -1,12 +1,11 @@
 package cap4j.plugins;
 
 import cap4j.core.GlobalContext;
-import cap4j.core.SessionContext;
+import cap4j.core.VarFun;
 import cap4j.plugins.java.JavaPlugin;
 import cap4j.scm.VcsCLI;
 import cap4j.session.DynamicVariable;
 import cap4j.task.Task;
-import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import org.apache.commons.lang3.StringUtils;
 
@@ -30,8 +29,8 @@ public class ZippedToolPlugin extends Plugin{
         versionName = concat(toolDistrName, "-", version).setDesc("i.e. apache-maven-3.0.5"),
         distrFilename = concat(versionName, ".tar.gz"),
         homePath = concat("/var/lib/", toolname).setDesc("Tool root dir"),
-        homeParentPath = dynamic(new Function<SessionContext, String>() {
-            public String apply(SessionContext ctx) {
+        homeParentPath = dynamic(new VarFun<String>() {
+            public String apply() {
                 return StringUtils.substringBeforeLast(ctx.var(homePath), "/");
             }
         }),

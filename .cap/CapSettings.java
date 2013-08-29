@@ -11,7 +11,6 @@ import cap4j.scm.CommandLine;
 import cap4j.scm.VcsCLI;
 import cap4j.strategy.BaseStrategy;
 import cap4j.strategy.SymlinkEntry;
-import com.google.common.base.Function;
 import com.google.common.collect.Lists;
 import org.apache.commons.lang3.time.StopWatch;
 import org.slf4j.Logger;
@@ -74,9 +73,9 @@ public class CapSettings implements ICapSettings {
                     .add(newUnixRemote("pac-test", "10.22.13.6", global)))
         );
 
-        CapConstants.newStrategy.setDynamic(new Function<SessionContext, BaseStrategy>() {
+        CapConstants.newStrategy.setDynamic(new VarFun<BaseStrategy>() {
 
-            public BaseStrategy apply(SessionContext ctx) {
+            public BaseStrategy apply() {
 //                GrailsConf.projectWarPath.setEqualTo(
 //                    joinPath(vcsBranchLocalPath, GrailsConf.warName)
 //                );

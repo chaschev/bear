@@ -7,7 +7,6 @@ import cap4j.scm.SvnVcsCLI;
 import cap4j.scm.VcsCLI;
 import cap4j.session.DynamicVariable;
 import cap4j.strategy.BaseStrategy;
-import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
 import com.google.common.collect.Iterables;
@@ -40,14 +39,14 @@ public class CapConstants {
 
     public final DynamicVariable<String>
 
-    applicationsPath = strVar("applicationsPath", "System apps folder").setDynamic(new Function<SessionContext, String>() {
-        public String apply(SessionContext ctx) {
+    applicationsPath = strVar("applicationsPath", "System apps folder").setDynamic(new VarFun<String>() {
+        public String apply() {
             return ctx.system.isNativeUnix() ? "/var/lib" : "c:";
         }
     }),
 
-    logsPath = strVar("applicationsPath", "System apps folder").setDynamic(new Function<SessionContext, String>() {
-        public String apply(SessionContext ctx) {
+    logsPath = strVar("applicationsPath", "System apps folder").setDynamic(new VarFun<String>() {
+        public String apply() {
             return ctx.system.isNativeUnix() ? "/var/log" : "c:";
         }
     }),
@@ -58,8 +57,8 @@ public class CapConstants {
     appLogsPath = joinPath("appLogsPath", logsPath, applicationName),
     sshUsername = strVar("sshUsername", ""),
     appUsername = eql("appUsername", sshUsername),
-    sshPassword = dynamic(new Function<SessionContext, String>() {
-        public String apply(SessionContext ctx) {
+    sshPassword = dynamic(new VarFun<String>() {
+        public String apply() {
             return global.getProperty(ctx.var(sessionHostname) + ".password");
         }
     }),
@@ -85,24 +84,24 @@ public class CapConstants {
 
     devEnvironment = enumConstant("devEnvironment", "Development environment", "dev", "test", "prod").defaultTo("prod"),
 
-    revision = strVar("revision", "Get head revision").setDynamic(new Function<SessionContext, String>() {
-        public String apply(SessionContext ctx) {
+    revision = strVar("revision", "Get head revision").setDynamic(new VarFun<String>() {
+        public String apply() {
             return vcs.apply(ctx).head();
         }
     }),
 
-   realRevision = strVar("realRevision", "Update revision from vcs").setDynamic(new Function<SessionContext, String>() {
-        public String apply(SessionContext ctx) {
-            final VcsCLI vcsCLI = ctx.var(vcs);
-            final CommandLine<BranchInfoResult> line = vcsCLI.queryRevision(ctx.var(revision), Collections.<String, String>emptyMap());
+   realRevision = strVar("realRevision", "Update revision from vcs").setDynamic(new VarFun<String>() {
+       public String apply() {
+           final VcsCLI vcsCLI = ctx.var(vcs);
+           final CommandLine<BranchInfoResult> line = vcsCLI.queryRevision(ctx.var(revision), Collections.<String, String>emptyMap());
 
-            line.timeoutMs(20000);
+           line.timeoutMs(20000);
 
-            BranchInfoResult r = ctx.system.run(line, vcsCLI.passwordCallback());
+           BranchInfoResult r = ctx.system.run(line, vcsCLI.passwordCallback());
 
-            return r.revision;
-        }
-    }),
+           return r.revision;
+       }
+   }),
 
     releasesPath = joinPath("releasesPath", deployTo, releasesDirName),
     currentPath = joinPath("currentPath", deployTo, currentDirName),
@@ -115,8 +114,8 @@ public class CapConstants {
     vcsBranchLocalPath = joinPath("vcsBranchLocalPath", vcsCheckoutPath, vcsBranchName),
     vcsBranchURI = joinPath("vcsProjectURI", repositoryURI, vcsBranchName),
 
-    getLatestReleasePath = strVar("getLatestReleasePath", "").setDynamic(new Function<SessionContext, String>() {
-        public String apply(SessionContext ctx) {
+    getLatestReleasePath = strVar("getLatestReleasePath", "").setDynamic(new VarFun<String>() {
+        public String apply() {
             final Releases r = ctx.var(getReleases);
 
             if (r.releases.isEmpty()) return null;
@@ -125,8 +124,8 @@ public class CapConstants {
         }
     }).memoize(true),
 
-    getPreviousReleasePath = strVar("getPreviousReleasePath", "").setDynamic(new Function<SessionContext, String>() {
-        public String apply(SessionContext ctx) {
+    getPreviousReleasePath = strVar("getPreviousReleasePath", "").setDynamic(new VarFun<String>() {
+        public String apply() {
             final Releases r = ctx.var(getReleases);
 
             if (r.releases.size() < 2) return null;
@@ -135,23 +134,23 @@ public class CapConstants {
         }
     }).memoize(true),
 
-   getCurrentRevision = strVar("getCurrentRevision", "").setDynamic(new Function<SessionContext, String>() {
-        public String apply(SessionContext ctx) {
-            return ctx.system.readString(ctx.joinPath(currentPath, "REVISION"), null);
-        }
-    }).memoize(true),
+   getCurrentRevision = strVar("getCurrentRevision", "").setDynamic(new VarFun<String>() {
+       public String apply() {
+           return ctx.system.readString(ctx.joinPath(currentPath, "REVISION"), null);
+       }
+   }).memoize(true),
 
-    getLatestReleaseRevision = strVar("getLatestReleaseRevision", "").setDynamic(new Function<SessionContext, String>() {
-        public String apply(SessionContext ctx) {
+    getLatestReleaseRevision = strVar("getLatestReleaseRevision", "").setDynamic(new VarFun<String>() {
+        public String apply() {
             return ctx.system.readString(ctx.joinPath(getLatestReleasePath, "REVISION"), null);
         }
     }).memoize(true),
 
-     getPreviousReleaseRevision = strVar("getPreviousReleaseRevision", "").setDynamic(new Function<SessionContext, String>() {
-        public String apply(SessionContext ctx) {
-            return ctx.system.readString(ctx.joinPath(getPreviousReleasePath, "REVISION"), null);
-        }
-    }).memoize(true);
+     getPreviousReleaseRevision = strVar("getPreviousReleaseRevision", "").setDynamic(new VarFun<String>() {
+         public String apply() {
+             return ctx.system.readString(ctx.joinPath(getPreviousReleasePath, "REVISION"), null);
+         }
+     }).memoize(true);
 
     public final DynamicVariable<Boolean>
         useSudo = bool("useSudo", "").defaultTo(true),
@@ -160,19 +159,19 @@ public class CapConstants {
         speedUpBuild = and("speedUpBuild", not("", productionDeployment), not("", clean)),
         scmAuthCache = dynamicNotSet("scmAuthCache", ""),
         scmPreferPrompt = dynamicNotSet("scmPreferPrompt", ""),
-        isRemoteEnv = dynamic(new Function<SessionContext, Boolean>() {
-            public Boolean apply(SessionContext c) {
-                return c.system.isRemote();
+        isRemoteEnv = dynamic(new VarFun<Boolean>() {
+            public Boolean apply() {
+                return ctx.system.isRemote();
             }
         }),
-        isNativeUnix = dynamic(new Function<SessionContext, Boolean>() {
-            public Boolean apply(SessionContext c) {
-                return c.system.isNativeUnix();
+        isNativeUnix = dynamic(new VarFun<Boolean>() {
+            public Boolean apply() {
+                return ctx.system.isNativeUnix();
             }
         }),
-        isUnix = dynamic(new Function<SessionContext, Boolean>() {
-            public Boolean apply(SessionContext c) {
-                return c.system.isUnix();
+        isUnix = dynamic(new VarFun<Boolean>() {
+            public Boolean apply() {
+                return ctx.system.isUnix();
             }
         })
     ;
@@ -180,15 +179,15 @@ public class CapConstants {
     public static final DynamicVariable<Integer>
         keepXReleases = newVar(5);
 
-    public final DynamicVariable<Releases> getReleases = new DynamicVariable<Releases>("getReleases", "").setDynamic(new Function<SessionContext, Releases>() {
-        public Releases apply(SessionContext ctx) {
+    public final DynamicVariable<Releases> getReleases = new DynamicVariable<Releases>("getReleases", "").setDynamic(new VarFun<Releases>() {
+        public Releases apply() {
             return new Releases(ctx.system.ls(ctx.var(releasesPath)));
         }
     });
 
     public final DynamicVariable<Stages> stages = new DynamicVariable<Stages>("stages", "List of stages. Stage is collection of servers with roles and auth defined for each of the server.");
-    public final DynamicVariable<Stage> getStage = dynamic("getStage", "", new Function<SessionContext, Stage>() {
-        public Stage apply(SessionContext ctx) {
+    public final DynamicVariable<Stage> getStage = dynamic("getStage", "", new VarFun<Stage>() {
+        public Stage apply() {
             final String stageName = ctx.var(CapConstants.this.stage);
             final Stage stage = Iterables.find(ctx.var(stages).stages, new Predicate<Stage>() {
                 public boolean apply(Stage s) {
@@ -202,8 +201,8 @@ public class CapConstants {
         }
     });
 
-    public final DynamicVariable<VcsCLI> vcs = new DynamicVariable<VcsCLI>("vcs", "VCS adapter").setDynamic(new Function<SessionContext, VcsCLI>() {
-        public VcsCLI apply(SessionContext ctx) {
+    public final DynamicVariable<VcsCLI> vcs = new DynamicVariable<VcsCLI>("vcs", "VCS adapter").setDynamic(new VarFun<VcsCLI>() {
+        public VcsCLI apply() {
             final String scm = ctx.var(vcsType);
 
             if ("svn".equals(scm)) {
@@ -216,8 +215,8 @@ public class CapConstants {
 
     public final DynamicVariable<File>
         scriptsDir = newVar(new File(".cap")),
-        settingsFile = dynamic(new Function<SessionContext, File>() {
-            public File apply(SessionContext ctx) {
+        settingsFile = dynamic(new VarFun<File>() {
+            public File apply() {
                 return new File(ctx.var(scriptsDir), "settings.properties");
             }
         })
@@ -231,7 +230,7 @@ public class CapConstants {
 
     public static <T> DynamicVariable<T> dynamicNotSet(final String name, String desc) {
         return dynamic(name, desc, new VarFun<T>() {
-            public T apply(SessionContext ctx) {
+            public T apply() {
                 throw new UnsupportedOperationException("you need to set the :" + var.name +"'s name!");
             }
         });
@@ -241,7 +240,7 @@ public class CapConstants {
         return new DynamicVariable<T>("").defaultTo(_default);
     }
 
-    public static <T> DynamicVariable<T> dynamic(Function<SessionContext, T> function){
+    public static <T> DynamicVariable<T> dynamic(VarFun<T> function){
         return dynamic(null, "", function);
     }
 
@@ -253,11 +252,11 @@ public class CapConstants {
         return new DynamicVariable<T>(name, desc);
     }
 
-    public static <T> DynamicVariable<T> dynamic(String desc, Function<SessionContext, T> function) {
+    public static <T> DynamicVariable<T> dynamic(String desc, VarFun<T> function) {
         return new DynamicVariable<T>((String)null, desc).setDynamic(function);
     }
 
-    public static <T> DynamicVariable<T> dynamic(String name, String desc, Function<SessionContext, T> function) {
+    public static <T> DynamicVariable<T> dynamic(String name, String desc, VarFun<T> function) {
         return new DynamicVariable<T>(name, desc).setDynamic(function);
     }
 

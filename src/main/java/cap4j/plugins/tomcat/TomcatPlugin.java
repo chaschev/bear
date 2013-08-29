@@ -1,7 +1,7 @@
 package cap4j.plugins.tomcat;
 
 import cap4j.core.GlobalContext;
-import cap4j.core.SessionContext;
+import cap4j.core.VarFun;
 import cap4j.plugins.Plugin;
 import cap4j.plugins.java.JavaPlugin;
 import cap4j.scm.CommandLineResult;
@@ -13,7 +13,6 @@ import cap4j.session.VariableUtils;
 import cap4j.task.Task;
 import cap4j.task.TaskResult;
 import cap4j.task.TaskRunner;
-import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -35,8 +34,8 @@ public class TomcatPlugin extends Plugin {
         versionName = concat("apache-tomcat-", version),
         distrFilename = concat("apache-tomcat-", version, ".tar.gz"),
         homePath = newVar("/var/lib/tomcat").setDesc("Tomcat root dir"),
-        homeParentPath = dynamic(new Function<SessionContext, String>() {
-            public String apply(SessionContext ctx) {
+        homeParentPath = dynamic(new VarFun<String>() {
+            public String apply() {
                 return StringUtils.substringBeforeLast(ctx.var(homePath), "/");
             }
         }),
@@ -60,8 +59,8 @@ public class TomcatPlugin extends Plugin {
         myDirPath,
         buildPath,
 
-        distrWwwAddress = dynamic(new Function<SessionContext, String>() {
-            public String apply(SessionContext ctx) {
+        distrWwwAddress = dynamic(new VarFun<String>() {
+            public String apply() {
                 return MessageFormat.format("http://apache-mirror.rbc.ru/pub/apache/tomcat/tomcat-7/v{0}/bin/apache-tomcat-{0}.tar.gz", ctx.var(version));
             }
         })
@@ -144,8 +143,8 @@ public class TomcatPlugin extends Plugin {
     };
 
 
-    public final DynamicVariable<String[]> warCacheDirs = dynamic(new Function<SessionContext, String[]>() {
-        public String[] apply(SessionContext ctx) {
+    public final DynamicVariable<String[]> warCacheDirs = dynamic(new VarFun<String[]>() {
+        public String[] apply() {
             final String name = FilenameUtils.getBaseName(ctx.var(warName));
             return new String[]{
                 ctx.system.joinPath(ctx.var(webapps), name)

@@ -2,18 +2,17 @@ package cap4j.core;
 
 import cap4j.session.DynamicVariable;
 import cap4j.session.VariableUtils;
-import com.google.common.base.Function;
 
 /**
  * User: chaschev
  * Date: 8/30/13
  */
-public abstract class VarFun <T> implements Function<SessionContext, T>{
+public abstract class VarFun <T> {
     protected DynamicVariable<T> var;
 
     protected SessionContext ctx;
 
-    public abstract T apply(SessionContext ctx);
+    public abstract T apply();
 
     protected String concat(Object... varsAndStrings){
         return VariableUtils.concat(ctx, varsAndStrings);
