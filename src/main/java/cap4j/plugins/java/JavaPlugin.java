@@ -68,7 +68,7 @@ public class JavaPlugin extends Plugin {
                 .add(system.line().sudo().addRaw("chmod u+x,g+x,o+x /var/lib/java/bin/*"))
                 .add(system.line().sudo().addRaw("ln -s /var/lib/java/bin/java /usr/bin/java"))
                 .add(system.line().sudo().addRaw("ln -s /var/lib/java/bin/javac /usr/bin/javac")),
-                SystemEnvironment.passwordCallback(null, ctx.var(cap.sshPassword))
+                SystemEnvironment.passwordCallback(ctx.var(cap.sshPassword))
             );
 
             return new TaskResult(Result.OK);

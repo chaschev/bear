@@ -6,6 +6,12 @@ utils:
 
 features:
 
+- (ok) jdk plugin
+- (ok) grails plugin
+- tomcat plugin
+- upstart plugin
+- play plugin
+- maven plugin
 - (ok) console: saving/loading user input - only in the very beginning
 - configure variables from ENV
 - (ok) add running from scripts
@@ -21,6 +27,7 @@ features:
 - validate variables (required variables)
 - list available variables
 - events, listeners & notifications
+- rewrite deployments in static groovy/java 8
 - check live status
 
 

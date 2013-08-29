@@ -52,6 +52,10 @@ public abstract class SystemEnvironment {
         return new Variables(environment.getName() + " vars", globalContext.variables);
     }
 
+    public static GenericUnixRemoteEnvironment.SshSession.WithSession passwordCallback(final String password) {
+        return passwordCallback(null, password);
+    }
+
     public static GenericUnixRemoteEnvironment.SshSession.WithSession passwordCallback(final String text, final String password) {
         return new GenericUnixRemoteEnvironment.SshSession.WithSession(null, text) {
             @Override

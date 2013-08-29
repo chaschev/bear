@@ -52,7 +52,7 @@ public class VariableUtils {
         });
     }
 
-    public static <T> DynamicVariable<Boolean> eql(String name, final DynamicVariable<T> var, final String to){
+    public static <T> DynamicVariable<Boolean> isEql(String name, final DynamicVariable<T> var, final String to){
         return dynamic(name, "", new Function<SessionContext, Boolean>() {
             public Boolean apply(final SessionContext ctx) {
                 final T v = ctx.var(var);
@@ -88,6 +88,10 @@ public class VariableUtils {
         });
     }
 
+    public static <T> DynamicVariable<T> eql(final DynamicVariable<T> var){
+        return eql(null, var);
+    }
+
     public static <T> DynamicVariable<T> eql(String name, final DynamicVariable<T> var){
         return dynamic(name, "", new Function<SessionContext, T>() {
             public T apply(final SessionContext ctx) {
@@ -120,5 +124,24 @@ public class VariableUtils {
         });
     }
 
+    public static DynamicVariable<String> concat(final Object... varsAndStrings){
+        return dynamic(new Function<SessionContext, String>() {
+            public String apply(final SessionContext ctx) {
+                StringBuilder sb = new StringBuilder(128);
 
+                for (Object obj : varsAndStrings) {
+                    if (obj instanceof CharSequence) {
+                        sb.append(obj);
+                    }else if (obj instanceof DynamicVariable) {
+                        DynamicVariable var = (DynamicVariable) obj;
+                        sb.append(ctx.var(var));
+                    }else{
+                        throw new IllegalStateException(obj + " of class " + obj.getClass().getSimpleName() + " is not supported");
+                    }
+                }
+
+                return sb.toString();
+            }
+        });
+    }
 }

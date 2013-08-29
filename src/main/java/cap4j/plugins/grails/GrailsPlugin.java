@@ -16,6 +16,8 @@ import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import org.apache.commons.lang3.StringUtils;
 
+import java.text.MessageFormat;
+
 import static cap4j.core.CapConstants.*;
 import static cap4j.session.VariableUtils.*;
 
@@ -50,31 +52,41 @@ public class GrailsPlugin extends Plugin {
         projectWarPath = joinPath(projectPath, warName),
         releaseWarPath = condition(cap.isRemoteEnv, joinPath(cap.releasePath, warName), projectWarPath),
         version = dynamicNotSet(""),
-        grailsSharedDirPath,
-        grailsSharedBuildPath
+        myDirPath,
+        buildPath,
+        distrFilename = dynamic(new Function<SessionContext, String>() {
+            public String apply(SessionContext ctx) {
+                return "grails-" + ctx.var(version) + ".zip";
+            }
+        }),
+        distrWwwAddress = dynamic(new Function<SessionContext, String>() {
+            public String apply(SessionContext ctx) {
+                return MessageFormat.format("http://dist.springframework.org.s3.amazonaws.com/release/GRAILS/%s", ctx.var(distrFilename));
+            }
+        })
     ;
 
     public final DynamicVariable<Boolean>
-        grailsClean = VariableUtils.eql("grailsClean", cap.clean).setDesc("clean project")
+        clean = VariableUtils.eql(cap.clean).setDesc("clean project before build")
     ;
 
     public final Task setup = new Task("setup grails") {
         @Override
         protected TaskResult run(TaskRunner runner) {
-            system.rm(ctx.var(grailsSharedBuildPath));
-            system.mkdirs(ctx.var(grailsSharedBuildPath));
+            system.rm(ctx.var(buildPath));
+            system.mkdirs(ctx.var(buildPath));
 
-            if(!system.exists(system.joinPath(ctx.var(grailsSharedDirPath), String.format("grails-%s.zip", ctx.var(version))))){
+            if(!system.exists(system.joinPath(ctx.var(myDirPath), ctx.var(distrFilename)))){
                 system.run(new VcsCLI.Script()
-                    .cd(ctx.var(grailsSharedBuildPath))
-                    .add(system.line().timeoutMin(60).addRaw("wget http://dist.springframework.org.s3.amazonaws.com/release/GRAILS/grails-%s.zip", ctx.var(version))));
+                    .cd(ctx.var(buildPath))
+                    .add(system.line().timeoutMin(60).addRaw(ctx.var(distrWwwAddress))));
             }
 
             final String homeParentPath = StringUtils.substringBeforeLast(ctx.var(homePath), "/");
 
             final CommandLineResult r = system.run(new VcsCLI.Script()
-                .cd(ctx.var(grailsSharedBuildPath))
-                .add(system.line().timeoutMin(1).addRaw("unzip ../grails-%s.zip", ctx.var(version)))
+                .cd(ctx.var(buildPath))
+                .add(system.line().timeoutMin(1).addRaw("unzip ../%s", ctx.var(distrFilename)))
                 .add(system.line().sudo().addRaw("rm -r %s", ctx.var(homePath)))
                 .add(system.line().sudo().addRaw("mv %s %s", ctx.var(currentVersionPath), homeParentPath))
                 .add(system.line().sudo().addRaw("ln -s %s %s", ctx.var(currentVersionPath), ctx.var(homePath)))
@@ -82,7 +94,7 @@ public class GrailsPlugin extends Plugin {
                 .add(system.line().sudo().addRaw("chmod u+x,g+x,o+x %s/bin/*", ctx.var(homePath)))
                 .add(system.line().sudo().addRaw("rm /usr/bin/grails"))
                 .add(system.line().sudo().addRaw("ln -s %s/bin/grails /usr/bin/grails", ctx.var(currentVersionPath))),
-                SystemEnvironment.passwordCallback(null, ctx.var(cap.sshPassword))
+                SystemEnvironment.passwordCallback(ctx.var(cap.sshPassword))
             );
 
             System.out.println("verifying version...");
@@ -102,8 +114,8 @@ public class GrailsPlugin extends Plugin {
     public GrailsPlugin(GlobalContext global) {
         super(global);
 
-        grailsSharedDirPath = VariableUtils.joinPath(cap.sharedPath, "grails");
-        grailsSharedBuildPath = VariableUtils.joinPath(grailsSharedDirPath, "build");
+        myDirPath = VariableUtils.joinPath(cap.sharedPath, "grails");
+        buildPath = VariableUtils.joinPath(myDirPath, "build");
     }
 
     //            projectPath,

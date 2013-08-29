@@ -78,7 +78,7 @@ public abstract class VcsCLI {
     public abstract String head();
 
     public GenericUnixRemoteEnvironment.SshSession.WithSession passwordCallback() {
-        return SystemEnvironment.passwordCallback(null, ctx.var(cap.vcsPassword));
+        return SystemEnvironment.passwordCallback(ctx.var(cap.vcsPassword));
     }
 
     public CommandLine<SvnVcsCLI.LsResult> ls(String path){

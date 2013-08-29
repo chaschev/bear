@@ -43,7 +43,7 @@ public class GrailsBuilder {
         final VcsCLI.Script script = new VcsCLI.Script()
             .cd(projectPath);
 
-        if (ctx.varB(grails.grailsClean)) {
+        if (ctx.varB(grails.clean)) {
             script
                 .add(newGrailsCommand(grailsExecPath).a("clean"));
         }

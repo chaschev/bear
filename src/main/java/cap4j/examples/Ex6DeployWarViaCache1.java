@@ -146,7 +146,7 @@ public class Ex6DeployWarViaCache1 {
             }
         });
 
-        global.localCtx.var(cap.getStage).runTask(grails.setup);
+        global.localCtx.var(cap.getStage).runTask(tomcat.setup);
 
         global.shutdown();
     }

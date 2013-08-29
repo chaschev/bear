@@ -161,13 +161,18 @@ public class CapConstants {
         scmAuthCache = dynamicNotSet("scmAuthCache", ""),
         scmPreferPrompt = dynamicNotSet("scmPreferPrompt", ""),
         isRemoteEnv = dynamic(new Function<SessionContext, Boolean>() {
-            public Boolean apply(SessionContext input) {
-                return input.system.isRemote();
+            public Boolean apply(SessionContext c) {
+                return c.system.isRemote();
             }
         }),
         isNativeUnix = dynamic(new Function<SessionContext, Boolean>() {
-            public Boolean apply(SessionContext input) {
-                return input.system.isNativeUnix();
+            public Boolean apply(SessionContext c) {
+                return c.system.isNativeUnix();
+            }
+        }),
+        isUnix = dynamic(new Function<SessionContext, Boolean>() {
+            public Boolean apply(SessionContext c) {
+                return c.system.isUnix();
             }
         })
     ;
