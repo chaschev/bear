@@ -8,6 +8,7 @@ import cap4j.plugins.grails.GrailsBuilder;
 import cap4j.plugins.grails.GrailsPlugin;
 import cap4j.plugins.java.JavaPlugin;
 import cap4j.plugins.mysql.MySqlPlugin;
+import cap4j.plugins.tomcat.MavenPlugin;
 import cap4j.plugins.tomcat.TomcatPlugin;
 import cap4j.scm.CommandLine;
 import cap4j.scm.VcsCLI;
@@ -39,7 +40,8 @@ public class Ex6DeployWarViaCache1 {
                     TomcatPlugin.class,
                     GrailsPlugin.class,
                     MySqlPlugin.class,
-                    JavaPlugin.class
+                    JavaPlugin.class,
+                    MavenPlugin.class
                 );
             }
         };
@@ -54,6 +56,7 @@ public class Ex6DeployWarViaCache1 {
         final JavaPlugin java = plugin(JavaPlugin.class);
         final TomcatPlugin tomcat = plugin(TomcatPlugin.class);
         final MySqlPlugin mysql = plugin(MySqlPlugin.class);
+        final MavenPlugin maven = plugin(MavenPlugin.class);
 
         final CapConstants cap = global.cap;
 
@@ -146,7 +149,7 @@ public class Ex6DeployWarViaCache1 {
             }
         });
 
-        global.localCtx.var(cap.getStage).runTask(tomcat.setup);
+        global.localCtx.var(cap.getStage).runTask(maven.setup);
 
         global.shutdown();
     }

@@ -2,6 +2,7 @@ package cap4j.session;
 
 import cap4j.core.SessionContext;
 import cap4j.core.Nameable;
+import cap4j.core.VarFun;
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import org.slf4j.Logger;
@@ -70,6 +71,10 @@ public class DynamicVariable<T> implements Nameable<T> {
                 return defaultValue;
             }
 
+            if (dynamicImplementation instanceof VarFun<?>) {
+                ((VarFun<?>) dynamicImplementation).setCtx(context);
+            }
+
             final T r = dynamicImplementation.apply(context);
 
             if(memoize){
@@ -108,8 +113,14 @@ public class DynamicVariable<T> implements Nameable<T> {
         return this;
     }
 
-    public DynamicVariable<T> setDynamic(Function<SessionContext, T> dynamicImplementation) {
-        this.dynamicImplementation = dynamicImplementation;
+    public DynamicVariable<T> setDynamic(Function<SessionContext, T> impl) {
+        this.dynamicImplementation = impl;
+
+        if (impl instanceof VarFun) {
+            VarFun<T> varFun = (VarFun<T>) impl;
+            varFun.setVar(this);
+        }
+
         defaultValue = null;
         return this;
     }

@@ -57,9 +57,8 @@ public class TomcatPlugin extends Plugin {
         catalinaHome = newVar("/usr/share/tomcat6"),
         catalinaExecutable = newVar("/usr/sbin/tomcat6"),
 
-            myDirPath,
-            buildPath,
-
+        myDirPath,
+        buildPath,
 
         distrWwwAddress = dynamic(new Function<SessionContext, String>() {
             public String apply(SessionContext ctx) {
@@ -138,12 +137,11 @@ public class TomcatPlugin extends Plugin {
             Preconditions.checkArgument(ctx.var(version).equals(installedVersion),
                 "versions don't match: %s (installed) vs %s (actual)", installedVersion, ctx.var(version));
 
-            System.out.printf("successfully installed Grails %s%n", ctx.var(version));
+            System.out.printf("successfully installed Tomcat %s%n", ctx.var(version));
 
             return new TaskResult(r);
         }
     };
-
 
 
     public final DynamicVariable<String[]> warCacheDirs = dynamic(new Function<SessionContext, String[]>() {

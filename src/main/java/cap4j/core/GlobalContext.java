@@ -6,6 +6,7 @@ import cap4j.session.GenericUnixLocalEnvironment;
 import cap4j.session.SystemEnvironment;
 import cap4j.task.Tasks;
 import com.chaschev.chutils.util.Exceptions;
+import com.google.common.base.Preconditions;
 import org.apache.commons.lang3.SystemUtils;
 
 import java.io.File;
@@ -98,7 +99,11 @@ public class GlobalContext {
     }
 
     public <T extends Plugin> T getPlugin(Class<T> pluginClass) {
-        return (T) pluginMap.get(pluginClass);
+        final T plugin = (T) pluginMap.get(pluginClass);
+
+        Preconditions.checkNotNull(plugin, "plugin " + pluginClass.getSimpleName() + " has not been loaded yet");
+
+        return plugin;
     }
 
     public static <T extends Plugin> T plugin(Class<T> pluginClass) {

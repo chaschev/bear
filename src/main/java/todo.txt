@@ -8,7 +8,8 @@ features:
 
 - (ok) jdk plugin
 - (ok) grails plugin
-- tomcat plugin
+- (ok) tomcat plugin
+- replace Functions with VarFunctions
 - upstart plugin
 - play plugin
 - maven plugin

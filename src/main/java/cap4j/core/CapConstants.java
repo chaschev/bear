@@ -230,9 +230,9 @@ public class CapConstants {
     }
 
     public static <T> DynamicVariable<T> dynamicNotSet(final String name, String desc) {
-        return dynamic(name, desc, new Function<SessionContext, T>() {
+        return dynamic(name, desc, new VarFun<T>() {
             public T apply(SessionContext ctx) {
-                throw new UnsupportedOperationException("you need to set the :!todo-link-function-to-var-to-get-it's-name!");
+                throw new UnsupportedOperationException("you need to set the :" + var.name +"'s name!");
             }
         });
     }
@@ -274,7 +274,11 @@ public class CapConstants {
     }
 
     public static DynamicVariable<String> strVar() {
-        return new DynamicVariable<String>((String) null, "");
+        return strVar("");
+    }
+
+    public static DynamicVariable<String> strVar(String desc) {
+        return new DynamicVariable<String>((String) null, desc);
     }
 
     public static DynamicVariable<String> strVar(String name, String desc) {
