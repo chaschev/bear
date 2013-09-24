@@ -55,10 +55,10 @@ public class MavenPlugin extends ZippedToolPlugin {
             shortCut("mvn", "mvn");
 
             final CommandLineResult r = system.run(extractToHomeScript,
-                SystemEnvironment.passwordCallback(ctx.var(cap.sshPassword))
+                SystemEnvironment.passwordCallback($.var(cap.sshPassword))
             );
 
-            verifyVersion();
+            verifyExecution();
 
             return new TaskResult(r);
         }
@@ -75,4 +75,10 @@ public class MavenPlugin extends ZippedToolPlugin {
             return "mvn --version";
         }
     };
+
+
+    @Override
+    public Task getSetup() {
+        return setup;
+    }
 }

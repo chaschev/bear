@@ -20,9 +20,9 @@ public class VariableUtils {
 
 
     public static DynamicVariable<String> joinPath(String name, final DynamicVariable<String> root, final String... folders){
-        return strVar(name, "").setDynamic(new VarFun<String>() {
+        return strVar("").setDynamic(new VarFun<String>() {
             public String apply() {
-                return ctx.system.joinPath(ctx.var(root), ctx.joinPath(folders));
+                return $.system.joinPath($.var(root), $.joinPath(folders));
             }
         });
     }
@@ -32,11 +32,11 @@ public class VariableUtils {
     }
 
     public static DynamicVariable<String> joinPath(String name,final DynamicVariable... folders){
-        return strVar(name, "").setDynamic(new VarFun<String>() {
+        return strVar("").setDynamic(new VarFun<String>() {
             public String apply() {
-                return ctx.system.joinPath(Iterables.transform(Arrays.asList(folders), new Function<DynamicVariable, String>() {
+                return $.system.joinPath(Iterables.transform(Arrays.asList(folders), new Function<DynamicVariable, String>() {
                     public String apply(DynamicVariable var) {
-                        return ctx.var((DynamicVariable<String>) var);
+                        return $.var((DynamicVariable<String>) var);
                     }
                 }));
             }
@@ -44,9 +44,9 @@ public class VariableUtils {
     }
 
     public static DynamicVariable<Boolean> not(String name, final DynamicVariable<Boolean> b){
-        return bool(name, "").setDynamic(new VarFun<Boolean>() {
+        return bool("").setDynamic(new VarFun<Boolean>() {
             public Boolean apply() {
-                return !ctx.varB(b);
+                return !$.varB(b);
             }
         });
     }
@@ -54,7 +54,7 @@ public class VariableUtils {
     public static <T> DynamicVariable<Boolean> isEql(String name, final DynamicVariable<T> variable, final String to){
         return dynamic(name, "", new VarFun<Boolean>() {
             public Boolean apply() {
-                final T v = ctx.var(variable);
+                final T v = $.var(variable);
                 return v == null ? to == v : String.valueOf(v).equals(to);
             }
         });
@@ -67,7 +67,7 @@ public class VariableUtils {
     public static <T> DynamicVariable<Boolean> isSet(String name, final DynamicVariable<T> variable){
         return dynamic(name, "", new VarFun<Boolean>() {
             public Boolean apply() {
-                final DynamicVariable<T> x = ctx.sessionVariables.getClosure(variable);
+                final DynamicVariable<T> x = $.sessionVariables.getClosure(variable);
 
                 return x != null && x.isSet();
 
@@ -82,7 +82,7 @@ public class VariableUtils {
     public static <T> DynamicVariable<T> condition(String name, final DynamicVariable<Boolean> condition, final DynamicVariable<T> trueVar, final DynamicVariable<T> falseVar){
         return dynamic(name, "", new VarFun<T>() {
             public T apply() {
-                return ctx.varB(condition) ? ctx.var(trueVar) : ctx.var(falseVar);
+                return $.varB(condition) ? $.var(trueVar) : $.var(falseVar);
             }
         });
     }
@@ -94,16 +94,16 @@ public class VariableUtils {
     public static <T> DynamicVariable<T> eql(String name, final DynamicVariable<T> var){
         return dynamic(name, "", new VarFun<T>() {
             public T apply() {
-                return ctx.var(var);
+                return $.var(var);
             }
         });
     }
 
-    public static DynamicVariable<Boolean> and(String name, final DynamicVariable... bools){
-        return bool(name, "").setDynamic(new VarFun<Boolean>() {
+    public static DynamicVariable<Boolean> and(final DynamicVariable... bools){
+        return bool("").setDynamic(new VarFun<Boolean>() {
             public Boolean apply() {
                 for (DynamicVariable b : bools) {
-                    if (!ctx.varB(b)) return false;
+                    if (!$.varB(b)) return false;
                 }
 
                 return true;
@@ -112,10 +112,10 @@ public class VariableUtils {
     }
 
     public static DynamicVariable<Boolean> or(String name, final DynamicVariable... bools){
-        return bool(name, "").setDynamic(new VarFun<Boolean>() {
+        return bool("").setDynamic(new VarFun<Boolean>() {
             public Boolean apply() {
                 for (DynamicVariable b : bools) {
-                    if (ctx.varB(b)) return true;
+                    if ($.varB(b)) return true;
                 }
 
                 return false;
@@ -126,12 +126,12 @@ public class VariableUtils {
     public static DynamicVariable<String> concat(final Object... varsAndStrings){
         return dynamic(new VarFun<String>() {
             public String apply() {
-                return VariableUtils.concat(ctx, varsAndStrings);
+                return VariableUtils.concat($, varsAndStrings);
             }
         });
     }
 
-    public static String concat(SessionContext ctx, Object... varsAndStrings) {
+    public static String concat(SessionContext $, Object... varsAndStrings) {
         StringBuilder sb = new StringBuilder(128);
 
         for (Object obj : varsAndStrings) {
@@ -139,7 +139,7 @@ public class VariableUtils {
                 sb.append(obj);
             }else if (obj instanceof DynamicVariable) {
                 DynamicVariable var = (DynamicVariable) obj;
-                sb.append(ctx.var(var));
+                sb.append($.var(var));
             }else{
                 throw new IllegalStateException(obj + " of class " + obj.getClass().getSimpleName() + " is not supported");
             }

@@ -10,20 +10,20 @@ import cap4j.session.VariableUtils;
 public abstract class VarFun <T> {
     protected DynamicVariable<T> var;
 
-    protected SessionContext ctx;
+    protected SessionContext $;
 
     public abstract T apply();
 
     protected String concat(Object... varsAndStrings){
-        return VariableUtils.concat(ctx, varsAndStrings);
+        return VariableUtils.concat($, varsAndStrings);
     }
 
     public void setVar(DynamicVariable<T> var) {
         this.var = var;
     }
 
-    public VarFun<T> setCtx(SessionContext ctx) {
-        this.ctx = ctx;
+    public VarFun<T> set$(SessionContext $) {
+        this.$ = $;
         return this;
     }
 }

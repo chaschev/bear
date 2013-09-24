@@ -84,7 +84,7 @@ public class CapSettings implements ICapSettings {
                     cap.vcsBranchLocalPath
                 );
 
-                final BaseStrategy strategy = new BaseStrategy(ctx, global) {
+                final BaseStrategy strategy = new BaseStrategy($, global) {
                     @Override
                     protected void step_40_updateRemoteFiles() {
                         logger.info("updating the project, please wait...");
@@ -92,30 +92,30 @@ public class CapSettings implements ICapSettings {
                         StopWatch sw = new StopWatch();
                         sw.start();
 
-                        final VcsCLI vcsCLI = ctx.var(cap.vcs);
+                        final VcsCLI vcsCLI = $.var(cap.vcs);
 
-                        final String destPath = ctx.var(cap.vcsBranchLocalPath);
+                        final String destPath = $.var(cap.vcsBranchLocalPath);
 
                         final CommandLine line;
 
-                        if(!ctx.system.exists(destPath)){
-                            line = vcsCLI.checkout(ctx.var(cap.revision), destPath, VcsCLI.emptyParams());
+                        if(!$.system.exists(destPath)){
+                            line = vcsCLI.checkout($.var(cap.revision), destPath, VcsCLI.emptyParams());
                         }else{
-                            line = vcsCLI.sync(ctx.var(cap.revision), destPath, VcsCLI.emptyParams());
+                            line = vcsCLI.sync($.var(cap.revision), destPath, VcsCLI.emptyParams());
                         }
 
                         line.timeoutMs(600 * 1000);
 
-                        ctx.system.run(line, vcsCLI.passwordCallback());
+                        $.system.run(line, vcsCLI.passwordCallback());
 
                         logger.info("done updating in {}", sw);
 
                         logger.info("building the project...");
 
-                        String warPath = ctx.var(grails.releaseWarPath);
+                        String warPath = $.var(grails.releaseWarPath);
 
-                        if (!ctx.system.exists(warPath) || !ctx.var(global.getPlugin(Atocha.class).reuseWar)) {
-                            final GrailsBuildResult r = new GrailsBuilder(ctx, global).build();
+                        if (!$.system.exists(warPath) || !$.var(global.getPlugin(Atocha.class).reuseWar)) {
+                            final GrailsBuildResult r = new GrailsBuilder($, global).build();
 
                             if (r.result.nok()) {
                                 throw new IllegalStateException("failed to build WAR");

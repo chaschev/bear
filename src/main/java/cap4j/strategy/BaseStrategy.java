@@ -40,7 +40,7 @@ public abstract class BaseStrategy {
     private static String deployZipPath;
     private final CapConstants cap;
 
-    protected SessionContext ctx;
+    protected SessionContext $;
 
     protected GlobalContext global;
 
@@ -49,8 +49,8 @@ public abstract class BaseStrategy {
      */
     protected SymlinkRules symlinkRules = new SymlinkRules();
 
-    protected BaseStrategy(SessionContext ctx, GlobalContext global) {
-        this.ctx = ctx;
+    protected BaseStrategy(SessionContext $, GlobalContext global) {
+        this.$ = $;
         this.global = global;
         this.cap = global.cap;
     }
@@ -158,21 +158,21 @@ public abstract class BaseStrategy {
         updateReleasesDirs();
 
         if(isCopyingZip()){
-            ctx.system.upload(ctx.var(cap.releasePath), new File(deployZipPath));
+            $.system.upload($.var(cap.releasePath), new File(deployZipPath));
         }
 
         step_30_copyFilesToHosts();
     }
 
     private void updateReleasesDirs() {
-        ctx.system.mkdirs(ctx.var(cap.releasePath));
-        int keepX = ctx.var(keepXReleases);
+        $.system.mkdirs($.var(cap.releasePath));
+        int keepX = $.var(keepXReleases);
 
         if(keepX > 0){
-            final Releases releases = ctx.var(cap.getReleases);
+            final Releases releases = $.var(cap.getReleases);
             List<String> toDelete = releases.listToDelete(keepX);
 
-            ctx.system.rmCd(ctx.var(cap.releasesPath),
+            $.system.rmCd($.var(cap.releasesPath),
                 toDelete.toArray(new String[toDelete.size()]));
         }
     }
@@ -183,8 +183,8 @@ public abstract class BaseStrategy {
 
     private void _step_40_updateRemoteFiles(){
         if(isCopyingZip()){
-            ctx.system.unzip(
-                ctx.joinPath(ctx.var(cap.releasePath), "deploy.zip"), null
+            $.system.unzip(
+                $.joinPath($.var(cap.releasePath), "deploy.zip"), null
             );
         }
 
@@ -195,16 +195,16 @@ public abstract class BaseStrategy {
         for (SymlinkEntry entry : symlinkRules.entries) {
             String srcPath;
 
-            srcPath = ctx.var(VariableUtils.joinPath("symlinkSrc", cap.currentPath, entry.sourcePath));
+            srcPath = $.var(VariableUtils.joinPath("symlinkSrc", cap.currentPath, entry.sourcePath));
 
-            ctx.system.link(srcPath, ctx.var(entry.destPath), entry.owner);
+            $.system.link(srcPath, $.var(entry.destPath), entry.owner);
         }
 
         writeRevision();
     }
 
     protected Result writeRevision(){
-        return ctx.system.writeString(ctx.joinPath(cap.releasePath, "REVISION"), ctx.var(cap.realRevision));
+        return $.system.writeString($.joinPath(cap.releasePath, "REVISION"), $.var(cap.realRevision));
     }
 
     protected void step_40_updateRemoteFiles(){

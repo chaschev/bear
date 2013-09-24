@@ -18,14 +18,14 @@ import org.slf4j.LoggerFactory;
 public class GrailsBuilder {
     private static final Logger logger = LoggerFactory.getLogger(GrailsBuilder.class);
 
-    SessionContext ctx;
+    SessionContext $;
 
     GrailsPlugin grails;
     JavaPlugin java;
     CapConstants cap;
 
-    public GrailsBuilder(SessionContext ctx, GlobalContext global) {
-        this.ctx = ctx;
+    public GrailsBuilder(SessionContext $, GlobalContext global) {
+        this.$ = $;
         grails = global.getPlugin(GrailsPlugin.class);
         java = global.getPlugin(JavaPlugin.class);
         cap = global.cap;
@@ -34,35 +34,35 @@ public class GrailsBuilder {
     public GrailsBuildResult build() {
         logger.info("building Grails WAR...");
 
-        System.out.println(ctx.var(cap.realRevision));
+        System.out.println($.var(cap.realRevision));
 
-        final String grailsExecPath = ctx.var(grails.grailsExecPath);
+        final String grailsExecPath = $.var(grails.grailsExecPath);
 
-        String projectPath = ctx.var(grails.projectPath);
+        String projectPath = $.var(grails.projectPath);
 
-        final Script script = new Script()
+        final Script script = new Script($.system)
             .cd(projectPath);
 
-        if (ctx.varB(grails.clean)) {
+        if ($.varB(grails.clean)) {
             script
                 .add(newGrailsCommand(grailsExecPath).a("clean"));
         }
 
-        final String warName = ctx.var(grails.releaseWarPath);
+        final String warName = $.var(grails.releaseWarPath);
 
         script.add(
             newGrailsCommand(grailsExecPath).a(
                 "war",
                 warName));
 
-        final CommandLineResult clResult = ctx.system.run(script);
+        final CommandLineResult clResult = $.system.run(script);
 
-        return new GrailsBuildResult(clResult.result, ctx.joinPath(projectPath, warName));
+        return new GrailsBuildResult(clResult.result, $.joinPath(projectPath, warName));
     }
 
     private CommandLine newGrailsCommand(String grailsExecPath) {
-        return ctx.newCommandLine()
-            .setVar("JAVA_HOME", ctx.var(java.homePath))
+        return $.newCommandLine()
+            .setVar("JAVA_HOME", $.var(java.homePath))
             .a(grailsExecPath)
             .timeoutMs(600000);
     }

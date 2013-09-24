@@ -13,7 +13,7 @@ import cap4j.session.DynamicVariable;
 public class Atocha extends Plugin {
 
     public final DynamicVariable<Boolean>
-        reuseWar = CapConstants.bool("reuseWar", "will skip building WAR").defaultTo(false);
+        reuseWar = CapConstants.bool("will skip building WAR").defaultTo(false);
 
     public Atocha(GlobalContext global) {
         super(global);

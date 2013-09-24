@@ -46,12 +46,12 @@ public class Variables {
     }
 
     public Variables putS(Nameable key, String value) {
-        put(key, CapConstants.strVar(key.name(), "external var").defaultTo(value));
+        put(key, CapConstants.strVar("external var").defaultTo(value));
         return this;
     }
 
     public Variables putB(Nameable key, boolean b) {
-        put(key, bool(key.name(), "external var").defaultTo(b));
+        put(key, bool("external var").defaultTo(b));
         return this;
     }
 

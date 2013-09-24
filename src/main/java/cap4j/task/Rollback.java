@@ -19,15 +19,20 @@ public class Rollback extends Plugin{
 
     }
 
+    @Override
+    public Task getSetup() {
+        return null;
+    }
+
     public final Task<TaskResult> pointToPreviousRelease = new Task<TaskResult>() {
         @Override
         protected TaskResult run(TaskRunner runner) {
-            requirePreviousRelease(ctx);
+            requirePreviousRelease($);
 
             return new TaskResult(
                 system.script()
-                    .line().sudo().addRaw("rm -r %s", ctx.var(cap.currentPath)).build()
-                    .line().sudo().addRaw("ln -s %s %s", ctx.var(cap.getPreviousReleasePath), ctx.var(cap.currentPath)).build()
+                    .line().sudo().addRaw("rm -r %s", $.var(cap.currentPath)).build()
+                    .line().sudo().addRaw("ln -s %s %s", $.var(cap.getPreviousReleasePath), $.var(cap.currentPath)).build()
                     .run()
             );
         }
@@ -41,7 +46,7 @@ public class Rollback extends Plugin{
             return new TaskResult(
                 system.run(
                     system.line().sudo().addRaw("if [ `readlink #{%s}` != #{%s} ]; then #{try_sudo} rm -rf #{%s}; fi",
-                        ctx.var(cap.currentPath), ctx.var(cap.releasePath), ctx.var(cap.releasePath) ))
+                        $.var(cap.currentPath), $.var(cap.releasePath), $.var(cap.releasePath) ))
             );
         }
     };
@@ -66,8 +71,8 @@ public class Rollback extends Plugin{
     };
 
 
-    private void requirePreviousRelease(SessionContext ctx) {
-        if(ctx.var(cap.getPreviousReleasePath) != null) {
+    private void requirePreviousRelease(SessionContext $) {
+        if($.var(cap.getPreviousReleasePath) != null) {
             throw new RuntimeException("could not rollback the code because there is no prior release");
         }
     }

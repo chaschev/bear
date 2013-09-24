@@ -23,11 +23,11 @@ public class TaskRunner {
 
     LinkedHashSet<Task> tasksExecuted = new LinkedHashSet<Task>();
 
-    public SessionContext ctx;
+    public SessionContext $;
     public GlobalContext global;
 
-    public TaskRunner(SessionContext ctx, GlobalContext global) {
-        this.ctx = ctx;
+    public TaskRunner(SessionContext $, GlobalContext global) {
+        this.$ = $;
         this.global = global;
     }
 
@@ -71,7 +71,7 @@ public class TaskRunner {
             return OK;
         }
 
-        task.ctx = ctx;
+        task.$ = $;
 
         return Result.and(
             runCollectionOfTasks(task.dependsOnTasks, task.name + ": depending tasks", false),
@@ -94,7 +94,7 @@ public class TaskRunner {
 
         Result runResult = OK;
         for (Task<TaskResult> task : tasks) {
-            if (!task.roles.isEmpty() && !task.hasRole(ctx.system.getRoles())) {
+            if (!task.roles.isEmpty() && !task.hasRole($.system.getRoles())) {
                 continue;
             }
 
@@ -113,7 +113,7 @@ public class TaskRunner {
             if(!thisIsMe){
                 result = runWithDependencies(task);
             }else{
-                task.setCtx(ctx);
+                task.set$($);
                 result = task.run(this).result;
             }
         } catch (Exception ignore) {

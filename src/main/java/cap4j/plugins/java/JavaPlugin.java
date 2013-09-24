@@ -34,11 +34,11 @@ public class JavaPlugin extends Plugin {
     javaDistributionPath
     ;
 
-    public final Task setup = new Task("setup java") {
+    public final Task setup = new Task() {
         @Override
         protected TaskResult run(TaskRunner runner) {
-            system.rm(ctx.var(javaSharedBuildDirPath));
-            system.mkdirs(ctx.var(javaSharedBuildDirPath));
+            system.rm($.var(javaSharedBuildDirPath));
+            system.mkdirs($.var(javaSharedBuildDirPath));
 
             final File localDFile = new File(global.localCtx.var(
                 system.isNativeUnix() ? javaLinuxDistributionPath : javaWindowsDistributionPath));
@@ -47,19 +47,19 @@ public class JavaPlugin extends Plugin {
                 throw new RuntimeException("expecting java distribution at " + localDFile.getAbsolutePath());
             }
 
-            system.upload(ctx.var(javaDistributionPath), localDFile);
+            system.upload($.var(javaDistributionPath), localDFile);
 
-            final String distrName = ctx.var(javaDistributionName);
+            final String distrName = $.var(javaDistributionName);
             if(distrName.endsWith("gz")) {
                 system.run(
                     system.newCommandLine()
                         .timeoutSec(30)
-                        .cd(ctx.var(javaSharedBuildDirPath))
+                        .cd($.var(javaSharedBuildDirPath))
                         .addRaw("tar xvf").a(distrName)
                 );
             }else{
                 system.script()
-                        .cd(ctx.var(javaSharedBuildDirPath))
+                        .cd($.var(javaSharedBuildDirPath))
                         .line().addRaw("chmod u+x %s", distrName).build()
                         .line()
                             .timeoutSec(30)
@@ -67,13 +67,13 @@ public class JavaPlugin extends Plugin {
                     .run();
             }
 
-            String jdkDirName = system.capture(String.format("cd %s && ls -w 1 | grep -v gz | grep -v bin", ctx.var(javaSharedBuildDirPath))).trim();
+            String jdkDirName = system.capture(String.format("cd %s && ls -w 1 | grep -v gz | grep -v bin", $.var(javaSharedBuildDirPath))).trim();
 
             system.run(system.script()
                 .line().sudo().addRaw("rm -r /var/lib/java").build()
                 .line().sudo().addRaw("rm -r /var/lib/jdks/%s", jdkDirName).build()
                 .line().sudo().addRaw("mkdir -p /var/lib/jdks").build()
-                .line().sudo().addRaw("mv %s/%s /var/lib/jdks", ctx.var(javaSharedBuildDirPath), jdkDirName).build()
+                .line().sudo().addRaw("mv %s/%s /var/lib/jdks", $.var(javaSharedBuildDirPath), jdkDirName).build()
                 .line().sudo().addRaw("ln -s /var/lib/jdks/%s /var/lib/java", jdkDirName).build()
                 .line().sudo().addRaw("chmod -R g+r,o+r /var/lib/java").build()
                 .line().sudo().addRaw("chmod u+x,g+x,o+x /var/lib/java/bin/*").build()
@@ -81,7 +81,7 @@ public class JavaPlugin extends Plugin {
                 .line().sudo().addRaw("ln -s /var/lib/java/bin/java /usr/bin/java").build()
                 .line().sudo().addRaw("rm /usr/bin/javac").build()
                 .line().sudo().addRaw("ln -s /var/lib/java/bin/javac /usr/bin/javac").build(),
-                SystemEnvironment.passwordCallback(ctx.var(cap.sshPassword))
+                SystemEnvironment.passwordCallback($.var(cap.sshPassword))
             );
 
             return new TaskResult(Result.OK);
@@ -98,5 +98,11 @@ public class JavaPlugin extends Plugin {
         javaDistributionName = VariableUtils.condition(cap.isNativeUnix, javaLinuxDistributionName, javaLinuxDistributionName);
         javaDistributionPath = VariableUtils.condition(cap.isNativeUnix, javaLinuxDistributionPath, javaWindowsDistributionPath);
 
+    }
+
+
+    @Override
+    public Task getSetup() {
+        return setup;
     }
 }

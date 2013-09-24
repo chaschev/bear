@@ -12,6 +12,7 @@ import org.apache.commons.lang3.SystemUtils;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
@@ -104,6 +105,10 @@ public class GlobalContext {
         Preconditions.checkNotNull(plugin, "plugin " + pluginClass.getSimpleName() + " has not been loaded yet");
 
         return plugin;
+    }
+
+    public Collection<Plugin> getPlugins() {
+        return pluginMap.values();
     }
 
     public static <T extends Plugin> T plugin(Class<T> pluginClass) {

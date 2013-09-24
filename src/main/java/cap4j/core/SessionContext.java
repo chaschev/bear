@@ -17,7 +17,7 @@ public class SessionContext {
     public SessionContext(GlobalContext global, SystemEnvironment system) {
         this.global = global;
         this.system = system;
-        system.ctx = this;
+        system.$ = this;
         this.sessionVariables = SystemEnvironment.newSessionVars(global, system);
         sessionVariables.putS(global.cap.sessionHostname, system.getName());
     }

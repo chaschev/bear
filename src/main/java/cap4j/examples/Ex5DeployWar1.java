@@ -58,7 +58,7 @@ public class Ex5DeployWar1 {
 
         CapConstants.newStrategy.setDynamic(new VarFun<BaseStrategy>() {
             public BaseStrategy apply() {
-                final BaseStrategy strategy = new BaseStrategy(ctx, global) {
+                final BaseStrategy strategy = new BaseStrategy($, global) {
                     @Override
                     protected List<File> step_20_prepareLocalFiles(SessionContext localCtx) {
                         File rootWar = new File(localCtx.var(grails.projectWarPath));
@@ -76,7 +76,7 @@ public class Ex5DeployWar1 {
                 };
 
                 strategy.getSymlinkRules().add(
-                    new SymlinkEntry("ROOT.war", tomcat.warPath, ctx.var(cap.appUsername) + "." + ctx.var(cap.appUsername))
+                    new SymlinkEntry("ROOT.war", tomcat.warPath, $.var(cap.appUsername) + "." + $.var(cap.appUsername))
                 );
 
                 return strategy;

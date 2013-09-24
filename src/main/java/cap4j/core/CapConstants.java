@@ -39,65 +39,65 @@ public class CapConstants {
 
     public final DynamicVariable<String>
 
-    applicationsPath = strVar("applicationsPath", "System apps folder").setDynamic(new VarFun<String>() {
+    applicationsPath = strVar("System apps folder").setDynamic(new VarFun<String>() {
         public String apply() {
-            return ctx.system.isNativeUnix() ? "/var/lib" : "c:";
+            return $.system.isNativeUnix() ? "/var/lib" : "c:";
         }
     }),
 
-    logsPath = strVar("applicationsPath", "System apps folder").setDynamic(new VarFun<String>() {
+    logsPath = strVar("System apps folder").setDynamic(new VarFun<String>() {
         public String apply() {
-            return ctx.system.isNativeUnix() ? "/var/log" : "c:";
+            return $.system.isNativeUnix() ? "/var/log" : "c:";
         }
     }),
 
-    task = strVar("task", "A task to run").defaultTo("deploy"),
+    task = strVar("A task to run").defaultTo("deploy"),
 
     applicationName = strVar().setDesc("Your app name"),
     appLogsPath = joinPath("appLogsPath", logsPath, applicationName),
-    sshUsername = strVar("sshUsername", ""),
+    sshUsername = strVar(""),
     appUsername = eql("appUsername", sshUsername),
     sshPassword = dynamic(new VarFun<String>() {
         public String apply() {
-            return global.getProperty(ctx.var(sessionHostname) + ".password");
+            return global.getProperty($.var(sessionHostname) + ".password");
         }
     }),
-    stage = strVar("stage", "Stage to deploy to"),
-    repositoryURI = strVar("repository", "Project VCS URI"),
+    stage = strVar("Stage to deploy to"),
+    repositoryURI = strVar("Project VCS URI"),
     vcsType = enumConstant("vcsType", "Your VCS type", "svn"),
     vcsUsername = eql("vcsUserName", sshUsername),
     vcsPassword = eql("vcsPassword", sshPassword),
-    sessionHostname = strVar("", "internal variable containing the name of the current session"),
+    sessionHostname = strVar("internal variable containing the name of the current session"),
 
-    tempUserInput = strVar("tempUserInput", ""),
+    tempUserInput = strVar(""),
 
-    deployScript = strVar("deployScript", "Script to use").defaultTo("CreateNewScript"),
+    deployScript = strVar("Script to use").defaultTo("CreateNewScript"),
 
     deployTo = joinPath("deployTo", applicationsPath, applicationName).setDesc("Current release dir"),
 
-    currentDirName = strVar("currentDirName", "Current release dir").defaultTo("current"),
-    sharedDirName = strVar("sharedDirName", "").defaultTo("shared"),
+    currentDirName = strVar("Current release dir").defaultTo("current"),
+    sharedDirName = strVar("").defaultTo("shared"),
 
-    releasesDirName = strVar("releasesDirName", "").defaultTo("releases"),
+    releasesDirName = strVar("").defaultTo("releases"),
 
-    releaseName = strVar("releaseName", "I.e. 20140216").defaultTo(RELEASE_FORMATTER.print(new DateTime()) + ".GMT"),
+    releaseName = strVar("I.e. 20140216").defaultTo(RELEASE_FORMATTER.print(new DateTime()) + ".GMT"),
 
     devEnvironment = enumConstant("devEnvironment", "Development environment", "dev", "test", "prod").defaultTo("prod"),
 
-    revision = strVar("revision", "Get head revision").setDynamic(new VarFun<String>() {
+    revision = strVar("Get head revision").setDynamic(new VarFun<String>() {
         public String apply() {
-            return vcs.apply(ctx).head();
+            return vcs.apply($).head();
         }
     }),
 
-   realRevision = strVar("realRevision", "Update revision from vcs").setDynamic(new VarFun<String>() {
+   realRevision = strVar("Update revision from vcs").setDynamic(new VarFun<String>() {
        public String apply() {
-           final VcsCLI vcsCLI = ctx.var(vcs);
-           final CommandLine<BranchInfoResult> line = vcsCLI.queryRevision(ctx.var(revision), Collections.<String, String>emptyMap());
+           final VcsCLI vcsCLI = $.var(vcs);
+           final CommandLine<BranchInfoResult> line = vcsCLI.queryRevision($.var(revision), Collections.<String, String>emptyMap());
 
            line.timeoutMs(20000);
 
-           BranchInfoResult r = ctx.system.run(line, vcsCLI.passwordCallback());
+           BranchInfoResult r = $.system.run(line, vcsCLI.passwordCallback());
 
            return r.revision;
        }
@@ -110,70 +110,71 @@ public class CapConstants {
     releasePath = joinPath("releasesPath", releasesPath, releaseName),
 
     vcsCheckoutPath = joinPath("vcsCheckoutPath", sharedPath, "vcs"),
-    vcsBranchName = strVar("vcsBranchName", "").defaultTo("trunk"),
+    vcsBranchName = strVar("").defaultTo("trunk"),
     vcsBranchLocalPath = joinPath("vcsBranchLocalPath", vcsCheckoutPath, vcsBranchName),
     vcsBranchURI = joinPath("vcsProjectURI", repositoryURI, vcsBranchName),
 
-    getLatestReleasePath = strVar("getLatestReleasePath", "").setDynamic(new VarFun<String>() {
+    getLatestReleasePath = strVar("").setDynamic(new VarFun<String>() {
         public String apply() {
-            final Releases r = ctx.var(getReleases);
+            final Releases r = $.var(getReleases);
 
             if (r.releases.isEmpty()) return null;
 
-            return ctx.system.joinPath(ctx.var(releasesPath), r.last());
+            return $.system.joinPath($.var(releasesPath), r.last());
         }
     }).memoize(true),
 
-    getPreviousReleasePath = strVar("getPreviousReleasePath", "").setDynamic(new VarFun<String>() {
+    getPreviousReleasePath = strVar("").setDynamic(new VarFun<String>() {
         public String apply() {
-            final Releases r = ctx.var(getReleases);
+            final Releases r = $.var(getReleases);
 
             if (r.releases.size() < 2) return null;
 
-            return ctx.system.joinPath(ctx.var(releasesPath), r.previous());
+            return $.system.joinPath($.var(releasesPath), r.previous());
         }
     }).memoize(true),
 
-   getCurrentRevision = strVar("getCurrentRevision", "").setDynamic(new VarFun<String>() {
+   getCurrentRevision = strVar("").setDynamic(new VarFun<String>() {
        public String apply() {
-           return ctx.system.readString(ctx.joinPath(currentPath, "REVISION"), null);
+           return $.system.readString($.joinPath(currentPath, "REVISION"), null);
        }
    }).memoize(true),
 
-    getLatestReleaseRevision = strVar("getLatestReleaseRevision", "").setDynamic(new VarFun<String>() {
+    getLatestReleaseRevision = strVar("").setDynamic(new VarFun<String>() {
         public String apply() {
-            return ctx.system.readString(ctx.joinPath(getLatestReleasePath, "REVISION"), null);
+            return $.system.readString($.joinPath(getLatestReleasePath, "REVISION"), null);
         }
     }).memoize(true),
 
-     getPreviousReleaseRevision = strVar("getPreviousReleaseRevision", "").setDynamic(new VarFun<String>() {
+     getPreviousReleaseRevision = strVar("").setDynamic(new VarFun<String>() {
          public String apply() {
-             return ctx.system.readString(ctx.joinPath(getPreviousReleasePath, "REVISION"), null);
+             return $.system.readString($.joinPath(getPreviousReleasePath, "REVISION"), null);
          }
      }).memoize(true);
 
     public final DynamicVariable<Boolean>
-        useSudo = bool("useSudo", "").defaultTo(true),
-        productionDeployment = bool("productionDeployment", "").defaultTo(true),
+        useSudo = bool("").defaultTo(true),
+        productionDeployment = bool("").defaultTo(true),
         clean = eql("clean", productionDeployment),
-        speedUpBuild = and("speedUpBuild", not("", productionDeployment), not("", clean)),
+        speedUpBuild = and(not("", productionDeployment), not("", clean)),
         scmAuthCache = dynamicNotSet("scmAuthCache", ""),
         scmPreferPrompt = dynamicNotSet("scmPreferPrompt", ""),
         isRemoteEnv = dynamic(new VarFun<Boolean>() {
             public Boolean apply() {
-                return ctx.system.isRemote();
+                return $.system.isRemote();
             }
         }),
         isNativeUnix = dynamic(new VarFun<Boolean>() {
             public Boolean apply() {
-                return ctx.system.isNativeUnix();
+                return $.system.isNativeUnix();
             }
         }),
         isUnix = dynamic(new VarFun<Boolean>() {
             public Boolean apply() {
-                return ctx.system.isUnix();
+                return $.system.isUnix();
             }
-        })
+        }),
+        verifyPlugins = newVar(true)
     ;
 
     public static final DynamicVariable<Integer>
@@ -181,15 +182,15 @@ public class CapConstants {
 
     public final DynamicVariable<Releases> getReleases = new DynamicVariable<Releases>("getReleases", "").setDynamic(new VarFun<Releases>() {
         public Releases apply() {
-            return new Releases(ctx.system.ls(ctx.var(releasesPath)));
+            return new Releases($.system.ls($.var(releasesPath)));
         }
     });
 
     public final DynamicVariable<Stages> stages = new DynamicVariable<Stages>("stages", "List of stages. Stage is collection of servers with roles and auth defined for each of the server.");
     public final DynamicVariable<Stage> getStage = dynamic("getStage", "", new VarFun<Stage>() {
         public Stage apply() {
-            final String stageName = ctx.var(CapConstants.this.stage);
-            final Stage stage = Iterables.find(ctx.var(stages).stages, new Predicate<Stage>() {
+            final String stageName = $.var(CapConstants.this.stage);
+            final Stage stage = Iterables.find($.var(stages).stages, new Predicate<Stage>() {
                 public boolean apply(Stage s) {
                     return s.name.equals(stageName);
                 }
@@ -203,10 +204,10 @@ public class CapConstants {
 
     public final DynamicVariable<VcsCLI> vcs = new DynamicVariable<VcsCLI>("vcs", "VCS adapter").setDynamic(new VarFun<VcsCLI>() {
         public VcsCLI apply() {
-            final String scm = ctx.var(vcsType);
+            final String scm = $.var(vcsType);
 
             if ("svn".equals(scm)) {
-                return new SvnVcsCLI(ctx, global);
+                return new SvnVcsCLI($, global);
             }
 
             throw new UnsupportedOperationException(scm + " is not yet supported");
@@ -217,7 +218,7 @@ public class CapConstants {
         scriptsDir = newVar(new File(".cap")),
         settingsFile = dynamic(new VarFun<File>() {
             public File apply() {
-                return new File(ctx.var(scriptsDir), "settings.properties");
+                return new File($.var(scriptsDir), "settings.properties");
             }
         })
     ;
@@ -280,11 +281,7 @@ public class CapConstants {
         return new DynamicVariable<String>((String) null, desc);
     }
 
-    public static DynamicVariable<String> strVar(String name, String desc) {
-        return new DynamicVariable<String>(name, desc);
-    }
-
-    public static DynamicVariable<Boolean> bool(String name, String desc) {
-        return new DynamicVariable<Boolean>(name, desc);
+    public static DynamicVariable<Boolean> bool(String desc) {
+        return new DynamicVariable<Boolean>(desc);
     }
 }

@@ -7,9 +7,7 @@ import cap4j.core.SessionContext;
 import cap4j.session.GenericUnixRemoteEnvironment;
 import cap4j.session.SystemEnvironment;
 
-import java.util.ArrayList;
 import java.util.Collections;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -17,12 +15,12 @@ import java.util.Map;
  * Date: 7/24/13
  */
 public abstract class VcsCLI {
-    protected SessionContext ctx;
+    protected SessionContext $;
     protected GlobalContext global;
     protected CapConstants cap;
 
-    protected VcsCLI(SessionContext ctx, GlobalContext global) {
-        this.ctx = ctx;
+    protected VcsCLI(SessionContext $, GlobalContext global) {
+        this.$ = $;
         this.global = global;
         this.cap = global.cap;
     }
@@ -79,7 +77,7 @@ public abstract class VcsCLI {
     public abstract String head();
 
     public GenericUnixRemoteEnvironment.SshSession.WithSession passwordCallback() {
-        return SystemEnvironment.passwordCallback(ctx.var(cap.vcsPassword));
+        return SystemEnvironment.passwordCallback($.var(cap.vcsPassword));
     }
 
     public CommandLine<SvnVcsCLI.LsResult> ls(String path){

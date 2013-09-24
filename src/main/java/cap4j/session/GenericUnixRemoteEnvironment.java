@@ -467,8 +467,8 @@ public class GenericUnixRemoteEnvironment extends SystemEnvironment {
     @Override
     public void connect(){
         if(sshSession == null){
-            sshAddress.username = ctx.var(cap.sshUsername);
-            sshAddress.password = ctx.var(cap.sshPassword);
+            sshAddress.username = $.var(cap.sshUsername);
+            sshAddress.password = $.var(cap.sshPassword);
             sshSession = new SshSession(sshAddress, global);
         }
     }

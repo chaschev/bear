@@ -25,24 +25,28 @@ import static cap4j.session.VariableUtils.*;
 * Date: 8/3/13
 * Time: 11:28 PM
 */
+
+/**
+ * todo: change to zip tool
+ */
 public class GrailsPlugin extends Plugin {
     public final DynamicVariable<String>
         homePath = newVar("/var/lib/grails").setDesc("Grails root dir"),
         homeParentPath = dynamic(new VarFun<String>() {
             public String apply() {
-                return StringUtils.substringBeforeLast(ctx.var(homePath), "/");
+                return StringUtils.substringBeforeLast($.var(homePath), "/");
             }
         }),
         currentVersionPath = dynamic(new VarFun<String>() {
             public String apply() {
-                return ctx.system.joinPath(ctx.var(homeParentPath), "grails-" + ctx.var(version));
+                return $.system.joinPath($.var(homeParentPath), "grails-" + $.var(version));
             }
         }),
         grailsBin = joinPath(homePath, "bin"),
         projectPath = dynamicNotSet("Project root dir"),
         grailsExecName = dynamic("grails or grails.bat", new VarFun<String>() {
             public String apply() {
-                return "grails" + (ctx.system.isNativeUnix() ? "" : ".bat");
+                return "grails" + ($.system.isNativeUnix() ? "" : ".bat");
             }
         }),
         grailsExecPath = condition(isSet(null, homePath),
@@ -55,12 +59,12 @@ public class GrailsPlugin extends Plugin {
         buildPath,
         distrFilename = dynamic(new VarFun<String>() {
             public String apply() {
-                return "grails-" + ctx.var(version) + ".zip";
+                return "grails-" + $.var(version) + ".zip";
             }
         }),
         distrWwwAddress = dynamic(new VarFun<String>() {
             public String apply() {
-                return MessageFormat.format("http://dist.springframework.org.s3.amazonaws.com/release/GRAILS/%s", ctx.var(distrFilename));
+                return MessageFormat.format("http://dist.springframework.org.s3.amazonaws.com/release/GRAILS/%s", $.var(distrFilename));
             }
         })
     ;
@@ -69,42 +73,42 @@ public class GrailsPlugin extends Plugin {
         clean = VariableUtils.eql(cap.clean).setDesc("clean project before build")
     ;
 
-    public final Task setup = new Task("setup grails") {
+    public final Task setup = new Task() {
         @Override
         protected TaskResult run(TaskRunner runner) {
-            system.rm(ctx.var(buildPath));
-            system.mkdirs(ctx.var(buildPath));
+            system.rm($.var(buildPath));
+            system.mkdirs($.var(buildPath));
 
-            if(!system.exists(system.joinPath(ctx.var(myDirPath), ctx.var(distrFilename)))){
-                system.run(new Script()
-                    .cd(ctx.var(buildPath))
-                    .add(system.line().timeoutMin(60).addRaw(ctx.var(distrWwwAddress))));
+            if(!system.exists(system.joinPath($.var(myDirPath), $.var(distrFilename)))){
+                system.run(new Script(system)
+                    .cd($.var(buildPath))
+                    .add(system.line().timeoutMin(60).addRaw($.var(distrWwwAddress))));
             }
 
-            final String homeParentPath = StringUtils.substringBeforeLast(ctx.var(homePath), "/");
+            final String homeParentPath = StringUtils.substringBeforeLast($.var(homePath), "/");
 
-            final CommandLineResult r = system.run(new Script()
-                .cd(ctx.var(buildPath))
-                .add(system.line().timeoutMin(1).addRaw("unzip ../%s", ctx.var(distrFilename)))
-                .add(system.line().sudo().addRaw("rm -r %s", ctx.var(homePath)))
-                .add(system.line().sudo().addRaw("mv %s %s", ctx.var(currentVersionPath), homeParentPath))
-                .add(system.line().sudo().addRaw("ln -s %s %s", ctx.var(currentVersionPath), ctx.var(homePath)))
-                .add(system.line().sudo().addRaw("chmod -R g+r,o+r %s", ctx.var(homePath)))
-                .add(system.line().sudo().addRaw("chmod u+x,g+x,o+x %s/bin/*", ctx.var(homePath)))
+            final CommandLineResult r = system.run(new Script(system)
+                .cd($.var(buildPath))
+                .add(system.line().timeoutMin(1).addRaw("unzip ../%s", $.var(distrFilename)))
+                .add(system.line().sudo().addRaw("rm -r %s", $.var(homePath)))
+                .add(system.line().sudo().addRaw("mv %s %s", $.var(currentVersionPath), homeParentPath))
+                .add(system.line().sudo().addRaw("ln -s %s %s", $.var(currentVersionPath), $.var(homePath)))
+                .add(system.line().sudo().addRaw("chmod -R g+r,o+r %s", $.var(homePath)))
+                .add(system.line().sudo().addRaw("chmod u+x,g+x,o+x %s/bin/*", $.var(homePath)))
                 .add(system.line().sudo().addRaw("rm /usr/bin/grails"))
-                .add(system.line().sudo().addRaw("ln -s %s/bin/grails /usr/bin/grails", ctx.var(currentVersionPath))),
-                SystemEnvironment.passwordCallback(ctx.var(cap.sshPassword))
+                .add(system.line().sudo().addRaw("ln -s %s/bin/grails /usr/bin/grails", $.var(currentVersionPath))),
+                SystemEnvironment.passwordCallback($.var(cap.sshPassword))
             );
 
             System.out.println("verifying version...");
             final String installedVersion = StringUtils.substringAfter(
-                system.run(system.line().timeoutSec(20).setVar("JAVA_HOME", ctx.var(global.getPlugin(JavaPlugin.class).homePath)).addRaw("grails --version")).text.trim(),
+                system.run(system.line().timeoutSec(20).setVar("JAVA_HOME", $.var(global.getPlugin(JavaPlugin.class).homePath)).addRaw("grails --version")).text.trim(),
                 "version: ");
 
-            Preconditions.checkArgument(ctx.var(version).equals(installedVersion),
-                "versions don't match: %s (installed) vs %s (actual)", installedVersion, ctx.var(version));
+            Preconditions.checkArgument($.var(version).equals(installedVersion),
+                "versions don't match: %s (installed) vs %s (actual)", installedVersion, $.var(version));
 
-            System.out.printf("successfully installed Grails %s%n", ctx.var(version));
+            System.out.printf("successfully installed Grails %s%n", $.var(version));
 
             return new TaskResult(r);
         }
@@ -117,6 +121,8 @@ public class GrailsPlugin extends Plugin {
         buildPath = VariableUtils.joinPath(myDirPath, "build");
     }
 
-    //            projectPath,
-//            clean
+    @Override
+    public Task getSetup() {
+        return setup;
+    }
 }

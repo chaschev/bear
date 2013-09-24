@@ -3,6 +3,7 @@ package cap4j.plugins;
 import cap4j.core.CapConstants;
 import cap4j.core.GlobalContext;
 import cap4j.session.DynamicVariable;
+import cap4j.task.Task;
 import com.chaschev.chutils.util.OpenBean2;
 import com.google.common.base.Preconditions;
 
@@ -12,7 +13,7 @@ import java.lang.reflect.Field;
  * User: achaschev
  * Date: 8/13/13
  */
-public class Plugin {
+public abstract class Plugin {
     public String name;
     public final CapConstants cap;
     protected GlobalContext global;
@@ -45,4 +46,6 @@ public class Plugin {
     public void init(){
 
     }
+
+    public abstract Task getSetup();
 }

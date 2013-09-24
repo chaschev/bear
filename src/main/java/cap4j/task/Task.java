@@ -18,20 +18,16 @@ public abstract class Task<T extends TaskResult> {
     String name;
     String description;
 
+    private boolean setupTask;
+
     Set<Role> roles = new HashSet<Role>();
 
-    protected transient SessionContext ctx;
-
+    protected transient SessionContext $;
     List<Task<TaskResult>> beforeTasks = new ArrayList<Task<TaskResult>>();
     List<Task<TaskResult>> afterTasks = new ArrayList<Task<TaskResult>>();
     List<Task<TaskResult>> dependsOnTasks = new ArrayList<Task<TaskResult>>();
 
     public Task() {
-    }
-
-    @Deprecated
-    public Task(String name) {
-        this.name = name;
     }
 
     protected SystemEnvironment system;
@@ -57,7 +53,7 @@ public abstract class Task<T extends TaskResult> {
 
 
     public <T> T var(DynamicVariable<T> varName){
-        return ctx.var(varName);
+        return $.var(varName);
     }
 
     protected void onRollback(){
@@ -79,13 +75,32 @@ public abstract class Task<T extends TaskResult> {
         return sb.toString();
     }
 
-    public void setCtx(SessionContext ctx) {
-        this.ctx = ctx;
-        this.system = ctx.system;
+    public void set$(SessionContext $) {
+        this.$ = $;
+        this.system = $.system;
     }
 
     public Task desc(String description){
         this.description = description;
+        return this;
+    }
+
+    public final boolean verifyExecution(){
+        return verifyExecution(true);
+    }
+
+    public final boolean verifyExecution(boolean throwException){
+        return verify(throwException);
+    }
+
+    protected boolean verify(boolean throwException){return true;}
+    
+    public boolean isSetupTask(){
+        return setupTask;
+    }
+
+    public Task<T> setSetupTask(boolean setupTask) {
+        this.setupTask = setupTask;
         return this;
     }
 }

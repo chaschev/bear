@@ -34,12 +34,12 @@ public class CreateNewScript extends Script{
         final Stage stage = global.localCtx.var(cap.getStage);
         final SystemEnvironment remoteEnv = stage.findRemoteEnvironment();
 
-        final SessionContext ctx = remoteEnv.ctx();
+        final SessionContext $ = remoteEnv.ctx();
 
         List<String> branches = Lists.newArrayList("trunk/");
 
-        branches.addAll(remoteVcsLs(cap, remoteEnv, ctx, "branches"));
-        branches.addAll(remoteVcsLs(cap, remoteEnv, ctx, "tags"));
+        branches.addAll(remoteVcsLs(cap, remoteEnv, $, "branches"));
+        branches.addAll(remoteVcsLs(cap, remoteEnv, $, "tags"));
 
         new Question("step 2, choose a branch: ",
             branches,
@@ -75,9 +75,9 @@ public class CreateNewScript extends Script{
                 "public class " + scriptName + " extends Script{\n" +
                 "\t@Override\n" +
                 "\tpublic void run() throws Exception {\n" +
-                "\t\tcap.stage.defaultTo(\"" + ctx.var(cap.stage) + "\");\n" +
-                "\t\tcap.vcsBranchName.defaultTo(\"" + ctx.var(cap.vcsBranchName) + "\");\n" +
-                "\t\tcap.task.defaultTo(\"" + ctx.var(cap.task) + "\");\n" +
+                "\t\tcap.stage.defaultTo(\"" + $.var(cap.stage) + "\");\n" +
+                "\t\tcap.vcsBranchName.defaultTo(\"" + $.var(cap.vcsBranchName) + "\");\n" +
+                "\t\tcap.task.defaultTo(\"" + $.var(cap.task) + "\");\n" +
                 "\n" +
                 "\t\tglobal.run();\n" +
                 "\t\tglobal.shutdown();\n" +
@@ -89,10 +89,10 @@ public class CreateNewScript extends Script{
         System.out.printf("you may now restart cap4j to run it%n");
     }
 
-    private static List<String> remoteVcsLs(CapConstants cap, SystemEnvironment remoteEnv, SessionContext ctx, final String dir) {
-        final VcsCLI vcsCLI = ctx.var(cap.vcs);
+    private static List<String> remoteVcsLs(CapConstants cap, SystemEnvironment remoteEnv, SessionContext $, final String dir) {
+        final VcsCLI vcsCLI = $.var(cap.vcs);
 
-        final CommandLine<SvnVcsCLI.LsResult> line = vcsCLI.ls(ctx.joinPath(cap.repositoryURI, dir));
+        final CommandLine<SvnVcsCLI.LsResult> line = vcsCLI.ls($.joinPath(cap.repositoryURI, dir));
 
         line.timeoutMs(20000);
 

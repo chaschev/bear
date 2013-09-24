@@ -71,7 +71,7 @@ public class DynamicVariable<T> implements Nameable<T> {
             }
 
             if (dynamicImplementation instanceof VarFun<?>) {
-                ((VarFun<?>) dynamicImplementation).setCtx(context);
+                ((VarFun<?>) dynamicImplementation).set$(context);
             }
 
             final T r = dynamicImplementation.apply();
@@ -170,7 +170,7 @@ public class DynamicVariable<T> implements Nameable<T> {
     public DynamicVariable<T> setEqualTo(final DynamicVariable<T> var) {
         setDynamic(new VarFun<T>() {
             public T apply() {
-                return var.apply(ctx);
+                return var.apply($);
             }
         });
         return this;

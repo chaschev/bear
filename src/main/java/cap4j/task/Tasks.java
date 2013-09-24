@@ -2,6 +2,7 @@ package cap4j.task;
 
 import cap4j.core.CapConstants;
 import cap4j.core.GlobalContext;
+import cap4j.plugins.Plugin;
 import cap4j.session.Result;
 import com.google.common.base.Preconditions;
 
@@ -24,7 +25,7 @@ public class Tasks {
 
     };
 
-    public final Task<TaskResult> deploy = new Task<TaskResult>("deploy") {
+    public final Task<TaskResult> deploy = new Task<TaskResult>() {
         @Override
         protected TaskResult run(TaskRunner runner) {
             return new TaskResult(runner.run(
@@ -33,7 +34,7 @@ public class Tasks {
         }
     };
 
-    public final Task<TaskResult> setup = new Task<TaskResult>("setup") {
+    public final Task<TaskResult> setup = new Task<TaskResult>() {
         @Override
         protected TaskResult run(TaskRunner runner) {
             final String appLogs = var(cap.appLogsPath);
@@ -54,11 +55,20 @@ public class Tasks {
                 system.sudo().chown(appUser + "." + appUser, true, appLogs);
             }
 
+            if($.var(cap.verifyPlugins)){
+                for (Plugin plugin : global.getPlugins()) {
+                    if(!plugin.getSetup().verifyExecution(false)){
+                        runner.run(plugin.getSetup());
+
+                    }
+                }
+            }
+
             return new TaskResult(Result.OK);
         }
-    };
+    }.setSetupTask(true);
 
-    public final Task<TaskResult> update = new Task<TaskResult>("update") {
+    public final Task<TaskResult> update = new Task<TaskResult>() {
         @Override
         protected TaskResult run(TaskRunner runner) {
             return new TaskResult(runner.run(new TransactionTask(
@@ -68,7 +78,7 @@ public class Tasks {
         }
     };
 
-    public final Task<TaskResult> updateCode = new Task<TaskResult>("updateCode") {
+    public final Task<TaskResult> updateCode = new Task<TaskResult>() {
         @Override
         protected TaskResult run(TaskRunner runner) {
             return new TaskResult(
@@ -85,7 +95,7 @@ public class Tasks {
     };
 
 
-    public final Task<TaskResult> finalizeTouchCode = new Task<TaskResult>("finalizeTouchCode") {
+    public final Task<TaskResult> finalizeTouchCode = new Task<TaskResult>() {
         @Override
         protected TaskResult run(TaskRunner runner) {
             system.chmod("g+w", true, var(cap.getLatestReleasePath));
@@ -95,7 +105,7 @@ public class Tasks {
         }
     };
 
-    public final Task<TaskResult> createSymlink = new Task<TaskResult>("createSymlink") {
+    public final Task<TaskResult> createSymlink = new Task<TaskResult>() {
         @Override
         protected TaskResult run(TaskRunner runner) {
             return new TaskResult(system.link(var(cap.getLatestReleasePath), var(cap.currentPath)));

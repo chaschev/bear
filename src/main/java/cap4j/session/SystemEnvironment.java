@@ -28,7 +28,7 @@ public abstract class SystemEnvironment {
     private int defaultTimeout = 5000;
     private int singleTimeout = -1;
 
-    public SessionContext ctx;
+    public SessionContext $;
 
     public CapConstants cap;
 
@@ -138,10 +138,10 @@ public abstract class SystemEnvironment {
     public abstract <T extends CommandLineResult> CommandLine<T> newCommandLine(Class<T> aClass);
 
     public synchronized SessionContext ctx() {
-        if(ctx == null){
-            ctx = new SessionContext(global, this);
+        if($ == null){
+            $ = new SessionContext(global, this);
         }
-        return ctx;
+        return $;
     }
 
     public void connect(){

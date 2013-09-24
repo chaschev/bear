@@ -6,7 +6,6 @@ import cap4j.core.VarFun;
 import cap4j.plugins.java.JavaPlugin;
 import cap4j.session.DynamicVariable;
 import cap4j.task.Task;
-import com.google.common.base.Preconditions;
 import org.apache.commons.lang3.StringUtils;
 
 import static cap4j.core.CapConstants.*;
@@ -17,11 +16,10 @@ import static cap4j.session.VariableUtils.concat;
  * Date: 8/30/13
  */
 
-
 /**
  * A class that simplifies operations (i.e. installation) of tools like Maven, Grails, Play, Tomcat, etc
  */
-public class ZippedToolPlugin extends Plugin{
+public abstract class ZippedToolPlugin extends Plugin{
     public final DynamicVariable<String>
         version = dynamicNotSet("version of the tool"),
         toolname = dynamicNotSet("i.e. maven"),
@@ -31,7 +29,7 @@ public class ZippedToolPlugin extends Plugin{
         homePath = concat("/var/lib/", toolname).setDesc("Tool root dir"),
         homeParentPath = dynamic(new VarFun<String>() {
             public String apply() {
-                return StringUtils.substringBeforeLast(ctx.var(homePath), "/");
+                return StringUtils.substringBeforeLast($.var(homePath), "/");
             }
         }),
         homeVersionPath = concat(homeParentPath, "/", versionName).setDesc("i.e. /var/lib/apache-maven-7.0.42"),
@@ -50,19 +48,19 @@ public class ZippedToolPlugin extends Plugin{
 
     protected abstract class ZippedToolTask extends Task {
         protected ZippedToolTask(String name) {
-            super(name);
+            super();
         }
 
         protected void clean(){
-            system.rm(ctx.var(buildPath));
-            system.mkdirs(ctx.var(buildPath));
+            system.rm($.var(buildPath));
+            system.mkdirs($.var(buildPath));
         }
 
         protected void download(){
-            if(!system.exists(system.joinPath(ctx.var(myDirPath), ctx.var(distrFilename)))){
+            if(!system.exists(system.joinPath($.var(myDirPath), $.var(distrFilename)))){
                 system.script()
-                    .cd(ctx.var(myDirPath))
-                    .line().timeoutMin(60).addRaw("wget %s", ctx.var(distrWwwAddress)).build();
+                    .cd($.var(myDirPath))
+                    .line().timeoutMin(60).addRaw("wget %s", $.var(distrWwwAddress)).build();
             }
         }
 
@@ -72,43 +70,53 @@ public class ZippedToolPlugin extends Plugin{
         protected abstract String createVersionCommandLine();
 
         protected Script extractToHomeDir(){
-            final String _distrFilename = ctx.var(distrFilename);
+            final String _distrFilename = $.var(distrFilename);
 
             extractToHomeScript = new Script(system)
-                .cd(ctx.var(buildPath));
+                .cd($.var(buildPath));
 
             if(_distrFilename.endsWith("tar.gz")){
                 extractToHomeScript.add(system.line().timeoutMin(1).addRaw("tar xvfz ../%s", _distrFilename));
             }else
             if(_distrFilename.endsWith("zip")){
-                extractToHomeScript.add(system.line().timeoutMin(1).addRaw("unzip ../%s", ctx.var(distrFilename)));
+                extractToHomeScript.add(system.line().timeoutMin(1).addRaw("unzip ../%s", $.var(distrFilename)));
             }
 
             extractToHomeScript
-                .line().sudo().addRaw("rm -r %s", ctx.var(homePath)).build()
-                .line().sudo().addRaw("rm -r %s", ctx.var(homeVersionPath)).build()
-                .line().sudo().addRaw("mv %s %s", ctx.var(buildPath) + "/" + ctx.var(versionName), ctx.var(homeParentPath)).build()
-                .line().sudo().addRaw("ln -s %s %s", ctx.var(currentVersionPath), ctx.var(homePath)).build()
-                .line().sudo().addRaw("chmod -R g+r,o+r %s", ctx.var(homePath)).build()
-                .line().sudo().addRaw("chmod u+x,g+x,o+x %s/bin/*", ctx.var(homePath)).build();
+                .line().sudo().addRaw("rm -r %s", $.var(homePath)).build()
+                .line().sudo().addRaw("rm -r %s", $.var(homeVersionPath)).build()
+                .line().sudo().addRaw("mv %s %s", $.var(buildPath) + "/" + $.var(versionName), $.var(homeParentPath)).build()
+                .line().sudo().addRaw("ln -s %s %s", $.var(currentVersionPath), $.var(homePath)).build()
+                .line().sudo().addRaw("chmod -R g+r,o+r %s", $.var(homePath)).build()
+                .line().sudo().addRaw("chmod u+x,g+x,o+x %s/bin/*", $.var(homePath)).build();
 
             return extractToHomeScript;
         }
 
         protected Script shortCut(String newCommandName, String sourceExecutableName){
             return extractToHomeScript.add(system.line().sudo().addRaw("rm /usr/bin/%s", newCommandName))
-                .add(system.line().sudo().addRaw("ln -s %s/bin/%s /usr/bin/mvn", ctx.var(homePath), sourceExecutableName, newCommandName));
+                .add(system.line().sudo().addRaw("ln -s %s/bin/%s /usr/bin/mvn", $.var(homePath), sourceExecutableName, newCommandName));
         }
 
-        protected void verifyVersion(){
+        @Override
+        public boolean verify(boolean throwException){
             System.out.println("verifying version...");
-            final String versionText = system.run(system.line().setVar("JAVA_HOME", ctx.var(global.getPlugin(JavaPlugin.class).homePath)).addRaw(createVersionCommandLine())).text.trim();
+
+            final String versionText = system.run(system.line().setVar("JAVA_HOME", $.var(global.getPlugin(JavaPlugin.class).homePath)).addRaw(createVersionCommandLine())).text.trim();
             final String installedVersion = extractVersion(versionText);
 
-            Preconditions.checkArgument(ctx.var(version).equals(installedVersion),
-                "versions don't match: %s (installed) vs %s (actual)", installedVersion, ctx.var(version));
+            if($.var(version).equals(installedVersion)){
+                System.out.printf("successfully installed %s%n", $.var(versionName));
 
-            System.out.printf("successfully installed %s%n", ctx.var(versionName));
+                return true;
+            }else{
+                if(throwException){
+                    final String format = "versions don't match: %s (installed) vs %s (actual)";
+                    throw new RuntimeException(String.format(format, installedVersion, $.var(version)));
+                } else {
+                    return false;
+                }
+            }
         }
     }
 }
