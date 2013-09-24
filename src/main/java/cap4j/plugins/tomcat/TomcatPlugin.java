@@ -1,11 +1,11 @@
 package cap4j.plugins.tomcat;
 
+import cap4j.cli.Script;
 import cap4j.core.GlobalContext;
 import cap4j.core.VarFun;
 import cap4j.plugins.Plugin;
 import cap4j.plugins.java.JavaPlugin;
 import cap4j.scm.CommandLineResult;
-import cap4j.scm.VcsCLI;
 import cap4j.session.DynamicVariable;
 import cap4j.session.Result;
 import cap4j.session.SystemEnvironment;
@@ -100,14 +100,14 @@ public class TomcatPlugin extends Plugin {
             system.mkdirs(ctx.var(buildPath));
 
             if(!system.exists(system.joinPath(ctx.var(myDirPath), ctx.var(distrFilename)))){
-                system.run(new VcsCLI.Script()
+                system.run(new Script()
                     .cd(ctx.var(myDirPath))
                     .add(system.line().timeoutMin(60).addRaw("wget %s", ctx.var(distrWwwAddress))));
             }
 
             final String homeParentPath = StringUtils.substringBeforeLast(ctx.var(homePath), "/");
 
-            final CommandLineResult r = system.run(new VcsCLI.Script()
+            final CommandLineResult r = system.run(new Script()
                 .cd(ctx.var(buildPath))
                 .add(system.line().timeoutMin(1).addRaw("tar xvfz ../%s", ctx.var(distrFilename)))
                 .add(system.line().sudo().addRaw("rm -r %s", ctx.var(homePath)))

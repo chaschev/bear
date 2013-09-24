@@ -1,5 +1,5 @@
 import cap4j.core.*;
-import cap4j.scm.CommandLine;
+import cap4j.cli.CommandLine;
 import cap4j.scm.SvnVcsCLI;
 import cap4j.scm.VcsCLI;
 import cap4j.session.Question;

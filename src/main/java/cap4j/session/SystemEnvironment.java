@@ -1,9 +1,9 @@
 package cap4j.session;
 
+import cap4j.cli.*;
+import cap4j.cli.Script;
 import cap4j.core.*;
-import cap4j.scm.CommandLine;
 import cap4j.scm.CommandLineResult;
-import cap4j.scm.VcsCLI;
 import com.google.common.base.Joiner;
 import net.schmizz.sshj.common.IOUtils;
 import net.schmizz.sshj.connection.channel.direct.Session;
@@ -127,6 +127,10 @@ public abstract class SystemEnvironment {
         return newCommandLine();
     }
 
+    public Script script(){
+        return new Script(this);
+    }
+
     public CommandLine newCommandLine(){
         return newCommandLine(CommandLineResult.class);
     }
@@ -164,14 +168,14 @@ public abstract class SystemEnvironment {
 
 
     public enum CopyCommandType{
-        COPY, LINK, MOVE;
+        COPY, LINK, MOVE
     }
 
-    public CommandLineResult run(VcsCLI.Script script) {
+    public CommandLineResult run(cap4j.cli.Script script) {
         return run(script, null);
     }
 
-    public CommandLineResult run(VcsCLI.Script script, GenericUnixRemoteEnvironment.SshSession.WithSession callback){
+    public CommandLineResult run(Script script, GenericUnixRemoteEnvironment.SshSession.WithSession callback){
         StringBuilder sb = new StringBuilder(1024);
         Result r = Result.OK;
 

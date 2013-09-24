@@ -29,6 +29,7 @@ public abstract class Task<T extends TaskResult> {
     public Task() {
     }
 
+    @Deprecated
     public Task(String name) {
         this.name = name;
     }
@@ -81,5 +82,10 @@ public abstract class Task<T extends TaskResult> {
     public void setCtx(SessionContext ctx) {
         this.ctx = ctx;
         this.system = ctx.system;
+    }
+
+    public Task desc(String description){
+        this.description = description;
+        return this;
     }
 }

@@ -1,15 +1,34 @@
+top priority:
+
+- (ok) rollback command
+- test error messages by setting incorrect rights at each step
+-- reuse setup task validation
+-- dependencies
+- test revert to previous when deploy fails
+- stop when errors
+- think of unit testing
+- test rollback
+- maven installation (via dependencies:get)
+
 utils:
 
 - (ok) remote WAR deploy
 - sql dumps
--
 
 features:
 
 - (ok) jdk plugin
 - (ok) grails plugin
 - (ok) tomcat plugin
-- replace Functions with VarFunctions
+- set variables from the command line
+- validate variables ("required" variables)
+- variables registry (to list, to validate)
+- list available variables
+- fix weird error messages when errors occur
+- make DynVars similar to JavaFX properties
+- validation step: validation [ validate(closure) ]
+- GitHub support
+- (ok) replace Functions with VarFunctions
 - upstart plugin
 - play plugin
 - maven plugin
@@ -18,19 +37,13 @@ features:
 - (ok) add running from scripts
 - dependencies
 - verify installation by checking version installed
-- installation
 - interactive mode
 - local console
-- revert command
 - (ok) proguard
 - basic operations should be available from console (revert, show revision, show log)
-- variables registry (to list, to validate)
-- validate variables (required variables)
-- list available variables
 - events, listeners & notifications
 - rewrite deployments in static groovy/java 8
 - check live status
-
 
 cap4j script:
 

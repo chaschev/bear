@@ -1,7 +1,7 @@
 package cap4j.session;
 
 import cap4j.core.GlobalContext;
-import cap4j.scm.CommandLine;
+import cap4j.cli.CommandLine;
 import cap4j.scm.CommandLineResult;
 import cap4j.scm.LocalCommandLine;
 import com.google.common.base.Preconditions;

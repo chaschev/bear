@@ -1,5 +1,6 @@
 package cap4j.scm;
 
+import cap4j.cli.CommandLine;
 import cap4j.core.GlobalContext;
 import cap4j.core.SessionContext;
 import com.google.common.base.Function;
@@ -54,7 +55,8 @@ public class SvnVcsCLI extends VcsCLI {
 
     @Override
     public CommandLine<BranchInfoResult> queryRevision(String revision, Map<String, String> params) {
-        final CommandLine<BranchInfoResult> r = commandPrefix("info", params)
+
+        return commandPrefix("info", params)
             .a("-r" + revision,
                 scmRepository())
             .cd(ctx.var(cap.releasePath))
@@ -67,8 +69,6 @@ public class SvnVcsCLI extends VcsCLI {
                     );
                 }
             });
-
-        return r;
     }
 
     @Override

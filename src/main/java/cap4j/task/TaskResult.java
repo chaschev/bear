@@ -8,9 +8,8 @@ import cap4j.session.Result;
 * Date: 7/27/13
 */
 public class TaskResult {
-    Result result;
-    CommandLineResult cliResult;
-
+    public Result result;
+    public CommandLineResult cliResult;
 
     public TaskResult(CommandLineResult cliResult) {
         this.cliResult = cliResult;

@@ -2,7 +2,6 @@ package cap4j.plugins.java;
 
 import cap4j.core.GlobalContext;
 import cap4j.plugins.Plugin;
-import cap4j.scm.VcsCLI;
 import cap4j.session.DynamicVariable;
 import cap4j.session.Result;
 import cap4j.session.SystemEnvironment;
@@ -50,24 +49,38 @@ public class JavaPlugin extends Plugin {
 
             system.upload(ctx.var(javaDistributionPath), localDFile);
 
-            system.run(
-                system.newCommandLine()
-                    .timeoutSec(30)
-                    .cd(ctx.var(javaSharedBuildDirPath))
-                    .addSplit("tar xvf").a(ctx.var(javaDistributionName))
-            );
+            final String distrName = ctx.var(javaDistributionName);
+            if(distrName.endsWith("gz")) {
+                system.run(
+                    system.newCommandLine()
+                        .timeoutSec(30)
+                        .cd(ctx.var(javaSharedBuildDirPath))
+                        .addRaw("tar xvf").a(distrName)
+                );
+            }else{
+                system.script()
+                        .cd(ctx.var(javaSharedBuildDirPath))
+                        .line().addRaw("chmod u+x %s", distrName).build()
+                        .line()
+                            .timeoutSec(30)
+                            .addRaw("./%s", distrName).build()
+                    .run();
+            }
 
-            String jdkDirName = system.capture(String.format("cd %s && ls -w 1 | grep -v gz", ctx.var(javaSharedBuildDirPath))).trim();
+            String jdkDirName = system.capture(String.format("cd %s && ls -w 1 | grep -v gz | grep -v bin", ctx.var(javaSharedBuildDirPath))).trim();
 
-            system.run(new VcsCLI.Script()
-                .add(system.line().sudo().addRaw("rm -r /var/lib/java"))
-                .add(system.line().sudo().addRaw("rm -r /var/lib/%s", jdkDirName))
-                .add(system.line().sudo().addRaw("mv %s/%s /var/lib", ctx.var(javaSharedBuildDirPath), jdkDirName))
-                .add(system.line().sudo().addRaw("ln -s /var/lib/%s /var/lib/java", jdkDirName))
-                .add(system.line().sudo().addRaw("chmod -R g+r,o+r /var/lib/java"))
-                .add(system.line().sudo().addRaw("chmod u+x,g+x,o+x /var/lib/java/bin/*"))
-                .add(system.line().sudo().addRaw("ln -s /var/lib/java/bin/java /usr/bin/java"))
-                .add(system.line().sudo().addRaw("ln -s /var/lib/java/bin/javac /usr/bin/javac")),
+            system.run(system.script()
+                .line().sudo().addRaw("rm -r /var/lib/java").build()
+                .line().sudo().addRaw("rm -r /var/lib/jdks/%s", jdkDirName).build()
+                .line().sudo().addRaw("mkdir -p /var/lib/jdks").build()
+                .line().sudo().addRaw("mv %s/%s /var/lib/jdks", ctx.var(javaSharedBuildDirPath), jdkDirName).build()
+                .line().sudo().addRaw("ln -s /var/lib/jdks/%s /var/lib/java", jdkDirName).build()
+                .line().sudo().addRaw("chmod -R g+r,o+r /var/lib/java").build()
+                .line().sudo().addRaw("chmod u+x,g+x,o+x /var/lib/java/bin/*").build()
+                .line().sudo().addRaw("rm /usr/bin/java").build()
+                .line().sudo().addRaw("ln -s /var/lib/java/bin/java /usr/bin/java").build()
+                .line().sudo().addRaw("rm /usr/bin/javac").build()
+                .line().sudo().addRaw("ln -s /var/lib/java/bin/javac /usr/bin/javac").build(),
                 SystemEnvironment.passwordCallback(ctx.var(cap.sshPassword))
             );
 

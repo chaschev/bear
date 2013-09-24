@@ -1,12 +1,12 @@
 package cap4j.plugins.grails;
 
+import cap4j.cli.Script;
 import cap4j.core.CapConstants;
 import cap4j.core.GlobalContext;
 import cap4j.core.SessionContext;
 import cap4j.plugins.java.JavaPlugin;
-import cap4j.scm.CommandLine;
+import cap4j.cli.CommandLine;
 import cap4j.scm.CommandLineResult;
-import cap4j.scm.VcsCLI;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,7 +40,7 @@ public class GrailsBuilder {
 
         String projectPath = ctx.var(grails.projectPath);
 
-        final VcsCLI.Script script = new VcsCLI.Script()
+        final Script script = new Script()
             .cd(projectPath);
 
         if (ctx.varB(grails.clean)) {

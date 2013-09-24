@@ -23,8 +23,7 @@ public class TransactionTask extends Task{
     }
 
     public TransactionTask(Task... tasks) {
-        final ArrayList tasks1 = Lists.newArrayList(tasks);
-        this.tasks = tasks1;
+        this.tasks = (ArrayList) Lists.newArrayList(tasks);
         name = "transaction of " + tasks.length + " tasks";
     }
 

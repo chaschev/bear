@@ -1,6 +1,6 @@
 package cap4j.core;
 
-import cap4j.scm.CommandLine;
+import cap4j.cli.CommandLine;
 import cap4j.session.DynamicVariable;
 import cap4j.session.SystemEnvironment;
 

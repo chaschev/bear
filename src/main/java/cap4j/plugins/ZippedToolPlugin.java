@@ -1,9 +1,9 @@
 package cap4j.plugins;
 
+import cap4j.cli.Script;
 import cap4j.core.GlobalContext;
 import cap4j.core.VarFun;
 import cap4j.plugins.java.JavaPlugin;
-import cap4j.scm.VcsCLI;
 import cap4j.session.DynamicVariable;
 import cap4j.task.Task;
 import com.google.common.base.Preconditions;
@@ -60,21 +60,21 @@ public class ZippedToolPlugin extends Plugin{
 
         protected void download(){
             if(!system.exists(system.joinPath(ctx.var(myDirPath), ctx.var(distrFilename)))){
-                system.run(new VcsCLI.Script()
+                system.script()
                     .cd(ctx.var(myDirPath))
-                    .add(system.line().timeoutMin(60).addRaw("wget %s", ctx.var(distrWwwAddress))));
+                    .line().timeoutMin(60).addRaw("wget %s", ctx.var(distrWwwAddress)).build();
             }
         }
 
-        protected VcsCLI.Script extractToHomeScript;
+        protected Script extractToHomeScript;
 
         protected abstract String extractVersion(String output);
         protected abstract String createVersionCommandLine();
 
-        protected VcsCLI.Script extractToHomeDir(){
+        protected Script extractToHomeDir(){
             final String _distrFilename = ctx.var(distrFilename);
 
-            extractToHomeScript = new VcsCLI.Script()
+            extractToHomeScript = new Script(system)
                 .cd(ctx.var(buildPath));
 
             if(_distrFilename.endsWith("tar.gz")){
@@ -85,17 +85,17 @@ public class ZippedToolPlugin extends Plugin{
             }
 
             extractToHomeScript
-                .add(system.line().sudo().addRaw("rm -r %s", ctx.var(homePath)))
-                .add(system.line().sudo().addRaw("rm -r %s", ctx.var(homeVersionPath)))
-                .add(system.line().sudo().addRaw("mv %s %s", ctx.var(buildPath) + "/" + ctx.var(versionName), ctx.var(homeParentPath)))
-                .add(system.line().sudo().addRaw("ln -s %s %s", ctx.var(currentVersionPath), ctx.var(homePath)))
-                .add(system.line().sudo().addRaw("chmod -R g+r,o+r %s", ctx.var(homePath)))
-                .add(system.line().sudo().addRaw("chmod u+x,g+x,o+x %s/bin/*", ctx.var(homePath)));
+                .line().sudo().addRaw("rm -r %s", ctx.var(homePath)).build()
+                .line().sudo().addRaw("rm -r %s", ctx.var(homeVersionPath)).build()
+                .line().sudo().addRaw("mv %s %s", ctx.var(buildPath) + "/" + ctx.var(versionName), ctx.var(homeParentPath)).build()
+                .line().sudo().addRaw("ln -s %s %s", ctx.var(currentVersionPath), ctx.var(homePath)).build()
+                .line().sudo().addRaw("chmod -R g+r,o+r %s", ctx.var(homePath)).build()
+                .line().sudo().addRaw("chmod u+x,g+x,o+x %s/bin/*", ctx.var(homePath)).build();
 
             return extractToHomeScript;
         }
 
-        protected VcsCLI.Script shortCut(String newCommandName, String sourceExecutableName){
+        protected Script shortCut(String newCommandName, String sourceExecutableName){
             return extractToHomeScript.add(system.line().sudo().addRaw("rm /usr/bin/%s", newCommandName))
                 .add(system.line().sudo().addRaw("ln -s %s/bin/%s /usr/bin/mvn", ctx.var(homePath), sourceExecutableName, newCommandName));
         }

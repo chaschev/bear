@@ -32,8 +32,6 @@ public enum Registry {
             throw new UnsupportedOperationException("todo");
         }
 
-        final Task task = (Task) OpenBean2.getFieldValue2(CapConstants.class, taskName);
-
-        return task;
+        return (Task) OpenBean2.getFieldValue2(CapConstants.class, taskName);
     }
 }

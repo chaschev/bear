@@ -10,7 +10,7 @@ import cap4j.plugins.java.JavaPlugin;
 import cap4j.plugins.mysql.MySqlPlugin;
 import cap4j.plugins.tomcat.MavenPlugin;
 import cap4j.plugins.tomcat.TomcatPlugin;
-import cap4j.scm.CommandLine;
+import cap4j.cli.CommandLine;
 import cap4j.scm.VcsCLI;
 import cap4j.strategy.BaseStrategy;
 import cap4j.strategy.SymlinkEntry;
@@ -148,7 +148,7 @@ public class Ex6DeployWarViaCache1 {
             }
         });
 
-        global.localCtx.var(cap.getStage).runTask(grails.setup);
+        global.localCtx.var(cap.getStage).runTask(maven.setup);
 
         global.shutdown();
     }

@@ -1,9 +1,12 @@
-package cap4j.scm;
+package cap4j.cli;
 
+import cap4j.scm.CommandLineResult;
+import cap4j.scm.VcsCLI;
 import cap4j.session.Result;
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
 
+import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -22,7 +25,17 @@ public abstract class CommandLine<T extends CommandLineResult>{
 
     protected Function<String, T> parser;
 
+    /**
+     * Null when used outside of a script.
+     */
+    @Nullable
+    protected Script script;
+
     protected CommandLine() {
+    }
+
+    protected CommandLine(Script script) {
+        this.script = script;
     }
 
     public CommandLine a(String... s){
@@ -132,5 +145,9 @@ public abstract class CommandLine<T extends CommandLineResult>{
 
     public CommandLine pipe() {
         return addRaw(" | ");
+    }
+
+    public Script build() {
+        return script;
     }
 }

@@ -1,5 +1,6 @@
 package cap4j.scm;
 
+import cap4j.cli.CommandLine;
 import cap4j.core.CapConstants;
 import cap4j.core.GlobalContext;
 import cap4j.core.SessionContext;
@@ -92,23 +93,6 @@ public abstract class VcsCLI {
             super(text);
 
             this.value = value;
-        }
-    }
-
-    public static class Script{
-        public String cd = ".";
-
-        public List<CommandLine> lines = new ArrayList<CommandLine>();
-
-        public Script add(CommandLine commandLine) {
-            lines.add(commandLine);
-
-            return this;
-        }
-
-        public Script cd(String cd) {
-            this.cd = cd;
-            return this;
         }
     }
 

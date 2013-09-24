@@ -4,7 +4,7 @@ import cap4j.core.AbstractConsole;
 import cap4j.core.CapConstants;
 import cap4j.core.GlobalContext;
 import cap4j.core.MarkedBuffer;
-import cap4j.scm.CommandLine;
+import cap4j.cli.CommandLine;
 import cap4j.scm.CommandLineResult;
 import cap4j.scm.RemoteCommandLine;
 import cap4j.scm.VcsCLI;
@@ -141,9 +141,7 @@ public class GenericUnixRemoteEnvironment extends SystemEnvironment {
 
                 List strings = line.strings;
 
-                for (int i = 0; i < strings.size(); i++) {
-                    Object string = strings.get(i);
-
+                for (Object string : strings) {
                     if (string instanceof VcsCLI.CommandLineOperator) {
                         sb.append(string);
                     } else {
