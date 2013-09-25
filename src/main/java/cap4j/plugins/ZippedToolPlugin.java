@@ -21,11 +21,11 @@ import cap4j.core.GlobalContext;
 import cap4j.core.VarFun;
 import cap4j.plugins.java.JavaPlugin;
 import cap4j.session.DynamicVariable;
+import cap4j.session.Variables;
 import cap4j.task.Task;
 import org.apache.commons.lang3.StringUtils;
 
-import static cap4j.core.Cap.*;
-import static cap4j.session.VariableUtils.concat;
+import static cap4j.session.Variables.concat;
 
 /**
  * User: chaschev
@@ -37,13 +37,13 @@ import static cap4j.session.VariableUtils.concat;
  */
 public abstract class ZippedToolPlugin extends Plugin{
     public final DynamicVariable<String>
-        version = dynamicNotSet("version of the tool"),
-        toolname = dynamicNotSet("i.e. maven"),
-        toolDistrName = strVar("i.e. apache-tomcat").setEqualTo(toolname),
+        version = Variables.dynamicNotSet("version of the tool"),
+        toolname = Variables.dynamicNotSet("i.e. maven"),
+        toolDistrName = Variables.strVar("i.e. apache-tomcat").setEqualTo(toolname),
         versionName = concat(toolDistrName, "-", version).setDesc("i.e. apache-maven-3.0.5"),
         distrFilename = concat(versionName, ".tar.gz"),
         homePath = concat("/var/lib/", toolname).setDesc("Tool root dir"),
-        homeParentPath = dynamic(new VarFun<String>() {
+        homeParentPath = Variables.dynamic(new VarFun<String>() {
             public String apply() {
                 return StringUtils.substringBeforeLast($.var(homePath), "/");
             }
@@ -54,7 +54,7 @@ public abstract class ZippedToolPlugin extends Plugin{
         myDirPath,
         buildPath,
 
-        distrWwwAddress = dynamicNotSet("distribution download address");
+        distrWwwAddress = Variables.dynamicNotSet("distribution download address");
 
     public ZippedToolPlugin(GlobalContext global) {
         super(global);

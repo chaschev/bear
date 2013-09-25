@@ -19,7 +19,7 @@ package cap4j.strategy;
 import cap4j.core.*;
 import cap4j.session.DynamicVariable;
 import cap4j.session.Result;
-import cap4j.session.VariableUtils;
+import cap4j.session.Variables;
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
@@ -212,7 +212,7 @@ public abstract class BaseStrategy {
         for (SymlinkEntry entry : symlinkRules.entries) {
             String srcPath;
 
-            srcPath = $(VariableUtils.joinPath("symlinkSrc", cap.currentPath, entry.sourcePath));
+            srcPath = $(Variables.joinPath("symlinkSrc", cap.currentPath, entry.sourcePath));
 
             $.system.link(srcPath, $(entry.destPath), entry.owner);
         }

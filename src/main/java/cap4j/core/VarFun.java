@@ -17,7 +17,7 @@
 package cap4j.core;
 
 import cap4j.session.DynamicVariable;
-import cap4j.session.VariableUtils;
+import cap4j.session.Variables;
 
 /**
  * @author Andrey Chaschev chaschev@gmail.com
@@ -30,7 +30,7 @@ public abstract class VarFun<T> {
     public abstract T apply();
 
     protected String concat(Object... varsAndStrings) {
-        return VariableUtils.concat($, varsAndStrings);
+        return Variables.concat($, varsAndStrings);
     }
 
     public void setVar(DynamicVariable<T> var) {

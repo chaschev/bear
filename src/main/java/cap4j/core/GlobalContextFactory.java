@@ -40,11 +40,11 @@ public class GlobalContextFactory {
 
     public void init() {
         if (globalVarsInitPhase != null) {
-            globalVarsInitPhase.setVars(global.variables);
+            globalVarsInitPhase.setVars(global.variablesLayer);
         }
 
         if (registerPluginsPhase != null) {
-            final List<Class<? extends Plugin>> list = registerPluginsPhase.registerPlugins(global.variables);
+            final List<Class<? extends Plugin>> list = registerPluginsPhase.registerPlugins(global.variablesLayer);
 
             for (Class<? extends Plugin> aClass : list) {
                 try {
@@ -61,11 +61,11 @@ public class GlobalContextFactory {
     }
 
     public static interface GlobalVarsInitPhase {
-        void setVars(Variables vars);
+        void setVars(VariablesLayer vars);
     }
 
     public static interface RegisterPluginsPhase {
-        List<Class<? extends Plugin>> registerPlugins(Variables vars);
+        List<Class<? extends Plugin>> registerPlugins(VariablesLayer vars);
     }
 
     public GlobalVarsInitPhase globalVarsInitPhase;

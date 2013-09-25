@@ -21,6 +21,7 @@ import cap4j.scm.VcsCLI;
 import cap4j.session.Result;
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
+import org.apache.commons.lang3.StringUtils;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
@@ -53,8 +54,21 @@ public abstract class CommandLine<T extends CommandLineResult> {
         this.script = script;
     }
 
-    public CommandLine a(String... s) {
-        Collections.addAll(strings, s);
+    public CommandLine a(String... strings) {
+        for (String s : strings) {
+            if(!StringUtils.isBlank(s)){
+                this.strings.add(s);
+            }
+        }
+        return this;
+    }
+
+    public CommandLine a(List<String> strings) {
+        for (String s : strings) {
+            if(!StringUtils.isBlank(s)){
+                this.strings.add(s);
+            }
+        }
         return this;
     }
 

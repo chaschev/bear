@@ -16,7 +16,6 @@
 
 package cap4j.session;
 
-import cap4j.core.Cap;
 import com.chaschev.chutils.util.Exceptions;
 import com.google.common.collect.Lists;
 
@@ -115,7 +114,7 @@ public class Question {
     }
 
     public static String freeQuestion(String question) {
-        return freeQuestion(question, Cap.strVar());
+        return freeQuestion(question, Variables.strVar());
     }
 
     public static String freeQuestion(String question, DynamicVariable<String> strVar) {
@@ -126,7 +125,7 @@ public class Question {
     }
 
     public static String freeQuestionWithOption(String question, String _default) {
-        return freeQuestionWithOption(question, _default, Cap.strVar());
+        return freeQuestionWithOption(question, _default, Variables.strVar());
     }
 
     public static String freeQuestionWithOption(String question, String _default, DynamicVariable<String> strVar) {

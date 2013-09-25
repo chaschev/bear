@@ -26,7 +26,6 @@ import cap4j.plugins.java.JavaPlugin;
 import cap4j.plugins.mysql.MySqlPlugin;
 import cap4j.plugins.tomcat.MavenPlugin;
 import cap4j.plugins.tomcat.TomcatPlugin;
-import cap4j.cli.CommandLine;
 import cap4j.scm.VcsCLI;
 import cap4j.strategy.BaseStrategy;
 import cap4j.strategy.SymlinkEntry;
@@ -50,7 +49,7 @@ public class Ex6DeployWarViaCache1 {
     public static void main(String[] args) throws InterruptedException {
         GlobalContextFactory.INSTANCE.registerPluginsPhase = new GlobalContextFactory.RegisterPluginsPhase() {
             @Override
-            public List<Class<? extends Plugin>> registerPlugins(Variables vars) {
+            public List<Class<? extends Plugin>> registerPlugins(VariablesLayer vars) {
                 return Lists.<Class<? extends Plugin>>newArrayList(
                     TomcatPlugin.class,
                     GrailsPlugin.class,
@@ -65,7 +64,7 @@ public class Ex6DeployWarViaCache1 {
         GlobalContextFactory.INSTANCE.init();
 
         final GlobalContext global = getInstance();
-        final Variables vars = global.variables;
+        final VariablesLayer vars = global.variablesLayer;
 
         final GrailsPlugin grails = plugin(GrailsPlugin.class);
         final JavaPlugin java = plugin(JavaPlugin.class);
@@ -119,17 +118,17 @@ public class Ex6DeployWarViaCache1 {
 
                         final String destPath = $.var(cap.vcsBranchLocalPath);
 
-                        final CommandLine line;
+                        final cap4j.cli.Script script;
 
                         if (!$.system.exists(destPath)) {
-                            line = vcsCLI.checkout($.var(cap.revision), destPath, VcsCLI.emptyParams());
+                            script = vcsCLI.checkout($.var(cap.revision), destPath, VcsCLI.emptyParams());
                         } else {
-                            line = vcsCLI.sync($.var(cap.revision), destPath, VcsCLI.emptyParams());
+                            script = vcsCLI.sync($.var(cap.revision), destPath, VcsCLI.emptyParams());
                         }
 
-                        line.timeoutMs(600 * 1000);
+                        script.timeoutMs(600 * 1000);
 
-                        $.system.run(line, vcsCLI.passwordCallback());
+                        $.system.run(script, vcsCLI.passwordCallback());
 
                         logger.info("done updating in {}", sw);
 

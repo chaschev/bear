@@ -1,0 +1,4 @@
+- Some commands like Git's checkout are scripts. And it's quite demanding to validate all the commands inside, because
+some my fail for a positive scenario.
+
+So instead of validating each command, result validation (i.e. checkout output or disk contents) is being proposed.

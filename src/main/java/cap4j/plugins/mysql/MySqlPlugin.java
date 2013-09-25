@@ -21,23 +21,20 @@ import cap4j.core.GlobalContext;
 import cap4j.core.VarFun;
 import cap4j.plugins.Plugin;
 import cap4j.scm.CommandLineResult;
+import cap4j.scm.GitCLI;
 import cap4j.session.*;
 import cap4j.task.Task;
 import cap4j.task.TaskResult;
 import cap4j.task.TaskRunner;
-import net.schmizz.sshj.common.IOUtils;
 import net.schmizz.sshj.connection.channel.direct.Session;
 import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.OutputStream;
 import java.text.MessageFormat;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import static cap4j.core.Cap.*;
 
 /**
  * @author Andrey Chaschev chaschev@gmail.com
@@ -46,36 +43,36 @@ public class MySqlPlugin extends Plugin {
     private static final Logger logger = LoggerFactory.getLogger(MySqlPlugin.class);
 
     public final DynamicVariable<String>
-        version = strVar().setDesc("null means ANY").defaultTo(null),
-        adminUser = strVar().setDesc("admin user").defaultTo("root"),
-        adminPassword = strVar().setDesc("admin password").defaultTo("root"),
-        dbName = strVar().setDesc("database name"),
-        user = strVar().setDesc("default user for operations").setEqualTo(adminUser),
-        password = strVar().setDesc("pw").setEqualTo(adminPassword),
-        serverPackage = newVar("mysql55-server"),
-        clientPackage = newVar("mysql55"),
-        mysqlTempScriptName = strVar().defaultTo("temp.sql"),
-        mysqlTempScriptPath = dynamic(new VarFun<String>() {
+        version = Variables.strVar().setDesc("null means ANY").defaultTo(null),
+        adminUser = Variables.strVar().setDesc("admin user").defaultTo("root"),
+        adminPassword = Variables.strVar().setDesc("admin password").defaultTo("root"),
+        dbName = Variables.strVar().setDesc("database name"),
+        user = Variables.strVar().setDesc("default user for operations").setEqualTo(adminUser),
+        password = Variables.strVar().setDesc("pw").setEqualTo(adminPassword),
+        serverPackage = Variables.newVar("mysql55-server"),
+        clientPackage = Variables.newVar("mysql55"),
+        mysqlTempScriptName = Variables.strVar().defaultTo("temp.sql"),
+        mysqlTempScriptPath = Variables.dynamic(new VarFun<String>() {
             @Override
             public String apply() {
                 return $.system.joinPath($.var(cap.sharedPath), $.var(mysqlTempScriptName));
             }
         }),
-        dumpName = dynamic(new VarFun<String>() {
+        dumpName = Variables.dynamic(new VarFun<String>() {
             @Override
             public String apply() {
                 return String.format("dump_%s_%s.GMT_%s.sql",
                     $.var(cap.applicationName), Cap.RELEASE_FORMATTER.print(new DateTime()), $.var(cap.sessionHostname));
             }
         }),
-        dumpsDirPath = VariableUtils.joinPath(cap.sharedPath, "dumps"),
-        dumpPath = dynamic(new VarFun<String>() {
+        dumpsDirPath = Variables.joinPath(cap.sharedPath, "dumps"),
+        dumpPath = Variables.dynamic(new VarFun<String>() {
             public String apply() {
                 return $.system.joinPath($.var(dumpsDirPath), $.var(dumpName) + ".bz2");
             }
         });
 
-    public final DynamicVariable<Version> getVersion = dynamic(new VarFun<Version>() {
+    public final DynamicVariable<Version> getVersion = Variables.dynamic(new VarFun<Version>() {
         @Override
         public Version apply() {
             return Version.fromString($.var(version));
@@ -242,9 +239,7 @@ public class MySqlPlugin extends Plugin {
             @Override
             public void act(Session session, Session.Shell shell) throws Exception {
                 if (text.contains("Enter password:")) {
-                    final OutputStream os = session.getOutputStream();
-                    os.write((pw + "\n").getBytes(IOUtils.UTF8));
-                    os.flush();
+                    GitCLI.answer(session, pw);
                 }
             }
         };

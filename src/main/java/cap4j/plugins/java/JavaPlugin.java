@@ -21,15 +21,15 @@ import cap4j.plugins.Plugin;
 import cap4j.session.DynamicVariable;
 import cap4j.session.Result;
 import cap4j.session.SystemEnvironment;
-import cap4j.session.VariableUtils;
+import cap4j.session.Variables;
 import cap4j.task.Task;
 import cap4j.task.TaskResult;
 import cap4j.task.TaskRunner;
 
 import java.io.File;
 
-import static cap4j.core.Cap.newVar;
-import static cap4j.core.Cap.strVar;
+import static cap4j.session.Variables.newVar;
+import static cap4j.session.Variables.strVar;
 
 /**
  * @author Andrey Chaschev chaschev@gmail.com
@@ -41,8 +41,8 @@ public class JavaPlugin extends Plugin {
 
     javaSharedDirPath,
         javaSharedBuildDirPath,
-        javaLinuxDistributionName = strVar(),
-        javaWindowsDistributionName = strVar(),
+        javaLinuxDistributionName = Variables.strVar(),
+        javaWindowsDistributionName = Variables.strVar(),
         javaLinuxDistributionPath,
         javaWindowsDistributionPath,
         javaDistributionName,
@@ -105,12 +105,12 @@ public class JavaPlugin extends Plugin {
 
     public JavaPlugin(GlobalContext global) {
         super(global);
-        javaSharedDirPath = VariableUtils.joinPath(cap.sharedPath, "java");
-        javaSharedBuildDirPath = VariableUtils.joinPath(javaSharedDirPath, "build");
-        javaLinuxDistributionPath = VariableUtils.joinPath(javaSharedBuildDirPath, javaLinuxDistributionName);
-        javaWindowsDistributionPath = VariableUtils.joinPath(javaSharedBuildDirPath, javaWindowsDistributionName);
-        javaDistributionName = VariableUtils.condition(cap.isNativeUnix, javaLinuxDistributionName, javaLinuxDistributionName);
-        javaDistributionPath = VariableUtils.condition(cap.isNativeUnix, javaLinuxDistributionPath, javaWindowsDistributionPath);
+        javaSharedDirPath = Variables.joinPath(cap.sharedPath, "java");
+        javaSharedBuildDirPath = Variables.joinPath(javaSharedDirPath, "build");
+        javaLinuxDistributionPath = Variables.joinPath(javaSharedBuildDirPath, javaLinuxDistributionName);
+        javaWindowsDistributionPath = Variables.joinPath(javaSharedBuildDirPath, javaWindowsDistributionName);
+        javaDistributionName = Variables.condition(cap.isNativeUnix, javaLinuxDistributionName, javaLinuxDistributionName);
+        javaDistributionPath = Variables.condition(cap.isNativeUnix, javaLinuxDistributionPath, javaWindowsDistributionPath);
 
     }
 

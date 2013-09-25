@@ -17,26 +17,24 @@
 package cap4j.core;
 
 import cap4j.session.DynamicVariable;
+import cap4j.session.Variables;
 import com.chaschev.chutils.util.Exceptions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.LinkedHashMap;
 
-import static cap4j.core.Cap.bool;
-
-public class Variables {
-    private static final Logger logger = LoggerFactory.getLogger(Variables.class);
-
+public class VariablesLayer {
+    private static final Logger logger = LoggerFactory.getLogger(VariablesLayer.class);
 
     String name;
-    private final Variables fallbackVariables;
+    private final VariablesLayer fallbackVariablesLayer;
 
     public LinkedHashMap<String, DynamicVariable> variables = new LinkedHashMap<String, DynamicVariable>();
 
-    public Variables(String name, Variables fallbackVariables) {
+    public VariablesLayer(String name, VariablesLayer fallbackVariablesLayer) {
         this.name = name;
-        this.fallbackVariables = fallbackVariables;
+        this.fallbackVariablesLayer = fallbackVariablesLayer;
     }
 
     public void set(Nameable name, String value) {
@@ -56,22 +54,22 @@ public class Variables {
         }
     }
 
-    public Variables put(Nameable key, DynamicVariable value) {
+    public VariablesLayer put(Nameable key, DynamicVariable value) {
         putUnlessFrozen(key, value);
         return this;
     }
 
-    public Variables put(DynamicVariable value) {
+    public VariablesLayer put(DynamicVariable value) {
         return put(value, value);
     }
 
-    public Variables putS(Nameable key, String value) {
-        put(key, Cap.strVar("external var").defaultTo(value));
+    public VariablesLayer putS(Nameable key, String value) {
+        put(key, Variables.strVar("external var").defaultTo(value));
         return this;
     }
 
-    public Variables putB(Nameable key, boolean b) {
-        put(key, bool("external var").defaultTo(b));
+    public VariablesLayer putB(Nameable key, boolean b) {
+        put(key, Variables.bool("external var").defaultTo(b));
         return this;
     }
 
@@ -112,8 +110,8 @@ public class Variables {
 
         DynamicVariable<T> r = variables.get(var.name());
 
-        if (r == null && fallbackVariables != null) {
-            r = fallbackVariables.getClosure(var);
+        if (r == null && fallbackVariablesLayer != null) {
+            r = fallbackVariablesLayer.getClosure(var);
         }
 
         if(r == null){
@@ -142,8 +140,8 @@ public class Variables {
     public <T> DynamicVariable<T> getClosure(Nameable<T> name) {
         DynamicVariable var = variables.get(name.name());
 
-        if(var  == null && fallbackVariables != null){
-            var = fallbackVariables.getClosure(name);
+        if(var  == null && fallbackVariablesLayer != null){
+            var = fallbackVariablesLayer.getClosure(name);
         }
 
         return var;
@@ -165,8 +163,8 @@ public class Variables {
 //        };
 //    }
 
-    public Variables dup(){
-        final Variables v = new Variables("dup of " + name, fallbackVariables);
+    public VariablesLayer dup(){
+        final VariablesLayer v = new VariablesLayer("dup of " + name, fallbackVariablesLayer);
 
         v.variables = new LinkedHashMap<String, DynamicVariable>(variables);
 

@@ -17,6 +17,7 @@
 package cap4j.scm;
 
 import cap4j.cli.CommandLine;
+import cap4j.cli.Script;
 import cap4j.core.Cap;
 import cap4j.core.GlobalContext;
 import cap4j.core.SessionContext;
@@ -41,15 +42,15 @@ public abstract class VcsCLI {
         this.cap = global.cap;
     }
 
-    public CommandLine checkout(String revision, String destination, Map<String, String> params) {
+    public Script checkout(String revision, String destination, Map<String, String> params) {
         throw new UnsupportedOperationException("todo");
     }
 
-    public CommandLine sync(String revision, String destination, Map<String, String> params) {
+    public Script sync(String revision, String destination, Map<String, String> params) {
         throw new UnsupportedOperationException("todo");
     }
 
-    public CommandLine export(String revision, String destination, Map<String, String> params) {
+    public Script export(String revision, String destination, Map<String, String> params) {
         throw new UnsupportedOperationException("todo");
     }
 
@@ -57,7 +58,7 @@ public abstract class VcsCLI {
         throw new UnsupportedOperationException("todo");
     }
 
-    public CommandLine<BranchInfoResult> queryRevision(String revision) {
+    public Script<BranchInfoResult> queryRevision(String revision) {
         return queryRevision(revision, emptyParams());
     }
 
@@ -72,7 +73,7 @@ public abstract class VcsCLI {
      * containing the commands that, when executed will return a string
      * that this method can then extract the real revision from.
      */
-    public CommandLine<BranchInfoResult> queryRevision(String revision, Map<String, String> params) {
+    public Script<BranchInfoResult> queryRevision(String revision, Map<String, String> params) {
         throw new UnsupportedOperationException("todo");
     }
 

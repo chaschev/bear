@@ -16,12 +16,13 @@
 
 package cap4j.session;
 
+import cap4j.cli.CommandLine;
 import cap4j.core.AbstractConsole;
 import cap4j.core.Cap;
 import cap4j.core.GlobalContext;
 import cap4j.core.MarkedBuffer;
-import cap4j.cli.CommandLine;
 import cap4j.scm.CommandLineResult;
+import cap4j.scm.GitCLI;
 import cap4j.scm.RemoteCommandLine;
 import cap4j.scm.VcsCLI;
 import com.google.common.collect.Lists;
@@ -43,7 +44,6 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.io.File;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -190,9 +190,7 @@ public class GenericUnixRemoteEnvironment extends SystemEnvironment {
                             if (text.contains("sudo") && text.contains("password")) {
                                 buffer.markStart();
 
-                                final OutputStream os = session.getOutputStream();
-                                os.write((ctx().var(cap.sshPassword) + "\n").getBytes(IOUtils.UTF8));
-                                os.flush();
+                                GitCLI.answer(session, ctx().var(cap.sshPassword));
                             }
                         }
                     }
@@ -364,7 +362,12 @@ public class GenericUnixRemoteEnvironment extends SystemEnvironment {
 
     @Override
     public Result rmCd(@Nonnull String dir, String... paths) {
-        return run(newCommandLine().cd(dir).a("rm", "-rf").a(paths)).result;
+        return run(rmLine(dir, paths)).result;
+    }
+
+    @Override
+    public CommandLine rmLine(@Nonnull String dir, String... paths) {
+        return line().cd(dir).a("rm", "-rf").a(paths);
     }
 
     public static class SshSession {

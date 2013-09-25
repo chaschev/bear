@@ -20,6 +20,7 @@ import cap4j.plugins.Plugin;
 import cap4j.session.DynamicVariable;
 import cap4j.session.GenericUnixLocalEnvironment;
 import cap4j.session.SystemEnvironment;
+import cap4j.session.Variables;
 import cap4j.task.Tasks;
 import com.chaschev.chutils.util.Exceptions;
 import com.google.common.base.Preconditions;
@@ -39,7 +40,7 @@ public class GlobalContext {
     //    public static final GlobalContext INSTANCE = new GlobalContext();
     private static final GlobalContext INSTANCE = new GlobalContext();
 
-    public final Variables variables = new Variables("global vars", null);
+    public final VariablesLayer variablesLayer = new VariablesLayer("global vars", null);
     public final Console console = new Console(this);
     public final Tasks tasks;
 
@@ -63,7 +64,7 @@ public class GlobalContext {
 
     public final SystemEnvironment local;
 
-    public final Variables localVars;
+    public final VariablesLayer localVars;
 
     public final SessionContext localCtx;
     public final Cap cap;
@@ -83,16 +84,16 @@ public class GlobalContext {
 //
 //    }
 
-    public Variables gvars() {
-        return variables;
+    public VariablesLayer gvars() {
+        return variablesLayer;
     }
 
     public <T> T var(DynamicVariable<T> varName) {
-        return variables.get(this.localCtx, varName);
+        return variablesLayer.get(this.localCtx, varName);
     }
 
     public <T> T var(DynamicVariable<T> varName, T _default) {
-        return variables.get(varName, _default);
+        return variablesLayer.get(varName, _default);
     }
 
     public Console console() {
@@ -170,13 +171,13 @@ public class GlobalContext {
             final Object v = properties.get(name);
 
             if (v instanceof Boolean) {
-                final DynamicVariable<Boolean> value = Cap.newVar((Boolean) v).setName(name);
+                final DynamicVariable<Boolean> value = Variables.newVar((Boolean) v).setName(name);
 
-                variables.put(value, value);
+                variablesLayer.put(value, value);
             } else if (v instanceof String) {
-                final DynamicVariable<String> value = Cap.newVar((String) v).setName(name);
+                final DynamicVariable<String> value = Variables.newVar((String) v).setName(name);
 
-                variables.put(value, value);
+                variablesLayer.put(value, value);
             } else {
                 throw new UnsupportedOperationException("todo: implement for " + v.getClass());
             }

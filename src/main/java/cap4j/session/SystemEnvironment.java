@@ -16,19 +16,19 @@
 
 package cap4j.session;
 
-import cap4j.cli.*;
+import cap4j.cli.CommandLine;
 import cap4j.cli.Script;
 import cap4j.core.*;
 import cap4j.scm.CommandLineResult;
+import cap4j.scm.GitCLI;
 import com.google.common.base.Joiner;
-import net.schmizz.sshj.common.IOUtils;
 import net.schmizz.sshj.connection.channel.direct.Session;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.io.File;
-import java.io.OutputStream;
 import java.util.*;
 
 /**
@@ -63,8 +63,8 @@ public abstract class SystemEnvironment {
 
     protected Set<Role> roles = new LinkedHashSet<Role>();
 
-    public static Variables newSessionVars(GlobalContext globalContext, SystemEnvironment environment) {
-        return new Variables(environment.getName() + " vars", globalContext.variables);
+    public static VariablesLayer newSessionVars(GlobalContext globalContext, SystemEnvironment environment) {
+        return new VariablesLayer(environment.getName() + " vars", globalContext.variablesLayer);
     }
 
     public static GenericUnixRemoteEnvironment.SshSession.WithSession passwordCallback(final String password) {
@@ -76,9 +76,7 @@ public abstract class SystemEnvironment {
             @Override
             public void act(Session session, Session.Shell shell) throws Exception {
                 if (text.contains("password")) {
-                    final OutputStream os = session.getOutputStream();
-                    os.write((password + "\n").getBytes(IOUtils.UTF8));
-                    os.flush();
+                    GitCLI.answer(session, password);
                 }
             }
         };
@@ -172,6 +170,8 @@ public abstract class SystemEnvironment {
         return run(line().addRaw(s)).text;
     }
 
+    public abstract CommandLine rmLine(@Nonnull String dir, String... paths);
+
     public static enum DownloadMethod {
         SCP, SFTP
     }
@@ -195,7 +195,7 @@ public abstract class SystemEnvironment {
         return run(script, null);
     }
 
-    public CommandLineResult run(Script script, GenericUnixRemoteEnvironment.SshSession.WithSession callback) {
+    public <T extends CommandLineResult> T run(Script<T> script, GenericUnixRemoteEnvironment.SshSession.WithSession callback) {
         StringBuilder sb = new StringBuilder(1024);
         Result r = Result.OK;
 
@@ -214,7 +214,7 @@ public abstract class SystemEnvironment {
 //            }
         }
 
-        return new CommandLineResult(sb.toString(), r);
+        return script.parseResult(sb.toString());
     }
 
     public <T extends CommandLineResult> T run(CommandLine<T> commandLine) {

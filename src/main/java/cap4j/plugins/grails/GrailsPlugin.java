@@ -24,7 +24,7 @@ import cap4j.plugins.java.JavaPlugin;
 import cap4j.scm.CommandLineResult;
 import cap4j.session.DynamicVariable;
 import cap4j.session.SystemEnvironment;
-import cap4j.session.VariableUtils;
+import cap4j.session.Variables;
 import cap4j.task.Task;
 import cap4j.task.TaskResult;
 import cap4j.task.TaskRunner;
@@ -33,8 +33,7 @@ import org.apache.commons.lang3.StringUtils;
 
 import java.text.MessageFormat;
 
-import static cap4j.core.Cap.*;
-import static cap4j.session.VariableUtils.*;
+import static cap4j.session.Variables.*;
 
 /**
 * User: achaschev
@@ -86,7 +85,7 @@ public class GrailsPlugin extends Plugin {
     ;
 
     public final DynamicVariable<Boolean>
-        clean = VariableUtils.eql(cap.clean).setDesc("clean project before build")
+        clean = Variables.eql(cap.clean).setDesc("clean project before build")
     ;
 
     public final Task setup = new Task() {
@@ -133,8 +132,8 @@ public class GrailsPlugin extends Plugin {
     public GrailsPlugin(GlobalContext global) {
         super(global);
 
-        myDirPath = VariableUtils.joinPath(cap.sharedPath, "grails");
-        buildPath = VariableUtils.joinPath(myDirPath, "build");
+        myDirPath = Variables.joinPath(cap.sharedPath, "grails");
+        buildPath = Variables.joinPath(myDirPath, "build");
     }
 
     @Override

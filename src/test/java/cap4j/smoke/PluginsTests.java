@@ -46,7 +46,7 @@ public class PluginsTests {
 
             factory.registerPluginsPhase = new GlobalContextFactory.RegisterPluginsPhase() {
                 @Override
-                public List<Class<? extends Plugin>> registerPlugins(Variables vars) {
+                public List<Class<? extends Plugin>> registerPlugins(VariablesLayer vars) {
                     return Lists.newArrayList(
                         JavaPlugin.class,
                         MavenPlugin.class,

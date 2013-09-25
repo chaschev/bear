@@ -25,7 +25,7 @@ import cap4j.session.SystemEnvironment;
  */
 public class SessionContext {
     //    public final GlobalContext globalContext;
-    public final Variables sessionVariables;
+    public final VariablesLayer sessionVariablesLayer;
     private final GlobalContext global;
     public final SystemEnvironment system;
 
@@ -33,22 +33,22 @@ public class SessionContext {
         this.global = global;
         this.system = system;
         system.$ = this;
-        this.sessionVariables = SystemEnvironment.newSessionVars(global, system);
-        sessionVariables.putS(global.cap.sessionHostname, system.getName());
+        this.sessionVariablesLayer = SystemEnvironment.newSessionVars(global, system);
+        sessionVariablesLayer.putS(global.cap.sessionHostname, system.getName());
     }
 
     public GlobalContext getGlobal() {
         return global;
     }
 
-    public SessionContext(Variables sessionVariables) {
-        this.sessionVariables = sessionVariables;
+    public SessionContext(VariablesLayer sessionVariablesLayer) {
+        this.sessionVariablesLayer = sessionVariablesLayer;
         system = null;
         global = null;
     }
 
     public <T> T var(DynamicVariable<T> varName) {
-        return sessionVariables.get(this, varName);
+        return sessionVariablesLayer.get(this, varName);
     }
 
     public String joinPath(DynamicVariable<String> var, String path) {
@@ -59,16 +59,22 @@ public class SessionContext {
         return system.joinPath(paths);
     }
 
+    public <T> boolean isSet(Nameable<T> variable){
+        final DynamicVariable<T> x = sessionVariablesLayer.getClosure(variable);
+
+        return x != null && x.isSet();
+    }
+
     public String threadName() {
         return system.getName();
     }
 
     public boolean varB(Nameable<Boolean> var) {
-        return sessionVariables.get(this, var, null);
+        return sessionVariablesLayer.get(this, var, null);
     }
 
     public boolean varB(DynamicVariable<Boolean> var) {
-        return sessionVariables.get(this, var);
+        return sessionVariablesLayer.get(this, var);
     }
 
     public CommandLine newCommandLine() {

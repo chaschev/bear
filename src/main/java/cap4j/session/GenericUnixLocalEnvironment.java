@@ -29,6 +29,7 @@ import org.apache.tools.ant.types.ZipFileSet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.io.File;
 import java.io.IOException;
@@ -135,6 +136,8 @@ public class GenericUnixLocalEnvironment extends SystemEnvironment {
     public <T extends CommandLineResult> CommandLine<T> newCommandLine(Class<T> aClass) {
         return new LocalCommandLine<T>();
     }
+
+
 
     @Override
     public Result download(List<String> paths, DownloadMethod method, File destParentDir) {
@@ -333,5 +336,10 @@ public class GenericUnixLocalEnvironment extends SystemEnvironment {
     @Override
     public Result rmCd(String dir, String... paths) {
         throw new UnsupportedOperationException("todo GenericUnixLocalEnvironment.rm");
+    }
+
+    @Override
+    public CommandLine rmLine(@Nonnull String dir, String... paths) {
+        throw new UnsupportedOperationException("todo GenericUnixLocalEnvironment.rmLine");
     }
 }

@@ -43,7 +43,7 @@ public class Ex5DeployWar1 {
     public static void main(String[] args) throws InterruptedException {
         GlobalContextFactory.INSTANCE.registerPluginsPhase = new GlobalContextFactory.RegisterPluginsPhase() {
             @Override
-            public List<Class<? extends Plugin>> registerPlugins(Variables vars) {
+            public List<Class<? extends Plugin>> registerPlugins(VariablesLayer vars) {
                 return Lists.<Class<? extends Plugin>>newArrayList(
                     TomcatPlugin.class,
                     GrailsPlugin.class
@@ -54,7 +54,7 @@ public class Ex5DeployWar1 {
         GlobalContextFactory.INSTANCE.init();
 
         final GlobalContext global = GlobalContext.getInstance();
-        final Variables vars = global.variables;
+        final VariablesLayer vars = global.variablesLayer;
 
         final Cap cap = global.cap;
 
@@ -108,7 +108,7 @@ public class Ex5DeployWar1 {
 
         return new GlobalContextFactory.GlobalVarsInitPhase() {
             @Override
-            public void setVars(Variables vars) {
+            public void setVars(VariablesLayer vars) {
                 vars
                     .putS(cap.applicationName, "atocha")
                     .putB(cap.productionDeployment, false)

@@ -18,26 +18,22 @@ package cap4j.core;
 
 import cap4j.plugins.Plugin;
 import cap4j.scm.BranchInfoResult;
-import cap4j.cli.CommandLine;
 import cap4j.scm.SvnVcsCLI;
 import cap4j.scm.VcsCLI;
 import cap4j.session.DynamicVariable;
 import cap4j.strategy.BaseStrategy;
-import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
 import com.google.common.collect.Iterables;
-import org.apache.commons.lang3.ArrayUtils;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
 
 import java.io.File;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.TimeZone;
 
-import static cap4j.session.VariableUtils.*;
+import static cap4j.session.Variables.*;
 
 /**
  * @author Andrey Chaschev chaschev@gmail.com
@@ -108,9 +104,9 @@ public class Cap {
     realRevision = strVar("Update revision from vcs").setDynamic(new VarFun<String>() {
         public String apply() {
             final VcsCLI vcsCLI = $.var(vcs);
-            final CommandLine<BranchInfoResult> line = vcsCLI.queryRevision($.var(revision), Collections.<String, String>emptyMap());
-
-            line.timeoutMs(20000);
+            final cap4j.cli.Script<BranchInfoResult> line =
+                vcsCLI.queryRevision($.var(revision), Collections.<String, String>emptyMap())
+                .timeoutMs(20000);
 
             BranchInfoResult r = $.system.run(line, vcsCLI.passwordCallback());
 
@@ -190,7 +186,9 @@ public class Cap {
             }
         }),
         verifyPlugins = newVar(true),
-        autoSetupPlugins = newVar(false);
+        autoSetupPlugins = newVar(false),
+        verbose = newVar(false)
+    ;
 
     public static final DynamicVariable<Integer>
         keepXReleases = newVar(5);
@@ -239,67 +237,4 @@ public class Cap {
 
     public static final DynamicVariable<BaseStrategy> newStrategy = dynamicNotSet("strategy", "Deployment strategy: how app files copied and built");
 
-    public static <T> DynamicVariable<T> dynamicNotSet(String desc) {
-        return dynamicNotSet(null, desc);
-    }
-
-    public static <T> DynamicVariable<T> dynamicNotSet(final String name, String desc) {
-        return dynamic(name, desc, new VarFun<T>() {
-            public T apply() {
-                throw new UnsupportedOperationException("you need to set the :" + var.name + "'s name!");
-            }
-        });
-    }
-
-    public static <T> DynamicVariable<T> newVar(T _default) {
-        return new DynamicVariable<T>("").defaultTo(_default);
-    }
-
-    public static <T> DynamicVariable<T> dynamic(VarFun<T> function) {
-        return dynamic(null, "", function);
-    }
-
-    public static <T> DynamicVariable<T> dynamic(String desc) {
-        return dynamic(null, desc);
-    }
-
-    static <T> DynamicVariable<T> dynamic(String name, String desc) {
-        return new DynamicVariable<T>(name, desc);
-    }
-
-    public static <T> DynamicVariable<T> dynamic(String desc, VarFun<T> function) {
-        return new DynamicVariable<T>((String) null, desc).setDynamic(function);
-    }
-
-    public static <T> DynamicVariable<T> dynamic(String name, String desc, VarFun<T> function) {
-        return new DynamicVariable<T>(name, desc).setDynamic(function);
-    }
-
-    private static DynamicVariable<String> enumConstant(String name, final String desc, final String... options) {
-        return new DynamicVariable<String>(name, desc) {
-            @Override
-            public void validate(String value) {
-                if (!ArrayUtils.contains(options, value)) {
-                    Preconditions.checkArgument(false, ":" + name +
-                        " must be one of: " + Arrays.asList(options));
-                }
-            }
-        };
-    }
-
-    public static DynamicVariable<String> strVar() {
-        return strVar("");
-    }
-
-    public static DynamicVariable<String> strVar(String desc) {
-        return new DynamicVariable<String>((String) null, desc);
-    }
-
-    public static DynamicVariable<Boolean> bool() {
-        return new DynamicVariable<Boolean>(null);
-    }
-
-    public static DynamicVariable<Boolean> bool(String desc) {
-        return new DynamicVariable<Boolean>(desc);
-    }
 }

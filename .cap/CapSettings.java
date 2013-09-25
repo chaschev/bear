@@ -7,7 +7,6 @@ import cap4j.plugins.grails.GrailsBuilder;
 import cap4j.plugins.grails.GrailsPlugin;
 import cap4j.plugins.java.JavaPlugin;
 import cap4j.plugins.tomcat.TomcatPlugin;
-import cap4j.cli.CommandLine;
 import cap4j.scm.VcsCLI;
 import cap4j.strategy.BaseStrategy;
 import cap4j.strategy.SymlinkEntry;
@@ -42,7 +41,7 @@ public class CapSettings extends ICapSettings {
         factory.globalVarsInitPhase = Ex5DeployWar1.newAtochaSettings(global.cap);
         factory.registerPluginsPhase = new GlobalContextFactory.RegisterPluginsPhase() {
             @Override
-            public List<Class<? extends Plugin>> registerPlugins(Variables vars) {
+            public List<Class<? extends Plugin>> registerPlugins(VariablesLayer vars) {
                 return Lists.newArrayList(
                     TomcatPlugin.class,
                     GrailsPlugin.class,
@@ -57,7 +56,7 @@ public class CapSettings extends ICapSettings {
         java = global.getPlugin(JavaPlugin.class);
         cap = global.cap;
 
-        final Variables vars = global.variables;
+        final VariablesLayer vars = global.variablesLayer;
 
         vars
             .putS(grails.homePath, "/opt/grails")
@@ -99,7 +98,7 @@ public class CapSettings extends ICapSettings {
 
                         final String destPath = $.var(cap.vcsBranchLocalPath);
 
-                        final CommandLine line;
+                        final cap4j.cli.Script line;
 
                         if (!$.system.exists(destPath)) {
                             line = vcsCLI.checkout($.var(cap.revision), destPath, VcsCLI.emptyParams());

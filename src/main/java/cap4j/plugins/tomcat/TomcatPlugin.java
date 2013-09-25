@@ -25,7 +25,7 @@ import cap4j.scm.CommandLineResult;
 import cap4j.session.DynamicVariable;
 import cap4j.session.Result;
 import cap4j.session.SystemEnvironment;
-import cap4j.session.VariableUtils;
+import cap4j.session.Variables;
 import cap4j.task.Task;
 import cap4j.task.TaskResult;
 import cap4j.task.TaskRunner;
@@ -35,20 +35,19 @@ import org.apache.commons.lang3.StringUtils;
 
 import java.text.MessageFormat;
 
-import static cap4j.core.Cap.*;
-import static cap4j.session.VariableUtils.concat;
-import static cap4j.session.VariableUtils.condition;
+import static cap4j.session.Variables.concat;
+import static cap4j.session.Variables.condition;
 
 /**
  * @author Andrey Chaschev chaschev@gmail.com
  */
 public class TomcatPlugin extends Plugin {
     public final DynamicVariable<String>
-        version = newVar("7.0.42"),
+        version = Variables.newVar("7.0.42"),
         versionName = concat("apache-tomcat-", version),
         distrFilename = concat("apache-tomcat-", version, ".tar.gz"),
-        homePath = newVar("/var/lib/tomcat").setDesc("Tomcat root dir"),
-        homeParentPath = dynamic(new VarFun<String>() {
+        homePath = Variables.newVar("/var/lib/tomcat").setDesc("Tomcat root dir"),
+        homeParentPath = Variables.dynamic(new VarFun<String>() {
             public String apply() {
                 return StringUtils.substringBeforeLast($.var(homePath), "/");
             }
@@ -56,24 +55,24 @@ public class TomcatPlugin extends Plugin {
         homeVersionPath = concat(homeParentPath, "/", versionName).setDesc("i.e. /var/lib/tomcat-7.0.42"),
         currentVersionPath = concat(homeParentPath, "/", versionName),
 
-    webappsUnix = strVar("/var/lib/tomcat6/webapps").defaultTo("/var/lib/tomcat6/webapps"),
-        webappsWin = dynamicNotSet("webappsWin", ""),
+    webappsUnix = Variables.strVar("/var/lib/tomcat6/webapps").defaultTo("/var/lib/tomcat6/webapps"),
+        webappsWin = Variables.dynamicNotSet("webappsWin", ""),
         webapps,
-        warName = strVar("i.e. ROOT.war"),
+        warName = Variables.strVar("i.e. ROOT.war"),
         warPath,
 
-    tomcatBasePort = newVar("8005"),
-        tomcatAjpPort = newVar("8009"),
-        tomcatHttpPort = newVar("8080"),
-        tomcatHttpsPort = newVar("8443"),
-        keystrokePassword = dynamicNotSet(""),
-        catalinaHome = newVar("/usr/share/tomcat6"),
-        catalinaExecutable = newVar("/usr/sbin/tomcat6"),
+    tomcatBasePort = Variables.newVar("8005"),
+        tomcatAjpPort = Variables.newVar("8009"),
+        tomcatHttpPort = Variables.newVar("8080"),
+        tomcatHttpsPort = Variables.newVar("8443"),
+        keystrokePassword = Variables.dynamicNotSet(""),
+        catalinaHome = Variables.newVar("/usr/share/tomcat6"),
+        catalinaExecutable = Variables.newVar("/usr/sbin/tomcat6"),
 
     myDirPath,
         buildPath,
 
-    distrWwwAddress = dynamic(new VarFun<String>() {
+    distrWwwAddress = Variables.dynamic(new VarFun<String>() {
         public String apply() {
             return MessageFormat.format("http://apache-mirror.rbc.ru/pub/apache/tomcat/tomcat-7/v{0}/bin/apache-tomcat-{0}.tar.gz", $.var(version));
         }
@@ -82,10 +81,10 @@ public class TomcatPlugin extends Plugin {
     public TomcatPlugin(GlobalContext global) {
         super(global);
 
-        myDirPath = VariableUtils.joinPath(cap.sharedPath, "tomcat");
-        buildPath = VariableUtils.joinPath(myDirPath, "build");
+        myDirPath = Variables.joinPath(cap.sharedPath, "tomcat");
+        buildPath = Variables.joinPath(myDirPath, "build");
         webapps = condition(cap.isUnix, webappsUnix, webappsWin);
-        warPath = VariableUtils.joinPath("warPath", webapps, warName);
+        warPath = Variables.joinPath("warPath", webapps, warName);
     }
 
     public void init() {
@@ -156,7 +155,7 @@ public class TomcatPlugin extends Plugin {
     };
 
 
-    public final DynamicVariable<String[]> warCacheDirs = dynamic(new VarFun<String[]>() {
+    public final DynamicVariable<String[]> warCacheDirs = Variables.dynamic(new VarFun<String[]>() {
         public String[] apply() {
             final String name = FilenameUtils.getBaseName($.var(warName));
             return new String[]{

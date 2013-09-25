@@ -17,6 +17,7 @@
 package cap4j.scm;
 
 import cap4j.cli.CommandLine;
+import cap4j.cli.Script;
 import cap4j.core.GlobalContext;
 import cap4j.core.SessionContext;
 import com.google.common.base.Function;
@@ -48,50 +49,50 @@ public class SvnVcsCLI extends VcsCLI {
     }
 
     @Override
-    public CommandLine checkout(String revision, String destination, Map<String, String> params) {
-        return commandPrefix("checkout", params)
+    public Script checkout(String revision, String destination, Map<String, String> params) {
+        return $.system.script().line(commandPrefix("checkout", params)
             .a("-r" + revision,
                 scmRepository(),
-                destination);
+                destination));
     }
 
     @Override
-    public CommandLine sync(String revision, String destination, Map<String, String> params) {
-        return commandPrefix("switch", params)
+    public Script sync(String revision, String destination, Map<String, String> params) {
+        return $.system.script().line(commandPrefix("switch", params)
             .a("-r" + revision,
                 scmRepository(),
-                destination);
+                destination));
     }
 
     @Override
-    public CommandLine<BranchInfoResult> queryRevision(String revision) {
+    public Script<BranchInfoResult> queryRevision(String revision) {
         return queryRevision(revision, emptyParams());
     }
 
+    @SuppressWarnings("unchecked")
     @Override
-    public CommandLine<BranchInfoResult> queryRevision(String revision, Map<String, String> params) {
-
-        return commandPrefix("info", params)
+    public Script<BranchInfoResult> queryRevision(String revision, Map<String, String> params) {
+        return $.system.script().line(commandPrefix("info", params)
             .a("-r" + revision,
                 scmRepository())
             .cd($(cap.releasePath))
-            .setParser(new Function<String, BranchInfoResult>() {
-                public BranchInfoResult apply(String s) {
-                    return new BranchInfoResult(
-                        StringUtils.substringBetween(s, "Last Changed Author: ", "\n").trim(),
-                        StringUtils.substringBetween(s, "Revision: ", "\n").trim(),
-                        StringUtils.substringBetween(s, "Last Changed Date: ", "\n".trim())
-                    );
-                }
-            });
+        ).setParser(new Function<String, BranchInfoResult>() {
+            public BranchInfoResult apply(String s) {
+                return new BranchInfoResult(
+                    StringUtils.substringBetween(s, "Last Changed Author: ", "\n").trim(),
+                    StringUtils.substringBetween(s, "Revision: ", "\n").trim(),
+                    StringUtils.substringBetween(s, "Last Changed Date: ", "\n".trim())
+                );
+            }
+        });
     }
 
     @Override
-    public CommandLine export(String revision, String destination, Map<String, String> params) {
-        return commandPrefix("export", params)
+    public Script export(String revision, String destination, Map<String, String> params) {
+        return $.system.script().line(commandPrefix("export", params)
             .a("-r" + revision,
                 scmRepository(),
-                destination);
+                destination));
     }
 
     @Override
