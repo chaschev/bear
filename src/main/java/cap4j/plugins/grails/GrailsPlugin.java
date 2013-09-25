@@ -17,7 +17,7 @@ import org.apache.commons.lang3.StringUtils;
 
 import java.text.MessageFormat;
 
-import static cap4j.core.CapConstants.*;
+import static cap4j.core.Cap.*;
 import static cap4j.session.VariableUtils.*;
 
 /**

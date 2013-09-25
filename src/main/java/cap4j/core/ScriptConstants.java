@@ -6,5 +6,5 @@ package cap4j.core;
  * Time: 3:10 PM
  */
 public class ScriptConstants {
-    CapConstants aClass;
+    Cap aClass;
 }

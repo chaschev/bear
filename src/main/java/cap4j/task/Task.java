@@ -75,9 +75,10 @@ public abstract class Task<T extends TaskResult> {
         return sb.toString();
     }
 
-    public void set$(SessionContext $) {
+    public Task<T> setCtx(SessionContext $) {
         this.$ = $;
         this.system = $.system;
+        return this;
     }
 
     public Task desc(String description){
@@ -103,4 +104,10 @@ public abstract class Task<T extends TaskResult> {
         this.setupTask = setupTask;
         return this;
     }
+
+    public <T> T $(DynamicVariable<T> varName) {
+        return $.var(varName);
+    }
+    
+    
 }

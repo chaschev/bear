@@ -60,7 +60,7 @@ public class DynamicVariable<T> implements Nameable<T> {
         return name;
     }
 
-    public final T apply(SessionContext context) {
+    public final T apply(SessionContext $) {
         if(defaultValue == null && dynamicImplementation == null){
             throw new UnsupportedOperationException("you should implement dynamic variable :" + name + " or set its default value");
         }
@@ -71,7 +71,7 @@ public class DynamicVariable<T> implements Nameable<T> {
             }
 
             if (dynamicImplementation instanceof VarFun<?>) {
-                ((VarFun<?>) dynamicImplementation).set$(context);
+                ((VarFun<?>) dynamicImplementation).set$($);
             }
 
             final T r = dynamicImplementation.apply();
@@ -176,7 +176,8 @@ public class DynamicVariable<T> implements Nameable<T> {
         return this;
     }
 
-    public void setName(String name) {
+    public DynamicVariable<T> setName(String name) {
         this.name = name;
+        return this;
     }
 }

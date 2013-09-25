@@ -59,7 +59,7 @@ public class SvnVcsCLI extends VcsCLI {
         return commandPrefix("info", params)
             .a("-r" + revision,
                 scmRepository())
-            .cd($.var(cap.releasePath))
+            .cd($(cap.releasePath))
             .setParser(new Function<String, BranchInfoResult>() {
                 public BranchInfoResult apply(String s) {
                     return new BranchInfoResult(
@@ -129,7 +129,7 @@ public class SvnVcsCLI extends VcsCLI {
     }
 
     private String scmRepository() {
-        return $.var(cap.vcsBranchURI);
+        return $(cap.vcsBranchURI);
     }
 
     protected String[] auth(){

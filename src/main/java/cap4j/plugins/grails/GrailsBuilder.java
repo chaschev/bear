@@ -1,7 +1,7 @@
 package cap4j.plugins.grails;
 
 import cap4j.cli.Script;
-import cap4j.core.CapConstants;
+import cap4j.core.Cap;
 import cap4j.core.GlobalContext;
 import cap4j.core.SessionContext;
 import cap4j.plugins.java.JavaPlugin;
@@ -22,7 +22,7 @@ public class GrailsBuilder {
 
     GrailsPlugin grails;
     JavaPlugin java;
-    CapConstants cap;
+    Cap cap;
 
     public GrailsBuilder(SessionContext $, GlobalContext global) {
         this.$ = $;

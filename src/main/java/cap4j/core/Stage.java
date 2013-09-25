@@ -60,10 +60,12 @@ public class Stage {
                         int count = 0;
                         for (Plugin plugin : global.getPlugins()) {
                             try {
-                                plugin.getSetup().verifyExecution(true);
+                                plugin.getSetup()
+                                    .setCtx(environment.$)
+                                    .verifyExecution(true);
                             } catch (Exception e) {
                                 count++;
-                                logger.error("error verifying plugin " + plugin + " installation: ", e.toString());
+                                logger.error("error verifying plugin {} installation: {}", plugin, e.toString());
                             }
                         }
 

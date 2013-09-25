@@ -30,7 +30,7 @@ public abstract class SystemEnvironment {
 
     public SessionContext $;
 
-    public CapConstants cap;
+    public Cap cap;
 
     protected GlobalContext global;
     private UnixFlavour unixFlavour;

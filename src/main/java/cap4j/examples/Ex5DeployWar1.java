@@ -41,7 +41,7 @@ public class Ex5DeployWar1 {
         final GlobalContext global = GlobalContext.getInstance();
         final Variables vars = global.variables;
 
-        final CapConstants cap = global.cap;
+        final Cap cap = global.cap;
 
         final GrailsPlugin grails = plugin(GrailsPlugin.class);
         final JavaPlugin java = plugin(JavaPlugin.class);
@@ -56,7 +56,7 @@ public class Ex5DeployWar1 {
             .add(newUnixRemote("server1", "vm02", global))
             ;
 
-        CapConstants.newStrategy.setDynamic(new VarFun<BaseStrategy>() {
+        Cap.newStrategy.setDynamic(new VarFun<BaseStrategy>() {
             public BaseStrategy apply() {
                 final BaseStrategy strategy = new BaseStrategy($, global) {
                     @Override
@@ -89,8 +89,8 @@ public class Ex5DeployWar1 {
 
     }
 
-    public static GlobalContextFactory.GlobalVarsInitPhase newAtochaSettings(CapConstants cap1) {
-        final CapConstants cap = cap1;
+    public static GlobalContextFactory.GlobalVarsInitPhase newAtochaSettings(Cap cap1) {
+        final Cap cap = cap1;
 
         return new GlobalContextFactory.GlobalVarsInitPhase() {
             @Override

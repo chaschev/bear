@@ -1,6 +1,6 @@
 package cap4j.task;
 
-import cap4j.core.CapConstants;
+import cap4j.core.Cap;
 import cap4j.core.GlobalContext;
 import cap4j.plugins.Plugin;
 import cap4j.session.Result;
@@ -12,7 +12,7 @@ import com.google.common.base.Preconditions;
  * Date: 7/24/13
  */
 public class Tasks {
-    CapConstants cap;
+    Cap cap;
     GlobalContext global;
 
     public Tasks(GlobalContext global) {
@@ -58,8 +58,12 @@ public class Tasks {
             if($.var(cap.verifyPlugins)){
                 for (Plugin plugin : global.getPlugins()) {
                     if(!plugin.getSetup().verifyExecution(false)){
-                        runner.run(plugin.getSetup());
-
+                        if($(cap.autoSetupPlugins)){
+                            $.log("plugin %s was not installed. installing it...", plugin);
+                            runner.run(plugin.getSetup());
+                        }else{
+                            $.warn("plugin %s was not installed (autoSetup is off)", plugin);
+                        }
                     }
                 }
             }

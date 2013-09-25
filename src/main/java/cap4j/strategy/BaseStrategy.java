@@ -1,6 +1,7 @@
 package cap4j.strategy;
 
 import cap4j.core.*;
+import cap4j.session.DynamicVariable;
 import cap4j.session.Result;
 import cap4j.session.VariableUtils;
 import com.google.common.base.Function;
@@ -16,7 +17,7 @@ import java.util.List;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.TimeUnit;
 
-import static cap4j.core.CapConstants.*;
+import static cap4j.core.Cap.*;
 import static org.apache.commons.io.FileUtils.byteCountToDisplaySize;
 
 /**
@@ -38,7 +39,7 @@ public abstract class BaseStrategy {
 
     @Nullable
     private static String deployZipPath;
-    private final CapConstants cap;
+    private final Cap cap;
 
     protected SessionContext $;
 
@@ -158,14 +159,14 @@ public abstract class BaseStrategy {
         updateReleasesDirs();
 
         if(isCopyingZip()){
-            $.system.upload($.var(cap.releasePath), new File(deployZipPath));
+            $.system.upload($(cap.releasePath), new File(deployZipPath));
         }
 
         step_30_copyFilesToHosts();
     }
 
     private void updateReleasesDirs() {
-        $.system.mkdirs($.var(cap.releasePath));
+        $.system.mkdirs($(cap.releasePath));
         int keepX = $.var(keepXReleases);
 
         if(keepX > 0){
@@ -184,7 +185,7 @@ public abstract class BaseStrategy {
     private void _step_40_updateRemoteFiles(){
         if(isCopyingZip()){
             $.system.unzip(
-                $.joinPath($.var(cap.releasePath), "deploy.zip"), null
+                $.joinPath($(cap.releasePath), "deploy.zip"), null
             );
         }
 
@@ -195,9 +196,9 @@ public abstract class BaseStrategy {
         for (SymlinkEntry entry : symlinkRules.entries) {
             String srcPath;
 
-            srcPath = $.var(VariableUtils.joinPath("symlinkSrc", cap.currentPath, entry.sourcePath));
+            srcPath = $(VariableUtils.joinPath("symlinkSrc", cap.currentPath, entry.sourcePath));
 
-            $.system.link(srcPath, $.var(entry.destPath), entry.owner);
+            $.system.link(srcPath, $(entry.destPath), entry.owner);
         }
 
         writeRevision();
@@ -225,5 +226,9 @@ public abstract class BaseStrategy {
 
     public SymlinkRules getSymlinkRules() {
         return symlinkRules;
+    }
+
+    public <T> T $(DynamicVariable<T> varName) {
+        return $.var(varName);
     }
 }

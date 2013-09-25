@@ -7,7 +7,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.LinkedHashMap;
 
-import static cap4j.core.CapConstants.bool;
+import static cap4j.core.Cap.bool;
 
 public class Variables {
     private static final Logger logger = LoggerFactory.getLogger(Variables.class);
@@ -45,8 +45,12 @@ public class Variables {
         return this;
     }
 
+    public Variables put(DynamicVariable value) {
+        return put(value, value);
+    }
+
     public Variables putS(Nameable key, String value) {
-        put(key, CapConstants.strVar("external var").defaultTo(value));
+        put(key, Cap.strVar("external var").defaultTo(value));
         return this;
     }
 

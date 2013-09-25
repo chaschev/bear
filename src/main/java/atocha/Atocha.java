@@ -1,9 +1,10 @@
 package atocha;
 
-import cap4j.core.CapConstants;
+import cap4j.core.Cap;
 import cap4j.core.GlobalContext;
 import cap4j.plugins.Plugin;
 import cap4j.session.DynamicVariable;
+import cap4j.task.Task;
 
 /**
 * User: achaschev
@@ -13,9 +14,14 @@ import cap4j.session.DynamicVariable;
 public class Atocha extends Plugin {
 
     public final DynamicVariable<Boolean>
-        reuseWar = CapConstants.bool("will skip building WAR").defaultTo(false);
+        reuseWar = Cap.bool("will skip building WAR").defaultTo(false);
 
     public Atocha(GlobalContext global) {
         super(global);
+    }
+
+    @Override
+    public Task getSetup() {
+        return null;
     }
 }

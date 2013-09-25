@@ -12,10 +12,8 @@ import org.apache.commons.lang3.SystemUtils;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Properties;
+import java.io.InputStream;
+import java.util.*;
 import java.util.concurrent.*;
 
 /**
@@ -53,11 +51,11 @@ public class GlobalContext {
     public final Variables localVars;
 
     public final SessionContext localCtx;
-    public final CapConstants cap;
+    public final Cap cap;
     protected Properties properties = new Properties();
 
     private GlobalContext() {
-        cap = new CapConstants(this);
+        cap = new Cap(this);
         local = SystemUtils.IS_OS_WINDOWS ?
             new GenericUnixLocalEnvironment("local", this) : new GenericUnixLocalEnvironment("local", this);
         localVars = SystemEnvironment.newSessionVars(this, local);
@@ -115,7 +113,7 @@ public class GlobalContext {
         return getInstance().getPlugin(pluginClass);
     }
 
-    public CapConstants cap(){
+    public Cap cap(){
         return cap;
     }
 
@@ -138,10 +136,35 @@ public class GlobalContext {
 
     public void loadProperties(File file) {
         try {
-            properties.load(new FileInputStream(file));
+            final FileInputStream fis = new FileInputStream(file);
+            loadProperties(fis);
         } catch (IOException e) {
             throw Exceptions.runtime(e);
         }
 
+    }
+
+    public void loadProperties(InputStream is) throws IOException {
+        properties.load(is);
+
+        final Enumeration<?> enumeration = properties.propertyNames();
+
+        while(enumeration.hasMoreElements()){
+            final String name = (String) enumeration.nextElement();
+
+            final Object v = properties.get(name);
+
+            if (v instanceof Boolean) {
+                final DynamicVariable<Boolean> value = Cap.newVar((Boolean) v).setName(name);
+
+                variables.put(value, value);
+            }else if (v instanceof String) {
+                final DynamicVariable<String> value = Cap.newVar((String) v).setName(name);
+
+                variables.put(value, value);
+            }else{
+                throw new UnsupportedOperationException("todo: implement for " + v.getClass());
+            }
+        }
     }
 }

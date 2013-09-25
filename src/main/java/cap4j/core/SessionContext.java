@@ -61,4 +61,19 @@ public class SessionContext {
     }
 
 
+    public void log(String s, Object... params) {
+        if(!s.endsWith("%n") && !s.endsWith("\n")) {
+            s += "\n";
+        }
+
+        System.out.printf(s, params);
+    }
+
+    public void warn(String s, Object... params) {
+        if(!s.endsWith("%n") && !s.endsWith("\n")) {
+            s += "\n";
+        }
+
+        System.out.printf("[WARN]: + " + s, params);
+    }
 }

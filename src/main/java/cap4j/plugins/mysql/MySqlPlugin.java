@@ -1,6 +1,6 @@
 package cap4j.plugins.mysql;
 
-import cap4j.core.CapConstants;
+import cap4j.core.Cap;
 import cap4j.core.GlobalContext;
 import cap4j.core.VarFun;
 import cap4j.plugins.Plugin;
@@ -21,7 +21,7 @@ import java.text.MessageFormat;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static cap4j.core.CapConstants.*;
+import static cap4j.core.Cap.*;
 
 /**
 * User: achaschev
@@ -51,7 +51,7 @@ public class MySqlPlugin extends Plugin {
             @Override
             public String apply() {
                 return String.format("dump_%s_%s.GMT_%s.sql",
-                    $.var(cap.applicationName), CapConstants.RELEASE_FORMATTER.print(new DateTime()), $.var(cap.sessionHostname));
+                    $.var(cap.applicationName), Cap.RELEASE_FORMATTER.print(new DateTime()), $.var(cap.sessionHostname));
             }
         }),
         dumpsDirPath = VariableUtils.joinPath(cap.sharedPath, "dumps"),

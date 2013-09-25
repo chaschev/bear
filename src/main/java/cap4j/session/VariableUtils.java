@@ -7,7 +7,7 @@ import com.google.common.collect.Iterables;
 
 import java.util.Arrays;
 
-import static cap4j.core.CapConstants.*;
+import static cap4j.core.Cap.*;
 
 /**
  * User: chaschev
@@ -91,10 +91,10 @@ public class VariableUtils {
         return eql(null, var);
     }
 
-    public static <T> DynamicVariable<T> eql(String name, final DynamicVariable<T> var){
+    public static <T> DynamicVariable<T> eql(String name, final DynamicVariable<T> variable){
         return dynamic(name, "", new VarFun<T>() {
             public T apply() {
-                return $.var(var);
+                return $.var(variable);
             }
         });
     }

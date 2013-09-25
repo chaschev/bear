@@ -24,16 +24,20 @@ import static cap4j.session.GenericUnixRemoteEnvironment.newUnixRemote;
  * User: achaschev
  * Date: 8/5/13
  */
-public class CapSettings implements ICapSettings {
+public class CapSettings extends ICapSettings {
     private static final Logger logger = LoggerFactory.getLogger(BaseStrategy.class);
 
     GrailsPlugin grails;
     JavaPlugin java;
-    CapConstants cap;
+    Cap cap;
     TomcatPlugin tomcat;
 
+    protected CapSettings(GlobalContextFactory factory) {
+        super(factory);
+    }
+
     @Override
-    public GlobalContext configure(GlobalContextFactory factory) throws Exception{
+    public GlobalContext configureMe(GlobalContextFactory factory) throws Exception{
         final GlobalContext global = factory.getGlobal();
 
         factory.globalVarsInitPhase = Ex5DeployWar1.newAtochaSettings(global.cap);
@@ -73,7 +77,7 @@ public class CapSettings implements ICapSettings {
                     .add(newUnixRemote("pac-test", "10.22.13.6", global)))
         );
 
-        CapConstants.newStrategy.setDynamic(new VarFun<BaseStrategy>() {
+        Cap.newStrategy.setDynamic(new VarFun<BaseStrategy>() {
 
             public BaseStrategy apply() {
 //                GrailsConf.projectWarPath.setEqualTo(

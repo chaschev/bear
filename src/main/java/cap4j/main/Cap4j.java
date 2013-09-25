@@ -119,7 +119,6 @@ public class Cap4j {
 
         final GlobalContextFactory factory = GlobalContextFactory.INSTANCE;
         factory.getGlobal().loadProperties(new File(scriptsDir, "settings.properties"));
-        c.configure(factory);
 
        List<Class<?>> loadedScriptClasses = Lists.newArrayList(Iterables.filter(Lists.transform(filesList, new Function<File, Class<?>>() {
            public Class<?> apply(File input) {
@@ -137,7 +136,7 @@ public class Cap4j {
        }));
 
         final GlobalContext global = factory.getGlobal();
-        final CapConstants cap = global.cap;
+        final Cap cap = global.cap;
 
         if(options.has(SCRIPT)){
             logger.info("script is set in the command line to {}", options.get(SCRIPT));
@@ -166,7 +165,7 @@ public class Cap4j {
 
             script.setProperties(global, scriptsDir);
 
-            script.run();
+            new Cap4jRunner(c, script).run();
         }else{
             System.err.printf("Didn't find script with name %s. Exiting.%n", global.var(cap.deployScript));
             System.exit(-1);
@@ -183,5 +182,24 @@ public class Cap4j {
         System.out.printf("creating %s%n", file.getAbsolutePath());
 
         IOUtils.copy(Cap4j.class.getResourceAsStream("/" + resource), new FileOutputStream(file));
+    }
+
+    public static class Cap4jRunner {
+        private ICapSettings capSettings;
+        private GlobalContextFactory factory;
+        private Script script;
+
+        public Cap4jRunner(ICapSettings capSettings, Script script) {
+            this.capSettings = capSettings;
+            this.factory = GlobalContextFactory.INSTANCE;
+            this.script = script;
+        }
+
+        public void run() throws Exception {
+            capSettings.configure(factory);
+            script
+                .setProperties(capSettings.getGlobal(), null)
+                .run();
+        }
     }
 }

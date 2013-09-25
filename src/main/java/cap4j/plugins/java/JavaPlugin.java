@@ -12,8 +12,8 @@ import cap4j.task.TaskRunner;
 
 import java.io.File;
 
-import static cap4j.core.CapConstants.newVar;
-import static cap4j.core.CapConstants.strVar;
+import static cap4j.core.Cap.newVar;
+import static cap4j.core.Cap.strVar;
 
 /**
  * User: achaschev

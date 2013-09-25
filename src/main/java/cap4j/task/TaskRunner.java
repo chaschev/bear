@@ -113,7 +113,7 @@ public class TaskRunner {
             if(!thisIsMe){
                 result = runWithDependencies(task);
             }else{
-                task.set$($);
+                task.setCtx($);
                 result = task.run(this).result;
             }
         } catch (Exception ignore) {

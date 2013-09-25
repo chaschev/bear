@@ -11,13 +11,14 @@ public abstract class Script {
     public File scriptsDir;
 
     public GlobalContext global;
-    public CapConstants cap;
+    public Cap cap;
 
     public abstract void run() throws Exception;
 
-    public void setProperties(GlobalContext global, File scriptsDir) {
+    public Script setProperties(GlobalContext global, File scriptsDir) {
         this.global = global;
         this.scriptsDir = scriptsDir;
         cap = global.cap;
+        return this;
     }
 }

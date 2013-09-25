@@ -8,7 +8,7 @@ import cap4j.session.DynamicVariable;
 import cap4j.task.Task;
 import org.apache.commons.lang3.StringUtils;
 
-import static cap4j.core.CapConstants.*;
+import static cap4j.core.Cap.*;
 import static cap4j.session.VariableUtils.concat;
 
 /**
@@ -100,19 +100,18 @@ public abstract class ZippedToolPlugin extends Plugin{
 
         @Override
         public boolean verify(boolean throwException){
-            System.out.println("verifying version...");
+            $.log("verifying version for %s...", $.var(toolDistrName));
 
             final String versionText = system.run(system.line().setVar("JAVA_HOME", $.var(global.getPlugin(JavaPlugin.class).homePath)).addRaw(createVersionCommandLine())).text.trim();
             final String installedVersion = extractVersion(versionText);
 
             if($.var(version).equals(installedVersion)){
-                System.out.printf("successfully installed %s%n", $.var(versionName));
+                $.log("version is ok for %s", $.var(versionName));
 
                 return true;
             }else{
                 if(throwException){
-                    final String format = "versions don't match: %s (installed) vs %s (actual)";
-                    throw new RuntimeException(String.format(format, installedVersion, $.var(version)));
+                    throw new RuntimeException(String.format("versions don't match: %s (installed) vs %s (expected)", installedVersion, $.var(version)));
                 } else {
                     return false;
                 }

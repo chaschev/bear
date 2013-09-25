@@ -2,7 +2,7 @@ top priority:
 
 - (ok) rollback command
 - test error messages by setting incorrect rights at each step
--- reuse setup task validation
+-- (ok) reuse setup task validation
 -- dependencies
 - test revert to previous when deploy fails
 - stop when errors

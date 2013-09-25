@@ -1,7 +1,7 @@
 package cap4j.session;
 
 import cap4j.core.AbstractConsole;
-import cap4j.core.CapConstants;
+import cap4j.core.Cap;
 import cap4j.core.GlobalContext;
 import cap4j.core.MarkedBuffer;
 import cap4j.cli.CommandLine;
@@ -402,14 +402,14 @@ public class GenericUnixRemoteEnvironment extends SystemEnvironment {
         }
 
         public abstract static class WithSession{
-            public CapConstants cap;
+            public Cap cap;
             public String text;
 
-            protected WithSession(CapConstants cap) {
+            protected WithSession(Cap cap) {
                 this.cap = cap;
             }
 
-            protected WithSession(CapConstants cap, String text) {
+            protected WithSession(Cap cap, String text) {
                 this.cap = cap;
                 this.text = text;
             }

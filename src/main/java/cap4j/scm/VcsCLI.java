@@ -1,9 +1,10 @@
 package cap4j.scm;
 
 import cap4j.cli.CommandLine;
-import cap4j.core.CapConstants;
+import cap4j.core.Cap;
 import cap4j.core.GlobalContext;
 import cap4j.core.SessionContext;
+import cap4j.session.DynamicVariable;
 import cap4j.session.GenericUnixRemoteEnvironment;
 import cap4j.session.SystemEnvironment;
 
@@ -17,7 +18,7 @@ import java.util.Map;
 public abstract class VcsCLI {
     protected SessionContext $;
     protected GlobalContext global;
-    protected CapConstants cap;
+    protected Cap cap;
 
     protected VcsCLI(SessionContext $, GlobalContext global) {
         this.$ = $;
@@ -107,4 +108,7 @@ public abstract class VcsCLI {
         }
     }
 
+    public <T> T $(DynamicVariable<T> varName) {
+        return $.var(varName);
+    }
 }

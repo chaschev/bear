@@ -1,6 +1,6 @@
 package cap4j.plugins;
 
-import cap4j.core.CapConstants;
+import cap4j.core.Cap;
 import cap4j.core.GlobalContext;
 import cap4j.session.DynamicVariable;
 import cap4j.task.Task;
@@ -15,12 +15,13 @@ import java.lang.reflect.Field;
  */
 public abstract class Plugin {
     public String name;
-    public final CapConstants cap;
+    public final Cap cap;
     protected GlobalContext global;
 
     public Plugin(GlobalContext global) {
         this.global = global;
         this.cap = global.cap;
+        name  = getClass().getSimpleName();
     }
 
     public static void nameVars(Object obj){
@@ -48,4 +49,9 @@ public abstract class Plugin {
     }
 
     public abstract Task getSetup();
+
+    @Override
+    public String toString() {
+        return name;
+    }
 }

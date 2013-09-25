@@ -19,7 +19,7 @@ import org.apache.commons.lang3.StringUtils;
 
 import java.text.MessageFormat;
 
-import static cap4j.core.CapConstants.*;
+import static cap4j.core.Cap.*;
 import static cap4j.session.VariableUtils.concat;
 import static cap4j.session.VariableUtils.condition;
 
@@ -112,7 +112,7 @@ public class TomcatPlugin extends Plugin {
                 .add(system.line().timeoutMin(1).addRaw("tar xvfz ../%s", $.var(distrFilename)))
                 .add(system.line().sudo().addRaw("rm -r %s", $.var(homePath)))
                 .add(system.line().sudo().addRaw("rm -r %s", $.var(homeVersionPath)))
-                .add(system.line().sudo().addRaw("mv %s %s", $.var(buildPath) + "/" + $.var(versionName), homeParentPath))
+                .add(system.line().sudo().addRaw("mv %s %s", $(buildPath) + "/" + $(versionName), homeParentPath))
                 .add(system.line().sudo().addRaw("ln -s %s %s", $.var(currentVersionPath), $.var(homePath)))
                 .add(system.line().sudo().addRaw("chmod -R g+r,o+r %s", $.var(homePath)))
                 .add(system.line().sudo().addRaw("chmod u+x,g+x,o+x %s/bin/*", $.var(homePath)))

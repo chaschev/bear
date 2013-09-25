@@ -20,7 +20,7 @@ import static com.google.common.collect.Lists.transform;
 public class CreateNewScript extends Script{
     @Override
     public void run() throws Exception {
-        final CapConstants cap = global.cap;
+        final Cap cap = global.cap;
 
         new Question("step 1, choose the stage: ",
             transform(global.localCtx().var(cap.stages).getStages(), new Function<Stage, String>() {
@@ -89,7 +89,7 @@ public class CreateNewScript extends Script{
         System.out.printf("you may now restart cap4j to run it%n");
     }
 
-    private static List<String> remoteVcsLs(CapConstants cap, SystemEnvironment remoteEnv, SessionContext $, final String dir) {
+    private static List<String> remoteVcsLs(Cap cap, SystemEnvironment remoteEnv, SessionContext $, final String dir) {
         final VcsCLI vcsCLI = $.var(cap.vcs);
 
         final CommandLine<SvnVcsCLI.LsResult> line = vcsCLI.ls($.joinPath(cap.repositoryURI, dir));

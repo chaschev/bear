@@ -27,12 +27,12 @@ import static cap4j.session.VariableUtils.*;
  * User: ACHASCHEV
  * Date: 7/27/13
  */
-public class CapConstants {
+public class Cap {
     public static final DateTimeZone GMT = DateTimeZone.forTimeZone(TimeZone.getTimeZone("GMT"));
     public static final DateTimeFormatter RELEASE_FORMATTER = DateTimeFormat.forPattern("yyyyMMdd.HHmmss").withZone(GMT);
     public final GlobalContext global;
 
-    public CapConstants(GlobalContext global) {
+    public Cap(GlobalContext global) {
         this.global = global;
         Plugin.nameVars(this);
     }
@@ -174,7 +174,8 @@ public class CapConstants {
                 return $.system.isUnix();
             }
         }),
-        verifyPlugins = newVar(true)
+        verifyPlugins = newVar(true),
+        autoSetupPlugins = newVar(false)
     ;
 
     public static final DynamicVariable<Integer>
@@ -189,7 +190,7 @@ public class CapConstants {
     public final DynamicVariable<Stages> stages = new DynamicVariable<Stages>("stages", "List of stages. Stage is collection of servers with roles and auth defined for each of the server.");
     public final DynamicVariable<Stage> getStage = dynamic("getStage", "", new VarFun<Stage>() {
         public Stage apply() {
-            final String stageName = $.var(CapConstants.this.stage);
+            final String stageName = $.var(Cap.this.stage);
             final Stage stage = Iterables.find($.var(stages).stages, new Predicate<Stage>() {
                 public boolean apply(Stage s) {
                     return s.name.equals(stageName);
@@ -279,6 +280,10 @@ public class CapConstants {
 
     public static DynamicVariable<String> strVar(String desc) {
         return new DynamicVariable<String>((String) null, desc);
+    }
+
+    public static DynamicVariable<Boolean> bool() {
+        return new DynamicVariable<Boolean>(null);
     }
 
     public static DynamicVariable<Boolean> bool(String desc) {

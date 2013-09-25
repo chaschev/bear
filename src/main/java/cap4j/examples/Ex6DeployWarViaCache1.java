@@ -58,7 +58,7 @@ public class Ex6DeployWarViaCache1 {
         final MySqlPlugin mysql = plugin(MySqlPlugin.class);
         final MavenPlugin maven = plugin(MavenPlugin.class);
 
-        final CapConstants cap = global.cap;
+        final Cap cap = global.cap;
 
         vars
 //            .putS(grails.homePath, "/opt/grails")
@@ -82,7 +82,7 @@ public class Ex6DeployWarViaCache1 {
                     .add(newUnixRemote("vm02", "vm02", global)))
         );
 
-        CapConstants.newStrategy.setDynamic(new VarFun<BaseStrategy>() {
+        Cap.newStrategy.setDynamic(new VarFun<BaseStrategy>() {
             public BaseStrategy apply() {
 //                GrailsConf.projectWarPath.setEqualTo(
 //                    joinPath(vcsBranchLocalPath, GrailsConf.warName)
