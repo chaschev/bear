@@ -32,9 +32,9 @@ import java.util.Map;
  * User: ACHASCHEV
  * Date: 7/24/13
  */
-public class SvnVcsCLI extends VcsCLI {
+public class GitCLI extends VcsCLI {
 
-    public SvnVcsCLI(SessionContext ctx, GlobalContext global) {
+    public GitCLI(SessionContext ctx, GlobalContext global) {
         super(ctx, global);
     }
 
