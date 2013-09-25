@@ -29,8 +29,7 @@ import java.util.Map;
 
 
 /**
- * User: ACHASCHEV
- * Date: 7/24/13
+ * @author Andrey Chaschev chaschev@gmail.com
  */
 public class SvnVcsCLI extends VcsCLI {
 
@@ -39,7 +38,7 @@ public class SvnVcsCLI extends VcsCLI {
     }
 
     @Override
-    public String head(){
+    public String head() {
         return "HEAD";
     }
 
@@ -51,9 +50,9 @@ public class SvnVcsCLI extends VcsCLI {
     @Override
     public CommandLine checkout(String revision, String destination, Map<String, String> params) {
         return commandPrefix("checkout", params)
-         .a("-r" + revision,
-             scmRepository(),
-             destination);
+            .a("-r" + revision,
+                scmRepository(),
+                destination);
     }
 
     @Override
@@ -107,7 +106,7 @@ public class SvnVcsCLI extends VcsCLI {
             .a("-r" + rFrom + ":" + rTo);
     }
 
-    public static final class LsResult extends CommandLineResult{
+    public static final class LsResult extends CommandLineResult {
         List<String> files;
 
         public LsResult(String text, List<String> files) {
@@ -128,7 +127,7 @@ public class SvnVcsCLI extends VcsCLI {
         }
     }
 
-    public CommandLine<LsResult> ls(String path, Map<String, String> params){
+    public CommandLine<LsResult> ls(String path, Map<String, String> params) {
         return commandPrefix("ls", params)
             .a(path).setParser(new Function<String, LsResult>() {
                 public LsResult apply(String s) {
@@ -148,7 +147,7 @@ public class SvnVcsCLI extends VcsCLI {
         return $(cap.vcsBranchURI);
     }
 
-    protected String[] auth(){
+    protected String[] auth() {
         final String user = global.var(cap.vcsUsername, null);
         final String pw = global.var(cap.vcsPassword, null);
         final boolean preferPrompt = global.var(cap.scmPreferPrompt, false);
@@ -156,17 +155,17 @@ public class SvnVcsCLI extends VcsCLI {
 
         List<String> r = new ArrayList<String>(4);
 
-        if(user == null) return r.toArray(new String[0]);
+        if (user == null) return r.toArray(new String[0]);
 
         r.add("--username");
         r.add(user);
 
-        if(!preferPrompt && !authCache){
+        if (!preferPrompt && !authCache) {
             r.add("--password");
             r.add(pw);
         }
 
-        if(authCache){
+        if (authCache) {
             r.add("--no-auth-cache");
         }
 

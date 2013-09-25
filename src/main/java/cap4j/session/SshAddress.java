@@ -17,9 +17,8 @@
 package cap4j.session;
 
 /**
-* User: chaschev
-* Date: 7/29/13
-*/
+ * @author Andrey Chaschev chaschev@gmail.com
+ */
 public class SshAddress {
     String username;
     String password;

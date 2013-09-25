@@ -27,10 +27,8 @@ import cap4j.task.TaskRunner;
 import org.apache.commons.lang3.StringUtils;
 
 /**
-* User: achaschev
-* Date: 8/3/13
-* Time: 11:24 PM
-*/
+ * @author Andrey Chaschev chaschev@gmail.com
+ */
 public class MavenPlugin extends ZippedToolPlugin {
 
     public MavenPlugin(GlobalContext global) {
@@ -55,7 +53,7 @@ public class MavenPlugin extends ZippedToolPlugin {
         });
     }
 
-    public void init(){
+    public void init() {
 
     }
 

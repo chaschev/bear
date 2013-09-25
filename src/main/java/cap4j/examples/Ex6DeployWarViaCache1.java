@@ -42,8 +42,7 @@ import static cap4j.core.GlobalContext.plugin;
 import static cap4j.session.GenericUnixRemoteEnvironment.newUnixRemote;
 
 /**
- * User: achaschev
- * Date: 8/3/13
+ * @author Andrey Chaschev chaschev@gmail.com
  */
 public class Ex6DeployWarViaCache1 {
     private static final Logger logger = LoggerFactory.getLogger(BaseStrategy.class);

@@ -28,8 +28,7 @@ import java.util.Collections;
 import java.util.Map;
 
 /**
- * User: ACHASCHEV
- * Date: 7/24/13
+ * @author Andrey Chaschev chaschev@gmail.com
  */
 public abstract class VcsCLI {
     protected SessionContext $;
@@ -42,23 +41,23 @@ public abstract class VcsCLI {
         this.cap = global.cap;
     }
 
-    public CommandLine checkout(String revision, String destination, Map<String, String> params){
+    public CommandLine checkout(String revision, String destination, Map<String, String> params) {
         throw new UnsupportedOperationException("todo");
     }
 
-    public CommandLine sync(String revision, String destination, Map<String, String> params){
+    public CommandLine sync(String revision, String destination, Map<String, String> params) {
         throw new UnsupportedOperationException("todo");
     }
 
-    public CommandLine export(String revision, String destination, Map<String, String> params){
+    public CommandLine export(String revision, String destination, Map<String, String> params) {
         throw new UnsupportedOperationException("todo");
     }
 
-    public CommandLine diff(String rFrom, String rTo, Map<String, String> params){
+    public CommandLine diff(String rFrom, String rTo, Map<String, String> params) {
         throw new UnsupportedOperationException("todo");
     }
 
-    public CommandLine<BranchInfoResult> queryRevision(String revision){
+    public CommandLine<BranchInfoResult> queryRevision(String revision) {
         return queryRevision(revision, emptyParams());
     }
 
@@ -73,21 +72,21 @@ public abstract class VcsCLI {
      * containing the commands that, when executed will return a string
      * that this method can then extract the real revision from.
      */
-    public CommandLine<BranchInfoResult> queryRevision(String revision, Map<String, String> params){
+    public CommandLine<BranchInfoResult> queryRevision(String revision, Map<String, String> params) {
         throw new UnsupportedOperationException("todo");
     }
 
-    public String nextRevision(String r){
+    public String nextRevision(String r) {
         return r;
     }
 
     public abstract String command();
 
-    public CommandLine log(String rFrom, String rTo, Map<String, String> params){
+    public CommandLine log(String rFrom, String rTo, Map<String, String> params) {
         throw new UnsupportedOperationException("todo");
     }
 
-    public CommandLine ls(String path, Map<String, String> params){
+    public CommandLine ls(String path, Map<String, String> params) {
         throw new UnsupportedOperationException("todo");
     }
 
@@ -97,11 +96,11 @@ public abstract class VcsCLI {
         return SystemEnvironment.passwordCallback($.var(cap.vcsPassword));
     }
 
-    public CommandLine<SvnVcsCLI.LsResult> ls(String path){
+    public CommandLine<SvnVcsCLI.LsResult> ls(String path) {
         return ls(path, emptyParams());
     }
 
-    public static class StringResult extends CommandLineResult{
+    public static class StringResult extends CommandLineResult {
         public String value;
 
         public StringResult(String text, String value) {
@@ -111,7 +110,7 @@ public abstract class VcsCLI {
         }
     }
 
-    public static class CommandLineOperator{
+    public static class CommandLineOperator {
         String s;
 
         public CommandLineOperator(String s) {

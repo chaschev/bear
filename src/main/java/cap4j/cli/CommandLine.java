@@ -29,10 +29,9 @@ import java.util.List;
 import java.util.Map;
 
 /**
-* User: achaschev
-* Date: 8/4/13
-*/
-public abstract class CommandLine<T extends CommandLineResult>{
+ * @author Andrey Chaschev chaschev@gmail.com
+ */
+public abstract class CommandLine<T extends CommandLineResult> {
     public String cd = ".";
 
     public List strings = new ArrayList(4);
@@ -54,12 +53,12 @@ public abstract class CommandLine<T extends CommandLineResult>{
         this.script = script;
     }
 
-    public CommandLine a(String... s){
+    public CommandLine a(String... s) {
         Collections.addAll(strings, s);
         return this;
     }
 
-    public CommandLine addSplit(String s){
+    public CommandLine addSplit(String s) {
         Collections.addAll(strings, s.split("\\s+"));
         return this;
     }
@@ -71,8 +70,8 @@ public abstract class CommandLine<T extends CommandLineResult>{
         return this;
     }
 
-    public T parseResult(String text){
-        if(parser != null){
+    public T parseResult(String text) {
+        if (parser != null) {
             final T obj = parser.apply(text);
             obj.text = text;
             return obj;
@@ -155,7 +154,7 @@ public abstract class CommandLine<T extends CommandLineResult>{
     }
 
     public CommandLine<T> setVar(String k, String v) {
-        strings.add(new VcsCLI.CommandLineOperator("export " + k + "=" + v +"; "));
+        strings.add(new VcsCLI.CommandLineOperator("export " + k + "=" + v + "; "));
         return this;
     }
 

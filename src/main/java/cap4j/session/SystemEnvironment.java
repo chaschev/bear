@@ -32,8 +32,7 @@ import java.io.OutputStream;
 import java.util.*;
 
 /**
- * User: chaschev
- * Date: 7/21/13
+ * @author Andrey Chaschev chaschev@gmail.com
  */
 public abstract class SystemEnvironment {
     private static final Logger logger = LoggerFactory.getLogger(SystemEnvironment.class);
@@ -76,7 +75,7 @@ public abstract class SystemEnvironment {
         return new GenericUnixRemoteEnvironment.SshSession.WithSession(null, text) {
             @Override
             public void act(Session session, Session.Shell shell) throws Exception {
-                if(text.contains("password")){
+                if (text.contains("password")) {
                     final OutputStream os = session.getOutputStream();
                     os.write((password + "\n").getBytes(IOUtils.UTF8));
                     os.flush();
@@ -91,7 +90,9 @@ public abstract class SystemEnvironment {
         return null;
     }
 
-    public String diskRoot(){return isUnix() ? "" : "c:";}
+    public String diskRoot() {
+        return isUnix() ? "" : "c:";
+    }
 
     public String joinPath(String... strings) {
         return joinPath(Arrays.asList(strings));
@@ -108,15 +109,18 @@ public abstract class SystemEnvironment {
 
     public abstract List<String> ls(String path);
 
-    public void zip(String dest, String... paths){
+    public void zip(String dest, String... paths) {
         zip(dest, Arrays.asList(paths));
     }
+
     public abstract void zip(String dest, Collection<String> paths);
+
     public abstract void unzip(String file, @Nullable String destDir);
 
     public abstract String newTempDir();
 
     public abstract boolean isUnix();
+
     public abstract boolean isNativeUnix();
 
     protected int getTimeout() {
@@ -139,28 +143,28 @@ public abstract class SystemEnvironment {
         throw new UnsupportedOperationException("todo");
     }
 
-    public CommandLine line(){
+    public CommandLine line() {
         return newCommandLine();
     }
 
-    public Script script(){
+    public Script script() {
         return new Script(this);
     }
 
-    public CommandLine newCommandLine(){
+    public CommandLine newCommandLine() {
         return newCommandLine(CommandLineResult.class);
     }
 
     public abstract <T extends CommandLineResult> CommandLine<T> newCommandLine(Class<T> aClass);
 
     public synchronized SessionContext ctx() {
-        if($ == null){
+        if ($ == null) {
             $ = new SessionContext(global, this);
         }
         return $;
     }
 
-    public void connect(){
+    public void connect() {
 
     }
 
@@ -168,35 +172,35 @@ public abstract class SystemEnvironment {
         return run(line().addRaw(s)).text;
     }
 
-    public static enum DownloadMethod{
+    public static enum DownloadMethod {
         SCP, SFTP
     }
 
-    public void download(String path){
+    public void download(String path) {
         download(Collections.singletonList(path), new File("."));
     }
 
-    public void download(List<String> paths, File destParentDir){
+    public void download(List<String> paths, File destParentDir) {
         download(paths, DownloadMethod.SCP, destParentDir);
     }
 
     public abstract Result download(List<String> paths, DownloadMethod method, File destParentDir);
 
 
-    public enum CopyCommandType{
+    public enum CopyCommandType {
         COPY, LINK, MOVE
     }
 
-    public CommandLineResult run(cap4j.cli.Script script) {
+    public CommandLineResult run(Script script) {
         return run(script, null);
     }
 
-    public CommandLineResult run(Script script, GenericUnixRemoteEnvironment.SshSession.WithSession callback){
+    public CommandLineResult run(Script script, GenericUnixRemoteEnvironment.SshSession.WithSession callback) {
         StringBuilder sb = new StringBuilder(1024);
         Result r = Result.OK;
 
         for (CommandLine line : script.lines) {
-            if(script.cd != null){
+            if (script.cd != null) {
                 line.cd = script.cd;
             }
 
@@ -217,22 +221,31 @@ public abstract class SystemEnvironment {
         return run(commandLine, null);
     }
 
-    public abstract <T extends CommandLineResult> T run(CommandLine<T> commandLine, final GenericUnixRemoteEnvironment.SshSession.WithSession inputCallback) ;
+    public abstract <T extends CommandLineResult> T run(CommandLine<T> commandLine, final GenericUnixRemoteEnvironment.SshSession.WithSession inputCallback);
 
     public abstract Result sftp(String dest, String host, String path, String user, String pw);
+
     public abstract Result upload(String dest, File... files);
+
     public abstract Result mkdirs(String... dirs);
+
     protected abstract Result copyOperation(String src, String dest, CopyCommandType type, boolean folder, String owner);
+
     public abstract Result chown(String user, boolean recursive, String... dest);
+
     public abstract Result chmod(String octal, boolean recursive, String... files);
+
     public abstract Result writeString(String path, String s);
+
     public abstract String readString(String path, String _default);
+
     public abstract boolean exists(String path);
 
     public abstract String readLink(String path);
 
     public abstract Result rmCd(String dir, String... paths);
-    public Result rm(String... paths){
+
+    public Result rm(String... paths) {
         return rmCd(".", paths);
     }
 
@@ -240,7 +253,7 @@ public abstract class SystemEnvironment {
         return copy(src, dest, null);
     }
 
-    public Result copy(String src, String dest, String owner){
+    public Result copy(String src, String dest, String owner) {
         return copyOperation(src, dest, CopyCommandType.COPY, false, owner);
     }
 
@@ -248,15 +261,15 @@ public abstract class SystemEnvironment {
         return move(src, dest, null);
     }
 
-    public Result move(String src, String dest, String owner){
+    public Result move(String src, String dest, String owner) {
         return copyOperation(src, dest, CopyCommandType.MOVE, false, owner);
     }
 
-    public Result link(String src, String dest){
+    public Result link(String src, String dest) {
         return link(src, dest, null);
     }
 
-    public Result link(String src, String dest, @Nullable String owner){
+    public Result link(String src, String dest, @Nullable String owner) {
         return copyOperation(src, dest, CopyCommandType.LINK, false, owner);
     }
 
@@ -281,26 +294,26 @@ public abstract class SystemEnvironment {
         CENTOS, UBUNTU
     }
 
-    protected UnixFlavour computeUnixFlavour(){
+    protected UnixFlavour computeUnixFlavour() {
         final String text = run(newCommandLine().a("cat", "/etc/issue")).text;
 
-        if(text == null) return null;
+        if (text == null) return null;
 
-        if(text.contains("CentOS")) return UnixFlavour.CENTOS;
-        if(text.contains("Ubuntu")) return UnixFlavour.UBUNTU;
+        if (text.contains("CentOS")) return UnixFlavour.CENTOS;
+        if (text.contains("Ubuntu")) return UnixFlavour.UBUNTU;
 
         return null;
     }
 
-    public UnixFlavour getUnixFlavour(){
-        if(unixFlavour == null) {
+    public UnixFlavour getUnixFlavour() {
+        if (unixFlavour == null) {
             unixFlavour = computeUnixFlavour();
         }
 
         return unixFlavour;
     }
 
-    public static class PackageInfo{
+    public static class PackageInfo {
         String name;
         String desc;
         final Version version;
@@ -315,7 +328,7 @@ public abstract class SystemEnvironment {
             version = Version.ANY;
         }
 
-        public String getCompleteName(){
+        public String getCompleteName() {
             return name + ((version == null || version.isAny()) ? "" : "-" + version);
         }
 
@@ -325,11 +338,11 @@ public abstract class SystemEnvironment {
         }
     }
 
-    public static abstract class PackageManager{
+    public static abstract class PackageManager {
         public abstract CommandLineResult installPackage(PackageInfo pi);
     }
 
-    public PackageManager getPackageManager(){
+    public PackageManager getPackageManager() {
         switch (getUnixFlavour()) {
             case CENTOS:
                 return new PackageManager() {
@@ -338,16 +351,16 @@ public abstract class SystemEnvironment {
                         final CommandLineResult result = SystemEnvironment.this.run(newCommandLine().timeoutMin(5).sudo().a("yum", "install", pi.getCompleteName(), "-y"));
                         final String text = result.text;
 
-                        if(text.contains("Complete!") ||
+                        if (text.contains("Complete!") ||
                             text.contains("nothing to do")
                             ) {
                             result.result = Result.OK;
-                        }else {
+                        } else {
                             result.result = Result.ERROR;
                         }
 
 
-                        if(result.result.nok()){
+                        if (result.result.nok()) {
                             logger.error("could not install {}", pi);
                         }
 
@@ -355,7 +368,7 @@ public abstract class SystemEnvironment {
                     }
                 };
             case UBUNTU:
-                default:
+            default:
                 throw new UnsupportedOperationException("todo support" + getUnixFlavour() + " !");
         }
     }

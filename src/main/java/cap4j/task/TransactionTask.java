@@ -26,10 +26,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * User: chaschev
- * Date: 7/27/13
+ * @author Andrey Chaschev chaschev@gmail.com
  */
-public class TransactionTask extends Task{
+public class TransactionTask extends Task {
     private static final Logger logger = LoggerFactory.getLogger(GenericUnixRemoteEnvironment.class);
 
     List<Task<TaskResult>> tasks;
@@ -46,14 +45,14 @@ public class TransactionTask extends Task{
     @Override
     protected TaskResult run(TaskRunner runner) {
         Result result = null;
-        try{
+        try {
             result = runner.run(tasks);
-        }catch (Exception e){
+        } catch (Exception e) {
             logger.warn("", e);
             result = Result.ERROR;
         }
 
-        if(result != Result.OK){
+        if (result != Result.OK) {
             //let's keep it simple
             for (Task<TaskResult> task : tasks) {
                 task.onRollback();

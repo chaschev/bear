@@ -20,17 +20,16 @@ import cap4j.session.DynamicVariable;
 import cap4j.session.VariableUtils;
 
 /**
- * User: chaschev
- * Date: 8/30/13
+ * @author Andrey Chaschev chaschev@gmail.com
  */
-public abstract class VarFun <T> {
+public abstract class VarFun<T> {
     protected DynamicVariable<T> var;
 
     protected SessionContext $;
 
     public abstract T apply();
 
-    protected String concat(Object... varsAndStrings){
+    protected String concat(Object... varsAndStrings) {
         return VariableUtils.concat($, varsAndStrings);
     }
 

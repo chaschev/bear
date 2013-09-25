@@ -26,9 +26,8 @@ import org.slf4j.LoggerFactory;
 import javax.annotation.Nonnull;
 
 /**
-* User: chaschev
-* Date: 7/21/13
-*/
+ * @author Andrey Chaschev chaschev@gmail.com
+ */
 public class DynamicVariable<T> implements Nameable<T> {
     private static final Logger logger = LoggerFactory.getLogger(DynamicVariable.class);
 
@@ -67,7 +66,7 @@ public class DynamicVariable<T> implements Nameable<T> {
         this.frozen = frozen;
     }
 
-    public void validate(T value){
+    public void validate(T value) {
         //todo embed
     }
 
@@ -77,12 +76,12 @@ public class DynamicVariable<T> implements Nameable<T> {
     }
 
     public final T apply(SessionContext $) {
-        if(defaultValue == null && dynamicImplementation == null){
+        if (defaultValue == null && dynamicImplementation == null) {
             throw new UnsupportedOperationException("you should implement dynamic variable :" + name + " or set its default value");
         }
 
-        if(dynamicImplementation != null){
-            if(memoize && defaultValue != null){
+        if (dynamicImplementation != null) {
+            if (memoize && defaultValue != null) {
                 return defaultValue;
             }
 
@@ -92,7 +91,7 @@ public class DynamicVariable<T> implements Nameable<T> {
 
             final T r = dynamicImplementation.apply();
 
-            if(memoize){
+            if (memoize) {
                 defaultValue = r;
             }
 
@@ -114,11 +113,11 @@ public class DynamicVariable<T> implements Nameable<T> {
     }
 
     public DynamicVariable<T> defaultTo(T defaultValue, boolean force) {
-        if(dynamicImplementation !=null) {
+        if (dynamicImplementation != null) {
             if (force) {
                 dynamicImplementation = null;
                 memoize = false;
-            }else{
+            } else {
                 throw new IllegalStateException("use force to override dynamic implementation");
             }
         }

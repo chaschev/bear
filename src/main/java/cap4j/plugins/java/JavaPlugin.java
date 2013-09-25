@@ -32,23 +32,21 @@ import static cap4j.core.Cap.newVar;
 import static cap4j.core.Cap.strVar;
 
 /**
- * User: achaschev
- * Date: 8/4/13
+ * @author Andrey Chaschev chaschev@gmail.com
  */
 public class JavaPlugin extends Plugin {
     public DynamicVariable<String>
 
-    homePath = newVar("/var/lib/java"),
+        homePath = newVar("/var/lib/java"),
 
     javaSharedDirPath,
-    javaSharedBuildDirPath,
-    javaLinuxDistributionName = strVar(),
-    javaWindowsDistributionName = strVar(),
-    javaLinuxDistributionPath,
-    javaWindowsDistributionPath,
-    javaDistributionName,
-    javaDistributionPath
-    ;
+        javaSharedBuildDirPath,
+        javaLinuxDistributionName = strVar(),
+        javaWindowsDistributionName = strVar(),
+        javaLinuxDistributionPath,
+        javaWindowsDistributionPath,
+        javaDistributionName,
+        javaDistributionPath;
 
     public final Task setup = new Task() {
         @Override
@@ -59,27 +57,27 @@ public class JavaPlugin extends Plugin {
             final File localDFile = new File(global.localCtx.var(
                 system.isNativeUnix() ? javaLinuxDistributionPath : javaWindowsDistributionPath));
 
-            if(!localDFile.exists()){
+            if (!localDFile.exists()) {
                 throw new RuntimeException("expecting java distribution at " + localDFile.getAbsolutePath());
             }
 
             system.upload($.var(javaDistributionPath), localDFile);
 
             final String distrName = $.var(javaDistributionName);
-            if(distrName.endsWith("gz")) {
+            if (distrName.endsWith("gz")) {
                 system.run(
                     system.newCommandLine()
                         .timeoutSec(30)
                         .cd($.var(javaSharedBuildDirPath))
                         .addRaw("tar xvf").a(distrName)
                 );
-            }else{
+            } else {
                 system.script()
-                        .cd($.var(javaSharedBuildDirPath))
-                        .line().addRaw("chmod u+x %s", distrName).build()
-                        .line()
-                            .timeoutSec(30)
-                            .addRaw("./%s", distrName).build()
+                    .cd($.var(javaSharedBuildDirPath))
+                    .line().addRaw("chmod u+x %s", distrName).build()
+                    .line()
+                    .timeoutSec(30)
+                    .addRaw("./%s", distrName).build()
                     .run();
             }
 

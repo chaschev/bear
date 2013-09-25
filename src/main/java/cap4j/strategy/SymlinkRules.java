@@ -20,9 +20,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
-* User: chaschev
-* Date: 7/31/13
-*/
+ * @author Andrey Chaschev chaschev@gmail.com
+ */
 public class SymlinkRules {
     List<SymlinkEntry> entries = new ArrayList<SymlinkEntry>(4);
 

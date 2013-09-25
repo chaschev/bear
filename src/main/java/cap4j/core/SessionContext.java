@@ -21,11 +21,10 @@ import cap4j.session.DynamicVariable;
 import cap4j.session.SystemEnvironment;
 
 /**
-* User: chaschev
-* Date: 7/29/13
-*/
+ * @author Andrey Chaschev chaschev@gmail.com
+ */
 public class SessionContext {
-//    public final GlobalContext globalContext;
+    //    public final GlobalContext globalContext;
     public final Variables sessionVariables;
     private final GlobalContext global;
     public final SystemEnvironment system;
@@ -38,7 +37,7 @@ public class SessionContext {
         sessionVariables.putS(global.cap.sessionHostname, system.getName());
     }
 
-    public GlobalContext getGlobal(){
+    public GlobalContext getGlobal() {
         return global;
     }
 
@@ -52,11 +51,11 @@ public class SessionContext {
         return sessionVariables.get(this, varName);
     }
 
-    public String joinPath(DynamicVariable<String> var, String path){
+    public String joinPath(DynamicVariable<String> var, String path) {
         return system.joinPath(var(var), path);
     }
 
-    public String joinPath(String... paths){
+    public String joinPath(String... paths) {
         return system.joinPath(paths);
     }
 
@@ -78,7 +77,7 @@ public class SessionContext {
 
 
     public void log(String s, Object... params) {
-        if(!s.endsWith("%n") && !s.endsWith("\n")) {
+        if (!s.endsWith("%n") && !s.endsWith("\n")) {
             s += "\n";
         }
 
@@ -86,7 +85,7 @@ public class SessionContext {
     }
 
     public void warn(String s, Object... params) {
-        if(!s.endsWith("%n") && !s.endsWith("\n")) {
+        if (!s.endsWith("%n") && !s.endsWith("\n")) {
             s += "\n";
         }
 

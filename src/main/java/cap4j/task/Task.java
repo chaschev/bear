@@ -27,8 +27,7 @@ import com.google.common.collect.Sets;
 import java.util.*;
 
 /**
- * User: chaschev
- * Date: 7/21/13
+ * @author Andrey Chaschev chaschev@gmail.com
  */
 public abstract class Task<T extends TaskResult> {
     String name;
@@ -54,12 +53,12 @@ public abstract class Task<T extends TaskResult> {
 
     public Task setDependsOnTasks(Task... tasks) {
         dependsOnTasks.clear();
-        Collections.addAll((List)dependsOnTasks, tasks);
+        Collections.addAll((List) dependsOnTasks, tasks);
 
         return this;
     }
 
-    protected void defineVars(Console console){
+    protected void defineVars(Console console) {
 
     }
 
@@ -68,11 +67,11 @@ public abstract class Task<T extends TaskResult> {
     }
 
 
-    public <T> T var(DynamicVariable<T> varName){
+    public <T> T var(DynamicVariable<T> varName) {
         return $.var(varName);
     }
 
-    protected void onRollback(){
+    protected void onRollback() {
         //todo use it
     }
 
@@ -97,22 +96,24 @@ public abstract class Task<T extends TaskResult> {
         return this;
     }
 
-    public Task desc(String description){
+    public Task desc(String description) {
         this.description = description;
         return this;
     }
 
-    public final boolean verifyExecution(){
+    public final boolean verifyExecution() {
         return verifyExecution(true);
     }
 
-    public final boolean verifyExecution(boolean throwException){
+    public final boolean verifyExecution(boolean throwException) {
         return verify(throwException);
     }
 
-    protected boolean verify(boolean throwException){return true;}
-    
-    public boolean isSetupTask(){
+    protected boolean verify(boolean throwException) {
+        return true;
+    }
+
+    public boolean isSetupTask() {
         return setupTask;
     }
 
@@ -124,6 +125,6 @@ public abstract class Task<T extends TaskResult> {
     public <T> T $(DynamicVariable<T> varName) {
         return $.var(varName);
     }
-    
-    
+
+
 }

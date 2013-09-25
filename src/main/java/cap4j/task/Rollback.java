@@ -22,10 +22,9 @@ import cap4j.plugins.Plugin;
 import cap4j.session.Result;
 
 /**
- * User: chaschev
- * Date: 9/24/13
+ * @author Andrey Chaschev chaschev@gmail.com
  */
-public class Rollback extends Plugin{
+public class Rollback extends Plugin {
     public Rollback(GlobalContext global) {
         super(global);
     }
@@ -62,7 +61,7 @@ public class Rollback extends Plugin{
             return new TaskResult(
                 system.run(
                     system.line().sudo().addRaw("if [ `readlink #{%s}` != #{%s} ]; then #{try_sudo} rm -rf #{%s}; fi",
-                        $.var(cap.currentPath), $.var(cap.releasePath), $.var(cap.releasePath) ))
+                        $.var(cap.currentPath), $.var(cap.releasePath), $.var(cap.releasePath)))
             );
         }
     };
@@ -88,7 +87,7 @@ public class Rollback extends Plugin{
 
 
     private void requirePreviousRelease(SessionContext $) {
-        if($.var(cap.getPreviousReleasePath) != null) {
+        if ($.var(cap.getPreviousReleasePath) != null) {
             throw new RuntimeException("could not rollback the code because there is no prior release");
         }
     }

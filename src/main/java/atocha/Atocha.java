@@ -23,10 +23,8 @@ import cap4j.session.DynamicVariable;
 import cap4j.task.Task;
 
 /**
-* User: achaschev
-* Date: 8/13/13
-* Time: 8:02 PM
-*/
+ * @author Andrey Chaschev chaschev@gmail.com
+ */
 public class Atocha extends Plugin {
 
     public final DynamicVariable<Boolean>

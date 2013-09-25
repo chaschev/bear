@@ -51,14 +51,13 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 /**
- * User: ACHASCHEV
- * Date: 7/23/13
+ * @author Andrey Chaschev chaschev@gmail.com
  */
 public class GenericUnixRemoteEnvironment extends SystemEnvironment {
     private static final Logger logger = LoggerFactory.getLogger(GenericUnixRemoteEnvironment.class);
     private SshAddress sshAddress;
 
-    public static class RemoteConsole extends AbstractConsole{
+    public static class RemoteConsole extends AbstractConsole {
         Session.Command command;
 
         public RemoteConsole(Session.Command command, Listener listener) {
@@ -91,11 +90,11 @@ public class GenericUnixRemoteEnvironment extends SystemEnvironment {
         final CommandLine line = newCommandLine()
             .a("unzip");
 
-        if(destDir != null){
+        if (destDir != null) {
             line.a("-d", destDir);
-        }else{
+        } else {
             line.a("-d", StringUtils.substringBeforeLast(file, "/")
-                );
+            );
         }
 
         line.a("-o", file);
@@ -135,7 +134,7 @@ public class GenericUnixRemoteEnvironment extends SystemEnvironment {
 
     @Override
     public <T extends CommandLineResult> T run(final CommandLine<T> line, @Nullable final SshSession.WithSession inputCallback) {
-        if(sshSession == null){
+        if (sshSession == null) {
             connect();
         }
 //        final String[] s = new String[2];
@@ -171,10 +170,10 @@ public class GenericUnixRemoteEnvironment extends SystemEnvironment {
 
                 RemoteConsole remoteConsole = (RemoteConsole) new RemoteConsole(exec, new AbstractConsole.Listener() {
                     @Override
-                    public void textAdded(String textAdded, MarkedBuffer buffer) throws Exception{
+                    public void textAdded(String textAdded, MarkedBuffer buffer) throws Exception {
                         System.out.print(textAdded);
 
-                        if(StringUtils.isBlank(textAdded)) {
+                        if (StringUtils.isBlank(textAdded)) {
                             return;
                         }
 
@@ -208,7 +207,7 @@ public class GenericUnixRemoteEnvironment extends SystemEnvironment {
 
                 exitStatus[0] = exec.getExitStatus();
 
-                if(exitStatus[0] == 0){
+                if (exitStatus[0] == 0) {
                     result[0] = Result.OK;
                 }
 
@@ -252,7 +251,7 @@ public class GenericUnixRemoteEnvironment extends SystemEnvironment {
 
         try {
 
-            if(files.length == 1){
+            if (files.length == 1) {
                 transfer.upload(new FileSystemFile(files[0]), dest);
             } else {
                 for (File file : files) {
@@ -294,9 +293,9 @@ public class GenericUnixRemoteEnvironment extends SystemEnvironment {
                 break;
         }
 
-        if(owner == null){
+        if (owner == null) {
             return run(line).result;
-        }else{
+        } else {
             sudo().run(line);
         }
 
@@ -308,7 +307,7 @@ public class GenericUnixRemoteEnvironment extends SystemEnvironment {
         final CommandLine<CommandLineResult> line = newCommandLine();
 
         line.a("chown");
-        if(recursive) line.a("-R");
+        if (recursive) line.a("-R");
         line.a(user);
         line.a(files);
 
@@ -322,7 +321,7 @@ public class GenericUnixRemoteEnvironment extends SystemEnvironment {
         final CommandLine<CommandLineResult> line = newCommandLine();
 
         line.a("chmod");
-        if(recursive) line.a("-R");
+        if (recursive) line.a("-R");
         line.a(octal);
         line.a(files);
 
@@ -406,7 +405,7 @@ public class GenericUnixRemoteEnvironment extends SystemEnvironment {
         }
 
         public synchronized SSHClient getSsh() {
-            if(ssh == null){
+            if (ssh == null) {
                 try {
                     ssh = sshFuture.get();
                 } catch (Exception e) {
@@ -417,7 +416,7 @@ public class GenericUnixRemoteEnvironment extends SystemEnvironment {
             return ssh;
         }
 
-        public abstract static class WithSession{
+        public abstract static class WithSession {
             public Cap cap;
             public String text;
 
@@ -438,7 +437,7 @@ public class GenericUnixRemoteEnvironment extends SystemEnvironment {
                 final Session s = getSession();
 //                final Session.Shell shell = s.startShell();
                 withSession.act(s, null);
-                if(!reuseSession){
+                if (!reuseSession) {
                     s.close();
                 }
             } catch (Exception e) {
@@ -448,12 +447,11 @@ public class GenericUnixRemoteEnvironment extends SystemEnvironment {
 
         private synchronized Session getSession() throws ConnectionException, TransportException {
             if (reuseSession) {
-                if(session == null){
+                if (session == null) {
                     session = newSession();
                 }
                 return session;
-            }
-            else {
+            } else {
                 return newSession();
             }
         }
@@ -481,8 +479,8 @@ public class GenericUnixRemoteEnvironment extends SystemEnvironment {
     }
 
     @Override
-    public void connect(){
-        if(sshSession == null){
+    public void connect() {
+        if (sshSession == null) {
             sshAddress.username = $.var(cap.sshUsername);
             sshAddress.password = $.var(cap.sshPassword);
             sshSession = new SshSession(sshAddress, global);
@@ -510,10 +508,11 @@ public class GenericUnixRemoteEnvironment extends SystemEnvironment {
         }
     }
 
-    public static GenericUnixRemoteEnvironment newUnixRemote(String name, String address, GlobalContext g){
+    public static GenericUnixRemoteEnvironment newUnixRemote(String name, String address, GlobalContext g) {
         return newUnixRemote(name, g.var(g.cap.sshUsername), g.var(g.cap.sshPassword), address, g);
     }
-    public static GenericUnixRemoteEnvironment newUnixRemote(String name, String username, String password, String address, GlobalContext global){
+
+    public static GenericUnixRemoteEnvironment newUnixRemote(String name, String username, String password, String address, GlobalContext global) {
         return new GenericUnixRemoteEnvironment(name, new SshAddress(username, password, address), global);
     }
 

@@ -40,8 +40,7 @@ import java.util.TimeZone;
 import static cap4j.session.VariableUtils.*;
 
 /**
- * User: ACHASCHEV
- * Date: 7/27/13
+ * @author Andrey Chaschev chaschev@gmail.com
  */
 public class Cap {
     public static final DateTimeZone GMT = DateTimeZone.forTimeZone(TimeZone.getTimeZone("GMT"));
@@ -55,7 +54,7 @@ public class Cap {
 
     public final DynamicVariable<String>
 
-    applicationsPath = strVar("System apps folder").setDynamic(new VarFun<String>() {
+        applicationsPath = strVar("System apps folder").setDynamic(new VarFun<String>() {
         public String apply() {
             return $.system.isNativeUnix() ? "/var/lib" : "c:";
         }
@@ -70,20 +69,20 @@ public class Cap {
     task = strVar("A task to run").defaultTo("deploy"),
 
     applicationName = strVar().setDesc("Your app name"),
-    appLogsPath = joinPath("appLogsPath", logsPath, applicationName),
-    sshUsername = strVar(""),
-    appUsername = eql("appUsername", sshUsername),
-    sshPassword = dynamic(new VarFun<String>() {
-        public String apply() {
-            return global.getProperty($.var(sessionHostname) + ".password");
-        }
-    }),
-    stage = strVar("Stage to deploy to"),
-    repositoryURI = strVar("Project VCS URI"),
-    vcsType = enumConstant("vcsType", "Your VCS type", "svn"),
-    vcsUsername = eql("vcsUserName", sshUsername),
-    vcsPassword = eql("vcsPassword", sshPassword),
-    sessionHostname = strVar("internal variable containing the name of the current session"),
+        appLogsPath = joinPath("appLogsPath", logsPath, applicationName),
+        sshUsername = strVar(""),
+        appUsername = eql("appUsername", sshUsername),
+        sshPassword = dynamic(new VarFun<String>() {
+            public String apply() {
+                return global.getProperty($.var(sessionHostname) + ".password");
+            }
+        }),
+        stage = strVar("Stage to deploy to"),
+        repositoryURI = strVar("Project VCS URI"),
+        vcsType = enumConstant("vcsType", "Your VCS type", "svn"),
+        vcsUsername = eql("vcsUserName", sshUsername),
+        vcsPassword = eql("vcsPassword", sshPassword),
+        sessionHostname = strVar("internal variable containing the name of the current session"),
 
     tempUserInput = strVar(""),
 
@@ -92,7 +91,7 @@ public class Cap {
     deployTo = joinPath("deployTo", applicationsPath, applicationName).setDesc("Current release dir"),
 
     currentDirName = strVar("Current release dir").defaultTo("current"),
-    sharedDirName = strVar("").defaultTo("shared"),
+        sharedDirName = strVar("").defaultTo("shared"),
 
     releasesDirName = strVar("").defaultTo("releases"),
 
@@ -106,29 +105,29 @@ public class Cap {
         }
     }),
 
-   realRevision = strVar("Update revision from vcs").setDynamic(new VarFun<String>() {
-       public String apply() {
-           final VcsCLI vcsCLI = $.var(vcs);
-           final CommandLine<BranchInfoResult> line = vcsCLI.queryRevision($.var(revision), Collections.<String, String>emptyMap());
+    realRevision = strVar("Update revision from vcs").setDynamic(new VarFun<String>() {
+        public String apply() {
+            final VcsCLI vcsCLI = $.var(vcs);
+            final CommandLine<BranchInfoResult> line = vcsCLI.queryRevision($.var(revision), Collections.<String, String>emptyMap());
 
-           line.timeoutMs(20000);
+            line.timeoutMs(20000);
 
-           BranchInfoResult r = $.system.run(line, vcsCLI.passwordCallback());
+            BranchInfoResult r = $.system.run(line, vcsCLI.passwordCallback());
 
-           return r.revision;
-       }
-   }),
+            return r.revision;
+        }
+    }),
 
     releasesPath = joinPath("releasesPath", deployTo, releasesDirName),
-    currentPath = joinPath("currentPath", deployTo, currentDirName),
-    sharedPath = joinPath("sharedPath", deployTo, sharedDirName),
+        currentPath = joinPath("currentPath", deployTo, currentDirName),
+        sharedPath = joinPath("sharedPath", deployTo, sharedDirName),
 
     releasePath = joinPath("releasesPath", releasesPath, releaseName),
 
     vcsCheckoutPath = joinPath("vcsCheckoutPath", sharedPath, "vcs"),
-    vcsBranchName = strVar("").defaultTo("trunk"),
-    vcsBranchLocalPath = joinPath("vcsBranchLocalPath", vcsCheckoutPath, vcsBranchName),
-    vcsBranchURI = joinPath("vcsProjectURI", repositoryURI, vcsBranchName),
+        vcsBranchName = strVar("").defaultTo("trunk"),
+        vcsBranchLocalPath = joinPath("vcsBranchLocalPath", vcsCheckoutPath, vcsBranchName),
+        vcsBranchURI = joinPath("vcsProjectURI", repositoryURI, vcsBranchName),
 
     getLatestReleasePath = strVar("").setDynamic(new VarFun<String>() {
         public String apply() {
@@ -150,11 +149,11 @@ public class Cap {
         }
     }).memoize(true),
 
-   getCurrentRevision = strVar("").setDynamic(new VarFun<String>() {
-       public String apply() {
-           return $.system.readString($.joinPath(currentPath, "REVISION"), null);
-       }
-   }).memoize(true),
+    getCurrentRevision = strVar("").setDynamic(new VarFun<String>() {
+        public String apply() {
+            return $.system.readString($.joinPath(currentPath, "REVISION"), null);
+        }
+    }).memoize(true),
 
     getLatestReleaseRevision = strVar("").setDynamic(new VarFun<String>() {
         public String apply() {
@@ -162,11 +161,11 @@ public class Cap {
         }
     }).memoize(true),
 
-     getPreviousReleaseRevision = strVar("").setDynamic(new VarFun<String>() {
-         public String apply() {
-             return $.system.readString($.joinPath(getPreviousReleasePath, "REVISION"), null);
-         }
-     }).memoize(true);
+    getPreviousReleaseRevision = strVar("").setDynamic(new VarFun<String>() {
+        public String apply() {
+            return $.system.readString($.joinPath(getPreviousReleasePath, "REVISION"), null);
+        }
+    }).memoize(true);
 
     public final DynamicVariable<Boolean>
         useSudo = bool("").defaultTo(true),
@@ -191,8 +190,7 @@ public class Cap {
             }
         }),
         verifyPlugins = newVar(true),
-        autoSetupPlugins = newVar(false)
-    ;
+        autoSetupPlugins = newVar(false);
 
     public static final DynamicVariable<Integer>
         keepXReleases = newVar(5);
@@ -237,8 +235,7 @@ public class Cap {
             public File apply() {
                 return new File($.var(scriptsDir), "settings.properties");
             }
-        })
-    ;
+        });
 
     public static final DynamicVariable<BaseStrategy> newStrategy = dynamicNotSet("strategy", "Deployment strategy: how app files copied and built");
 
@@ -249,29 +246,29 @@ public class Cap {
     public static <T> DynamicVariable<T> dynamicNotSet(final String name, String desc) {
         return dynamic(name, desc, new VarFun<T>() {
             public T apply() {
-                throw new UnsupportedOperationException("you need to set the :" + var.name +"'s name!");
+                throw new UnsupportedOperationException("you need to set the :" + var.name + "'s name!");
             }
         });
     }
 
-    public static <T> DynamicVariable<T> newVar(T _default){
+    public static <T> DynamicVariable<T> newVar(T _default) {
         return new DynamicVariable<T>("").defaultTo(_default);
     }
 
-    public static <T> DynamicVariable<T> dynamic(VarFun<T> function){
+    public static <T> DynamicVariable<T> dynamic(VarFun<T> function) {
         return dynamic(null, "", function);
     }
 
-    public static <T> DynamicVariable<T> dynamic(String desc){
+    public static <T> DynamicVariable<T> dynamic(String desc) {
         return dynamic(null, desc);
     }
 
-    static <T> DynamicVariable<T> dynamic(String name, String desc){
+    static <T> DynamicVariable<T> dynamic(String name, String desc) {
         return new DynamicVariable<T>(name, desc);
     }
 
     public static <T> DynamicVariable<T> dynamic(String desc, VarFun<T> function) {
-        return new DynamicVariable<T>((String)null, desc).setDynamic(function);
+        return new DynamicVariable<T>((String) null, desc).setDynamic(function);
     }
 
     public static <T> DynamicVariable<T> dynamic(String name, String desc, VarFun<T> function) {

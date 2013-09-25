@@ -20,9 +20,8 @@ import cap4j.scm.CommandLineResult;
 import cap4j.session.Result;
 
 /**
-* User: chaschev
-* Date: 7/27/13
-*/
+ * @author Andrey Chaschev chaschev@gmail.com
+ */
 public class TaskResult {
     public Result result;
     public CommandLineResult cliResult;

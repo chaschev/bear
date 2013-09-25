@@ -16,16 +16,14 @@
 
 package cap4j.session;
 
-/**
-* User: chaschev
-* Date: 7/21/13
-*/
 public enum Result {
-    OK, CONNECTION_ERROR, TIMEOUT, ERROR;
+    OK, CONNECTION_ERROR, TIMEOUT, ERROR; /**
+     * @author Andrey Chaschev chaschev@gmail.com
+     */
 
-    public static Result and(Result... results){
+    public static Result and(Result... results) {
         for (Result result : results) {
-            if(result != OK){
+            if (result != OK) {
                 return result;
             }
         }

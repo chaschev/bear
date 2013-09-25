@@ -28,8 +28,7 @@ import cap4j.task.TaskRunner;
 import static cap4j.session.GenericUnixRemoteEnvironment.newUnixRemote;
 
 /**
- * User: ACHASCHEV
- * Date: 7/27/13
+ * @author Andrey Chaschev chaschev@gmail.com
  */
 public class Ex4ConsoleVars {
     static enum ProjectVars implements Nameable {
@@ -38,8 +37,7 @@ public class Ex4ConsoleVars {
 
     public static void main(String[] args) {
         final Stage pacDev = new Stage("pac-dev", GlobalContext.getInstance())
-            .add(newUnixRemote("", "chaschev", "aaaaaa", "192.168.25.66", GlobalContext.getInstance()))
-            ;
+            .add(newUnixRemote("", "chaschev", "aaaaaa", "192.168.25.66", GlobalContext.getInstance()));
 
         final Task<TaskResult> testTask = new Task<TaskResult>() {
             @Override

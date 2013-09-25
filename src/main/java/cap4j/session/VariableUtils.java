@@ -26,16 +26,15 @@ import java.util.Arrays;
 import static cap4j.core.Cap.*;
 
 /**
- * User: chaschev
- * Date: 7/31/13
+ * @author Andrey Chaschev chaschev@gmail.com
  */
 public class VariableUtils {
-    public static DynamicVariable<String> joinPath(final DynamicVariable<String> root, final String... folders){
+    public static DynamicVariable<String> joinPath(final DynamicVariable<String> root, final String... folders) {
         return joinPath(null, root, folders);
     }
 
 
-    public static DynamicVariable<String> joinPath(String name, final DynamicVariable<String> root, final String... folders){
+    public static DynamicVariable<String> joinPath(String name, final DynamicVariable<String> root, final String... folders) {
         return strVar("").setDynamic(new VarFun<String>() {
             public String apply() {
                 return $.system.joinPath($.var(root), $.joinPath(folders));
@@ -43,11 +42,11 @@ public class VariableUtils {
         });
     }
 
-    public static DynamicVariable<String> joinPath(final DynamicVariable... folders){
+    public static DynamicVariable<String> joinPath(final DynamicVariable... folders) {
         return joinPath(null, folders);
     }
 
-    public static DynamicVariable<String> joinPath(String name,final DynamicVariable... folders){
+    public static DynamicVariable<String> joinPath(String name, final DynamicVariable... folders) {
         return strVar("").setDynamic(new VarFun<String>() {
             public String apply() {
                 return $.system.joinPath(Iterables.transform(Arrays.asList(folders), new Function<DynamicVariable, String>() {
@@ -59,7 +58,7 @@ public class VariableUtils {
         });
     }
 
-    public static DynamicVariable<Boolean> not(String name, final DynamicVariable<Boolean> b){
+    public static DynamicVariable<Boolean> not(String name, final DynamicVariable<Boolean> b) {
         return bool("").setDynamic(new VarFun<Boolean>() {
             public Boolean apply() {
                 return !$.varB(b);
@@ -67,7 +66,7 @@ public class VariableUtils {
         });
     }
 
-    public static <T> DynamicVariable<Boolean> isEql(String name, final DynamicVariable<T> variable, final String to){
+    public static <T> DynamicVariable<Boolean> isEql(String name, final DynamicVariable<T> variable, final String to) {
         return dynamic(name, "", new VarFun<Boolean>() {
             public Boolean apply() {
                 final T v = $.var(variable);
@@ -76,11 +75,11 @@ public class VariableUtils {
         });
     }
 
-    public static <T> DynamicVariable<Boolean> isSet(final DynamicVariable<T> var){
+    public static <T> DynamicVariable<Boolean> isSet(final DynamicVariable<T> var) {
         return isSet(null, var);
     }
 
-    public static <T> DynamicVariable<Boolean> isSet(String name, final DynamicVariable<T> variable){
+    public static <T> DynamicVariable<Boolean> isSet(String name, final DynamicVariable<T> variable) {
         return dynamic(name, "", new VarFun<Boolean>() {
             public Boolean apply() {
                 final DynamicVariable<T> x = $.sessionVariables.getClosure(variable);
@@ -91,11 +90,11 @@ public class VariableUtils {
         });
     }
 
-    public static <T> DynamicVariable<T> condition(final DynamicVariable<Boolean> condition, final DynamicVariable<T> trueVar, final DynamicVariable<T> falseVar){
+    public static <T> DynamicVariable<T> condition(final DynamicVariable<Boolean> condition, final DynamicVariable<T> trueVar, final DynamicVariable<T> falseVar) {
         return condition(null, condition, trueVar, falseVar);
     }
 
-    public static <T> DynamicVariable<T> condition(String name, final DynamicVariable<Boolean> condition, final DynamicVariable<T> trueVar, final DynamicVariable<T> falseVar){
+    public static <T> DynamicVariable<T> condition(String name, final DynamicVariable<Boolean> condition, final DynamicVariable<T> trueVar, final DynamicVariable<T> falseVar) {
         return dynamic(name, "", new VarFun<T>() {
             public T apply() {
                 return $.varB(condition) ? $.var(trueVar) : $.var(falseVar);
@@ -103,11 +102,11 @@ public class VariableUtils {
         });
     }
 
-    public static <T> DynamicVariable<T> eql(final DynamicVariable<T> var){
+    public static <T> DynamicVariable<T> eql(final DynamicVariable<T> var) {
         return eql(null, var);
     }
 
-    public static <T> DynamicVariable<T> eql(String name, final DynamicVariable<T> variable){
+    public static <T> DynamicVariable<T> eql(String name, final DynamicVariable<T> variable) {
         return dynamic(name, "", new VarFun<T>() {
             public T apply() {
                 return $.var(variable);
@@ -115,7 +114,7 @@ public class VariableUtils {
         });
     }
 
-    public static DynamicVariable<Boolean> and(final DynamicVariable... bools){
+    public static DynamicVariable<Boolean> and(final DynamicVariable... bools) {
         return bool("").setDynamic(new VarFun<Boolean>() {
             public Boolean apply() {
                 for (DynamicVariable b : bools) {
@@ -127,7 +126,7 @@ public class VariableUtils {
         });
     }
 
-    public static DynamicVariable<Boolean> or(String name, final DynamicVariable... bools){
+    public static DynamicVariable<Boolean> or(String name, final DynamicVariable... bools) {
         return bool("").setDynamic(new VarFun<Boolean>() {
             public Boolean apply() {
                 for (DynamicVariable b : bools) {
@@ -139,7 +138,7 @@ public class VariableUtils {
         });
     }
 
-    public static DynamicVariable<String> concat(final Object... varsAndStrings){
+    public static DynamicVariable<String> concat(final Object... varsAndStrings) {
         return dynamic(new VarFun<String>() {
             public String apply() {
                 return VariableUtils.concat($, varsAndStrings);
@@ -153,10 +152,10 @@ public class VariableUtils {
         for (Object obj : varsAndStrings) {
             if (obj instanceof CharSequence) {
                 sb.append(obj);
-            }else if (obj instanceof DynamicVariable) {
+            } else if (obj instanceof DynamicVariable) {
                 DynamicVariable var = (DynamicVariable) obj;
                 sb.append($.var(var));
-            }else{
+            } else {
                 throw new IllegalStateException(obj + " of class " + obj.getClass().getSimpleName() + " is not supported");
             }
         }

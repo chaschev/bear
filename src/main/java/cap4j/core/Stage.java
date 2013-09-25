@@ -32,8 +32,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * User: ACHASCHEV
- * Date: 7/23/13
+ * @author Andrey Chaschev chaschev@gmail.com
  */
 public class Stage {
     private static final Logger logger = LoggerFactory.getLogger(Stage.class);
@@ -42,7 +41,7 @@ public class Stage {
     String description;
 
     SystemEnvironments environments = new SystemEnvironments(null);
-    
+
     GlobalContext global;
 
     public Stage(String name, GlobalContext global) {
@@ -53,13 +52,13 @@ public class Stage {
     /**
      * Runs a task from task variable
      */
-    public void run(){
+    public void run() {
         final String var = global.localCtx.var(global.cap.task);
         Task task = (Task) OpenBean2.getFieldValue2(global.tasks, var);
         runTask(task);
     }
 
-    public void runTask(final Task<TaskResult> task){
+    public void runTask(final Task<TaskResult> task) {
         GlobalContextFactory.INSTANCE.configure(environments);
 
         BaseStrategy.setBarriers(this, global);
@@ -72,7 +71,7 @@ public class Stage {
 
                     environment.ctx().system.connect();
 
-                    if(environment.ctx().var(environment.cap.verifyPlugins)){
+                    if (environment.ctx().var(environment.cap.verifyPlugins)) {
                         int count = 0;
                         for (Plugin plugin : global.getPlugins()) {
                             try {
@@ -85,7 +84,7 @@ public class Stage {
                             }
                         }
 
-                        if(count > 0){
+                        if (count > 0) {
                             throw new RuntimeException("there were " + count + " errors during plugin verification");
                         }
                     }
@@ -111,7 +110,7 @@ public class Stage {
     public String toString() {
         final StringBuilder sb = new StringBuilder("Stage{");
         sb.append("name='").append(name).append('\'');
-        if(description != null)
+        if (description != null)
             sb.append(", description='").append(description).append('\'');
         sb.append(", environments=").append(environments);
         sb.append('}');

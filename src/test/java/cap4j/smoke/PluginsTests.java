@@ -30,8 +30,7 @@ import java.util.List;
 import static cap4j.session.GenericUnixRemoteEnvironment.newUnixRemote;
 
 /**
- * User: chaschev
- * Date: 9/25/13
+ * @author Andrey Chaschev chaschev@gmail.com
  */
 public class PluginsTests {
     public static class SetupPluginsSettings extends ICapSettings {

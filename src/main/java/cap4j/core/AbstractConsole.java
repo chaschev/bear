@@ -30,12 +30,12 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 /**
- * User: chaschev
- * Date: 8/25/13
+ * @author Andrey Chaschev chaschev@gmail.com
  */
 public abstract class AbstractConsole {
-    public static abstract class Listener{
-        protected void commandFinished(String[] output){}
+    public static abstract class Listener {
+        protected void commandFinished(String[] output) {
+        }
 
         protected abstract void textAdded(String text, MarkedBuffer buffer) throws Exception;
     }
@@ -53,7 +53,7 @@ public abstract class AbstractConsole {
     }
 
 
-    public void print(String s){
+    public void print(String s) {
         try {
             out.write(s.getBytes());
         } catch (IOException e) {
@@ -65,7 +65,7 @@ public abstract class AbstractConsole {
         return addInputStream(is, false);
     }
 
-    public AbstractConsole addInputStream(InputStream is, boolean stdErr){
+    public AbstractConsole addInputStream(InputStream is, boolean stdErr) {
         final ByteArrayOutputStream baos = new ByteArrayOutputStream();
         final MyStreamCopier copier = new MyStreamCopier(is, baos, stdErr);
         final MarkedBuffer buffer = new MarkedBuffer(stdErr);
@@ -76,7 +76,7 @@ public abstract class AbstractConsole {
         copier.listener(new MyStreamCopier.Listener() {
             @Override
             public void reportProgress(long transferred, byte[] buf, int read) throws Exception {
-                if(buf == null){
+                if (buf == null) {
                     buffer.progress(baos.toByteArray());
 
                     listener.textAdded(buffer.interimText(), buffer);
@@ -89,22 +89,22 @@ public abstract class AbstractConsole {
         return this;
     }
 
-    public void stopStreamCopiers(){
+    public void stopStreamCopiers() {
         for (int i = 0; i < copiers.size(); i++) {
             copiers.get(i).stop();
             final Future future = futures.get(i);
 
-            if(!future.isDone()){
+            if (!future.isDone()) {
                 future.cancel(true);
             }
 
         }
     }
 
-    public boolean awaitStreamCopiers(long duration, TimeUnit unit){
+    public boolean awaitStreamCopiers(long duration, TimeUnit unit) {
         long period = duration / 9;
 
-        if(period == 0){
+        if (period == 0) {
             period = 1;
         }
 
@@ -115,24 +115,24 @@ public abstract class AbstractConsole {
 
         long startedAt = System.currentTimeMillis();
 
-        while(true){
+        while (true) {
             try {
                 boolean allFinished = true;
 
                 for (MyStreamCopier copier : copiers) {
-                    if(!copier.isFinished()) {
+                    if (!copier.isFinished()) {
                         allFinished = false;
                         break;
                     }
                 }
 
-                if(allFinished){
+                if (allFinished) {
                     return true;
                 }
 
                 final long now = System.currentTimeMillis();
 
-                if(now - startedAt > durationMs){
+                if (now - startedAt > durationMs) {
                     return false;
                 }
 
@@ -148,7 +148,7 @@ public abstract class AbstractConsole {
     }
 
 
-    public AbstractConsole bufSize(int size){
+    public AbstractConsole bufSize(int size) {
         for (MyStreamCopier copier : copiers) {
             copier.bufSize(size);
         }
@@ -156,7 +156,7 @@ public abstract class AbstractConsole {
         return this;
     }
 
-    public AbstractConsole spawn(ExecutorService service){
+    public AbstractConsole spawn(ExecutorService service) {
         for (MyStreamCopier copier : copiers) {
             futures.add(copier.spawn(service));
         }
@@ -172,7 +172,7 @@ public abstract class AbstractConsole {
 
             sb.append(buffer.wholeText());
 
-            if(i != buffers.size() - 1){
+            if (i != buffers.size() - 1) {
                 return sb.append("\n");
             }
         }

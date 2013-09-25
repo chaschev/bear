@@ -39,8 +39,7 @@ import java.util.List;
 import java.util.concurrent.ExecutorService;
 
 /**
- * User: ACHASCHEV
- * Date: 7/23/13
+ * @author Andrey Chaschev chaschev@gmail.com
  */
 public class GenericUnixLocalEnvironment extends SystemEnvironment {
     private static final Logger logger = LoggerFactory.getLogger(GenericUnixLocalEnvironment.class);
@@ -60,6 +59,7 @@ public class GenericUnixLocalEnvironment extends SystemEnvironment {
 
     /**
      * Single files a treated in a different way.
+     *
      * @param dest
      * @param paths
      */
@@ -71,25 +71,25 @@ public class GenericUnixLocalEnvironment extends SystemEnvironment {
         zip.setDestFile(new File(dest));
         zip.setProject(new Project());
 
-        if(paths.size() != 1){
-        for (String path : paths) {
-            final ZipFileSet set = new ZipFileSet();
+        if (paths.size() != 1) {
+            for (String path : paths) {
+                final ZipFileSet set = new ZipFileSet();
 
-            final File file = new File(path);
+                final File file = new File(path);
 
-            set.setDir(file.getParentFile());
-            set.setIncludes(file.getName());
+                set.setDir(file.getParentFile());
+                set.setIncludes(file.getName());
 
-            zip.addZipfileset(set);
-        }
-        }else{
+                zip.addZipfileset(set);
+            }
+        } else {
             final ZipFileSet set = new ZipFileSet();
 
             final File toAdd = new File(paths.iterator().next());
 
-            if(toAdd.isDirectory()){
+            if (toAdd.isDirectory()) {
                 set.setDir(toAdd);
-            }else{
+            } else {
                 set.setFile(toAdd);
             }
 
@@ -108,7 +108,7 @@ public class GenericUnixLocalEnvironment extends SystemEnvironment {
     public String newTempDir() {
         final File cap4jDir = new File(FileUtils.getTempDirectory(), "cap4j");
 
-        if(cap4jDir.exists()){
+        if (cap4jDir.exists()) {
             try {
                 FileUtils.deleteDirectory(cap4jDir);
             } catch (IOException e) {
@@ -188,7 +188,6 @@ public class GenericUnixLocalEnvironment extends SystemEnvironment {
                     .redirectErrorStream(true)
                     .redirectOutput(new File("c:\\users\\achaschev\\temp.txt"))
                     .start();
-
 
 
                 final InputStream is = process.getInputStream();

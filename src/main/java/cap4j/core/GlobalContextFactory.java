@@ -25,9 +25,8 @@ import org.slf4j.LoggerFactory;
 import java.util.List;
 
 /**
-* User: ACHASCHEV
-* Date: 7/23/13
-*/
+ * @author Andrey Chaschev chaschev@gmail.com
+ */
 public class GlobalContextFactory {
     private static final Logger logger = LoggerFactory.getLogger(GlobalContextFactory.class);
 
@@ -40,11 +39,11 @@ public class GlobalContextFactory {
     }
 
     public void init() {
-        if(globalVarsInitPhase != null){
+        if (globalVarsInitPhase != null) {
             globalVarsInitPhase.setVars(global.variables);
         }
 
-        if(registerPluginsPhase != null){
+        if (registerPluginsPhase != null) {
             final List<Class<? extends Plugin>> list = registerPluginsPhase.registerPlugins(global.variables);
 
             for (Class<? extends Plugin> aClass : list) {
@@ -72,12 +71,12 @@ public class GlobalContextFactory {
     public GlobalVarsInitPhase globalVarsInitPhase;
     public RegisterPluginsPhase registerPluginsPhase;
 
-    public GlobalContext configure(SystemEnvironments system){
+    public GlobalContext configure(SystemEnvironments system) {
         configure(global, system);
         return global;
     }
 
-    protected  GlobalContext configure(GlobalContext gc, SystemEnvironments system){
+    protected GlobalContext configure(GlobalContext gc, SystemEnvironments system) {
         logger.warn("warning: global config was not configured");
         return gc;
     }

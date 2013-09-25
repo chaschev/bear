@@ -17,8 +17,7 @@
 package cap4j.core;
 
 /**
- * User: chaschev
- * Date: 7/21/13
+ * @author Andrey Chaschev chaschev@gmail.com
  */
 public class GlobalOptions {
     public boolean exceptionOnError = true;

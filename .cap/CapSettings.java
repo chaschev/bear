@@ -21,8 +21,7 @@ import java.util.List;
 import static cap4j.session.GenericUnixRemoteEnvironment.newUnixRemote;
 
 /**
- * User: achaschev
- * Date: 8/5/13
+ * @author Andrey Chaschev chaschev@gmail.com
  */
 public class CapSettings extends ICapSettings {
     private static final Logger logger = LoggerFactory.getLogger(BaseStrategy.class);
@@ -37,7 +36,7 @@ public class CapSettings extends ICapSettings {
     }
 
     @Override
-    public GlobalContext configureMe(GlobalContextFactory factory) throws Exception{
+    public GlobalContext configureMe(GlobalContextFactory factory) throws Exception {
         final GlobalContext global = factory.getGlobal();
 
         factory.globalVarsInitPhase = Ex5DeployWar1.newAtochaSettings(global.cap);
@@ -102,9 +101,9 @@ public class CapSettings extends ICapSettings {
 
                         final CommandLine line;
 
-                        if(!$.system.exists(destPath)){
+                        if (!$.system.exists(destPath)) {
                             line = vcsCLI.checkout($.var(cap.revision), destPath, VcsCLI.emptyParams());
-                        }else{
+                        } else {
                             line = vcsCLI.sync($.var(cap.revision), destPath, VcsCLI.emptyParams());
                         }
 

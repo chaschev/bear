@@ -17,10 +17,9 @@
 package cap4j.core;
 
 /**
-* User: ACHASCHEV
-* Date: 7/24/13
-*/
+ * @author Andrey Chaschev chaschev@gmail.com
+ */
 
-public interface Nameable<T>{
+public interface Nameable<T> {
     String name();
 }

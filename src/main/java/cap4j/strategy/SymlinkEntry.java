@@ -21,9 +21,8 @@ import cap4j.session.DynamicVariable;
 import javax.annotation.Nullable;
 
 /**
-* User: chaschev
-* Date: 7/31/13
-*/
+ * @author Andrey Chaschev chaschev@gmail.com
+ */
 public class SymlinkEntry {
     //path in $current
     String sourcePath;

@@ -17,10 +17,8 @@
 package cap4j.scm;
 
 /**
-* User: achaschev
-* Date: 8/4/13
-* Time: 3:52 PM
-*/
+ * @author Andrey Chaschev chaschev@gmail.com
+ */
 public class BranchInfoResult extends CommandLineResult {
     public String author;
     public String revision;

@@ -33,11 +33,10 @@ import java.util.*;
 import java.util.concurrent.*;
 
 /**
- * User: chaschev
- * Date: 7/21/13
+ * @author Andrey Chaschev chaschev@gmail.com
  */
 public class GlobalContext {
-//    public static final GlobalContext INSTANCE = new GlobalContext();
+    //    public static final GlobalContext INSTANCE = new GlobalContext();
     private static final GlobalContext INSTANCE = new GlobalContext();
 
     public final Variables variables = new Variables("global vars", null);
@@ -84,27 +83,27 @@ public class GlobalContext {
 //
 //    }
 
-    public Variables gvars(){
+    public Variables gvars() {
         return variables;
     }
 
-    public <T> T var(DynamicVariable<T> varName){
+    public <T> T var(DynamicVariable<T> varName) {
         return variables.get(this.localCtx, varName);
     }
 
-    public <T> T var(DynamicVariable<T> varName, T _default){
+    public <T> T var(DynamicVariable<T> varName, T _default) {
         return variables.get(varName, _default);
     }
 
-    public Console console(){
+    public Console console() {
         return console;
     }
 
-    public SystemEnvironment local(){
+    public SystemEnvironment local() {
         return local;
     }
 
-    public SessionContext localCtx(){
+    public SessionContext localCtx() {
         return getInstance().localCtx;
     }
 
@@ -129,7 +128,7 @@ public class GlobalContext {
         return getInstance().getPlugin(pluginClass);
     }
 
-    public Cap cap(){
+    public Cap cap() {
         return cap;
     }
 
@@ -137,7 +136,7 @@ public class GlobalContext {
         return INSTANCE;
     }
 
-    public static Tasks tasks(){
+    public static Tasks tasks() {
         return getInstance().tasks;
     }
 
@@ -165,7 +164,7 @@ public class GlobalContext {
 
         final Enumeration<?> enumeration = properties.propertyNames();
 
-        while(enumeration.hasMoreElements()){
+        while (enumeration.hasMoreElements()) {
             final String name = (String) enumeration.nextElement();
 
             final Object v = properties.get(name);
@@ -174,11 +173,11 @@ public class GlobalContext {
                 final DynamicVariable<Boolean> value = Cap.newVar((Boolean) v).setName(name);
 
                 variables.put(value, value);
-            }else if (v instanceof String) {
+            } else if (v instanceof String) {
                 final DynamicVariable<String> value = Cap.newVar((String) v).setName(name);
 
                 variables.put(value, value);
-            }else{
+            } else {
                 throw new UnsupportedOperationException("todo: implement for " + v.getClass());
             }
         }

@@ -23,8 +23,7 @@ import org.slf4j.LoggerFactory;
 import java.util.*;
 
 /**
- * User: ACHASCHEV
- * Date: 7/27/13
+ * @author Andrey Chaschev chaschev@gmail.com
  */
 public class Console {
     private static final Logger logger = LoggerFactory.getLogger(Console.class);
@@ -42,16 +41,15 @@ public class Console {
         return askIfUnset(defaultPrompt(var, _default ? "y" : "n"), var, _default);
     }
 
-    public boolean askIfUnset(String prompt, DynamicVariable<String> var, boolean _default){
+    public boolean askIfUnset(String prompt, DynamicVariable<String> var, boolean _default) {
         final String s = askIfUnset(prompt, var, _default ? "y" : "n").toLowerCase();
 
-        if(!"y".equals(s) || !"n".equals(s)){
+        if (!"y".equals(s) || !"n".equals(s)) {
             throw new RuntimeException("expecting 'y' or 'n'");
         }
 
         return "y".equals(s);
     }
-
 
 
     public String askIfUnset(DynamicVariable<String> var, String _default) {
@@ -65,7 +63,7 @@ public class Console {
     }
 
     public String askIfUnset(String prompt, DynamicVariable<String> var, String _default) {
-        if(global.var(var) == null){
+        if (global.var(var) == null) {
             ask(prompt, var, _default);
         }
 
@@ -77,18 +75,18 @@ public class Console {
 
         String text = readText();
 
-        if(text.equals("") && _default != null) {
+        if (text.equals("") && _default != null) {
             text = _default;
         }
 
         global.gvars().set(var, text);
 
-        if(recordingMode){
+        if (recordingMode) {
             recordedVars.add(new AbstractMap.SimpleEntry<Nameable, String>(var, text));
         }
     }
 
-    public void stopRecording(){
+    public void stopRecording() {
         logger.info("stopping recording");
         recordingMode = false;
     }
@@ -99,7 +97,7 @@ public class Console {
         String line;
         String text = "";
 
-        while((line = scanner.nextLine()).endsWith("\\")){
+        while ((line = scanner.nextLine()).endsWith("\\")) {
             text += line + "\n";
         }
 

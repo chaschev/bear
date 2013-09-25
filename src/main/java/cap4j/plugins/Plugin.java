@@ -26,8 +26,7 @@ import com.google.common.base.Preconditions;
 import java.lang.reflect.Field;
 
 /**
- * User: achaschev
- * Date: 8/13/13
+ * @author Andrey Chaschev chaschev@gmail.com
  */
 public abstract class Plugin {
     public String name;
@@ -37,22 +36,22 @@ public abstract class Plugin {
     public Plugin(GlobalContext global) {
         this.global = global;
         this.cap = global.cap;
-        name  = getClass().getSimpleName();
+        name = getClass().getSimpleName();
     }
 
-    public static void nameVars(Object obj){
+    public static void nameVars(Object obj) {
         final Class<?> aClass = obj.getClass();
         final String className = aClass.getSimpleName();
         final Field[] fields = OpenBean2.getClassDesc(aClass).fields;
 
         try {
             for (Field field : fields) {
-                if(!DynamicVariable.class.isAssignableFrom(field.getType())){
+                if (!DynamicVariable.class.isAssignableFrom(field.getType())) {
                     continue;
                 }
 
                 final DynamicVariable var = (DynamicVariable) field.get(obj);
-                Preconditions.checkNotNull(var, field.getName() +" is null!");
+                Preconditions.checkNotNull(var, field.getName() + " is null!");
                 var.setName(className + "." + field.getName());
             }
         } catch (IllegalAccessException e) {
@@ -60,7 +59,7 @@ public abstract class Plugin {
         }
     }
 
-    public void init(){
+    public void init() {
 
     }
 

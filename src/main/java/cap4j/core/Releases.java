@@ -20,9 +20,8 @@ import java.util.Collections;
 import java.util.List;
 
 /**
-* User: achaschev
-* Date: 8/5/13
-*/
+ * @author Andrey Chaschev chaschev@gmail.com
+ */
 public class Releases {
     List<String> releases;
 
@@ -39,7 +38,7 @@ public class Releases {
     }
 
     public List<String> listToDelete(int keepX) {
-        if(releases.size() <= keepX) return Collections.emptyList();
+        if (releases.size() <= keepX) return Collections.emptyList();
 
         return releases.subList(0, releases.size() - keepX);
     }

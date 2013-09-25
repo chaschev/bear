@@ -14,20 +14,19 @@ import java.util.List;
 import static com.google.common.collect.Lists.transform;
 
 /**
- * User: achaschev
- * Date: 8/5/13
+ * @author Andrey Chaschev chaschev@gmail.com
  */
-public class CreateNewScript extends Script{
+public class CreateNewScript extends Script {
     @Override
     public void run() throws Exception {
         final Cap cap = global.cap;
 
         new Question("step 1, choose the stage: ",
             transform(global.localCtx().var(cap.stages).getStages(), new Function<Stage, String>() {
-            public String apply(Stage s) {
-                return s.name;
-            }
-        }),
+                public String apply(Stage s) {
+                    return s.name;
+                }
+            }),
             cap.stage
         ).ask();
 
@@ -70,7 +69,7 @@ public class CreateNewScript extends Script{
         final File newScriptFile = new File(scriptsDir, scriptName + ".java");
         FileUtils.writeStringToFile(
             newScriptFile,
-                "import cap4j.core.Script;\n" +
+            "import cap4j.core.Script;\n" +
                 "\n" +
                 "public class " + scriptName + " extends Script{\n" +
                 "\t@Override\n" +
@@ -99,7 +98,7 @@ public class CreateNewScript extends Script{
         final SvnVcsCLI.LsResult result = remoteEnv.run(line, vcsCLI.passwordCallback());
 
         return Lists.transform(result.getFiles(), new Function<String, String>() {
-            public String apply( String input) {
+            public String apply(String input) {
                 return dir + "/" + input;
             }
         });

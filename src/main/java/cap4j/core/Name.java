@@ -17,8 +17,7 @@
 package cap4j.core;
 
 /**
- * User: ACHASCHEV
- * Date: 7/27/13
+ * @author Andrey Chaschev chaschev@gmail.com
  */
 public class Name implements Nameable {
     String name;

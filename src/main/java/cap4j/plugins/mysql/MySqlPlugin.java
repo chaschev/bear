@@ -40,10 +40,8 @@ import java.util.regex.Pattern;
 import static cap4j.core.Cap.*;
 
 /**
-* User: achaschev
-* Date: 8/3/13
-* Time: 11:24 PM
-*/
+ * @author Andrey Chaschev chaschev@gmail.com
+ */
 public class MySqlPlugin extends Plugin {
     private static final Logger logger = LoggerFactory.getLogger(MySqlPlugin.class);
 
@@ -97,14 +95,14 @@ public class MySqlPlugin extends Plugin {
 
             Result r = Result.OK;
 
-            if(!installedVersionOk){
+            if (!installedVersionOk) {
                 system.sudo().run(system.newCommandLine().sudo().addSplit("rpm -Uvh http://mirror.webtatic.com/yum/el6/latest.rpm"));
                 r = system.getPackageManager().installPackage(new SystemEnvironment.PackageInfo($.var(clientPackage))).result;
             }
 
             Version serverVersion = computeRealServerVersion(runner);
 
-            if(serverVersion == null){
+            if (serverVersion == null) {
                 r = system.getPackageManager().installPackage(new SystemEnvironment.PackageInfo($.var(serverPackage))).result;
             }
 
@@ -131,32 +129,32 @@ public class MySqlPlugin extends Plugin {
         }
     };
 
-    public void init(){
+    public void init() {
 
     }
 
     private Version computeRealServerVersion(TaskRunner runner) {
         final CommandLineResult r = runScript(runner, "select version();");
 
-        if(r.result.nok() || StringUtils.isBlank(r.text)){
+        if (r.result.nok() || StringUtils.isBlank(r.text)) {
             return null;
         }
 
         return Version.newVersion(r.text.trim().split("\\s+")[1]);
     }
 
-    public Version computeRealClientVersion(SystemEnvironment system){
+    public Version computeRealClientVersion(SystemEnvironment system) {
         final CommandLineResult result = system.run(system.newCommandLine().a("mysql", "--version"));
 
         final String version;
-        if(result.text != null){
+        if (result.text != null) {
             final Matcher matcher = Pattern.compile(".*Distrib\\s+([0-9.]+).*").matcher(result.text);
-            if(matcher.matches()){
+            if (matcher.matches()) {
                 version = matcher.group(1);
-            }else{
+            } else {
                 version = null;
             }
-        }else{
+        } else {
             version = null;
         }
 
@@ -230,7 +228,7 @@ public class MySqlPlugin extends Plugin {
         return runScript(runner, sql, runner.$.var(user), runner.$.var(password));
     }
 
-    public CommandLineResult runScript(TaskRunner runner, String sql, String user, final String pw){
+    public CommandLineResult runScript(TaskRunner runner, String sql, String user, final String pw) {
         final String filePath = runner.$.var(mysqlTempScriptPath);
 
         final SystemEnvironment sys = runner.$.system;
@@ -243,7 +241,7 @@ public class MySqlPlugin extends Plugin {
         return new GenericUnixRemoteEnvironment.SshSession.WithSession(null, pw) {
             @Override
             public void act(Session session, Session.Shell shell) throws Exception {
-                if(text.contains("Enter password:")){
+                if (text.contains("Enter password:")) {
                     final OutputStream os = session.getOutputStream();
                     os.write((pw + "\n").getBytes(IOUtils.UTF8));
                     os.flush();
@@ -251,7 +249,6 @@ public class MySqlPlugin extends Plugin {
             }
         };
     }
-
 
 
     @Override

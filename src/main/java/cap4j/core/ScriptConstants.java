@@ -17,9 +17,7 @@
 package cap4j.core;
 
 /**
- * User: achaschev
- * Date: 8/12/13
- * Time: 3:10 PM
+ * @author Andrey Chaschev chaschev@gmail.com
  */
 public class ScriptConstants {
     Cap aClass;

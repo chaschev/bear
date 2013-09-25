@@ -26,10 +26,8 @@ import java.io.InputStreamReader;
 import java.util.List;
 
 /**
-* User: achaschev
-* Date: 8/12/13
-* Time: 1:39 AM
-*/
+ * @author Andrey Chaschev chaschev@gmail.com
+ */
 public class Question {
     public String question;
     public List<String> options;
@@ -44,7 +42,7 @@ public class Question {
         this.var = var;
     }
 
-    public void ask(){
+    public void ask() {
         try {
 
             final BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
@@ -54,18 +52,18 @@ public class Question {
 
             final String newValue;
 
-            if(freeInput){
+            if (freeInput) {
                 System.out.println(System.out.printf("%s", question));
                 newValue = br.readLine();
-            }else {
+            } else {
 
                 if (options.size() == 1) {
-                    if(!freeInputOption){
+                    if (!freeInputOption) {
                         System.out.printf("%s%n", question);
 
                         newValue = options.get(0);
                         System.out.printf("there is only one option, setting to '%s'%n", newValue);
-                    }else{
+                    } else {
                         System.out.printf("%s [ENTER=%s]: ", question, options.get(0));
 
                         String temp = br.readLine().trim();
@@ -78,7 +76,7 @@ public class Question {
                         System.out.printf("%d) %s%n", i + 1, s);
                     }
 
-                    if(freeInputOption){
+                    if (freeInputOption) {
                         System.out.printf("%d) %s%n", options.size() + 1, "Other (enter manually)");
                     }
 
@@ -90,11 +88,11 @@ public class Question {
                         newValue = defaultValue;
                     } else {
                         final int index = Integer.parseInt(line) - 1;
-                        if(index == options.size()){
+                        if (index == options.size()) {
                             System.out.printf("Enter your value: ");
 
                             newValue = br.readLine();
-                        }else{
+                        } else {
                             newValue = options.get(index);
                         }
                     }
@@ -120,7 +118,7 @@ public class Question {
         return freeQuestion(question, Cap.strVar());
     }
 
-    public static String freeQuestion(String question, DynamicVariable<String> strVar){
+    public static String freeQuestion(String question, DynamicVariable<String> strVar) {
         new Question(question, null, strVar).ask();
 
         return strVar.defaultValue;

@@ -20,21 +20,18 @@ import cap4j.task.Task;
 import com.chaschev.chutils.util.OpenBean2;
 import org.apache.commons.lang3.StringUtils;
 
-/**
- * User: achaschev
- * Date: 8/12/13
- * Time: 1:04 AM
- */
 public enum Registry {
-    INSTANCE;
+    INSTANCE; /**
+     * @author Andrey Chaschev chaschev@gmail.com
+     */
 
-    public Task getByName(String name){
+    public Task getByName(String name) {
         String className;
         String taskName;
 
-        if(!name.contains(".")){
+        if (!name.contains(".")) {
             className = "CapConstants";
-        }else {
+        } else {
             className = StringUtils.substringBefore(name, ".");
         }
 
@@ -44,7 +41,7 @@ public enum Registry {
     }
 
     private Task getTask(String className, String taskName) {
-        if(!className.equals("CapConstants")){
+        if (!className.equals("CapConstants")) {
             throw new UnsupportedOperationException("todo");
         }
 

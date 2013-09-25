@@ -40,10 +40,8 @@ import static cap4j.session.VariableUtils.concat;
 import static cap4j.session.VariableUtils.condition;
 
 /**
-* User: achaschev
-* Date: 8/3/13
-* Time: 11:24 PM
-*/
+ * @author Andrey Chaschev chaschev@gmail.com
+ */
 public class TomcatPlugin extends Plugin {
     public final DynamicVariable<String>
         version = newVar("7.0.42"),
@@ -58,13 +56,13 @@ public class TomcatPlugin extends Plugin {
         homeVersionPath = concat(homeParentPath, "/", versionName).setDesc("i.e. /var/lib/tomcat-7.0.42"),
         currentVersionPath = concat(homeParentPath, "/", versionName),
 
-        webappsUnix = strVar("/var/lib/tomcat6/webapps").defaultTo("/var/lib/tomcat6/webapps"),
+    webappsUnix = strVar("/var/lib/tomcat6/webapps").defaultTo("/var/lib/tomcat6/webapps"),
         webappsWin = dynamicNotSet("webappsWin", ""),
         webapps,
         warName = strVar("i.e. ROOT.war"),
         warPath,
 
-        tomcatBasePort = newVar("8005"),
+    tomcatBasePort = newVar("8005"),
         tomcatAjpPort = newVar("8009"),
         tomcatHttpPort = newVar("8080"),
         tomcatHttpsPort = newVar("8443"),
@@ -72,15 +70,14 @@ public class TomcatPlugin extends Plugin {
         catalinaHome = newVar("/usr/share/tomcat6"),
         catalinaExecutable = newVar("/usr/sbin/tomcat6"),
 
-        myDirPath,
+    myDirPath,
         buildPath,
 
-        distrWwwAddress = dynamic(new VarFun<String>() {
-            public String apply() {
-                return MessageFormat.format("http://apache-mirror.rbc.ru/pub/apache/tomcat/tomcat-7/v{0}/bin/apache-tomcat-{0}.tar.gz", $.var(version));
-            }
-        })
-    ;
+    distrWwwAddress = dynamic(new VarFun<String>() {
+        public String apply() {
+            return MessageFormat.format("http://apache-mirror.rbc.ru/pub/apache/tomcat/tomcat-7/v{0}/bin/apache-tomcat-{0}.tar.gz", $.var(version));
+        }
+    });
 
     public TomcatPlugin(GlobalContext global) {
         super(global);
@@ -91,7 +88,7 @@ public class TomcatPlugin extends Plugin {
         warPath = VariableUtils.joinPath("warPath", webapps, warName);
     }
 
-    public void init(){
+    public void init() {
         global.tasks.restartApp.addBeforeTask(new Task() {
             @Override
             protected TaskResult run(TaskRunner runner) {
@@ -115,7 +112,7 @@ public class TomcatPlugin extends Plugin {
             system.rm($.var(buildPath));
             system.mkdirs($.var(buildPath));
 
-            if(!system.exists(system.joinPath($.var(myDirPath), $.var(distrFilename)))){
+            if (!system.exists(system.joinPath($.var(myDirPath), $.var(distrFilename)))) {
                 system.run(new Script(system)
                     .cd($.var(myDirPath))
                     .add(system.line().timeoutMin(60).addRaw("wget %s", $.var(distrWwwAddress))));

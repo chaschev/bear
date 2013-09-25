@@ -23,9 +23,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
-* User: chaschev
-* Date: 9/24/13
-*/
+ * @author Andrey Chaschev chaschev@gmail.com
+ */
 public class Script {
     public String cd = ".";
 
@@ -37,7 +36,7 @@ public class Script {
         this.system = system;
     }
 
-    public CommandLine line(){
+    public CommandLine line() {
         final CommandLine line = system.line();
 
         lines.add(line);

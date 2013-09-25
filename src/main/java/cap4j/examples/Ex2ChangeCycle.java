@@ -17,8 +17,7 @@
 package cap4j.examples;
 
 /**
- * User: chaschev
- * Date: 7/21/13
+ * @author Andrey Chaschev chaschev@gmail.com
  */
 public class Ex2ChangeCycle {
     public static void main(String[] args) {

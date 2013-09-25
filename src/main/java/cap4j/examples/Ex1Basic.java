@@ -26,15 +26,13 @@ import cap4j.task.TaskRunner;
 import static cap4j.session.GenericUnixRemoteEnvironment.newUnixRemote;
 
 /**
- * User: chaschev
- * Date: 7/21/13
+ * @author Andrey Chaschev chaschev@gmail.com
  */
 public class Ex1Basic {
     public static void main(String[] args) {
 
         final Stage pacDev = new Stage("pac-dev", GlobalContext.getInstance())
-            .add(newUnixRemote("", "chaschev", "1", "192.168.25.66", GlobalContext.getInstance()))
-            ;
+            .add(newUnixRemote("", "chaschev", "1", "192.168.25.66", GlobalContext.getInstance()));
 
         final Task<TaskResult> testTask = new Task<TaskResult>() {
             {

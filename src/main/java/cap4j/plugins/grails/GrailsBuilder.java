@@ -27,10 +27,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
-* User: achaschev
-* Date: 8/3/13
-* Time: 11:25 PM
-*/
+ * @author Andrey Chaschev chaschev@gmail.com
+ */
 public class GrailsBuilder {
     private static final Logger logger = LoggerFactory.getLogger(GrailsBuilder.class);
 

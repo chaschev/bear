@@ -19,8 +19,7 @@ package cap4j.scm;
 import cap4j.cli.CommandLine;
 
 /**
- * User: achaschev
- * Date: 8/4/13
+ * @author Andrey Chaschev chaschev@gmail.com
  */
 public class LocalCommandLine<T extends CommandLineResult> extends CommandLine<T> {
     public LocalCommandLine() {

@@ -20,8 +20,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * User: achaschev
- * Date: 8/5/13
+ * @author Andrey Chaschev chaschev@gmail.com
  */
 public class Stages {
     List<Stage> stages = new ArrayList<Stage>();

@@ -24,8 +24,7 @@ import com.google.common.base.Preconditions;
 
 
 /**
- * User: ACHASCHEV
- * Date: 7/24/13
+ * @author Andrey Chaschev chaschev@gmail.com
  */
 public class Tasks {
     Cap cap;
@@ -67,17 +66,17 @@ public class Tasks {
             system.sudo().chown(sshUser + "." + sshUser, true, dirs);
             system.sudo().chmod("g+w", true, dirs);
 
-            if(!appUser.equals(sshUser)){
+            if (!appUser.equals(sshUser)) {
                 system.sudo().chown(appUser + "." + appUser, true, appLogs);
             }
 
-            if($.var(cap.verifyPlugins)){
+            if ($.var(cap.verifyPlugins)) {
                 for (Plugin plugin : global.getPlugins()) {
-                    if(!plugin.getSetup().verifyExecution(false)){
-                        if($(cap.autoSetupPlugins)){
+                    if (!plugin.getSetup().verifyExecution(false)) {
+                        if ($(cap.autoSetupPlugins)) {
                             $.log("plugin %s was not installed. installing it...", plugin);
                             runner.run(plugin.getSetup());
-                        }else{
+                        } else {
                             $.warn("plugin %s was not installed (autoSetup is off)", plugin);
                         }
                     }
@@ -105,7 +104,7 @@ public class Tasks {
                 Result.and(var(cap.newStrategy).deploy(),
                     runner.run(finalizeTouchCode)
                 )
-                );
+            );
         }
 
         @Override

@@ -46,8 +46,7 @@ import static com.google.common.collect.Lists.newArrayList;
 import static com.google.common.collect.Lists.transform;
 
 /**
- * User: achaschev
- * Date: 8/5/13
+ * @author Andrey Chaschev chaschev@gmail.com
  */
 public class Cap4j {
     public static final Logger logger = LoggerFactory.getLogger(Cap4j.class);
@@ -70,15 +69,15 @@ public class Cap4j {
     public static void main(String[] args) throws Exception {
         final Options options = new Options(args);
 
-        if(options.has(HELP)){
+        if (options.has(HELP)) {
             System.out.println(options.printHelpOn());
             return;
         }
 
-        if(options.has(CAPIFY)){
+        if (options.has(CAPIFY)) {
             final File capDir = new File(options.get(CAPIFY), options.get(SCRIPTS_DIR));
 //            System.out.printf("saving to dir %s%n", capDir.getAbsolutePath());;
-            if(!capDir.exists()) {
+            if (!capDir.exists()) {
                 capDir.mkdirs();
             }
             copyResource("CreateNewScript.java", capDir);
@@ -100,7 +99,7 @@ public class Cap4j {
 
         final File buildDir = new File(scriptsDir, "classes");
 
-        if(!buildDir.exists()){
+        if (!buildDir.exists()) {
             buildDir.mkdir();
         }
 
@@ -121,43 +120,43 @@ public class Cap4j {
 
         final int r = compiler.run(null, null, null, params.toArray(new String[params.size()]));
 
-        if(r == 0){
+        if (r == 0) {
             System.out.printf("compilation OK.%n");
-        }else{
+        } else {
             System.out.printf("compilation failed.%n");
         }
 
         System.out.printf("configuring with CapSettings.java...%n");
         final URLClassLoader classLoader = new URLClassLoader(new URL[]{buildDir.toURI().toURL()});
-        
+
         final Class<?> settingsClass = classLoader.loadClass("CapSettings");
         ICapSettings c = (ICapSettings) settingsClass.newInstance();
 
         final GlobalContextFactory factory = GlobalContextFactory.INSTANCE;
         factory.getGlobal().loadProperties(new File(scriptsDir, "settings.properties"));
 
-       List<Class<?>> loadedScriptClasses = Lists.newArrayList(Iterables.filter(Lists.transform(filesList, new Function<File, Class<?>>() {
-           public Class<?> apply(File input) {
-               try {
-                   return classLoader.loadClass(FilenameUtils.getBaseName(input.getName()));
-               } catch (ClassNotFoundException e) {
-                   throw Exceptions.runtime(e);
-               }
-           }
-       }), new Predicate<Class<?>>() {
-           @Override
-           public boolean apply(Class<?> input) {
-               return Script.class.isAssignableFrom(input);
-           }
-       }));
+        List<Class<?>> loadedScriptClasses = Lists.newArrayList(Iterables.filter(Lists.transform(filesList, new Function<File, Class<?>>() {
+            public Class<?> apply(File input) {
+                try {
+                    return classLoader.loadClass(FilenameUtils.getBaseName(input.getName()));
+                } catch (ClassNotFoundException e) {
+                    throw Exceptions.runtime(e);
+                }
+            }
+        }), new Predicate<Class<?>>() {
+            @Override
+            public boolean apply(Class<?> input) {
+                return Script.class.isAssignableFrom(input);
+            }
+        }));
 
         final GlobalContext global = factory.getGlobal();
         final Cap cap = global.cap;
 
-        if(options.has(SCRIPT)){
+        if (options.has(SCRIPT)) {
             logger.info("script is set in the command line to {}", options.get(SCRIPT));
             cap.deployScript.defaultTo(options.get(SCRIPT));
-        }else {
+        } else {
             new Question("Enter a script name to run:",
                 transform(loadedScriptClasses, new Function<Class<?>, String>() {
                     public String apply(Class<?> input) {
@@ -174,7 +173,7 @@ public class Cap4j {
             }
         });
 
-        if(scriptToRun.isPresent()){
+        if (scriptToRun.isPresent()) {
             System.out.printf("running script %s...%n", scriptToRun.get().getSimpleName());
 
             final Script script = (Script) scriptToRun.get().newInstance();
@@ -182,7 +181,7 @@ public class Cap4j {
             script.setProperties(global, scriptsDir);
 
             new Cap4jRunner(c, script).run();
-        }else{
+        } else {
             System.err.printf("Didn't find script with name %s. Exiting.%n", global.var(cap.deployScript));
             System.exit(-1);
         }

@@ -31,8 +31,7 @@ import static cap4j.session.Result.ERROR;
 import static cap4j.session.Result.OK;
 
 /**
- * User: chaschev
- * Date: 7/21/13
+ * @author Andrey Chaschev chaschev@gmail.com
  */
 public class TaskRunner {
     private static final Logger logger = LoggerFactory.getLogger(TaskRunner.class);
@@ -52,7 +51,7 @@ public class TaskRunner {
     }
 
     public Result run(Task... tasks) {
-        return run((List)Arrays.asList(tasks));
+        return run((List) Arrays.asList(tasks));
     }
 
     public Result run(Iterable<Task<TaskResult>> tasks) {
@@ -104,7 +103,7 @@ public class TaskRunner {
     }
 
     private Result runCollectionOfTasks(List<Task<TaskResult>> tasks, String desc, boolean thisIsMe) {
-        if(!tasks.isEmpty() && !desc.isEmpty()){
+        if (!tasks.isEmpty() && !desc.isEmpty()) {
             logger.info(desc);
         }
 
@@ -126,9 +125,9 @@ public class TaskRunner {
     private Result _runSingleTask(Task<TaskResult> task, boolean thisIsMe) {
         Result result = null;
         try {
-            if(!thisIsMe){
+            if (!thisIsMe) {
                 result = runWithDependencies(task);
-            }else{
+            } else {
                 task.setCtx($);
                 result = task.run(this).result;
             }

@@ -20,9 +20,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
-* User: chaschev
-* Date: 8/25/13
-*/
+ * @author Andrey Chaschev chaschev@gmail.com
+ */
 public class MarkedBuffer {
     private final boolean stdErr;
     byte[] bytes;
@@ -35,12 +34,12 @@ public class MarkedBuffer {
         this.stdErr = stdErr;
     }
 
-    public void markStart(){
+    public void markStart() {
         startPosition = bytes.length;
     }
 
-    public void markInterim(){
-        interimPosition =  bytes.length;
+    public void markInterim() {
+        interimPosition = bytes.length;
     }
 
     void setBytes(byte[] bytes) {
@@ -59,23 +58,22 @@ public class MarkedBuffer {
         return new String(bytes, startPosition, bytes.length - startPosition);
     }
 
-    public void putMark(String name){
+    public void putMark(String name) {
         marks.put(name, bytes.length);
     }
 
-    public String subText(String mark1, String mark2){
+    public String subText(String mark1, String mark2) {
         return new String(bytes, markToPosition(mark1), markToPosition(mark2));
     }
 
     private int markToPosition(String mark) {
         int pos;
 
-        if("start".equals(mark)){
+        if ("start".equals(mark)) {
             pos = startPosition;
-        }else
-        if("interim".equals(mark)){
+        } else if ("interim".equals(mark)) {
             pos = interimPosition;
-        }else{
+        } else {
             pos = marks.get(mark);
         }
         return pos;
