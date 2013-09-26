@@ -19,9 +19,9 @@ package cap4j.scm;
 import cap4j.cli.CommandLine;
 import cap4j.cli.Script;
 import cap4j.core.GlobalContext;
-import cap4j.core.SessionContext;
 import cap4j.session.DynamicVariable;
 import cap4j.session.GenericUnixRemoteEnvironment;
+import cap4j.task.Task;
 import com.google.common.base.Function;
 import net.schmizz.sshj.common.IOUtils;
 import net.schmizz.sshj.connection.channel.direct.Session;
@@ -51,8 +51,8 @@ public class GitCLI extends VcsCLI {
 
     public final DynamicVariable<String> remote = dynamicNotSet("");
 
-    public GitCLI(SessionContext ctx, GlobalContext global) {
-        super(ctx, global);
+    public GitCLI(GlobalContext global) {
+        super(global);
     }
 
     @Override
@@ -184,7 +184,7 @@ public class GitCLI extends VcsCLI {
         //this will break the logic a bit
         String newRevision = null;
 
-        final SvnVcsCLI.LsResult lsResult = $.system.run(lsRemote(revision).timeoutSec(10), passwordCallback());
+        final SvnCLI.LsResult lsResult = $.system.run(lsRemote(revision).timeoutSec(10), passwordCallback());
 
         for (String s : lsResult.getFiles()) {
             final String rev = StringUtils.substringBefore(s, "|");
@@ -269,22 +269,22 @@ public class GitCLI extends VcsCLI {
         throw new UnsupportedOperationException("todo: log");
     }
 
-    public CommandLine<SvnVcsCLI.LsResult> ls(String path, Map<String, String> params) {
+    public CommandLine<SvnCLI.LsResult> ls(String path, Map<String, String> params) {
         //noinspection unchecked
         return commandPrefix("ls", params)
-            .a(path).setParser(new Function<String, SvnVcsCLI.LsResult>() {
-                public SvnVcsCLI.LsResult apply(String s) {
-                    return new SvnVcsCLI.LsResult(s, convertLsOutput(s));
+            .a(path).setParser(new Function<String, SvnCLI.LsResult>() {
+                public SvnCLI.LsResult apply(String s) {
+                    return new SvnCLI.LsResult(s, convertLsOutput(s));
                 }
             });
     }
 
-    public CommandLine<SvnVcsCLI.LsResult> lsRemote(String revision) {
+    public CommandLine<SvnCLI.LsResult> lsRemote(String revision) {
         //noinspection unchecked
         return commandPrefix("ls-remote", emptyParams())
-            .a($(cap.repositoryURI), revision).setParser(new Function<String, SvnVcsCLI.LsResult>() {
-                public SvnVcsCLI.LsResult apply(String s) {
-                    return new SvnVcsCLI.LsResult(s, convertLsOutput(s));
+            .a($(cap.repositoryURI), revision).setParser(new Function<String, SvnCLI.LsResult>() {
+                public SvnCLI.LsResult apply(String s) {
+                    return new SvnCLI.LsResult(s, convertLsOutput(s));
                 }
             });
     }
@@ -315,7 +315,6 @@ public class GitCLI extends VcsCLI {
     }
 
     protected String[] auth() {
-
         final String user = global.var(cap.vcsUsername, null);
         final String pw = global.var(cap.vcsPassword, null);
         final boolean preferPrompt = global.var(cap.scmPreferPrompt, false);
@@ -338,5 +337,10 @@ public class GitCLI extends VcsCLI {
         }
 
         return r.toArray(new String[r.size()]);
+    }
+
+    @Override
+    public Task getSetup() {
+        return Task.nop();
     }
 }

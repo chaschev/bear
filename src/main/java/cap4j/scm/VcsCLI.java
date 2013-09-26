@@ -18,9 +18,9 @@ package cap4j.scm;
 
 import cap4j.cli.CommandLine;
 import cap4j.cli.Script;
-import cap4j.core.Cap;
 import cap4j.core.GlobalContext;
 import cap4j.core.SessionContext;
+import cap4j.plugins.Plugin;
 import cap4j.session.DynamicVariable;
 import cap4j.session.GenericUnixRemoteEnvironment;
 import cap4j.session.SystemEnvironment;
@@ -31,15 +31,14 @@ import java.util.Map;
 /**
  * @author Andrey Chaschev chaschev@gmail.com
  */
-public abstract class VcsCLI {
+public abstract class VcsCLI extends Plugin {
     protected SessionContext $;
     protected GlobalContext global;
-    protected Cap cap;
 
-    protected VcsCLI(SessionContext $, GlobalContext global) {
-        this.$ = $;
-        this.global = global;
-        this.cap = global.cap;
+    public static boolean sessionPlugin = true;
+
+    protected VcsCLI(GlobalContext global) {
+        super(global);
     }
 
     public Script checkout(String revision, String destination, Map<String, String> params) {
@@ -97,7 +96,7 @@ public abstract class VcsCLI {
         return SystemEnvironment.passwordCallback($.var(cap.vcsPassword));
     }
 
-    public CommandLine<SvnVcsCLI.LsResult> ls(String path) {
+    public CommandLine<SvnCLI.LsResult> ls(String path) {
         return ls(path, emptyParams());
     }
 

@@ -48,11 +48,7 @@ public class GlobalContextFactory {
 
             for (Class<? extends Plugin> aClass : list) {
                 try {
-                    final Plugin plugin = aClass.getConstructor(GlobalContext.class).newInstance(global);
-                    Plugin.nameVars(plugin);
-                    plugin.init();
-
-                    global.pluginMap.put(aClass, plugin);
+                    global.addPlugin(aClass);
                 } catch (Exception e) {
                     throw Exceptions.runtime(e);
                 }

@@ -18,6 +18,7 @@ package cap4j.plugins;
 
 import cap4j.core.Cap;
 import cap4j.core.GlobalContext;
+import cap4j.core.SessionContext;
 import cap4j.session.DynamicVariable;
 import cap4j.task.Task;
 import com.chaschev.chutils.util.OpenBean2;
@@ -32,6 +33,7 @@ public abstract class Plugin {
     public String name;
     public final Cap cap;
     protected GlobalContext global;
+    protected SessionContext $;
 
     public Plugin(GlobalContext global) {
         this.global = global;
@@ -68,5 +70,14 @@ public abstract class Plugin {
     @Override
     public String toString() {
         return name;
+    }
+
+    public <T> T $(DynamicVariable<T> varName) {
+        return $.var(varName);
+    }
+
+    public Plugin set$(SessionContext $) {
+        this.$ = $;
+        return this;
     }
 }

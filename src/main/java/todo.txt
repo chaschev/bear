@@ -32,6 +32,8 @@ features:
 - upstart plugin
 - play plugin
 - maven plugin
+- verify vcs installation via plugin verification
+- test: vars from console
 - (ok) console: saving/loading user input - only in the very beginning
 - configure variables from ENV
 - (ok) add running from scripts

@@ -1,6 +1,5 @@
 import atocha.Atocha;
 import cap4j.core.*;
-import cap4j.examples.Ex5DeployWar1;
 import cap4j.plugins.Plugin;
 import cap4j.plugins.grails.GrailsBuildResult;
 import cap4j.plugins.grails.GrailsBuilder;
@@ -38,7 +37,7 @@ public class CapSettings extends ICapSettings {
     public GlobalContext configureMe(GlobalContextFactory factory) throws Exception {
         final GlobalContext global = factory.getGlobal();
 
-        factory.globalVarsInitPhase = Ex5DeployWar1.newAtochaSettings(global.cap);
+        factory.globalVarsInitPhase = newAtochaSettings(global.cap);
         factory.registerPluginsPhase = new GlobalContextFactory.RegisterPluginsPhase() {
             @Override
             public List<Class<? extends Plugin>> registerPlugins(VariablesLayer vars) {
@@ -78,9 +77,6 @@ public class CapSettings extends ICapSettings {
         Cap.newStrategy.setDynamic(new VarFun<BaseStrategy>() {
 
             public BaseStrategy apply() {
-//                GrailsConf.projectWarPath.setEqualTo(
-//                    joinPath(vcsBranchLocalPath, GrailsConf.warName)
-//                );
 
                 grails.projectPath.setEqualTo(
                     cap.vcsBranchLocalPath
@@ -142,5 +138,23 @@ public class CapSettings extends ICapSettings {
         System.out.printf("finished configuring Settings.java%n");
 
         return global;
+    }
+
+    public static GlobalContextFactory.GlobalVarsInitPhase newAtochaSettings(Cap cap1) {
+        final Cap cap = cap1;
+
+        return new GlobalContextFactory.GlobalVarsInitPhase() {
+            @Override
+            public void setVars(VariablesLayer vars) {
+                vars
+                    .putS(cap.applicationName, "atocha")
+                    .putB(cap.productionDeployment, false)
+                    .putB(cap.speedUpBuild, true)
+                    .putS(cap.vcsType, "svn")
+                    .putS(cap.repositoryURI, "svn://vm02/svnrepos/atocha")
+                    .putS(cap.appUsername, "tomcat")
+                ;
+            }
+        };
     }
 }

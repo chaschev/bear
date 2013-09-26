@@ -160,6 +160,10 @@ public class Variables {
         return sb.toString();
     }
 
+    public static <T> DynamicVariable<T> dynamicNotSet() {
+        return dynamicNotSet(null, "");
+    }
+
     public static <T> DynamicVariable<T> dynamicNotSet(String desc) {
         return dynamicNotSet(null, desc);
     }
@@ -167,7 +171,7 @@ public class Variables {
     public static <T> DynamicVariable<T> dynamicNotSet(final String name, String desc) {
         return dynamic(name, desc, new VarFun<T>() {
             public T apply() {
-                throw new UnsupportedOperationException("you need to set the :" + var.name + "'s name!");
+                throw new VarNotSetException(var);
             }
         });
     }

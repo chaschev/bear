@@ -23,13 +23,17 @@ import cap4j.session.SystemEnvironment;
 import cap4j.session.Variables;
 import cap4j.task.Tasks;
 import com.chaschev.chutils.util.Exceptions;
+import com.chaschev.chutils.util.OpenBean2;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Predicates;
+import com.google.common.collect.Iterables;
 import org.apache.commons.lang3.SystemUtils;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 import java.util.concurrent.*;
 
@@ -44,7 +48,65 @@ public class GlobalContext {
     public final Console console = new Console(this);
     public final Tasks tasks;
 
-    public final Map<Class<? extends Plugin>, Plugin> pluginMap = new HashMap<Class<? extends Plugin>, Plugin>();
+    public final Plugins plugins = new Plugins();
+
+    public class Plugins{
+        public final Map<Class<? extends Plugin>, Plugin> pluginMap = new HashMap<Class<? extends Plugin>, Plugin>();
+
+        public boolean isSession(Class<? extends Plugin> aClass){
+            return pluginMap.get(aClass) == null && pluginMap.containsKey(aClass);
+        }
+
+        public void add(Class<? extends Plugin> aClass){
+            try {
+                boolean sessionPlugin = OpenBean2.getClassDesc(aClass).getStaticField("sessionPlugin") != null &&
+                    ((Boolean)OpenBean2.getStaticFieldValue(aClass, "sessionPlugin"));
+
+                if(sessionPlugin){
+                    final Plugin plugin = newPluginInstance(aClass);
+
+                    pluginMap.put(aClass, plugin);
+                }else{
+                    pluginMap.put(aClass, null);
+                }
+            } catch (Exception e) {
+                throw Exceptions.runtime(e);
+            }
+        }
+
+        public Plugin get(Class<? extends Plugin> aClass){
+            final Plugin plugin = pluginMap.get(aClass);
+
+            if(plugin == null){
+                if(isSession(aClass)){
+                    throw new RuntimeException("plugin " + aClass.getSimpleName() + " is a session plugin, use get(class, $)");
+                }
+
+                throw new RuntimeException("plugin " + aClass.getSimpleName() + " has not been loaded yet");
+            }
+
+            return plugin;
+        }
+
+        public Plugin get(Class<? extends Plugin> aClass, SessionContext $){
+            try {
+                Preconditions.checkArgument(pluginMap.get(aClass) == null, "plugin is not session!");
+
+                return newPluginInstance(aClass).set$($);
+            } catch (Exception e) {
+                throw Exceptions.runtime(e);
+            }
+        }
+
+        private Plugin newPluginInstance(Class<? extends Plugin> aClass) throws InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException {
+            final Plugin plugin = aClass.getConstructor(GlobalContext.class).newInstance(GlobalContext.this);
+
+            Plugin.nameVars(plugin);
+            plugin.init();
+
+            return plugin;
+        }
+    }
 
     public final ExecutorService taskExecutor = new ThreadPoolExecutor(2, 32,
         5L, TimeUnit.SECONDS,
@@ -114,19 +176,19 @@ public class GlobalContext {
     }
 
     public <T extends Plugin> T getPlugin(Class<T> pluginClass) {
-        final T plugin = (T) pluginMap.get(pluginClass);
-
-        Preconditions.checkNotNull(plugin, "plugin " + pluginClass.getSimpleName() + " has not been loaded yet");
-
-        return plugin;
+        return (T) plugins.get(pluginClass);
     }
 
-    public Collection<Plugin> getPlugins() {
-        return pluginMap.values();
+    public <T extends Plugin> T getPlugin(Class<T> pluginClass, SessionContext $) {
+        return (T) plugins.get(pluginClass, $);
     }
 
-    public static <T extends Plugin> T plugin(Class<T> pluginClass) {
-        return getInstance().getPlugin(pluginClass);
+    public Set<Class<? extends Plugin>> getPluginClasses() {
+        return plugins.pluginMap.keySet();
+    }
+
+    public Iterable<Plugin> getPlugins() {
+        return Iterables.filter(plugins.pluginMap.values(), Predicates.notNull());
     }
 
     public Cap cap() {
@@ -182,5 +244,9 @@ public class GlobalContext {
                 throw new UnsupportedOperationException("todo: implement for " + v.getClass());
             }
         }
+    }
+
+    public void addPlugin(Class<? extends Plugin> aClass) throws NoSuchMethodException {
+        plugins.add(aClass);
     }
 }

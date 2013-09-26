@@ -41,4 +41,8 @@ public abstract class VarFun<T> {
         this.$ = $;
         return this;
     }
+
+    public <T> T $(DynamicVariable<T> varName) {
+        return $.var(varName);
+    }
 }

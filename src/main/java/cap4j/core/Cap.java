@@ -18,10 +18,10 @@ package cap4j.core;
 
 import cap4j.plugins.Plugin;
 import cap4j.scm.BranchInfoResult;
-import cap4j.scm.SvnVcsCLI;
 import cap4j.scm.VcsCLI;
 import cap4j.session.DynamicVariable;
 import cap4j.strategy.BaseStrategy;
+import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
 import com.google.common.collect.Iterables;
 import org.joda.time.DateTime;
@@ -75,7 +75,7 @@ public class Cap {
         }),
         stage = strVar("Stage to deploy to"),
         repositoryURI = strVar("Project VCS URI"),
-        vcsType = enumConstant("vcsType", "Your VCS type", "svn"),
+//        vcsType = enumConstant("vcsType", "Your VCS type", "svn", "git"),
         vcsUsername = eql("vcsUserName", sshUsername),
         vcsPassword = eql("vcsPassword", sshPassword),
         sessionHostname = strVar("internal variable containing the name of the current session"),
@@ -121,9 +121,12 @@ public class Cap {
     releasePath = joinPath("releasesPath", releasesPath, releaseName),
 
     vcsCheckoutPath = joinPath("vcsCheckoutPath", sharedPath, "vcs"),
-        vcsBranchName = strVar("").defaultTo("trunk"),
-        vcsBranchLocalPath = joinPath("vcsBranchLocalPath", vcsCheckoutPath, vcsBranchName),
-        vcsBranchURI = joinPath("vcsProjectURI", repositoryURI, vcsBranchName),
+
+    vcsBranchName = dynamicNotSet(),
+
+    vcsBranchLocalPath = joinPath("vcsBranchLocalPath", vcsCheckoutPath, vcsBranchName),
+
+    vcsBranchURI = joinPath("vcsProjectURI", repositoryURI, vcsBranchName),
 
     getLatestReleasePath = strVar("").setDynamic(new VarFun<String>() {
         public String apply() {
@@ -217,13 +220,17 @@ public class Cap {
 
     public final DynamicVariable<VcsCLI> vcs = new DynamicVariable<VcsCLI>("vcs", "VCS adapter").setDynamic(new VarFun<VcsCLI>() {
         public VcsCLI apply() {
-            final String scm = $.var(vcsType);
+            Class<? extends VcsCLI> vcsCLI = null;
 
-            if ("svn".equals(scm)) {
-                return new SvnVcsCLI($, global);
+            for (Class<? extends Plugin> aClass : global.getPluginClasses()) {
+                if(VcsCLI.class.isAssignableFrom(aClass)){
+                    vcsCLI = (Class<? extends VcsCLI>) aClass;
+                }
             }
 
-            throw new UnsupportedOperationException(scm + " is not yet supported");
+            Preconditions.checkNotNull(vcsCLI, "add a VCS plugin!");
+
+            return global.getPlugin(vcsCLI, $);
         }
     });
 

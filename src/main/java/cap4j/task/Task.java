@@ -38,11 +38,16 @@ public abstract class Task<T extends TaskResult> {
     Set<Role> roles = new HashSet<Role>();
 
     protected transient SessionContext $;
+
     List<Task<TaskResult>> beforeTasks = new ArrayList<Task<TaskResult>>();
     List<Task<TaskResult>> afterTasks = new ArrayList<Task<TaskResult>>();
     List<Task<TaskResult>> dependsOnTasks = new ArrayList<Task<TaskResult>>();
 
     public Task() {
+    }
+
+    protected Task(String name) {
+        this.name = name;
     }
 
     protected SystemEnvironment system;
@@ -65,7 +70,6 @@ public abstract class Task<T extends TaskResult> {
     protected TaskResult run(TaskRunner runner) {
         return new TaskResult(Result.OK);
     }
-
 
     public <T> T var(DynamicVariable<T> varName) {
         return $.var(varName);
@@ -126,5 +130,11 @@ public abstract class Task<T extends TaskResult> {
         return $.var(varName);
     }
 
+    private static final Task NOP_TASK = new Task("nop") {
 
+    };
+
+    public static Task nop() {
+        return NOP_TASK;
+    }
 }

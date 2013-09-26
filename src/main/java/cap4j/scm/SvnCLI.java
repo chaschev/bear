@@ -19,7 +19,7 @@ package cap4j.scm;
 import cap4j.cli.CommandLine;
 import cap4j.cli.Script;
 import cap4j.core.GlobalContext;
-import cap4j.core.SessionContext;
+import cap4j.task.Task;
 import com.google.common.base.Function;
 import com.google.common.collect.Lists;
 import org.apache.commons.lang3.StringUtils;
@@ -32,10 +32,9 @@ import java.util.Map;
 /**
  * @author Andrey Chaschev chaschev@gmail.com
  */
-public class SvnVcsCLI extends VcsCLI {
-
-    public SvnVcsCLI(SessionContext ctx, GlobalContext global) {
-        super(ctx, global);
+public class SvnCLI extends VcsCLI {
+    public SvnCLI(GlobalContext global) {
+        super(global);
     }
 
     @Override
@@ -171,5 +170,10 @@ public class SvnVcsCLI extends VcsCLI {
         }
 
         return r.toArray(new String[r.size()]);
+    }
+
+    @Override
+    public Task getSetup() {
+        return Task.nop();
     }
 }
