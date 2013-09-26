@@ -128,7 +128,7 @@ public class MySqlPlugin extends Plugin {
         }
 
         @Override
-        public Dependency installedDependency() {
+        public Dependency asInstalledDependency() {
             return Dependency.NONE;
         }
     };

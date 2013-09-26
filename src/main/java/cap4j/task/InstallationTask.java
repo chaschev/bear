@@ -23,7 +23,7 @@ import cap4j.core.SessionContext;
 * @author Andrey Chaschev chaschev@gmail.com
 */
 public abstract class InstallationTask<T extends TaskResult> extends Task<T>{
-    public abstract Dependency installedDependency();
+    public abstract Dependency asInstalledDependency();
 
     public InstallationTask() {
     }
@@ -40,7 +40,7 @@ public abstract class InstallationTask<T extends TaskResult> extends Task<T>{
 
     private static final InstallationTask NOP_TASK = new InstallationTask("nop") {
         @Override
-        public Dependency installedDependency() {
+        public Dependency asInstalledDependency() {
             return Dependency.NONE;
         }
     };

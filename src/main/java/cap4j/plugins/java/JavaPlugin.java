@@ -101,7 +101,7 @@ public class JavaPlugin extends Plugin {
         }
 
         @Override
-        public Dependency installedDependency() {
+        public Dependency asInstalledDependency() {
             return Dependency.NONE;
         }
     };

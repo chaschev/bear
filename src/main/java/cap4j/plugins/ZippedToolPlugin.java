@@ -20,6 +20,7 @@ import cap4j.cli.Script;
 import cap4j.core.*;
 import cap4j.plugins.java.JavaPlugin;
 import cap4j.session.DynamicVariable;
+import cap4j.session.SystemEnvironment;
 import cap4j.session.Variables;
 import cap4j.task.InstallationTask;
 import cap4j.task.TaskResult;
@@ -90,7 +91,7 @@ public abstract class ZippedToolPlugin extends Plugin{
         protected abstract String extractVersion(String output);
         protected abstract String createVersionCommandLine();
 
-        protected Script extractToHomeDir(){
+        protected Script buildExtractionToHomeDir(){
             final String _distrFilename = $(distrFilename);
 
             extractToHomeScript = new Script(system)
@@ -116,7 +117,7 @@ public abstract class ZippedToolPlugin extends Plugin{
 
         protected Script shortCut(String newCommandName, String sourceExecutableName){
             return extractToHomeScript.add(system.line().sudo().addRaw("rm /usr/bin/%s", newCommandName))
-                .add(system.line().sudo().addRaw("ln -s %s/bin/%s /usr/bin/mvn", $(homePath), sourceExecutableName, newCommandName));
+                .add(system.line().sudo().addRaw("ln -s %s/bin/%s /usr/bin/%s", $(homePath), sourceExecutableName, newCommandName));
         }
 
 
@@ -139,7 +140,7 @@ public abstract class ZippedToolPlugin extends Plugin{
         }
 
         @Override
-        public Dependency installedDependency() {
+        public Dependency asInstalledDependency() {
             final Dependency dep = new Dependency($(toolDistrName), $);
 
             dep.add(dep.new Command(
@@ -153,6 +154,19 @@ public abstract class ZippedToolPlugin extends Plugin{
                 String.format("'%s' expected version: %s", $(toolDistrName), $(version))
             ));
             return dep;
+        }
+
+        protected DependencyResult extractAndVerify() {
+            system.run(extractToHomeScript,
+                SystemEnvironment.passwordCallback($.var(cap.sshPassword))
+            );
+
+            final DependencyResult r = asInstalledDependency().checkDeps();
+
+            if(r.result.ok()){
+                $.log("%s has been installed", $(versionName));
+            }
+            return r;
         }
     }
 }

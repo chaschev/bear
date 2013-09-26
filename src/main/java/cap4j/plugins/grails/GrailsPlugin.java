@@ -21,9 +21,7 @@ import cap4j.core.GlobalContext;
 import cap4j.core.VarFun;
 import cap4j.plugins.ZippedToolPlugin;
 import cap4j.plugins.java.JavaPlugin;
-import cap4j.scm.CommandLineResult;
 import cap4j.session.DynamicVariable;
-import cap4j.session.SystemEnvironment;
 import cap4j.session.Variables;
 import cap4j.task.InstallationTask;
 import cap4j.task.TaskResult;
@@ -95,17 +93,12 @@ public class GrailsPlugin extends ZippedToolPlugin {
 
             download();
 
-            extractToHomeDir();
+            buildExtractionToHomeDir();
 
             shortCut("grails", "grails");
+            shortCut("startGrails", "startGrails");
 
-            final CommandLineResult r = system.run(extractToHomeScript,
-                SystemEnvironment.passwordCallback($.var(cap.sshPassword))
-            );
-
-            checkDependencies();
-
-            return new TaskResult(r);
+            return extractAndVerify();
         }
 
         @Override

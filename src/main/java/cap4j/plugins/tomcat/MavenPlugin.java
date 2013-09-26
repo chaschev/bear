@@ -19,8 +19,6 @@ package cap4j.plugins.tomcat;
 import cap4j.core.GlobalContext;
 import cap4j.core.VarFun;
 import cap4j.plugins.ZippedToolPlugin;
-import cap4j.scm.CommandLineResult;
-import cap4j.session.SystemEnvironment;
 import cap4j.task.InstallationTask;
 import cap4j.task.TaskResult;
 import cap4j.task.TaskRunner;
@@ -63,17 +61,11 @@ public class MavenPlugin extends ZippedToolPlugin {
 
             download();
 
-            extractToHomeDir();
+            buildExtractionToHomeDir();
 
             shortCut("mvn", "mvn");
 
-            final CommandLineResult r = system.run(extractToHomeScript,
-                SystemEnvironment.passwordCallback($.var(cap.sshPassword))
-            );
-
-            checkDependencies();
-
-            return new TaskResult(r);
+            return extractAndVerify();
         }
 
         @Override
