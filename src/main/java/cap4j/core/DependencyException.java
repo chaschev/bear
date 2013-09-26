@@ -16,23 +16,14 @@
 
 package cap4j.core;
 
-import java.io.File;
-
 /**
  * @author Andrey Chaschev chaschev@gmail.com
  */
-public abstract class Script {
-    public File scriptsDir;
+public class DependencyException extends RuntimeException {
+    public DependencyException() {
+    }
 
-    public GlobalContext global;
-    public Cap cap;
-
-    public abstract void run() throws Exception;
-
-    public Script setProperties(GlobalContext global, File scriptsDir) {
-        this.global = global;
-        this.scriptsDir = scriptsDir;
-        cap = global.cap;
-        return this;
+    public DependencyException(String message) {
+        super(message);
     }
 }

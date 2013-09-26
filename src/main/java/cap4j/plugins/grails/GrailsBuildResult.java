@@ -17,15 +17,17 @@
 package cap4j.plugins.grails;
 
 import cap4j.session.Result;
+import cap4j.task.TaskResult;
 
 /**
  * @author Andrey Chaschev chaschev@gmail.com
  */
-public class GrailsBuildResult {
+public class GrailsBuildResult extends TaskResult{
     public Result result;
     public String path;
 
     public GrailsBuildResult(Result result, String path) {
+        super(result);
         this.result = result;
         this.path = path;
     }

@@ -2,3 +2,8 @@
 some my fail for a positive scenario.
 
 So instead of validating each command, result validation (i.e. checkout output or disk contents) is being proposed.
+
+
+Plugin
+ - setup task: checks installation dependency,
+ -

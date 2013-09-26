@@ -14,29 +14,27 @@
  * limitations under the License.
  */
 
-package cap4j.session;
+package cap4j.task;
+
+import cap4j.core.Dependency;
+import cap4j.core.SessionContext;
 
 /**
- * @author Andrey Chaschev chaschev@gmail.com
- */
-public enum Result {
-    OK, CONNECTION_ERROR, TIMEOUT, ERROR;
+* @author Andrey Chaschev chaschev@gmail.com
+*/
+public abstract class InstallationTask<T extends TaskResult> extends Task<T>{
+    public abstract Dependency installedDependency();
 
-    public static Result and(Result... results) {
-        for (Result result : results) {
-            if (result != OK) {
-                return result;
-            }
-        }
-
-        return OK;
+    public InstallationTask() {
     }
 
-    public boolean ok() {
-        return this == OK;
+    public InstallationTask(String name) {
+        super(name);
     }
 
-    public boolean nok() {
-        return this != OK;
+    @Override
+    public InstallationTask<T> setCtx(SessionContext $) {
+        super.setCtx($);
+        return this;
     }
 }

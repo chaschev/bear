@@ -34,4 +34,11 @@ public class TaskResult {
     public TaskResult(Result result) {
         this.result = result;
     }
+
+    public TaskResult(Result result, CommandLineResult cliResult) {
+        this.result = result;
+        this.cliResult = cliResult;
+    }
+
+    public static final TaskResult OK = new TaskResult(Result.OK);
 }

@@ -72,20 +72,19 @@ public class Stage {
                     environment.ctx().system.connect();
 
                     if (environment.ctx().var(environment.cap.verifyPlugins)) {
-                        int count = 0;
+                        DependencyResult r  = new DependencyResult(Result.OK);
+
                         for (Plugin plugin : global.getPlugins()) {
-                            try {
-                                plugin.getSetup()
-                                    .setCtx(environment.$)
-                                    .verifyExecution(true);
-                            } catch (Exception e) {
-                                count++;
-                                logger.error("error verifying plugin {} installation: {}", plugin, e.toString());
-                            }
+                            r.join(plugin.checkPluginDependencies());
+
+                            r.join(plugin.getSetup()
+                                .setCtx(environment.$)
+                                .installedDependency()
+                                .checkDeps());
                         }
 
-                        if (count > 0) {
-                            throw new RuntimeException("there were " + count + " errors during plugin verification");
+                        if (r.result.nok()) {
+                            throw new DependencyException(r.toString());
                         }
                     }
 

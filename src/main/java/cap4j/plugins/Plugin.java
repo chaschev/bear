@@ -17,9 +17,10 @@
 package cap4j.plugins;
 
 import cap4j.core.Cap;
+import cap4j.core.DependencyResult;
 import cap4j.core.GlobalContext;
 import cap4j.session.DynamicVariable;
-import cap4j.task.Task;
+import cap4j.task.InstallationTask;
 import com.chaschev.chutils.util.OpenBean2;
 import com.google.common.base.Preconditions;
 
@@ -63,7 +64,11 @@ public abstract class Plugin {
 
     }
 
-    public abstract Task getSetup();
+    public abstract InstallationTask getSetup();
+
+    public DependencyResult checkPluginDependencies(){
+        return DependencyResult.OK;
+    }
 
     @Override
     public String toString() {

@@ -72,7 +72,7 @@ public class Tasks {
 
             if ($.var(cap.verifyPlugins)) {
                 for (Plugin plugin : global.getPlugins()) {
-                    if (!plugin.getSetup().verifyExecution(false)) {
+                    if (plugin.getSetup().installedDependency().checkDeps().result.nok()) {
                         if ($(cap.autoSetupPlugins)) {
                             $.log("plugin %s was not installed. installing it...", plugin);
                             runner.run(plugin.getSetup());
@@ -83,7 +83,7 @@ public class Tasks {
                 }
             }
 
-            return new TaskResult(Result.OK);
+            return TaskResult.OK;
         }
     }.setSetupTask(true);
 
@@ -120,7 +120,7 @@ public class Tasks {
             system.chmod("g+w", true, var(cap.getLatestReleasePath));
 
             //new SimpleDateFormat("yyyyMMdd.HHmm.ss")
-            return new TaskResult(Result.OK);
+            return TaskResult.OK;
         }
     };
 

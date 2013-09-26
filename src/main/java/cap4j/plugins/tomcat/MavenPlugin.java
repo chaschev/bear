@@ -21,7 +21,7 @@ import cap4j.core.VarFun;
 import cap4j.plugins.ZippedToolPlugin;
 import cap4j.scm.CommandLineResult;
 import cap4j.session.SystemEnvironment;
-import cap4j.task.Task;
+import cap4j.task.InstallationTask;
 import cap4j.task.TaskResult;
 import cap4j.task.TaskRunner;
 import org.apache.commons.lang3.StringUtils;
@@ -30,7 +30,6 @@ import org.apache.commons.lang3.StringUtils;
  * @author Andrey Chaschev chaschev@gmail.com
  */
 public class MavenPlugin extends ZippedToolPlugin {
-
     public MavenPlugin(GlobalContext global) {
         super(global);
 
@@ -57,7 +56,7 @@ public class MavenPlugin extends ZippedToolPlugin {
 
     }
 
-    public final Task setup = new ZippedToolTask("setup maven") {
+    public final InstallationTask setup = new ZippedToolTask("setup maven") {
         @Override
         protected TaskResult run(TaskRunner runner) {
             clean();
@@ -72,7 +71,7 @@ public class MavenPlugin extends ZippedToolPlugin {
                 SystemEnvironment.passwordCallback($.var(cap.sshPassword))
             );
 
-            verifyExecution();
+            checkDependencies();
 
             return new TaskResult(r);
         }
@@ -92,7 +91,7 @@ public class MavenPlugin extends ZippedToolPlugin {
 
 
     @Override
-    public Task getSetup() {
+    public InstallationTask getSetup() {
         return setup;
     }
 }

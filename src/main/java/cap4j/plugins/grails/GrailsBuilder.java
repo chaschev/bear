@@ -16,23 +16,24 @@
 
 package cap4j.plugins.grails;
 
+import cap4j.cli.CommandLine;
 import cap4j.cli.Script;
 import cap4j.core.Cap;
 import cap4j.core.GlobalContext;
 import cap4j.core.SessionContext;
 import cap4j.plugins.java.JavaPlugin;
-import cap4j.cli.CommandLine;
 import cap4j.scm.CommandLineResult;
+import cap4j.task.Task;
+import cap4j.task.TaskResult;
+import cap4j.task.TaskRunner;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
  * @author Andrey Chaschev chaschev@gmail.com
  */
-public class GrailsBuilder {
+public class GrailsBuilder extends Task<TaskResult> {
     private static final Logger logger = LoggerFactory.getLogger(GrailsBuilder.class);
-
-    SessionContext $;
 
     GrailsPlugin grails;
     JavaPlugin java;
@@ -45,39 +46,40 @@ public class GrailsBuilder {
         cap = global.cap;
     }
 
-    public GrailsBuildResult build() {
-        logger.info("building Grails WAR...");
+    @Override
+    protected TaskResult run(TaskRunner runner) {
+        $.log("building Grails WAR, rev: %s...", $(cap.realRevision));
 
-        System.out.println($.var(cap.realRevision));
+        final String grailsExecPath = $(grails.grailsExecPath);
 
-        final String grailsExecPath = $.var(grails.grailsExecPath);
-
-        String projectPath = $.var(grails.projectPath);
+        String projectPath = $(grails.projectPath);
 
         final Script script = new Script($.system)
             .cd(projectPath);
 
-        if ($.varB(grails.clean)) {
+        if ($(grails.clean)) {
             script
                 .add(newGrailsCommand(grailsExecPath).a("clean"));
         }
 
-        final String warName = $.var(grails.releaseWarPath);
+        final String warName = $(grails.releaseWarPath);
 
         script.add(
             newGrailsCommand(grailsExecPath).a(
                 "war",
                 warName));
 
-        final CommandLineResult clResult = $.system.run(script);
+        final CommandLineResult clResult = script.run();
 
         return new GrailsBuildResult(clResult.result, $.joinPath(projectPath, warName));
     }
 
     private CommandLine newGrailsCommand(String grailsExecPath) {
-        return $.newCommandLine()
+        return $.system.line()
             .setVar("JAVA_HOME", $.var(java.homePath))
             .a(grailsExecPath)
             .timeoutMs(600000);
     }
+
+
 }

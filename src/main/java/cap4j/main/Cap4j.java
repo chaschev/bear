@@ -17,6 +17,7 @@
 package cap4j.main;
 
 import cap4j.core.*;
+import cap4j.exec.Script;
 import cap4j.session.Question;
 import com.chaschev.chutils.util.Exceptions;
 import com.chaschev.chutils.util.JOptOptions;

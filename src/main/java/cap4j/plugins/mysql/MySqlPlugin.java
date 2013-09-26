@@ -190,7 +190,7 @@ public class MySqlPlugin extends Plugin {
                 .redirectTo($.var(dumpPath))
                 , mysqlPasswordCallback($.var(password)));
 
-            return new TaskResult(Result.OK);
+            return TaskResult.OK;
         }
     };
 
@@ -201,7 +201,7 @@ public class MySqlPlugin extends Plugin {
 
             system.download($.var(dumpPath));
 
-            return new TaskResult(Result.OK);
+            return TaskResult.OK;
         }
     };
 

@@ -17,15 +17,16 @@
 package cap4j.plugins.tomcat;
 
 import cap4j.cli.Script;
+import cap4j.core.Dependency;
 import cap4j.core.GlobalContext;
 import cap4j.core.VarFun;
 import cap4j.plugins.Plugin;
 import cap4j.plugins.java.JavaPlugin;
 import cap4j.scm.CommandLineResult;
 import cap4j.session.DynamicVariable;
-import cap4j.session.Result;
 import cap4j.session.SystemEnvironment;
 import cap4j.session.Variables;
+import cap4j.task.InstallationTask;
 import cap4j.task.Task;
 import cap4j.task.TaskResult;
 import cap4j.task.TaskRunner;
@@ -100,12 +101,12 @@ public class TomcatPlugin extends Plugin {
                     .timeoutMin(2)
                 );
 
-                return new TaskResult(Result.OK);
+                return TaskResult.OK;
             }
         });
     }
 
-    public final Task setup = new Task() {
+    public final Task setup = new InstallationTask() {
         @Override
         protected TaskResult run(TaskRunner runner) {
             system.rm($.var(buildPath));
@@ -152,7 +153,13 @@ public class TomcatPlugin extends Plugin {
 
             return new TaskResult(r);
         }
+
+        @Override
+        public Dependency installedDependency() {
+            throw new UnsupportedOperationException("todo .installedDependency");
+        }
     };
+
 
 
     public final DynamicVariable<String[]> warCacheDirs = Variables.dynamic(new VarFun<String[]>() {

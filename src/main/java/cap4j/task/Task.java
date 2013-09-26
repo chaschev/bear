@@ -16,11 +16,8 @@
 
 package cap4j.task;
 
-import cap4j.core.Console;
-import cap4j.core.Role;
-import cap4j.core.SessionContext;
+import cap4j.core.*;
 import cap4j.session.DynamicVariable;
-import cap4j.session.Result;
 import cap4j.session.SystemEnvironment;
 import com.google.common.collect.Sets;
 
@@ -30,6 +27,7 @@ import java.util.*;
  * @author Andrey Chaschev chaschev@gmail.com
  */
 public abstract class Task<T extends TaskResult> {
+
     String name;
     String description;
 
@@ -56,8 +54,7 @@ public abstract class Task<T extends TaskResult> {
         return !Sets.intersection(this.roles, roles).isEmpty();
     }
 
-    public Task setDependsOnTasks(Task... tasks) {
-        dependsOnTasks.clear();
+    public Task depends(Task... tasks) {
         Collections.addAll((List) dependsOnTasks, tasks);
 
         return this;
@@ -68,7 +65,7 @@ public abstract class Task<T extends TaskResult> {
     }
 
     protected TaskResult run(TaskRunner runner) {
-        return new TaskResult(Result.OK);
+        return TaskResult.OK;
     }
 
     public <T> T var(DynamicVariable<T> varName) {
@@ -105,16 +102,16 @@ public abstract class Task<T extends TaskResult> {
         return this;
     }
 
-    public final boolean verifyExecution() {
-        return verifyExecution(true);
+    public final DependencyResult checkDependencies() {
+        return checkDependencies(true);
     }
 
-    public final boolean verifyExecution(boolean throwException) {
-        return verify(throwException);
+    public final DependencyResult checkDependencies(boolean throwException) {
+        return checkDeps(throwException);
     }
 
-    protected boolean verify(boolean throwException) {
-        return true;
+    protected DependencyResult checkDeps(boolean throwException) {
+        return DependencyResult.OK;
     }
 
     public boolean isSetupTask() {
@@ -137,4 +134,6 @@ public abstract class Task<T extends TaskResult> {
     public static Task nop() {
         return NOP_TASK;
     }
+
+
 }

@@ -98,7 +98,7 @@ public class JavaPlugin extends Plugin {
                 SystemEnvironment.passwordCallback($.var(cap.sshPassword))
             );
 
-            return new TaskResult(Result.OK);
+            return TaskResult.OK;
         }
     };
 

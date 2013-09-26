@@ -14,11 +14,28 @@
  * limitations under the License.
  */
 
-package cap4j.core;
+package cap4j.exec;
+
+import cap4j.core.Cap;
+import cap4j.core.GlobalContext;
+
+import java.io.File;
 
 /**
  * @author Andrey Chaschev chaschev@gmail.com
  */
-public class ScriptConstants {
-    Cap aClass;
+public abstract class Script {
+    public File scriptsDir;
+
+    public GlobalContext global;
+    public Cap cap;
+
+    public abstract void run() throws Exception;
+
+    public Script setProperties(GlobalContext global, File scriptsDir) {
+        this.global = global;
+        this.scriptsDir = scriptsDir;
+        cap = global.cap;
+        return this;
+    }
 }

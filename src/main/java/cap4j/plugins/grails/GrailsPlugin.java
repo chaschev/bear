@@ -42,7 +42,7 @@ import static cap4j.session.Variables.*;
 */
 
 /**
- * todo: change to zip tool
+ * todo: change to zipped tool
  */
 public class GrailsPlugin extends Plugin {
     public final DynamicVariable<String>
