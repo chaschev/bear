@@ -32,8 +32,6 @@ import java.util.Map;
  * @author Andrey Chaschev chaschev@gmail.com
  */
 public abstract class VcsCLI extends SessionPlugin {
-    protected GlobalContext global;
-
     public static boolean sessionPlugin = true;
 
     protected VcsCLI(GlobalContext global) {

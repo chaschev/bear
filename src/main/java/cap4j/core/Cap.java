@@ -142,7 +142,7 @@ public class Cap {
         public String apply() {
             final Releases r = $.var(getReleases);
 
-            if (r.releases.size() < 2) return null;
+            if (r.releases.size() < 1) return null;
 
             return $.system.joinPath($.var(releasesPath), r.previous());
         }
@@ -171,8 +171,8 @@ public class Cap {
         productionDeployment = bool("").defaultTo(true),
         clean = eql("clean", productionDeployment),
         speedUpBuild = and(not("", productionDeployment), not("", clean)),
-        scmAuthCache = dynamicNotSet("scmAuthCache", ""),
-        scmPreferPrompt = dynamicNotSet("scmPreferPrompt", ""),
+        vcsAuthCache = dynamic(""),
+        vcsPreferPrompt = dynamic(""),
         isRemoteEnv = dynamic(new VarFun<Boolean>() {
             public Boolean apply() {
                 return $.system.isRemote();

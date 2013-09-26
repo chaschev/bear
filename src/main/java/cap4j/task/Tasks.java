@@ -132,7 +132,11 @@ public class Tasks {
 
         @Override
         protected void onRollback() {
-            system.link(var(cap.getPreviousReleasePath), var(cap.currentPath));
+            final String var = var(cap.getPreviousReleasePath);
+
+            if(var != null){
+                system.link(var, var(cap.currentPath));
+            }
         }
     };
 }

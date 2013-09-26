@@ -212,7 +212,7 @@ public abstract class SystemEnvironment {
         Result r = Result.OK;
 
         for (CommandLine line : script.lines) {
-            if (script.cd != null) {
+            if (script.cd != null && line.cd != null) {
                 line.cd = script.cd;
             }
 

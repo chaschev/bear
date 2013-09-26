@@ -55,7 +55,7 @@ public class TransactionTask extends Task {
         if (result != Result.OK) {
             //let's keep it simple
             for (Task<TaskResult> task : tasks) {
-                task.onRollback();
+                runner.runRollback(task);
             }
         }
 

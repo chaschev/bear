@@ -146,4 +146,8 @@ public class TaskRunner {
         return runResult;
     }
 
+    public void runRollback(Task<TaskResult> task) {
+        task.setCtx($);
+        task.onRollback();
+    }
 }

@@ -45,6 +45,7 @@ import javax.annotation.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
@@ -76,6 +77,12 @@ public class GenericUnixRemoteEnvironment extends SystemEnvironment {
         final CommandLineResult r = run(newCommandLine().a("ls", "-w", "1", path));
 
         final String[] lines = r.text.split("[\r\n]+");
+
+        if(lines.length == 1 &&
+            (lines[0].contains("ls: cannot access") ||
+                lines[0].contains("such file or directory"))){
+            return Collections.emptyList();
+        }
 
         return Lists.newArrayList(lines);
     }

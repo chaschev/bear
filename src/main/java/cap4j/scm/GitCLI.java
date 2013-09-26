@@ -251,7 +251,7 @@ public class GitCLI extends VcsCLI {
     }
 
     private static boolean validRevision(String revision) {
-        return revision.matches("^[0-9a-f]{40}$");
+        return revision != null && revision.matches("^[0-9a-f]{40}$");
     }
 
     @Override
@@ -307,37 +307,11 @@ public class GitCLI extends VcsCLI {
     private CommandLine commandPrefix(String cmd, Map<String, String> params) {
         return $.newCommandLine()
             .stty()
-            .a(command(), cmd).p(params)
-            .a(auth());
+            .a(command(), cmd).p(params);
     }
 
     private String scmRepository() {
         return $(cap.vcsBranchURI);
-    }
-
-    protected String[] auth() {
-        final String user = global.var(cap.vcsUsername, null);
-        final String pw = global.var(cap.vcsPassword, null);
-        final boolean preferPrompt = global.var(cap.scmPreferPrompt, false);
-        final boolean authCache = global.var(cap.scmAuthCache, false);
-
-        List<String> r = new ArrayList<String>(4);
-
-        if (user == null) return r.toArray(new String[0]);
-
-        r.add("--username");
-        r.add(user);
-
-        if (!preferPrompt && !authCache) {
-            r.add("--password");
-            r.add(pw);
-        }
-
-        if (authCache) {
-            r.add("--no-auth-cache");
-        }
-
-        return r.toArray(new String[r.size()]);
     }
 
     @Override

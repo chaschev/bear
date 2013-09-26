@@ -150,8 +150,8 @@ public class SvnCLI extends VcsCLI {
     protected String[] auth() {
         final String user = global.var(cap.vcsUsername, null);
         final String pw = global.var(cap.vcsPassword, null);
-        final boolean preferPrompt = global.var(cap.scmPreferPrompt, false);
-        final boolean authCache = global.var(cap.scmAuthCache, false);
+        final boolean preferPrompt = global.var(cap.vcsPreferPrompt, false);
+        final boolean authCache = global.var(cap.vcsAuthCache, false);
 
         List<String> r = new ArrayList<String>(4);
 

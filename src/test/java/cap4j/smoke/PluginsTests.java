@@ -80,6 +80,8 @@ public class PluginsTests {
             java = global.getPlugin(JavaPlugin.class);
             cap = global.cap;
 
+            tomcat.warName.setEqualTo(grails.warName);
+
             cap.stages.defaultTo(
                 new Stages()
                     .add(new Stage("vm02", global)
