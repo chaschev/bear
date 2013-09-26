@@ -26,7 +26,6 @@ import cap4j.session.Variables;
 import cap4j.task.InstallationTask;
 import com.google.common.base.Function;
 import net.schmizz.sshj.common.IOUtils;
-import net.schmizz.sshj.connection.channel.direct.Session;
 import org.apache.commons.lang3.StringUtils;
 
 import java.io.IOException;
@@ -44,7 +43,7 @@ import static java.util.Collections.addAll;
 /**
  * @author Andrey Chaschev chaschev@gmail.com
  */
-public class GitCLI extends VcsCLI {
+public class GitCLI extends VcsCLI<GitCLI> {
     public final DynamicVariable<Integer> cloneDepth = newVar(-1);
     public final DynamicVariable<Boolean>
         enableSubmodules = newVar(false),
@@ -57,8 +56,13 @@ public class GitCLI extends VcsCLI {
         remote = Variables.<String>dynamic("remote user").setEqualTo(cap.vcsUsername);
     }
 
-    public class GitCLIContext extends VcsCLIContext<GitCLI> {
-        public GitCLIContext(SessionContext $) {
+    @Override
+    public GitCLISession newSession(SessionContext $) {
+        return new GitCLISession($);
+    }
+
+    public class GitCLISession extends Session<GitCLI> {
+        public GitCLISession(SessionContext $) {
             super($);
         }
 
@@ -223,7 +227,7 @@ public class GitCLI extends VcsCLI {
 
             return new GenericUnixRemoteEnvironment.SshSession.WithSession(null, null) {
                 @Override
-                public void act(Session session, Session.Shell shell) throws Exception {
+                public void act(net.schmizz.sshj.connection.channel.direct.Session session, net.schmizz.sshj.connection.channel.direct.Session.Shell shell) throws Exception {
                     if (text.matches(".*\\bpassword.*:.*")) {
                         answer(session, password);
                     } else if (text.contains("(yes/no)")) {
@@ -312,7 +316,7 @@ public class GitCLI extends VcsCLI {
         return InstallationTask.nop();
     }
 
-    public static void answer(Session session, String what) throws IOException {
+    public static void answer(net.schmizz.sshj.connection.channel.direct.Session session, String what) throws IOException {
         final OutputStream os = session.getOutputStream();
         os.write((what + "\n").getBytes(IOUtils.UTF8));
         os.flush();

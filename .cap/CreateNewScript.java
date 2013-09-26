@@ -90,7 +90,7 @@ public class CreateNewScript extends Script {
     }
 
     private static List<String> remoteVcsLs(Cap cap, SystemEnvironment remoteEnv, SessionContext $, final String dir) {
-        final VcsCLI vcsCLI = $.var(cap.vcs);
+        final VcsCLI.Session vcsCLI = $.var(cap.vcs);
 
         final CommandLine<SvnCLI.LsResult> line = vcsCLI.ls($.joinPath(cap.repositoryURI, dir));
 

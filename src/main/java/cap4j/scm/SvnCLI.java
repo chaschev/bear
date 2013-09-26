@@ -20,6 +20,7 @@ import cap4j.cli.CommandLine;
 import cap4j.cli.Script;
 import cap4j.core.GlobalContext;
 import cap4j.core.SessionContext;
+import cap4j.plugins.PluginSessionContext;
 import cap4j.task.InstallationTask;
 import com.google.common.base.Function;
 import com.google.common.collect.Lists;
@@ -33,13 +34,18 @@ import java.util.Map;
 /**
  * @author Andrey Chaschev chaschev@gmail.com
  */
-public class SvnCLI extends VcsCLI {
+public class SvnCLI extends VcsCLI<SvnCLI> {
     public SvnCLI(GlobalContext global) {
         super(global);
     }
 
-    public class SvnCLIContext extends VcsCLIContext<GitCLI> {
-        public SvnCLIContext(SessionContext $) {
+    @Override
+    public PluginSessionContext<SvnCLI> newSession(SessionContext $) {
+        return new SvnCLISession($);
+    }
+
+    public class SvnCLISession extends Session<SvnCLI> {
+        public SvnCLISession(SessionContext $) {
             super($);
         }
 

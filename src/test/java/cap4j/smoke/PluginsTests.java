@@ -106,7 +106,7 @@ public class PluginsTests {
                             StopWatch sw = new StopWatch();
                             sw.start();
 
-                            final VcsCLI vcsCLI = $.var(cap.vcs);
+                            final VcsCLI.Session vcsCLI = $.var(cap.vcs);
 
                             final String destPath = $.var(cap.vcsBranchLocalPath);
 
@@ -159,6 +159,7 @@ public class PluginsTests {
         @Override
         public void run() throws Exception {
             cap.stage.defaultTo("vm02");
+            cap.autoInstallPlugins.defaultTo(true);
             cap.task.defaultTo("setup");
 
             global.run();

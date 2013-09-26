@@ -72,7 +72,7 @@ public class Tasks {
 
             if ($.var(cap.verifyPlugins)) {
                 for (Plugin plugin : global.getGlobalPlugins()) {
-                    if (plugin.getSetup().setCtx(global.localCtx).installedDependency().checkDeps().result.nok()) {
+                    if (plugin.getSetup().setCtx($).installedDependency().checkDeps().result.nok()) {
                         if ($(cap.autoInstallPlugins)) {
                             $.log("plugin %s was not installed. installing it...", plugin);
                             runner.run(plugin.getSetup());

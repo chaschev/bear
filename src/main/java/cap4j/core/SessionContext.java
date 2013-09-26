@@ -95,6 +95,6 @@ public class SessionContext {
             s += "\n";
         }
 
-        System.out.printf("[WARN]: + " + s, params);
+        System.out.printf("[WARN]: " + s, params);
     }
 }

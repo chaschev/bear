@@ -90,7 +90,7 @@ public class CapSettings extends ICapSettings {
                         StopWatch sw = new StopWatch();
                         sw.start();
 
-                        final VcsCLI vcsCLI = $.var(cap.vcs);
+                        final VcsCLI.Session vcsCLI = $.var(cap.vcs);
 
                         final String destPath = $.var(cap.vcsBranchLocalPath);
 

@@ -103,7 +103,7 @@ public class Cap {
 
     realRevision = strVar("Update revision from vcs").setDynamic(new VarFun<String>() {
         public String apply() {
-            final VcsCLI vcsCLI = $.var(vcs);
+            final VcsCLI.Session vcsCLI = $.var(vcs);
             final cap4j.cli.Script<BranchInfoResult> line =
                 vcsCLI.queryRevision($.var(revision), Collections.<String, String>emptyMap())
                 .timeoutMs(20000);
@@ -218,8 +218,8 @@ public class Cap {
         }
     });
 
-    public final DynamicVariable<VcsCLI> vcs = new DynamicVariable<VcsCLI>("vcs", "VCS adapter").setDynamic(new VarFun<VcsCLI>() {
-        public VcsCLI apply() {
+    public final DynamicVariable<VcsCLI.Session> vcs = new DynamicVariable<VcsCLI.Session>("vcs", "VCS adapter").setDynamic(new VarFun<VcsCLI.Session>() {
+        public VcsCLI.Session apply() {
             Class<? extends VcsCLI> vcsCLI = null;
 
             for (Class<? extends Plugin> aClass : global.getPluginClasses()) {
@@ -230,7 +230,8 @@ public class Cap {
 
             Preconditions.checkNotNull(vcsCLI, "add a VCS plugin!");
 
-            return global.getPlugin(vcsCLI, $);
+            final VcsCLI.Session pluginSessionContext = (VcsCLI.Session) global.newPluginSession(vcsCLI, $);
+            return pluginSessionContext;
         }
     });
 

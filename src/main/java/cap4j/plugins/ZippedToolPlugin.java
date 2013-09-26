@@ -64,6 +64,8 @@ public abstract class ZippedToolPlugin extends Plugin{
         buildPath = concat(myDirPath, "/build");
     }
 
+
+
     protected abstract class ZippedToolTask extends InstallationTask<TaskResult> {
         protected ZippedToolTask(String name) {
             super();
@@ -78,7 +80,8 @@ public abstract class ZippedToolPlugin extends Plugin{
             if(!system.exists(system.joinPath($(myDirPath), $(distrFilename)))){
                 system.script()
                     .cd($(myDirPath))
-                    .line().timeoutMin(60).addRaw("wget %s", $(distrWwwAddress)).build();
+                    .line().timeoutMin(60).addRaw("wget %s", $(distrWwwAddress)).build()
+                .run();
             }
         }
 

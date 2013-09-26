@@ -30,8 +30,6 @@ import cap4j.task.TaskResult;
 import cap4j.task.TaskRunner;
 import org.apache.commons.lang3.StringUtils;
 
-import java.text.MessageFormat;
-
 import static cap4j.session.Variables.*;
 
 /**
@@ -77,16 +75,15 @@ public class GrailsPlugin extends ZippedToolPlugin {
         super(global);
 
         toolname.defaultTo("grails", true);
-//        distrFilename.setDynamic(new VarFun<String>() {
-//            @Override
-//            public String apply() {
-//                return concat(versionName, ".zip");
-//            }
-//        });
-
+        distrFilename.setDynamic(new VarFun<String>() {
+            @Override
+            public String apply() {
+                return concat(versionName, ".zip");
+            }
+        });
         distrWwwAddress.setDynamic(new VarFun<String>() {
             public String apply() {
-                return MessageFormat.format("http://dist.springframework.org.s3.amazonaws.com/release/GRAILS/%s", $.var(distrFilename));
+                return String.format("http://dist.springframework.org.s3.amazonaws.com/release/GRAILS/%s", $.var(distrFilename));
             }
         });
     }

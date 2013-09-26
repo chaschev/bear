@@ -21,7 +21,7 @@ import cap4j.cli.Script;
 import cap4j.core.GlobalContext;
 import cap4j.core.SessionContext;
 import cap4j.plugins.Plugin;
-import cap4j.plugins.SessionPluginContext;
+import cap4j.plugins.PluginSessionContext;
 import cap4j.session.DynamicVariable;
 import cap4j.session.GenericUnixRemoteEnvironment;
 import cap4j.session.SystemEnvironment;
@@ -33,7 +33,7 @@ import java.util.Map;
 /**
  * @author Andrey Chaschev chaschev@gmail.com
  */
-public abstract class VcsCLI extends Plugin {
+public abstract class VcsCLI<T extends VcsCLI> extends Plugin<T> {
 
     protected VcsCLI(GlobalContext global) {
         super(global);
@@ -56,8 +56,8 @@ public abstract class VcsCLI extends Plugin {
         return Collections.emptyMap();
     }
 
-    public abstract class VcsCLIContext<T extends VcsCLI> extends SessionPluginContext<T>{
-        public VcsCLIContext(SessionContext $) {
+    public abstract class Session<T extends VcsCLI> extends PluginSessionContext<T> {
+        public Session(SessionContext $) {
             super($);
         }
 
