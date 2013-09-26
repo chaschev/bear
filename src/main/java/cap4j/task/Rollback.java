@@ -35,8 +35,8 @@ public class Rollback extends Plugin {
     }
 
     @Override
-    public Task getSetup() {
-        return null;
+    public InstallationTask getSetup() {
+        return InstallationTask.nop();
     }
 
     public final Task<TaskResult> pointToPreviousRelease = new Task<TaskResult>() {

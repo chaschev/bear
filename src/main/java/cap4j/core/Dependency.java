@@ -23,6 +23,8 @@ public class Dependency extends Task<DependencyResult>{
         public abstract String message();
     }
 
+    public static final Dependency NONE = new Dependency("NONE");
+
     public class Directory extends Check{
         String path;
         boolean checkWritable;
@@ -50,6 +52,10 @@ public class Dependency extends Task<DependencyResult>{
 
     public Dependency(String name) {
         super(name);
+    }
+
+    public Dependency(String name, SessionContext $) {
+        super(name, $);
     }
 
     public class File extends Check{

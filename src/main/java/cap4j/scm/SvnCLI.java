@@ -19,7 +19,7 @@ package cap4j.scm;
 import cap4j.cli.CommandLine;
 import cap4j.cli.Script;
 import cap4j.core.GlobalContext;
-import cap4j.task.Task;
+import cap4j.task.InstallationTask;
 import com.google.common.base.Function;
 import com.google.common.collect.Lists;
 import org.apache.commons.lang3.StringUtils;
@@ -173,7 +173,7 @@ public class SvnCLI extends VcsCLI {
     }
 
     @Override
-    public Task getSetup() {
-        return Task.nop();
+    public InstallationTask getSetup() {
+        return InstallationTask.nop();
     }
 }

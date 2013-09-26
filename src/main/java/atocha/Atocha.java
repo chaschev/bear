@@ -20,7 +20,7 @@ import cap4j.core.GlobalContext;
 import cap4j.plugins.Plugin;
 import cap4j.session.DynamicVariable;
 import cap4j.session.Variables;
-import cap4j.task.Task;
+import cap4j.task.InstallationTask;
 
 /**
  * @author Andrey Chaschev chaschev@gmail.com
@@ -35,7 +35,7 @@ public class Atocha extends Plugin {
     }
 
     @Override
-    public Task getSetup() {
-        return null;
+    public InstallationTask getSetup() {
+        return InstallationTask.nop();
     }
 }

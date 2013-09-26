@@ -59,7 +59,7 @@ public abstract class ZippedToolPlugin extends Plugin{
         myDirPath,
         buildPath,
 
-        distrWwwAddress = Variables.dynamicNotSet("distribution download address");
+        distrWwwAddress = dynamic("distribution download address");
 
     public ZippedToolPlugin(GlobalContext global) {
         super(global);
@@ -140,7 +140,7 @@ public abstract class ZippedToolPlugin extends Plugin{
 
         @Override
         public Dependency installedDependency() {
-            final Dependency dep = new Dependency($(toolDistrName));
+            final Dependency dep = new Dependency($(toolDistrName), $);
 
             dep.add(dep.new Command(
                 system.line().setVar("JAVA_HOME", $(global.getPlugin(JavaPlugin.class).homePath)).addRaw(createVersionCommandLine()),

@@ -37,4 +37,16 @@ public abstract class InstallationTask<T extends TaskResult> extends Task<T>{
         super.setCtx($);
         return this;
     }
+
+    private static final InstallationTask NOP_TASK = new InstallationTask("nop") {
+        @Override
+        public Dependency installedDependency() {
+            return Dependency.NONE;
+        }
+    };
+
+    public static InstallationTask nop() {
+        return NOP_TASK;
+    }
+
 }

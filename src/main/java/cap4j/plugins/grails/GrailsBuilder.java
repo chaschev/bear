@@ -33,7 +33,7 @@ import org.slf4j.LoggerFactory;
  * @author Andrey Chaschev chaschev@gmail.com
  */
 public class GrailsBuilder extends Task<TaskResult> {
-    private static final Logger logger = LoggerFactory.getLogger(GrailsBuilder.class);
+    public static final Logger logger = LoggerFactory.getLogger(GrailsBuilder.class);
 
     GrailsPlugin grails;
     JavaPlugin java;
@@ -47,7 +47,7 @@ public class GrailsBuilder extends Task<TaskResult> {
     }
 
     @Override
-    protected TaskResult run(TaskRunner runner) {
+    public GrailsBuildResult run(TaskRunner runner) {
         $.log("building Grails WAR, rev: %s...", $(cap.realRevision));
 
         final String grailsExecPath = $(grails.grailsExecPath);

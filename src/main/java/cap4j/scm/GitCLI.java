@@ -22,7 +22,7 @@ import cap4j.core.GlobalContext;
 import cap4j.session.DynamicVariable;
 import cap4j.session.GenericUnixRemoteEnvironment;
 import cap4j.session.Variables;
-import cap4j.task.Task;
+import cap4j.task.InstallationTask;
 import com.google.common.base.Function;
 import net.schmizz.sshj.common.IOUtils;
 import net.schmizz.sshj.connection.channel.direct.Session;
@@ -315,7 +315,7 @@ public class GitCLI extends VcsCLI {
     }
 
     @Override
-    public Task getSetup() {
-        return Task.nop();
+    public InstallationTask getSetup() {
+        return InstallationTask.nop();
     }
 }

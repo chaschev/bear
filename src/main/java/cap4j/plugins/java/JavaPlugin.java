@@ -16,20 +16,19 @@
 
 package cap4j.plugins.java;
 
+import cap4j.core.Dependency;
 import cap4j.core.GlobalContext;
 import cap4j.plugins.Plugin;
 import cap4j.session.DynamicVariable;
-import cap4j.session.Result;
 import cap4j.session.SystemEnvironment;
 import cap4j.session.Variables;
-import cap4j.task.Task;
+import cap4j.task.InstallationTask;
 import cap4j.task.TaskResult;
 import cap4j.task.TaskRunner;
 
 import java.io.File;
 
 import static cap4j.session.Variables.newVar;
-import static cap4j.session.Variables.strVar;
 
 /**
  * @author Andrey Chaschev chaschev@gmail.com
@@ -48,7 +47,7 @@ public class JavaPlugin extends Plugin {
         javaDistributionName,
         javaDistributionPath;
 
-    public final Task setup = new Task() {
+    public final InstallationTask setup = new InstallationTask() {
         @Override
         protected TaskResult run(TaskRunner runner) {
             system.rm($.var(javaSharedBuildDirPath));
@@ -100,6 +99,11 @@ public class JavaPlugin extends Plugin {
 
             return TaskResult.OK;
         }
+
+        @Override
+        public Dependency installedDependency() {
+            return Dependency.NONE;
+        }
     };
 
 
@@ -116,7 +120,7 @@ public class JavaPlugin extends Plugin {
 
 
     @Override
-    public Task getSetup() {
+    public InstallationTask getSetup() {
         return setup;
     }
 }

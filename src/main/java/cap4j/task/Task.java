@@ -37,6 +37,8 @@ public abstract class Task<T extends TaskResult> {
 
     protected transient SessionContext $;
 
+    protected SystemEnvironment system;
+
     List<Task<TaskResult>> beforeTasks = new ArrayList<Task<TaskResult>>();
     List<Task<TaskResult>> afterTasks = new ArrayList<Task<TaskResult>>();
     List<Task<TaskResult>> dependsOnTasks = new ArrayList<Task<TaskResult>>();
@@ -48,7 +50,11 @@ public abstract class Task<T extends TaskResult> {
         this.name = name;
     }
 
-    protected SystemEnvironment system;
+    protected Task(String name, SessionContext $) {
+        this.name = name;
+        this.$ = $;
+        this.system = $.system;
+    }
 
     public boolean hasRole(Set<Role> roles) {
         return !Sets.intersection(this.roles, roles).isEmpty();

@@ -74,4 +74,22 @@ public abstract class Plugin {
     public String toString() {
         return name;
     }
+
+    protected DependencyResult require(Class... pluginClasses) {
+        final DependencyResult r = new DependencyResult(this.getClass().getSimpleName());
+
+        for (Class pluginClass : pluginClasses) {
+            require(r, pluginClass);
+        }
+
+        return r.updateResult();
+    }
+
+    protected void require(DependencyResult r, Class<? extends Plugin> pluginClass) {
+        final Plugin plugin = global.getPlugin(pluginClass);
+
+        if(plugin == null){
+            r.add(plugin.getClass().getSimpleName() + " plugin is required");
+        }
+    }
 }

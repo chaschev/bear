@@ -66,7 +66,7 @@ public class TomcatPlugin extends Plugin {
         tomcatAjpPort = Variables.newVar("8009"),
         tomcatHttpPort = Variables.newVar("8080"),
         tomcatHttpsPort = Variables.newVar("8443"),
-        keystrokePassword = Variables.dynamicNotSet(""),
+        keystrokePassword = Variables.dynamic(""),
         catalinaHome = Variables.newVar("/usr/share/tomcat6"),
         catalinaExecutable = Variables.newVar("/usr/sbin/tomcat6"),
 
@@ -106,7 +106,7 @@ public class TomcatPlugin extends Plugin {
         });
     }
 
-    public final Task setup = new InstallationTask() {
+    public final InstallationTask setup = new InstallationTask() {
         @Override
         protected TaskResult run(TaskRunner runner) {
             system.rm($.var(buildPath));
@@ -156,7 +156,7 @@ public class TomcatPlugin extends Plugin {
 
         @Override
         public Dependency installedDependency() {
-            throw new UnsupportedOperationException("todo .installedDependency");
+            return Dependency.NONE;
         }
     };
 
@@ -173,7 +173,7 @@ public class TomcatPlugin extends Plugin {
 
 
     @Override
-    public Task getSetup() {
+    public InstallationTask getSetup() {
         return setup;
     }
 }

@@ -6,7 +6,6 @@ import cap4j.plugins.grails.GrailsBuilder;
 import cap4j.plugins.grails.GrailsPlugin;
 import cap4j.plugins.java.JavaPlugin;
 import cap4j.plugins.tomcat.TomcatPlugin;
-import cap4j.scm.CommandLineResult;
 import cap4j.scm.VcsCLI;
 import cap4j.strategy.BaseStrategy;
 import cap4j.strategy.SymlinkEntry;
@@ -114,32 +113,7 @@ public class CapSettings extends ICapSettings {
                         String warPath = $.var(grails.releaseWarPath);
 
                         if (!$.system.exists(warPath) || !$.var(global.getPlugin(Atocha.class).reuseWar)) {
-                            GrailsBuilder.logger.info("building Grails WAR...");
-
-                            System.out.println(new GrailsBuilder($, global).$(new GrailsBuilder($, global).cap.realRevision));
-
-                            final String grailsExecPath = new GrailsBuilder($, global).$(new GrailsBuilder($, global).grails.grailsExecPath);
-
-                            String projectPath = new GrailsBuilder($, global).$(new GrailsBuilder($, global).grails.projectPath);
-
-                            final cap4j.cli.Script script = new cap4j.cli.Script(new GrailsBuilder($, global).$.system)
-                                .cd(projectPath);
-
-                            if (new GrailsBuilder($, global).$(new GrailsBuilder($, global).grails.clean)) {
-                                script
-                                    .add(new GrailsBuilder($, global).newGrailsCommand(grailsExecPath).a("clean"));
-                            }
-
-                            final String warName = new GrailsBuilder($, global).$(new GrailsBuilder($, global).grails.releaseWarPath);
-
-                            script.add(
-                                new GrailsBuilder($, global).newGrailsCommand(grailsExecPath).a(
-                                    "war",
-                                    warName));
-
-                            final CommandLineResult clResult = script.run();
-
-                            final GrailsBuildResult r = new GrailsBuildResult(clResult.result, new GrailsBuilder($, global).$.joinPath(projectPath, warName));
+                            final GrailsBuildResult r = new GrailsBuilder($, global).run(null);
 
                             if (r.result.nok()) {
                                 throw new IllegalStateException("failed to build WAR");

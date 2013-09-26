@@ -17,12 +17,14 @@
 package cap4j.plugins.mysql;
 
 import cap4j.core.Cap;
+import cap4j.core.Dependency;
 import cap4j.core.GlobalContext;
 import cap4j.core.VarFun;
 import cap4j.plugins.Plugin;
 import cap4j.scm.CommandLineResult;
 import cap4j.scm.GitCLI;
 import cap4j.session.*;
+import cap4j.task.InstallationTask;
 import cap4j.task.Task;
 import cap4j.task.TaskResult;
 import cap4j.task.TaskRunner;
@@ -83,7 +85,7 @@ public class MySqlPlugin extends Plugin {
         super(global);
     }
 
-    public final Task setup = new Task() {
+    public final InstallationTask setup = new InstallationTask() {
         @Override
         protected TaskResult run(TaskRunner runner) {
             final Version version = computeRealClientVersion(system);
@@ -123,6 +125,11 @@ public class MySqlPlugin extends Plugin {
             ).result);
 
             return new TaskResult(r);
+        }
+
+        @Override
+        public Dependency installedDependency() {
+            return Dependency.NONE;
         }
     };
 
@@ -247,7 +254,7 @@ public class MySqlPlugin extends Plugin {
 
 
     @Override
-    public Task getSetup() {
+    public InstallationTask getSetup() {
         return setup;
     }
 }

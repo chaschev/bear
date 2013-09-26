@@ -18,7 +18,6 @@ package cap4j.core;
 
 import cap4j.session.Result;
 import cap4j.task.TaskResult;
-import com.google.common.base.Joiner;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -27,7 +26,13 @@ import java.util.List;
 * @author Andrey Chaschev chaschev@gmail.com
 */
 public class DependencyResult extends TaskResult {
+    String name;
     List<String> messages;
+
+    public DependencyResult(String name) {
+        super(Result.OK);
+        this.name = name;
+    }
 
     public DependencyResult(Result result) {
         super(result);
@@ -35,6 +40,11 @@ public class DependencyResult extends TaskResult {
 
     public void add(String message) {
         initMessages();
+
+        if(name != null){
+            message = "[" + name + "]: ";
+        }
+
         messages.add(message);
     }
 
@@ -45,7 +55,11 @@ public class DependencyResult extends TaskResult {
     @Override
     public String toString() {
         final StringBuilder sb = new StringBuilder(messages.size() * 64);
-        Joiner.on("\n").appendTo(sb, messages);
+
+        for (String message : messages) {
+            sb.append(message).append("\n");
+        }
+
         return sb.append("\n").append(messages.size()).append(" errors found").toString();
     }
 
@@ -55,7 +69,12 @@ public class DependencyResult extends TaskResult {
             messages.addAll(other.messages);
         }
 
-        result = Result.and(result, other.result);
+        updateResult();
+    }
+
+    public DependencyResult updateResult(){
+        result = (messages == null || messages.isEmpty()) ? Result.OK : Result.ERROR;
+        return this;
     }
 
     public static final DependencyResult OK = new DependencyResult(Result.OK);
