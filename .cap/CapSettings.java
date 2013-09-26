@@ -150,7 +150,6 @@ public class CapSettings extends ICapSettings {
                     .putS(cap.applicationName, "atocha")
                     .putB(cap.productionDeployment, false)
                     .putB(cap.speedUpBuild, true)
-                    .putS(cap.vcsType, "svn")
                     .putS(cap.repositoryURI, "svn://vm02/svnrepos/atocha")
                     .putS(cap.appUsername, "tomcat")
                 ;

@@ -53,7 +53,7 @@ public class MavenPlugin extends ZippedToolPlugin {
         });
     }
 
-    public void init() {
+    public void initPlugin() {
 
     }
 

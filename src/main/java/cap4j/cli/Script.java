@@ -65,7 +65,7 @@ public class Script <T extends CommandLineResult>{
     }
 
     public CommandLine line() {
-        final CommandLine line = system.line();
+        final CommandLine line = system.line(this);
 
         lines.add(line);
 

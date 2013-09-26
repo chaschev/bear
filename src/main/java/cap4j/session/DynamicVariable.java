@@ -182,10 +182,10 @@ public class DynamicVariable<T> implements Nameable<T> {
         return dynamicImplementation != null || defaultValue != null;
     }
 
-    public DynamicVariable<T> setEqualTo(final DynamicVariable<T> var) {
+    public DynamicVariable<T> setEqualTo(final DynamicVariable<T> variable) {
         setDynamic(new VarFun<T>() {
             public T apply() {
-                return var.apply($);
+                return variable.apply($);
             }
         });
         return this;

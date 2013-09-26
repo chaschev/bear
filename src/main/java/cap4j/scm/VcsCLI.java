@@ -19,11 +19,11 @@ package cap4j.scm;
 import cap4j.cli.CommandLine;
 import cap4j.cli.Script;
 import cap4j.core.GlobalContext;
-import cap4j.core.SessionContext;
-import cap4j.plugins.Plugin;
+import cap4j.plugins.SessionPlugin;
 import cap4j.session.DynamicVariable;
 import cap4j.session.GenericUnixRemoteEnvironment;
 import cap4j.session.SystemEnvironment;
+import cap4j.session.Variables;
 
 import java.util.Collections;
 import java.util.Map;
@@ -31,8 +31,7 @@ import java.util.Map;
 /**
  * @author Andrey Chaschev chaschev@gmail.com
  */
-public abstract class VcsCLI extends Plugin {
-    protected SessionContext $;
+public abstract class VcsCLI extends SessionPlugin {
     protected GlobalContext global;
 
     public static boolean sessionPlugin = true;
@@ -98,6 +97,19 @@ public abstract class VcsCLI extends Plugin {
 
     public CommandLine<SvnCLI.LsResult> ls(String path) {
         return ls(path, emptyParams());
+    }
+
+    @Override
+    public void initPlugin() {
+        String msg = Variables.checkSet($, this.getClass().getSimpleName(),
+            cap.repositoryURI
+//            cap.vcsBranchName - no, because it's set in the script
+        );
+
+        if(msg != null){
+            $.log("%s", msg);
+            throw new RuntimeException(msg);
+        }
     }
 
     public static class StringResult extends CommandLineResult {

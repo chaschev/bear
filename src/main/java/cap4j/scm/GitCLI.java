@@ -21,6 +21,7 @@ import cap4j.cli.Script;
 import cap4j.core.GlobalContext;
 import cap4j.session.DynamicVariable;
 import cap4j.session.GenericUnixRemoteEnvironment;
+import cap4j.session.Variables;
 import cap4j.task.Task;
 import com.google.common.base.Function;
 import net.schmizz.sshj.common.IOUtils;
@@ -33,7 +34,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import static cap4j.session.Variables.dynamicNotSet;
 import static cap4j.session.Variables.newVar;
 import static com.chaschev.chutils.util.LangUtils.elvis;
 import static com.google.common.collect.Lists.*;
@@ -49,10 +49,11 @@ public class GitCLI extends VcsCLI {
         enableSubmodules = newVar(false),
         submodulesRecursive = newVar(true);
 
-    public final DynamicVariable<String> remote = dynamicNotSet("");
+    public final DynamicVariable<String> remote;
 
     public GitCLI(GlobalContext global) {
         super(global);
+        remote = Variables.<String>dynamic("remote user").setEqualTo(cap.vcsUsername);
     }
 
     @Override
@@ -98,7 +99,7 @@ public class GitCLI extends VcsCLI {
             .line()
             .stty().a(git).a("clone", verbose()).a(args)
             .a($(cap.repositoryURI), destination).build()
-        .line()
+            .line()
             .stty()
             .cd(destination)
             .a(git, "checkout", "-b", "deploy", revision).build();

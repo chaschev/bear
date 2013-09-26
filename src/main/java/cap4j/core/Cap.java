@@ -122,7 +122,7 @@ public class Cap {
 
     vcsCheckoutPath = joinPath("vcsCheckoutPath", sharedPath, "vcs"),
 
-    vcsBranchName = dynamicNotSet(),
+    vcsBranchName = dynamic("Relative path of the branch to use"),
 
     vcsBranchLocalPath = joinPath("vcsBranchLocalPath", vcsCheckoutPath, vcsBranchName),
 

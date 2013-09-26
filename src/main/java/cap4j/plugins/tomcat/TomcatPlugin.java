@@ -87,7 +87,7 @@ public class TomcatPlugin extends Plugin {
         warPath = Variables.joinPath("warPath", webapps, warName);
     }
 
-    public void init() {
+    public void initPlugin() {
         global.tasks.restartApp.addBeforeTask(new Task() {
             @Override
             protected TaskResult run(TaskRunner runner) {

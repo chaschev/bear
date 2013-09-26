@@ -17,6 +17,7 @@
 package cap4j.core;
 
 import cap4j.plugins.Plugin;
+import cap4j.plugins.SessionPlugin;
 import cap4j.session.DynamicVariable;
 import cap4j.session.GenericUnixLocalEnvironment;
 import cap4j.session.SystemEnvironment;
@@ -62,12 +63,12 @@ public class GlobalContext {
                 boolean sessionPlugin = OpenBean2.getClassDesc(aClass).getStaticField("sessionPlugin") != null &&
                     ((Boolean)OpenBean2.getStaticFieldValue(aClass, "sessionPlugin"));
 
-                if(sessionPlugin){
+                if (sessionPlugin) {
+                    pluginMap.put(aClass, null);
+                } else {
                     final Plugin plugin = newPluginInstance(aClass);
 
                     pluginMap.put(aClass, plugin);
-                }else{
-                    pluginMap.put(aClass, null);
                 }
             } catch (Exception e) {
                 throw Exceptions.runtime(e);
@@ -88,21 +89,33 @@ public class GlobalContext {
             return plugin;
         }
 
-        public Plugin get(Class<? extends Plugin> aClass, SessionContext $){
+        public <T extends SessionPlugin> T get(Class<T> aClass, SessionContext $){
             try {
                 Preconditions.checkArgument(pluginMap.get(aClass) == null, "plugin is not session!");
 
-                return newPluginInstance(aClass).set$($);
+                final T t = newPluginInstance(aClass);
+
+                t.set$($);
+
+                return t;
             } catch (Exception e) {
                 throw Exceptions.runtime(e);
             }
         }
 
-        private Plugin newPluginInstance(Class<? extends Plugin> aClass) throws InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException {
-            final Plugin plugin = aClass.getConstructor(GlobalContext.class).newInstance(GlobalContext.this);
+        private <T extends Plugin> T newPluginInstance(Class<T> aClass) throws InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException {
+            final T plugin = aClass.getConstructor(GlobalContext.class).newInstance(GlobalContext.this);
 
             Plugin.nameVars(plugin);
-            plugin.init();
+
+            if (plugin instanceof SessionPlugin) {
+                SessionPlugin ss = (SessionPlugin) plugin;
+                ss.set$(localCtx);  // to access global vars
+                plugin.initPlugin();
+                ss.set$(null);
+            }else{
+                plugin.initPlugin();
+            }
 
             return plugin;
         }
@@ -179,7 +192,7 @@ public class GlobalContext {
         return (T) plugins.get(pluginClass);
     }
 
-    public <T extends Plugin> T getPlugin(Class<T> pluginClass, SessionContext $) {
+    public <T extends SessionPlugin> T getPlugin(Class<T> pluginClass, SessionContext $) {
         return (T) plugins.get(pluginClass, $);
     }
 

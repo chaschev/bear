@@ -22,6 +22,7 @@ import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Iterables;
 import org.apache.commons.lang3.ArrayUtils;
+import org.apache.commons.lang3.StringUtils;
 
 import java.util.Arrays;
 
@@ -160,14 +161,17 @@ public class Variables {
         return sb.toString();
     }
 
+    @Deprecated
     public static <T> DynamicVariable<T> dynamicNotSet() {
         return dynamicNotSet(null, "");
     }
 
+    @Deprecated
     public static <T> DynamicVariable<T> dynamicNotSet(String desc) {
         return dynamicNotSet(null, desc);
     }
 
+    @Deprecated
     public static <T> DynamicVariable<T> dynamicNotSet(final String name, String desc) {
         return dynamic(name, desc, new VarFun<T>() {
             public T apply() {
@@ -226,5 +230,21 @@ public class Variables {
 
     public static DynamicVariable<Boolean> bool(String desc) {
         return new DynamicVariable<Boolean>(desc);
+    }
+
+    public static String checkSet(SessionContext $, final String actor, DynamicVariable... vars){
+        StringBuilder sb = new StringBuilder(256);
+
+        for (DynamicVariable var : vars) {
+            if(!$.isSet(var)){
+                sb.append(" :").append(var.name);
+                if(!StringUtils.isBlank(var.desc)){
+                    sb.append(" - ").append(var.desc);
+                }
+                sb.append("\n");
+            }
+        }
+
+        return sb.length() == 0 ? null : "(" + actor + "): you need to set variables:\n" + sb.toString();
     }
 }

@@ -179,4 +179,8 @@ public abstract class CommandLine<T extends CommandLineResult> {
     public Script build() {
         return script;
     }
+
+    public void setScript(@Nullable Script script) {
+        this.script = script;
+    }
 }

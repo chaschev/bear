@@ -141,6 +141,10 @@ public abstract class SystemEnvironment {
         throw new UnsupportedOperationException("todo");
     }
 
+    public CommandLine line(Script script) {
+        return newCommandLine(script);
+    }
+
     public CommandLine line() {
         return newCommandLine();
     }
@@ -151,6 +155,14 @@ public abstract class SystemEnvironment {
 
     public CommandLine newCommandLine() {
         return newCommandLine(CommandLineResult.class);
+    }
+
+    public CommandLine newCommandLine(Script script) {
+        final CommandLine<CommandLineResult> line = newCommandLine(CommandLineResult.class);
+
+        line.setScript(script);
+
+        return line;
     }
 
     public abstract <T extends CommandLineResult> CommandLine<T> newCommandLine(Class<T> aClass);

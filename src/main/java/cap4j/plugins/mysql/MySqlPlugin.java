@@ -126,7 +126,7 @@ public class MySqlPlugin extends Plugin {
         }
     };
 
-    public void init() {
+    public void initPlugin() {
 
     }
 

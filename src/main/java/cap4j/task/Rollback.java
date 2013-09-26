@@ -30,7 +30,7 @@ public class Rollback extends Plugin {
     }
 
     @Override
-    public void init() {
+    public void initPlugin() {
 
     }
 

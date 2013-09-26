@@ -173,7 +173,8 @@ public class PluginsTests {
         public void run() throws Exception {
             cap.stage.defaultTo("vm02");
             cap.task.defaultTo("deploy");
-            cap.vcsType.defaultTo("git");
+
+            cap.vcsBranchName.defaultTo("master");
 
             global.run();
             global.shutdown();
