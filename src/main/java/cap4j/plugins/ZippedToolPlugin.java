@@ -17,10 +17,7 @@
 package cap4j.plugins;
 
 import cap4j.cli.Script;
-import cap4j.core.Dependency;
-import cap4j.core.DependencyResult;
-import cap4j.core.GlobalContext;
-import cap4j.core.VarFun;
+import cap4j.core.*;
 import cap4j.plugins.java.JavaPlugin;
 import cap4j.session.DynamicVariable;
 import cap4j.session.Variables;

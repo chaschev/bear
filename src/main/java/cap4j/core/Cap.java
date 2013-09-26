@@ -189,7 +189,7 @@ public class Cap {
             }
         }),
         verifyPlugins = newVar(true),
-        autoSetupPlugins = newVar(false),
+        autoInstallPlugins = newVar(false),
         verbose = newVar(false)
     ;
 

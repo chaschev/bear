@@ -17,7 +17,7 @@
 package cap4j.core;
 
 import cap4j.plugins.Plugin;
-import cap4j.plugins.SessionPlugin;
+import cap4j.plugins.SessionPluginContext;
 import cap4j.session.DynamicVariable;
 import cap4j.session.GenericUnixLocalEnvironment;
 import cap4j.session.SystemEnvironment;
@@ -60,15 +60,17 @@ public class GlobalContext {
 
         public void add(Class<? extends Plugin> aClass){
             try {
-                boolean sessionPlugin = OpenBean2.getClassDesc(aClass).getStaticField("sessionPlugin") != null &&
-                    ((Boolean)OpenBean2.getStaticFieldValue(aClass, "sessionPlugin"));
+                boolean globalPlugin = OpenBean2.getClassDesc(aClass).getStaticField("globalPlugin") != null &&
+                    ((Boolean)OpenBean2.getStaticFieldValue(aClass, "globalPlugin"));
 
-                if (sessionPlugin) {
-                    pluginMap.put(aClass, null);
-                } else {
+                if (globalPlugin) {
                     final Plugin plugin = newPluginInstance(aClass);
 
+                    plugin.getSetup().setCtx(localCtx);
+
                     pluginMap.put(aClass, plugin);
+                } else {
+                    pluginMap.put(aClass, null);
                 }
             } catch (Exception e) {
                 throw Exceptions.runtime(e);
@@ -89,7 +91,7 @@ public class GlobalContext {
             return plugin;
         }
 
-        public <T extends SessionPlugin> T get(Class<T> aClass, SessionContext $){
+        public <T extends SessionPluginContext> T get(Class<T> aClass, SessionContext $){
             try {
                 Preconditions.checkArgument(pluginMap.get(aClass) == null, "plugin is not session!");
 
@@ -108,8 +110,8 @@ public class GlobalContext {
 
             Plugin.nameVars(plugin);
 
-            if (plugin instanceof SessionPlugin) {
-                SessionPlugin ss = (SessionPlugin) plugin;
+            if (plugin instanceof SessionPluginContext) {
+                SessionPluginContext ss = (SessionPluginContext) plugin;
                 ss.set$(localCtx);  // to access global vars
                 plugin.initPlugin();
                 ss.set$(null);
@@ -192,7 +194,7 @@ public class GlobalContext {
         return (T) plugins.get(pluginClass);
     }
 
-    public <T extends SessionPlugin> T getPlugin(Class<T> pluginClass, SessionContext $) {
+    public <T extends SessionPluginContext> T getPlugin(Class<T> pluginClass, SessionContext $) {
         return (T) plugins.get(pluginClass, $);
     }
 
@@ -200,7 +202,7 @@ public class GlobalContext {
         return plugins.pluginMap.keySet();
     }
 
-    public Iterable<Plugin> getPlugins() {
+    public Iterable<Plugin> getGlobalPlugins() {
         return Iterables.filter(plugins.pluginMap.values(), Predicates.notNull());
     }
 

@@ -71,9 +71,9 @@ public class Tasks {
             }
 
             if ($.var(cap.verifyPlugins)) {
-                for (Plugin plugin : global.getPlugins()) {
-                    if (plugin.getSetup().installedDependency().checkDeps().result.nok()) {
-                        if ($(cap.autoSetupPlugins)) {
+                for (Plugin plugin : global.getGlobalPlugins()) {
+                    if (plugin.getSetup().setCtx(global.localCtx).installedDependency().checkDeps().result.nok()) {
+                        if ($(cap.autoInstallPlugins)) {
                             $.log("plugin %s was not installed. installing it...", plugin);
                             runner.run(plugin.getSetup());
                         } else {

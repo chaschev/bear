@@ -74,13 +74,14 @@ public class Stage {
                     if (environment.ctx().var(environment.cap.verifyPlugins)) {
                         DependencyResult r  = new DependencyResult(Result.OK);
 
-                        for (Plugin plugin : global.getPlugins()) {
+                        for (Plugin plugin : global.getGlobalPlugins()) {
                             r.join(plugin.checkPluginDependencies());
 
-                            r.join(plugin.getSetup()
-                                .setCtx(environment.$)
-                                .installedDependency()
-                                .checkDeps());
+                            if(!task.isSetupTask()){
+                                r.join(plugin.getSetup()
+                                    .installedDependency()
+                                    .checkDeps());
+                            }
                         }
 
                         if (r.result.nok()) {

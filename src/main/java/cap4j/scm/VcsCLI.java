@@ -19,7 +19,9 @@ package cap4j.scm;
 import cap4j.cli.CommandLine;
 import cap4j.cli.Script;
 import cap4j.core.GlobalContext;
-import cap4j.plugins.SessionPlugin;
+import cap4j.core.SessionContext;
+import cap4j.plugins.Plugin;
+import cap4j.plugins.SessionPluginContext;
 import cap4j.session.DynamicVariable;
 import cap4j.session.GenericUnixRemoteEnvironment;
 import cap4j.session.SystemEnvironment;
@@ -31,82 +33,99 @@ import java.util.Map;
 /**
  * @author Andrey Chaschev chaschev@gmail.com
  */
-public abstract class VcsCLI extends SessionPlugin {
-    public static boolean sessionPlugin = true;
+public abstract class VcsCLI extends Plugin {
 
     protected VcsCLI(GlobalContext global) {
         super(global);
     }
 
-    public Script checkout(String revision, String destination, Map<String, String> params) {
-        throw new UnsupportedOperationException("todo");
-    }
+    @Override
+    public void initPlugin() {
+        String msg = Variables.checkSet(global.localCtx, this.getClass().getSimpleName(),
+            cap.repositoryURI
+//            cap.vcsBranchName - no, because it's set in the script
+        );
 
-    public Script sync(String revision, String destination, Map<String, String> params) {
-        throw new UnsupportedOperationException("todo");
-    }
-
-    public Script export(String revision, String destination, Map<String, String> params) {
-        throw new UnsupportedOperationException("todo");
-    }
-
-    public CommandLine diff(String rFrom, String rTo, Map<String, String> params) {
-        throw new UnsupportedOperationException("todo");
-    }
-
-    public Script<BranchInfoResult> queryRevision(String revision) {
-        return queryRevision(revision, emptyParams());
+        if(msg != null){
+            global.localCtx.log("%s", msg);
+            throw new RuntimeException(msg);
+        }
     }
 
     public static Map<String, String> emptyParams() {
         return Collections.emptyMap();
     }
 
-    /**
-     * f the given revision represents a "real" revision, this should
-     * simply return the revision value. If it represends a pseudo-revision
-     * (like Subversions "HEAD" identifier), it should yield a string
-     * containing the commands that, when executed will return a string
-     * that this method can then extract the real revision from.
-     */
-    public Script<BranchInfoResult> queryRevision(String revision, Map<String, String> params) {
-        throw new UnsupportedOperationException("todo");
-    }
+    public abstract class VcsCLIContext<T extends VcsCLI> extends SessionPluginContext<T>{
+        public VcsCLIContext(SessionContext $) {
+            super($);
+        }
 
-    public String nextRevision(String r) {
-        return r;
-    }
+        public Script checkout(String revision, String destination, Map<String, String> params) {
+            throw new UnsupportedOperationException("todo");
+        }
 
-    public abstract String command();
+        public Script sync(String revision, String destination, Map<String, String> params) {
+            throw new UnsupportedOperationException("todo");
+        }
 
-    public CommandLine log(String rFrom, String rTo, Map<String, String> params) {
-        throw new UnsupportedOperationException("todo");
-    }
+        public Script export(String revision, String destination, Map<String, String> params) {
+            throw new UnsupportedOperationException("todo");
+        }
 
-    public CommandLine ls(String path, Map<String, String> params) {
-        throw new UnsupportedOperationException("todo");
-    }
+        public CommandLine diff(String rFrom, String rTo, Map<String, String> params) {
+            throw new UnsupportedOperationException("todo");
+        }
 
-    public abstract String head();
+        public Script<BranchInfoResult> queryRevision(String revision) {
+            return queryRevision(revision, emptyParams());
+        }
 
-    public GenericUnixRemoteEnvironment.SshSession.WithSession passwordCallback() {
-        return SystemEnvironment.passwordCallback($.var(cap.vcsPassword));
-    }
 
-    public CommandLine<SvnCLI.LsResult> ls(String path) {
-        return ls(path, emptyParams());
-    }
 
-    @Override
-    public void initPlugin() {
-        String msg = Variables.checkSet($, this.getClass().getSimpleName(),
-            cap.repositoryURI
-//            cap.vcsBranchName - no, because it's set in the script
-        );
+        /**
+         * f the given revision represents a "real" revision, this should
+         * simply return the revision value. If it represends a pseudo-revision
+         * (like Subversions "HEAD" identifier), it should yield a string
+         * containing the commands that, when executed will return a string
+         * that this method can then extract the real revision from.
+         */
+        public Script<BranchInfoResult> queryRevision(String revision, Map<String, String> params) {
+            throw new UnsupportedOperationException("todo");
+        }
 
-        if(msg != null){
-            $.log("%s", msg);
-            throw new RuntimeException(msg);
+        public String nextRevision(String r) {
+            return r;
+        }
+
+        public String command() {
+            throw new UnsupportedOperationException("todo VcsCLIContext.command");
+        }
+
+        public CommandLine log(String rFrom, String rTo, Map<String, String> params) {
+            throw new UnsupportedOperationException("todo");
+        }
+
+        public CommandLine ls(String path, Map<String, String> params) {
+            throw new UnsupportedOperationException("todo");
+        }
+
+        public abstract String head();
+
+        public GenericUnixRemoteEnvironment.SshSession.WithSession passwordCallback() {
+            return SystemEnvironment.passwordCallback($.var(cap.vcsPassword));
+        }
+
+        public CommandLine<SvnCLI.LsResult> ls(String path) {
+            return ls(path, emptyParams());
+        }
+
+
+
+
+
+        public <T> T $(DynamicVariable<T> varName) {
+            return $.var(varName);
         }
     }
 
@@ -131,9 +150,5 @@ public abstract class VcsCLI extends SessionPlugin {
         public String toString() {
             return s;
         }
-    }
-
-    public <T> T $(DynamicVariable<T> varName) {
-        return $.var(varName);
     }
 }
