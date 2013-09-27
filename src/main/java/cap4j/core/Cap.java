@@ -52,13 +52,13 @@ public class Cap {
 
         applicationsPath = strVar("System apps folder").setDynamic(new VarFun<String>() {
         public String apply() {
-            return $.system.isNativeUnix() ? "/var/lib" : "c:";
+            return $.sys.isNativeUnix() ? "/var/lib" : "c:";
         }
     }),
 
     logsPath = strVar("System apps folder").setDynamic(new VarFun<String>() {
         public String apply() {
-            return $.system.isNativeUnix() ? "/var/log" : "c:";
+            return $.sys.isNativeUnix() ? "/var/log" : "c:";
         }
     }),
 
@@ -108,7 +108,7 @@ public class Cap {
                 vcsCLI.queryRevision($.var(revision), Collections.<String, String>emptyMap())
                 .timeoutMs(20000);
 
-            BranchInfoResult r = $.system.run(line, vcsCLI.passwordCallback());
+            BranchInfoResult r = $.sys.run(line, vcsCLI.passwordCallback());
 
             return r.revision;
         }
@@ -134,7 +134,7 @@ public class Cap {
 
             if (r.releases.isEmpty()) return null;
 
-            return $.system.joinPath($.var(releasesPath), r.last());
+            return $.sys.joinPath($.var(releasesPath), r.last());
         }
     }).memoize(true),
 
@@ -144,25 +144,25 @@ public class Cap {
 
             if (r.releases.size() < 1) return null;
 
-            return $.system.joinPath($.var(releasesPath), r.previous());
+            return $.sys.joinPath($.var(releasesPath), r.previous());
         }
     }).memoize(true),
 
     getCurrentRevision = strVar("").setDynamic(new VarFun<String>() {
         public String apply() {
-            return $.system.readString($.joinPath(currentPath, "REVISION"), null);
+            return $.sys.readString($.joinPath(currentPath, "REVISION"), null);
         }
     }).memoize(true),
 
     getLatestReleaseRevision = strVar("").setDynamic(new VarFun<String>() {
         public String apply() {
-            return $.system.readString($.joinPath(getLatestReleasePath, "REVISION"), null);
+            return $.sys.readString($.joinPath(getLatestReleasePath, "REVISION"), null);
         }
     }).memoize(true),
 
     getPreviousReleaseRevision = strVar("").setDynamic(new VarFun<String>() {
         public String apply() {
-            return $.system.readString($.joinPath(getPreviousReleasePath, "REVISION"), null);
+            return $.sys.readString($.joinPath(getPreviousReleasePath, "REVISION"), null);
         }
     }).memoize(true);
 
@@ -175,17 +175,17 @@ public class Cap {
         vcsPreferPrompt = dynamic(""),
         isRemoteEnv = dynamic(new VarFun<Boolean>() {
             public Boolean apply() {
-                return $.system.isRemote();
+                return $.sys.isRemote();
             }
         }),
         isNativeUnix = dynamic(new VarFun<Boolean>() {
             public Boolean apply() {
-                return $.system.isNativeUnix();
+                return $.sys.isNativeUnix();
             }
         }),
         isUnix = dynamic(new VarFun<Boolean>() {
             public Boolean apply() {
-                return $.system.isUnix();
+                return $.sys.isUnix();
             }
         }),
         verifyPlugins = newVar(true),
@@ -198,7 +198,7 @@ public class Cap {
 
     public final DynamicVariable<Releases> getReleases = new DynamicVariable<Releases>("getReleases", "").setDynamic(new VarFun<Releases>() {
         public Releases apply() {
-            return new Releases($.system.ls($.var(releasesPath)));
+            return new Releases($.sys.ls($.var(releasesPath)));
         }
     });
 

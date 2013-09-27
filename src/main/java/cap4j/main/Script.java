@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package cap4j.exec;
+package cap4j.main;
 
 import cap4j.core.Cap;
 import cap4j.core.GlobalContext;

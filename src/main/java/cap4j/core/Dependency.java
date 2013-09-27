@@ -4,6 +4,7 @@ import cap4j.cli.CommandLine;
 import cap4j.cli.Script;
 import cap4j.session.Result;
 import cap4j.task.Task;
+import cap4j.task.TaskDef;
 import cap4j.task.TaskRunner;
 import com.google.common.base.Predicate;
 import com.google.common.base.Predicates;
@@ -14,7 +15,11 @@ import java.util.List;
 /**
  * @author Andrey Chaschev chaschev@gmail.com
  */
-public class Dependency extends Task<DependencyResult>{
+public class Dependency extends Task{
+    String name;
+
+    List<Check> checks = new ArrayList<Check>();
+
 
     public abstract class Check{
 
@@ -35,7 +40,7 @@ public class Dependency extends Task<DependencyResult>{
 
         @Override
         public boolean check(){
-            return $.system.run($.system.line().addRaw(
+            return $.sys.run($.sys.line().addRaw(
                 "test -d " + path
                 + (checkWritable ? " && test -x " + path: ""))).result.ok();
         }
@@ -47,15 +52,22 @@ public class Dependency extends Task<DependencyResult>{
         }
     }
 
-    public Dependency() {
-    }
 
     public Dependency(String name) {
-        super(name);
+        super(null, null);
+        this.name = name;
     }
 
     public Dependency(String name, SessionContext $) {
-        super(name, $);
+        super(null, $);
+
+        this.name = name;
+    }
+
+    public Dependency(TaskDef parent, String name, SessionContext $) {
+        super(parent, $);
+
+        this.name = name;
     }
 
     public class File extends Check{
@@ -68,7 +80,7 @@ public class Dependency extends Task<DependencyResult>{
 
         @Override
         public boolean check(){
-            return $.system.run($.system.line().addRaw(
+            return $.sys.run($.sys.line().addRaw(
                 "test -t " + path
                     + (checkWritable ? (" && test -w " + path): ""))).result.ok();
         }
@@ -88,17 +100,17 @@ public class Dependency extends Task<DependencyResult>{
         public Command(CommandLine line, Predicate<CharSequence> matcher, String message) {
             this.matcher = matcher;
             this.message = message;
-            script = $.system.script().add(line);
+            script = $.sys.script().add(line);
         }
 
         public Command(CommandLine line, String command, String version) {
             this.matcher = Predicates.containsPattern(version);
             message = "'" + command + "' must be of version " + version;
-            script = $.system.script().add(line);
+            script = $.sys.script().add(line);
         }
 
         public Command(String command, String version) {
-            this($.system.line().addRaw(command), command, version);
+            this($.sys.line().addRaw(command), command, version);
         }
 
         @Override
@@ -112,7 +124,6 @@ public class Dependency extends Task<DependencyResult>{
         }
     }
 
-    List<Check> checks = new ArrayList<Check>();
 
     public Dependency add(Check check) {
         checks.add(check);

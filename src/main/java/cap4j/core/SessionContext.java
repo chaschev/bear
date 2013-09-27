@@ -19,6 +19,7 @@ package cap4j.core;
 import cap4j.cli.CommandLine;
 import cap4j.session.DynamicVariable;
 import cap4j.session.SystemEnvironment;
+import cap4j.task.TaskRunner;
 
 /**
  * @author Andrey Chaschev chaschev@gmail.com
@@ -27,14 +28,16 @@ public class SessionContext {
     //    public final GlobalContext globalContext;
     public final VariablesLayer sessionVariablesLayer;
     private final GlobalContext global;
-    public final SystemEnvironment system;
+    public final SystemEnvironment sys;
+    public final TaskRunner runner;
 
-    public SessionContext(GlobalContext global, SystemEnvironment system) {
+    public SessionContext(GlobalContext global, SystemEnvironment sys, TaskRunner runner) {
         this.global = global;
-        this.system = system;
-        system.$ = this;
-        this.sessionVariablesLayer = SystemEnvironment.newSessionVars(global, system);
-        sessionVariablesLayer.putS(global.cap.sessionHostname, system.getName());
+        this.sys = sys;
+        this.runner = runner;
+        sys.$ = this;
+        this.sessionVariablesLayer = SystemEnvironment.newSessionVars(global, sys);
+        sessionVariablesLayer.putS(global.cap.sessionHostname, sys.getName());
     }
 
     public GlobalContext getGlobal() {
@@ -43,8 +46,9 @@ public class SessionContext {
 
     public SessionContext(VariablesLayer sessionVariablesLayer) {
         this.sessionVariablesLayer = sessionVariablesLayer;
-        system = null;
+        sys = null;
         global = null;
+        runner = null;
     }
 
     public <T> T var(DynamicVariable<T> varName) {
@@ -52,11 +56,11 @@ public class SessionContext {
     }
 
     public String joinPath(DynamicVariable<String> var, String path) {
-        return system.joinPath(var(var), path);
+        return sys.joinPath(var(var), path);
     }
 
     public String joinPath(String... paths) {
-        return system.joinPath(paths);
+        return sys.joinPath(paths);
     }
 
     public <T> boolean isSet(Nameable<T> variable){
@@ -66,7 +70,7 @@ public class SessionContext {
     }
 
     public String threadName() {
-        return system.getName();
+        return sys.getName();
     }
 
     public boolean varB(Nameable<Boolean> var) {
@@ -78,7 +82,7 @@ public class SessionContext {
     }
 
     public CommandLine newCommandLine() {
-        return system.newCommandLine();
+        return sys.newCommandLine();
     }
 
 

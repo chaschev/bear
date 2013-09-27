@@ -18,9 +18,12 @@ package cap4j.task;
 
 import cap4j.core.Cap;
 import cap4j.core.GlobalContext;
+import cap4j.core.SessionContext;
 import cap4j.plugins.Plugin;
+import cap4j.scm.VcsCLI;
 import cap4j.session.Result;
 import com.google.common.base.Preconditions;
+import org.apache.commons.lang3.time.StopWatch;
 
 
 /**
@@ -36,107 +39,171 @@ public class Tasks {
         Preconditions.checkNotNull(cap);
     }
 
-    public final Task<TaskResult> restartApp = new Task<TaskResult>() {
+    public final TaskDef restartApp = new TaskDef() {
 
     };
 
-    public final Task<TaskResult> deploy = new Task<TaskResult>() {
+    public final TaskDef deploy = new TaskDef() {
         @Override
-        protected TaskResult run(TaskRunner runner) {
-            return new TaskResult(runner.run(
-                update,
-                restartApp));
+        public Task newSession(SessionContext $) {
+            return new Task(deploy, $) {
+                @Override
+                protected TaskResult run(TaskRunner runner) {
+                    return new TaskResult(runner.run(
+                        update,
+                        restartApp));
+                }
+            };
         }
     };
 
-    public final Task<TaskResult> setup = new Task<TaskResult>() {
+    public final TaskDef setup = new TaskDef() {
         @Override
-        protected TaskResult run(TaskRunner runner) {
-            final String appLogs = var(cap.appLogsPath);
-            final String[] dirs = {
-                var(cap.deployTo), var(cap.releasesPath), var(cap.vcsCheckoutPath),
-                appLogs
-            };
+        public Task newSession(SessionContext $) {
+            return new Task(deploy, $) {
+                @Override
+                protected TaskResult run(TaskRunner runner) {
+                    final String appLogs = $(cap.appLogsPath);
+                    final String[] dirs = {
+                        $(cap.deployTo), $(cap.releasesPath), $(cap.vcsCheckoutPath),
+                        appLogs
+                    };
 
-            system.sudo().mkdirs(dirs);
+                    $.sys.sudo().mkdirs(dirs);
 
-            final String sshUser = var(cap.sshUsername);
-            final String appUser = var(cap.appUsername);
+                    final String sshUser = $(cap.sshUsername);
+                    final String appUser = $(cap.appUsername);
 
-            system.sudo().chown(sshUser + "." + sshUser, true, dirs);
-            system.sudo().chmod("g+w", true, dirs);
+                    $.sys.sudo().chown(sshUser + "." + sshUser, true, dirs);
+                    $.sys.sudo().chmod("g+w", true, dirs);
 
-            if (!appUser.equals(sshUser)) {
-                system.sudo().chown(appUser + "." + appUser, true, appLogs);
-            }
+                    if (!appUser.equals(sshUser)) {
+                        $.sys.sudo().chown(appUser + "." + appUser, true, appLogs);
+                    }
 
-            if ($.var(cap.verifyPlugins)) {
-                for (Plugin plugin : global.getGlobalPlugins()) {
-                    if (plugin.getSetup().setCtx($).asInstalledDependency().checkDeps().result.nok()) {
-                        if ($(cap.autoInstallPlugins)) {
-                            $.log("plugin %s was not installed. installing it...", plugin);
-                            runner.run(plugin.getSetup());
-                        } else {
-                            $.warn("plugin %s was not installed (autoSetup is off)", plugin);
+                    if ($.var(cap.verifyPlugins)) {
+                        for (Plugin plugin : global.getGlobalPlugins()) {
+                            if (plugin.getSetup().setCtx($).asInstalledDependency().checkDeps().result.nok()) {
+                                if ($(cap.autoInstallPlugins)) {
+                                    $.log("plugin %s was not installed. installing it...", plugin);
+                                    runner.run(plugin.getSetup());
+                                } else {
+                                    $.warn("plugin %s was not installed (autoSetup is off)", plugin);
+                                }
+                            }
                         }
                     }
-                }
-            }
 
-            return TaskResult.OK;
+                    return TaskResult.OK;
+                }
+            };
         }
     }.setSetupTask(true);
 
-    public final Task<TaskResult> update = new Task<TaskResult>() {
+    public final TaskDef update = new TaskDef() {
         @Override
-        protected TaskResult run(TaskRunner runner) {
-            return new TaskResult(runner.run(new TransactionTask(
-                updateCode,
-                createSymlink
-            )));
+        public Task newSession(SessionContext $) {
+            return new Task(deploy, $) {
+                @Override
+                protected TaskResult run(TaskRunner runner) {
+                    return new TaskResult(runner.run(new TransactionTask(
+                        updateCode,
+                        createSymlink
+                    )));
+                }
+            };
         }
     };
 
-    public final Task<TaskResult> updateCode = new Task<TaskResult>() {
+    public final TaskDef updateCode = new TaskDef() {
         @Override
-        protected TaskResult run(TaskRunner runner) {
-            return new TaskResult(
-                Result.and(var(cap.newStrategy).deploy(),
-                    runner.run(finalizeTouchCode)
-                )
-            );
-        }
+        public Task newSession(SessionContext $) {
+            return new Task(deploy, $) {
+                @Override
+                protected TaskResult run(TaskRunner runner) {
+                    return new TaskResult(
+                        Result.and($(cap.newStrategy).deploy(),
+                            runner.run(finalizeTouchCode)
+                        )
+                    );
+                }
 
-        @Override
-        protected void onRollback() {
-            system.rm(var(cap.releasesPath));
-        }
-    };
-
-
-    public final Task<TaskResult> finalizeTouchCode = new Task<TaskResult>() {
-        @Override
-        protected TaskResult run(TaskRunner runner) {
-            system.chmod("g+w", true, var(cap.getLatestReleasePath));
-
-            //new SimpleDateFormat("yyyyMMdd.HHmm.ss")
-            return TaskResult.OK;
+                @Override
+                protected void onRollback() {
+                    $.sys.rm($(cap.releasesPath));
+                }
+            };
         }
     };
 
-    public final Task<TaskResult> createSymlink = new Task<TaskResult>() {
+
+    public final TaskDef finalizeTouchCode = new TaskDef() {
         @Override
-        protected TaskResult run(TaskRunner runner) {
-            return new TaskResult(system.link(var(cap.getLatestReleasePath), var(cap.currentPath)));
+        public Task newSession(SessionContext $) {
+            return new Task(deploy, $) {
+                @Override
+                protected TaskResult run(TaskRunner runner) {
+                    $.sys.chmod("g+w", true, $(cap.getLatestReleasePath));
+
+                    return TaskResult.OK;
+                }
+            };
         }
+    };
 
+    public final TaskDef createSymlink = new TaskDef() {
         @Override
-        protected void onRollback() {
-            final String var = var(cap.getPreviousReleasePath);
+        public Task newSession(SessionContext $) {
+            return new Task(deploy, $) {
+                @Override
+                protected TaskResult run(TaskRunner runner) {
+                    return new TaskResult($.sys.link($(cap.getLatestReleasePath), $(cap.currentPath)));
+                }
 
-            if(var != null){
-                system.link(var, var(cap.currentPath));
-            }
+                @Override
+                protected void onRollback() {
+                    final String var = $(cap.getPreviousReleasePath);
+
+                    if (var != null) {
+                        $.sys.link(var, $(cap.currentPath));
+                    }
+                }
+            };
+        }
+    };
+
+    public final TaskDef vcsUpdate = new TaskDef() {
+        @Override
+        public Task newSession(SessionContext $) {
+            return new Task(deploy, $) {
+                @Override
+                protected TaskResult run(TaskRunner runner) {
+                    $.log("updating the project, please wait...");
+
+                    StopWatch sw = new StopWatch();
+                    sw.start();
+
+                    final VcsCLI.Session vcsCLI = $(cap.vcs);
+
+                    final String destPath = $(cap.vcsBranchLocalPath);
+
+                    final cap4j.cli.Script line;
+
+                    if (!$.sys.exists(destPath)) {
+                        line = vcsCLI.checkout($(cap.revision), destPath, VcsCLI.emptyParams());
+                    } else {
+                        line = vcsCLI.sync($(cap.revision), destPath, VcsCLI.emptyParams());
+                    }
+
+                    line.timeoutMs(600 * 1000);
+
+                    $.sys.run(line, vcsCLI.passwordCallback());
+
+                    $.log("done updating in %s", sw);
+
+                    return TaskResult.OK;
+                }
+            };
         }
     };
 }

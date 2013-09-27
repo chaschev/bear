@@ -16,9 +16,7 @@
 
 package cap4j.plugins.grails;
 
-import cap4j.core.DependencyResult;
-import cap4j.core.GlobalContext;
-import cap4j.core.VarFun;
+import cap4j.core.*;
 import cap4j.plugins.ZippedToolPlugin;
 import cap4j.plugins.java.JavaPlugin;
 import cap4j.session.DynamicVariable;
@@ -48,14 +46,14 @@ public class GrailsPlugin extends ZippedToolPlugin {
     }),
         currentVersionPath = dynamic(new VarFun<String>() {
             public String apply() {
-                return $.system.joinPath($.var(homeParentPath), "grails-" + $.var(version));
+                return $.sys.joinPath($.var(homeParentPath), "grails-" + $.var(version));
             }
         }),
         grailsBin = joinPath(homePath, "bin"),
         projectPath = dynamic("Project root dir"),
         grailsExecName = dynamic("grails or grails.bat", new VarFun<String>() {
             public String apply() {
-                return "grails" + ($.system.isNativeUnix() ? "" : ".bat");
+                return "grails" + ($.sys.isNativeUnix() ? "" : ".bat");
             }
         }),
         grailsExecPath = condition(isSet(null, homePath),
@@ -85,6 +83,7 @@ public class GrailsPlugin extends ZippedToolPlugin {
             }
         });
     }
+
 
     public final InstallationTask setup = new ZippedToolTask("install grails") {
         @Override

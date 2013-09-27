@@ -1,6 +1,6 @@
 import cap4j.core.*;
 import cap4j.cli.CommandLine;
-import cap4j.exec.Script;
+import cap4j.main.Script;
 import cap4j.scm.SvnCLI;
 import cap4j.scm.VcsCLI;
 import cap4j.session.Question;

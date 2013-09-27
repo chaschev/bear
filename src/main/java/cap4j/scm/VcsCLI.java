@@ -21,7 +21,7 @@ import cap4j.cli.Script;
 import cap4j.core.GlobalContext;
 import cap4j.core.SessionContext;
 import cap4j.plugins.Plugin;
-import cap4j.plugins.PluginSessionContext;
+import cap4j.task.Task;
 import cap4j.session.DynamicVariable;
 import cap4j.session.GenericUnixRemoteEnvironment;
 import cap4j.session.SystemEnvironment;
@@ -56,7 +56,7 @@ public abstract class VcsCLI<T extends VcsCLI> extends Plugin<T> {
         return Collections.emptyMap();
     }
 
-    public abstract class Session<T extends VcsCLI> extends PluginSessionContext<T> {
+    public abstract class Session<T extends VcsCLI> extends Task<T> {
         public Session(SessionContext $) {
             super($);
         }
@@ -119,9 +119,6 @@ public abstract class VcsCLI<T extends VcsCLI> extends Plugin<T> {
         public CommandLine<SvnCLI.LsResult> ls(String path) {
             return ls(path, emptyParams());
         }
-
-
-
 
 
         public <T> T $(DynamicVariable<T> varName) {

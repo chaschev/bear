@@ -103,7 +103,7 @@ public class GitCLI extends VcsCLI<GitCLI> {
                 addAll(args, "--depth", "" + $(cloneDepth));
             }
 
-            final Script script = $.system.script();
+            final Script script = $.sys.script();
 
             script
                 .line()
@@ -138,7 +138,7 @@ public class GitCLI extends VcsCLI<GitCLI> {
             String git = command();
             String remote = origin();
 
-            Script script = $.system.script()
+            Script script = $.sys.script()
                 .cd(destination);
 
             // Use git-config to setup a remote tracking branches. Could use
@@ -192,7 +192,7 @@ public class GitCLI extends VcsCLI<GitCLI> {
             //this will break the logic a bit
             String newRevision = null;
 
-            final SvnCLI.LsResult lsResult = $.system.run(lsRemote(revision).timeoutSec(10), passwordCallback());
+            final SvnCLI.LsResult lsResult = $.sys.run(lsRemote(revision).timeoutSec(10), passwordCallback());
 
             for (String s : lsResult.getFiles()) {
                 final String rev = StringUtils.substringBefore(s, "|");
@@ -209,7 +209,7 @@ public class GitCLI extends VcsCLI<GitCLI> {
 
             //If sha is not found on remote, try expanding from local repository
 
-            newRevision = $.system.run(commandPrefix("rev-parse", emptyParams())
+            newRevision = $.sys.run(commandPrefix("rev-parse", emptyParams())
                 .a("--revs-only", origin() + "/" + revision)
                 .timeoutSec(10), passwordCallback()).text.trim();
 
@@ -246,14 +246,14 @@ public class GitCLI extends VcsCLI<GitCLI> {
 
 
         private Script.StubScript<BranchInfoResult> newQueryRevisionResult(String revision) {
-            return new Script.StubScript<BranchInfoResult>($.system, new BranchInfoResult(null, revision, null));
+            return new Script.StubScript<BranchInfoResult>($.sys, new BranchInfoResult(null, revision, null));
         }
 
 
         @Override
         public Script export(String revision, String destination, Map<String, String> params) {
             return checkout(revision, destination, emptyParams())
-                .line($.system.rmLine(".", destination + "/.git"));
+                .line($.sys.rmLine(".", destination + "/.git"));
         }
 
         @Override

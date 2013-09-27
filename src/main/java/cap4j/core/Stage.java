@@ -58,7 +58,7 @@ public class Stage {
         runTask(task);
     }
 
-    public void runTask(final Task<TaskResult> task) {
+    public void runTask(final TaskDef task) {
         GlobalContextFactory.INSTANCE.configure(environments);
 
         BaseStrategy.setBarriers(this, global);
@@ -67,20 +67,26 @@ public class Stage {
             global.taskExecutor.execute(new Runnable() {
                 @Override
                 public void run() {
-                    Thread.currentThread().setName(environment.ctx().threadName());
+                    final TaskRunner runner = new TaskRunner(null, global);
+                    final SessionContext $ = environment.newCtx(runner);
 
-                    environment.ctx().system.connect();
+                    Thread.currentThread().setName($.threadName());
 
-                    if (environment.ctx().var(environment.cap.verifyPlugins)) {
+                    $.sys.connect();
+
+                    if ($.var(environment.cap.verifyPlugins)) {
                         DependencyResult r  = new DependencyResult(Result.OK);
 
                         for (Plugin plugin : global.getGlobalPlugins()) {
                             r.join(plugin.checkPluginDependencies());
 
                             if(!task.isSetupTask()){
-                                r.join(plugin.getSetup()
-                                    .asInstalledDependency()
-                                    .checkDeps());
+                                runner.run(plugin.getSetup()
+                                    .asInstalledDependency());
+//                                plugin.newSession($).
+//                                r.join(plugin.getSetup()
+//                                    .asInstalledDependency()
+//                                    .checkDeps());
                             }
                         }
 
@@ -89,7 +95,7 @@ public class Stage {
                         }
                     }
 
-                    final Result run = new TaskRunner(environment.ctx(), global).run(task);
+                    final Result run = runner.run(task);
                 }
             });
         }

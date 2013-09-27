@@ -23,6 +23,7 @@ import cap4j.session.DynamicVariable;
 import cap4j.session.SystemEnvironment;
 import cap4j.session.Variables;
 import cap4j.task.InstallationTask;
+import cap4j.task.Task;
 import cap4j.task.TaskResult;
 import com.google.common.base.Predicate;
 import org.apache.commons.lang3.StringUtils;
@@ -66,20 +67,45 @@ public abstract class ZippedToolPlugin extends Plugin{
     }
 
 
+    protected abstract class ZippedTool<T extends ZippedToolPlugin> extends InstallationTask<T> {
+        public ZippedTool(SessionContext $) {
+            super($);
+        }
+
+        protected abstract String extractVersion(String output);
+        protected abstract String createVersionCommandLine();
+
+        @Override
+        public Dependency asInstalledDependency() {
+            final Dependency dep = new Dependency($(toolDistrName) + " installation", $);
+
+            dep.add(dep.new Command(
+                $.sys.line().setVar("JAVA_HOME", $(global.getPlugin(JavaPlugin.class).homePath)).addRaw(createVersionCommandLine()),
+                new Predicate<CharSequence>() {
+                    @Override
+                    public boolean apply(CharSequence s) {
+                        return $(version).equals(extractVersion(s.toString()));
+                    }
+                },
+                String.format("'%s' expected version: %s", $(toolDistrName), $(version))
+            ));
+            return dep;
+        }
+    }
 
     protected abstract class ZippedToolTask extends InstallationTask<TaskResult> {
         protected ZippedToolTask(String name) {
-            super();
+            super(name);
         }
 
         protected void clean(){
-            system.rm($(buildPath));
-            system.mkdirs($(buildPath));
+            sys.rm($(buildPath));
+            sys.mkdirs($(buildPath));
         }
 
         protected void download(){
-            if(!system.exists(system.joinPath($(myDirPath), $(distrFilename)))){
-                system.script()
+            if(!sys.exists(sys.joinPath($(myDirPath), $(distrFilename)))){
+                sys.script()
                     .cd($(myDirPath))
                     .line().timeoutMin(60).addRaw("wget %s", $(distrWwwAddress)).build()
                 .run();
@@ -94,14 +120,14 @@ public abstract class ZippedToolPlugin extends Plugin{
         protected Script buildExtractionToHomeDir(){
             final String _distrFilename = $(distrFilename);
 
-            extractToHomeScript = new Script(system)
+            extractToHomeScript = new Script(sys)
                 .cd($(buildPath));
 
             if(_distrFilename.endsWith("tar.gz")){
-                extractToHomeScript.add(system.line().timeoutMin(1).addRaw("tar xvfz ../%s", _distrFilename));
+                extractToHomeScript.add(sys.line().timeoutMin(1).addRaw("tar xvfz ../%s", _distrFilename));
             }else
             if(_distrFilename.endsWith("zip")){
-                extractToHomeScript.add(system.line().timeoutMin(1).addRaw("unzip ../%s", $(distrFilename)));
+                extractToHomeScript.add(sys.line().timeoutMin(1).addRaw("unzip ../%s", $(distrFilename)));
             }
 
             extractToHomeScript
@@ -116,8 +142,8 @@ public abstract class ZippedToolPlugin extends Plugin{
         }
 
         protected Script shortCut(String newCommandName, String sourceExecutableName){
-            return extractToHomeScript.add(system.line().sudo().addRaw("rm /usr/bin/%s", newCommandName))
-                .add(system.line().sudo().addRaw("ln -s %s/bin/%s /usr/bin/%s", $(homePath), sourceExecutableName, newCommandName));
+            return extractToHomeScript.add(sys.line().sudo().addRaw("rm /usr/bin/%s", newCommandName))
+                .add(sys.line().sudo().addRaw("ln -s %s/bin/%s /usr/bin/%s", $(homePath), sourceExecutableName, newCommandName));
         }
 
 
@@ -139,25 +165,10 @@ public abstract class ZippedToolPlugin extends Plugin{
               return DependencyResult.OK;
         }
 
-        @Override
-        public Dependency asInstalledDependency() {
-            final Dependency dep = new Dependency($(toolDistrName), $);
 
-            dep.add(dep.new Command(
-                system.line().setVar("JAVA_HOME", $(global.getPlugin(JavaPlugin.class).homePath)).addRaw(createVersionCommandLine()),
-                new Predicate<CharSequence>() {
-                    @Override
-                    public boolean apply(CharSequence s) {
-                        return $(version).equals(extractVersion(s.toString()));
-                    }
-                },
-                String.format("'%s' expected version: %s", $(toolDistrName), $(version))
-            ));
-            return dep;
-        }
 
         protected DependencyResult extractAndVerify() {
-            system.run(extractToHomeScript,
+            sys.run(extractToHomeScript,
                 SystemEnvironment.passwordCallback($.var(cap.sshPassword))
             );
 

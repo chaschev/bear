@@ -18,7 +18,7 @@ package cap4j.smoke;
 
 import atocha.Atocha;
 import cap4j.core.*;
-import cap4j.exec.Script;
+import cap4j.main.Script;
 import cap4j.main.Cap4j;
 import cap4j.plugins.Plugin;
 import cap4j.plugins.grails.GrailsBuildResult;
@@ -28,11 +28,9 @@ import cap4j.plugins.java.JavaPlugin;
 import cap4j.plugins.tomcat.MavenPlugin;
 import cap4j.plugins.tomcat.TomcatPlugin;
 import cap4j.scm.GitCLI;
-import cap4j.scm.VcsCLI;
 import cap4j.strategy.BaseStrategy;
 import cap4j.strategy.SymlinkEntry;
 import com.google.common.collect.Lists;
-import org.apache.commons.lang3.time.StopWatch;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -98,38 +96,17 @@ public class PluginsTests {
                         cap.vcsBranchLocalPath
                     );
 
-                    final BaseStrategy strategy = new BaseStrategy($, global) {
+                    final BaseStrategy strategy = new BaseStrategy<BaseStrategy>($, global) {
                         @Override
                         protected void step_40_updateRemoteFiles() {
-                            logger.info("updating the project, please wait...");
-
-                            StopWatch sw = new StopWatch();
-                            sw.start();
-
-                            final VcsCLI.Session vcsCLI = $.var(cap.vcs);
-
-                            final String destPath = $.var(cap.vcsBranchLocalPath);
-
-                            final cap4j.cli.Script line;
-
-                            if (!$.system.exists(destPath)) {
-                                line = vcsCLI.checkout($.var(cap.revision), destPath, VcsCLI.emptyParams());
-                            } else {
-                                line = vcsCLI.sync($.var(cap.revision), destPath, VcsCLI.emptyParams());
-                            }
-
-                            line.timeoutMs(600 * 1000);
-
-                            $.system.run(line, vcsCLI.passwordCallback());
-
-                            logger.info("done updating in {}", sw);
+                            $.runner.run(global.tasks.vcsUpdate);
 
                             logger.info("building the project...");
 
-                            String warPath = $.var(grails.releaseWarPath);
+                            String warPath = $(grails.releaseWarPath);
 
-                            if (!$.system.exists(warPath) || !$.var(global.getPlugin(Atocha.class).reuseWar)) {
-                                final GrailsBuildResult r = new GrailsBuilder($, global).run(null);
+                            if (!$.sys.exists(warPath) || !$(global.getPlugin(Atocha.class).reuseWar)) {
+                                final GrailsBuildResult r = new GrailsBuilder(global).run(null);
 
                                 if (r.result.nok()) {
                                     throw new IllegalStateException("failed to build WAR");

@@ -92,8 +92,8 @@ public class TomcatPlugin extends Plugin {
         global.tasks.restartApp.addBeforeTask(new Task() {
             @Override
             protected TaskResult run(TaskRunner runner) {
-                system.sudo().rm($.var(warCacheDirs));
-                system.sudo().run($.newCommandLine()
+                sys.sudo().rm($.var(warCacheDirs));
+                sys.sudo().run($.newCommandLine()
                     .a("service", "tomcat6", "stop")
                     .semicolon()
                     .sudo()
@@ -109,39 +109,39 @@ public class TomcatPlugin extends Plugin {
     public final InstallationTask setup = new InstallationTask() {
         @Override
         protected TaskResult run(TaskRunner runner) {
-            system.rm($.var(buildPath));
-            system.mkdirs($.var(buildPath));
+            sys.rm($.var(buildPath));
+            sys.mkdirs($.var(buildPath));
 
-            if (!system.exists(system.joinPath($.var(myDirPath), $.var(distrFilename)))) {
-                system.run(new Script(system)
+            if (!sys.exists(sys.joinPath($.var(myDirPath), $.var(distrFilename)))) {
+                sys.run(new Script(sys)
                     .cd($.var(myDirPath))
-                    .add(system.line().timeoutMin(60).addRaw("wget %s", $.var(distrWwwAddress))));
+                    .add(sys.line().timeoutMin(60).addRaw("wget %s", $.var(distrWwwAddress))));
             }
 
             final String homeParentPath = StringUtils.substringBeforeLast($.var(homePath), "/");
 
-            final CommandLineResult r = system.run(new Script(system)
+            final CommandLineResult r = sys.run(new Script(sys)
                 .cd($.var(buildPath))
-                .add(system.line().timeoutMin(1).addRaw("tar xvfz ../%s", $.var(distrFilename)))
-                .add(system.line().sudo().addRaw("rm -r %s", $.var(homePath)))
-                .add(system.line().sudo().addRaw("rm -r %s", $.var(homeVersionPath)))
-                .add(system.line().sudo().addRaw("mv %s %s", $(buildPath) + "/" + $(versionName), homeParentPath))
-                .add(system.line().sudo().addRaw("ln -s %s %s", $.var(currentVersionPath), $.var(homePath)))
-                .add(system.line().sudo().addRaw("chmod -R g+r,o+r %s", $.var(homePath)))
-                .add(system.line().sudo().addRaw("chmod u+x,g+x,o+x %s/bin/*", $.var(homePath)))
+                .add(sys.line().timeoutMin(1).addRaw("tar xvfz ../%s", $.var(distrFilename)))
+                .add(sys.line().sudo().addRaw("rm -r %s", $.var(homePath)))
+                .add(sys.line().sudo().addRaw("rm -r %s", $.var(homeVersionPath)))
+                .add(sys.line().sudo().addRaw("mv %s %s", $(buildPath) + "/" + $(versionName), homeParentPath))
+                .add(sys.line().sudo().addRaw("ln -s %s %s", $.var(currentVersionPath), $.var(homePath)))
+                .add(sys.line().sudo().addRaw("chmod -R g+r,o+r %s", $.var(homePath)))
+                .add(sys.line().sudo().addRaw("chmod u+x,g+x,o+x %s/bin/*", $.var(homePath)))
 
-                .add(system.line().sudo().addRaw("rm /usr/bin/tomcatStart"))
-                .add(system.line().sudo().addRaw("ln -s %s/bin/startup.sh /usr/bin/tomcatStart", $.var(homePath)))
-                .add(system.line().sudo().addRaw("rm /usr/bin/tomcatStop"))
-                .add(system.line().sudo().addRaw("ln -s %s/bin/shutdown.sh /usr/bin/tomcatStop", $.var(homePath)))
-                .add(system.line().sudo().addRaw("rm /usr/bin/tomcatVersion"))
-                .add(system.line().sudo().addRaw("ln -s %s/bin/version.sh /usr/bin/tomcatVersion", $.var(homePath))),
+                .add(sys.line().sudo().addRaw("rm /usr/bin/tomcatStart"))
+                .add(sys.line().sudo().addRaw("ln -s %s/bin/startup.sh /usr/bin/tomcatStart", $.var(homePath)))
+                .add(sys.line().sudo().addRaw("rm /usr/bin/tomcatStop"))
+                .add(sys.line().sudo().addRaw("ln -s %s/bin/shutdown.sh /usr/bin/tomcatStop", $.var(homePath)))
+                .add(sys.line().sudo().addRaw("rm /usr/bin/tomcatVersion"))
+                .add(sys.line().sudo().addRaw("ln -s %s/bin/version.sh /usr/bin/tomcatVersion", $.var(homePath))),
 
                 SystemEnvironment.passwordCallback($.var(cap.sshPassword))
             );
 
             System.out.println("verifying version...");
-            final String versionText = system.run(system.line().setVar("JAVA_HOME", $.var(global.getPlugin(JavaPlugin.class).homePath)).addRaw("tomcatVersion")).text.trim();
+            final String versionText = sys.run(sys.line().setVar("JAVA_HOME", $.var(global.getPlugin(JavaPlugin.class).homePath)).addRaw("tomcatVersion")).text.trim();
             final String installedVersion = StringUtils.substringBetween(
                 versionText,
                 "Server version: Apache Tomcat/", "\r");
@@ -166,7 +166,7 @@ public class TomcatPlugin extends Plugin {
         public String[] apply() {
             final String name = FilenameUtils.getBaseName($.var(warName));
             return new String[]{
-                $.system.joinPath($.var(webapps), name)
+                $.sys.joinPath($.var(webapps), name)
             };
         }
     });

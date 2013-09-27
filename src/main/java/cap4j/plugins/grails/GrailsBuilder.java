@@ -24,7 +24,7 @@ import cap4j.core.SessionContext;
 import cap4j.plugins.java.JavaPlugin;
 import cap4j.scm.CommandLineResult;
 import cap4j.task.Task;
-import cap4j.task.TaskResult;
+import cap4j.task.TaskDef;
 import cap4j.task.TaskRunner;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,54 +32,57 @@ import org.slf4j.LoggerFactory;
 /**
  * @author Andrey Chaschev chaschev@gmail.com
  */
-public class GrailsBuilder extends Task<TaskResult> {
+public class GrailsBuilder extends TaskDef {
     public static final Logger logger = LoggerFactory.getLogger(GrailsBuilder.class);
 
     GrailsPlugin grails;
     JavaPlugin java;
     Cap cap;
 
-    public GrailsBuilder(SessionContext $, GlobalContext global) {
-        this.$ = $;
+    public GrailsBuilder(GlobalContext global) {
         grails = global.getPlugin(GrailsPlugin.class);
         java = global.getPlugin(JavaPlugin.class);
         cap = global.cap;
     }
 
     @Override
-    public GrailsBuildResult run(TaskRunner runner) {
-        $.log("building Grails WAR, rev: %s...", $(cap.realRevision));
+    public Task newSession(SessionContext $) {
+        return new Task(this, $) {
+            @Override
+            public GrailsBuildResult run(TaskRunner runner) {
+                $.log("building Grails WAR, rev: %s...", $(cap.realRevision));
 
-        final String grailsExecPath = $(grails.grailsExecPath);
+                final String grailsExecPath = $(grails.grailsExecPath);
 
-        String projectPath = $(grails.projectPath);
+                String projectPath = $(grails.projectPath);
 
-        final Script script = new Script($.system)
-            .cd(projectPath);
+                final Script script = new Script($.sys)
+                    .cd(projectPath);
 
-        if ($(grails.clean)) {
-            script
-                .add(newGrailsCommand(grailsExecPath).a("clean"));
-        }
+                if ($(grails.clean)) {
+                    script
+                        .add(newGrailsCommand(grailsExecPath).a("clean"));
+                }
 
-        final String warName = $(grails.releaseWarPath);
+                final String warName = $(grails.releaseWarPath);
 
-        script.add(
-            newGrailsCommand(grailsExecPath).a(
-                "war",
-                warName));
+                script.add(
+                    newGrailsCommand(grailsExecPath).a(
+                        "war",
+                        warName));
 
-        final CommandLineResult clResult = script.run();
+                final CommandLineResult clResult = script.run();
 
-        return new GrailsBuildResult(clResult.result, $.joinPath(projectPath, warName));
+                return new GrailsBuildResult(clResult.result, $.joinPath(projectPath, warName));
+            }
+
+            private CommandLine newGrailsCommand(String grailsExecPath) {
+                return $.sys.line()
+                    .setVar("JAVA_HOME", $.var(java.homePath))
+                    .a(grailsExecPath)
+                    .timeoutMs(600000);
+            }
+        };
     }
-
-    private CommandLine newGrailsCommand(String grailsExecPath) {
-        return $.system.line()
-            .setVar("JAVA_HOME", $.var(java.homePath))
-            .a(grailsExecPath)
-            .timeoutMs(600000);
-    }
-
 
 }

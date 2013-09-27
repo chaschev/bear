@@ -17,7 +17,7 @@
 package cap4j.strategy;
 
 import cap4j.core.*;
-import cap4j.session.DynamicVariable;
+import cap4j.plugins.HavingContext;
 import cap4j.session.Result;
 import cap4j.session.Variables;
 import com.google.common.base.Function;
@@ -33,7 +33,8 @@ import java.util.List;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.TimeUnit;
 
-import static cap4j.core.Cap.*;
+import static cap4j.core.Cap.keepXReleases;
+import static cap4j.core.Cap.newStrategy;
 import static org.apache.commons.io.FileUtils.byteCountToDisplaySize;
 
 /**
@@ -45,7 +46,7 @@ import static org.apache.commons.io.FileUtils.byteCountToDisplaySize;
 /**
  * mapping $releasePath/ROOT.war -> $webapps/ROOT.war
  */
-public abstract class BaseStrategy {
+public abstract class BaseStrategy<CHILD extends BaseStrategy>  extends HavingContext<CHILD>{
     private static final Logger logger = LoggerFactory.getLogger(BaseStrategy.class);
 
     protected static CyclicBarrier prepareRemoteDataBarrier;
@@ -57,8 +58,6 @@ public abstract class BaseStrategy {
     private static String deployZipPath;
     private final Cap cap;
 
-    protected SessionContext $;
-
     protected GlobalContext global;
 
     /**
@@ -67,7 +66,7 @@ public abstract class BaseStrategy {
     protected SymlinkRules symlinkRules = new SymlinkRules();
 
     protected BaseStrategy(SessionContext $, GlobalContext global) {
-        this.$ = $;
+        super($);
         this.global = global;
         this.cap = global.cap;
     }
@@ -91,7 +90,7 @@ public abstract class BaseStrategy {
                 logger.info("20: zipping {} files of total size {} to: {}", preparedLocalFiles.size(),
                     byteCountToDisplaySize(countSpace(preparedLocalFiles)), tempDir);
 
-                deployZipPath = localCtx.system.joinPath(tempDir, "deploy.zip");
+                deployZipPath = localCtx.sys.joinPath(tempDir, "deploy.zip");
 
                 global.local().zip(deployZipPath, Lists.transform(preparedLocalFiles, new Function<File, String>() {
                     public String apply(File f) {
@@ -175,21 +174,21 @@ public abstract class BaseStrategy {
         updateReleasesDirs();
 
         if(isCopyingZip()){
-            $.system.upload($(cap.releasePath), new File(deployZipPath));
+            $.sys.upload($(cap.releasePath), new File(deployZipPath));
         }
 
         step_30_copyFilesToHosts();
     }
 
     private void updateReleasesDirs() {
-        $.system.mkdirs($(cap.releasePath));
+        $.sys.mkdirs($(cap.releasePath));
         int keepX = $.var(keepXReleases);
 
         if(keepX > 0){
             final Releases releases = $.var(cap.getReleases);
             List<String> toDelete = releases.listToDelete(keepX);
 
-            $.system.rmCd($.var(cap.releasesPath),
+            $.sys.rmCd($.var(cap.releasesPath),
                 toDelete.toArray(new String[toDelete.size()]));
         }
     }
@@ -200,7 +199,7 @@ public abstract class BaseStrategy {
 
     private void _step_40_updateRemoteFiles(){
         if(isCopyingZip()){
-            $.system.unzip(
+            $.sys.unzip(
                 $.joinPath($(cap.releasePath), "deploy.zip"), null
             );
         }
@@ -214,14 +213,14 @@ public abstract class BaseStrategy {
 
             srcPath = $(Variables.joinPath("symlinkSrc", cap.currentPath, entry.sourcePath));
 
-            $.system.link(srcPath, $(entry.destPath), entry.owner);
+            $.sys.link(srcPath, $(entry.destPath), entry.owner);
         }
 
         writeRevision();
     }
 
     protected Result writeRevision(){
-        return $.system.writeString($.joinPath(cap.releasePath, "REVISION"), $.var(cap.realRevision));
+        return $.sys.writeString($.joinPath(cap.releasePath, "REVISION"), $.var(cap.realRevision));
     }
 
     protected void step_40_updateRemoteFiles(){
@@ -242,9 +241,5 @@ public abstract class BaseStrategy {
 
     public SymlinkRules getSymlinkRules() {
         return symlinkRules;
-    }
-
-    public <T> T $(DynamicVariable<T> varName) {
-        return $.var(varName);
     }
 }

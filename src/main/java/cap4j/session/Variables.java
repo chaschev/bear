@@ -38,7 +38,7 @@ public class Variables {
     public static DynamicVariable<String> joinPath(String name, final DynamicVariable<String> root, final String... folders) {
         return strVar("").setDynamic(new VarFun<String>() {
             public String apply() {
-                return $.system.joinPath($.var(root), $.joinPath(folders));
+                return $.sys.joinPath($.var(root), $.joinPath(folders));
             }
         });
     }
@@ -50,7 +50,7 @@ public class Variables {
     public static DynamicVariable<String> joinPath(String name, final DynamicVariable... folders) {
         return strVar("").setDynamic(new VarFun<String>() {
             public String apply() {
-                return $.system.joinPath(Iterables.transform(Arrays.asList(folders), new Function<DynamicVariable, String>() {
+                return $.sys.joinPath(Iterables.transform(Arrays.asList(folders), new Function<DynamicVariable, String>() {
                     public String apply(DynamicVariable var) {
                         return $.var((DynamicVariable<String>) var);
                     }

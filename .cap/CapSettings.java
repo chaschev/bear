@@ -96,7 +96,7 @@ public class CapSettings extends ICapSettings {
 
                         final cap4j.cli.Script line;
 
-                        if (!$.system.exists(destPath)) {
+                        if (!$.sys.exists(destPath)) {
                             line = vcsCLI.checkout($.var(cap.revision), destPath, VcsCLI.emptyParams());
                         } else {
                             line = vcsCLI.sync($.var(cap.revision), destPath, VcsCLI.emptyParams());
@@ -104,7 +104,7 @@ public class CapSettings extends ICapSettings {
 
                         line.timeoutMs(600 * 1000);
 
-                        $.system.run(line, vcsCLI.passwordCallback());
+                        $.sys.run(line, vcsCLI.passwordCallback());
 
                         logger.info("done updating in {}", sw);
 
@@ -112,8 +112,8 @@ public class CapSettings extends ICapSettings {
 
                         String warPath = $.var(grails.releaseWarPath);
 
-                        if (!$.system.exists(warPath) || !$.var(global.getPlugin(Atocha.class).reuseWar)) {
-                            final GrailsBuildResult r = new GrailsBuilder($, global).run(null);
+                        if (!$.sys.exists(warPath) || !$.var(global.getPlugin(Atocha.class).reuseWar)) {
+                            final GrailsBuildResult r = new GrailsBuilder(global).run(null);
 
                             if (r.result.nok()) {
                                 throw new IllegalStateException("failed to build WAR");

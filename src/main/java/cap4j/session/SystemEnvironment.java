@@ -21,6 +21,7 @@ import cap4j.cli.Script;
 import cap4j.core.*;
 import cap4j.scm.CommandLineResult;
 import cap4j.scm.GitCLI;
+import cap4j.task.TaskRunner;
 import com.google.common.base.Joiner;
 import net.schmizz.sshj.connection.channel.direct.Session;
 import org.slf4j.Logger;
@@ -167,10 +168,13 @@ public abstract class SystemEnvironment {
 
     public abstract <T extends CommandLineResult> CommandLine<T> newCommandLine(Class<T> aClass);
 
-    public synchronized SessionContext ctx() {
-        if ($ == null) {
-            $ = new SessionContext(global, this);
-        }
+    public SessionContext newCtx(TaskRunner runner){
+        $ = new SessionContext(global, this, runner);
+        runner.$ = $;
+        return $;
+    }
+
+    public SessionContext ctx() {
         return $;
     }
 

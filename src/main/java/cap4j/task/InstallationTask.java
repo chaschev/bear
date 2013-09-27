@@ -22,23 +22,14 @@ import cap4j.core.SessionContext;
 /**
 * @author Andrey Chaschev chaschev@gmail.com
 */
-public abstract class InstallationTask<T extends TaskResult> extends Task<T>{
+public abstract class InstallationTask extends Task{
+    public InstallationTask(TaskDef parent, SessionContext $) {
+        super(parent, $);
+    }
+
     public abstract Dependency asInstalledDependency();
 
-    public InstallationTask() {
-    }
-
-    public InstallationTask(String name) {
-        super(name);
-    }
-
-    @Override
-    public InstallationTask<T> setCtx(SessionContext $) {
-        super.setCtx($);
-        return this;
-    }
-
-    private static final InstallationTask NOP_TASK = new InstallationTask("nop") {
+    private static final InstallationTask NOP_TASK = new InstallationTask(null, null) {
         @Override
         public Dependency asInstalledDependency() {
             return Dependency.NONE;

@@ -16,6 +16,7 @@
 
 package cap4j.task;
 
+import cap4j.core.Cap;
 import cap4j.core.SessionContext;
 import cap4j.core.GlobalContext;
 import cap4j.session.Result;
@@ -35,27 +36,28 @@ import static cap4j.session.Result.OK;
  */
 public class TaskRunner {
     private static final Logger logger = LoggerFactory.getLogger(TaskRunner.class);
-
-    LinkedHashSet<Task> tasksExecuted = new LinkedHashSet<Task>();
+    LinkedHashSet<TaskDef> tasksExecuted = new LinkedHashSet<TaskDef>();
 
     public SessionContext $;
-    public GlobalContext global;
+    public final GlobalContext global;
+    public final Cap cap;
 
     public TaskRunner(SessionContext $, GlobalContext global) {
         this.$ = $;
         this.global = global;
+        this.cap = global.cap;
     }
 
-    public Result run(Task<TaskResult> task) {
+    public Result run(TaskDef task) {
         return runWithDependencies(task);
     }
 
-    public Result run(Task... tasks) {
-        return run((List) Arrays.asList(tasks));
+    public Result run(TaskDef... tasks) {
+        return runMany((List) Arrays.asList(tasks));
     }
 
-    public Result run(Iterable<Task<TaskResult>> tasks) {
-        for (Task<TaskResult> task : tasks) {
+    public Result runMany(Iterable<TaskDef> tasks) {
+        for (TaskDef task : tasks) {
             final Result result = runWithDependencies(task);
 
             if (result != OK) {
@@ -66,50 +68,37 @@ public class TaskRunner {
         return OK;
     }
 
-    private void rollbackExecuted(Result result) {
-        if (result != OK) {
-            //todo fixme reverse!
-            try {
-                for (Task taskExecuted : tasksExecuted) {
-                    taskExecuted.onRollback();
-                }
-            } finally {
-                tasksExecuted.clear();
-            }
-        }
-    }
 
-    protected Result runWithDependencies(Task<TaskResult> task) {
-        logger.info("starting task '{}'", task.name);
+    //////
 
-        if (tasksExecuted.contains(task)) {
+    protected Result runWithDependencies(TaskDef taskDef) {
+        logger.info("starting task '{}'", taskDef.name);
+
+        if (tasksExecuted.contains(taskDef)) {
             return OK;
         }
 
-        task.$ = $;
-
         return Result.and(
-            runCollectionOfTasks(task.dependsOnTasks, task.name + ": depending tasks", false),
-            runCollectionOfTasks(task.beforeTasks, task.name + ": before tasks", false),
-            runMe(task),
-            runCollectionOfTasks(task.afterTasks, task.name + ": after tasks", false)
+            runCollectionOfTasks(taskDef.dependsOnTasks, taskDef.name + ": depending tasks", false),
+            runCollectionOfTasks(taskDef.beforeTasks, taskDef.name + ": before tasks", false),
+            runMe(taskDef),
+            runCollectionOfTasks(taskDef.afterTasks, taskDef.name + ": after tasks", false)
         );
     }
 
-    private Result runMe(Task<TaskResult> task) {
-        task.defineVars(global.console());
-
+    private Result runMe(TaskDef task) {
         return runCollectionOfTasks(Collections.singletonList(task), task.name + ": running myself", true);
     }
 
-    private Result runCollectionOfTasks(List<Task<TaskResult>> tasks, String desc, boolean thisIsMe) {
+    private Result runCollectionOfTasks(List<TaskDef> tasks, String desc, boolean thisIsMe) {
         if (!tasks.isEmpty() && !desc.isEmpty()) {
             logger.info(desc);
         }
 
         Result runResult = OK;
-        for (Task<TaskResult> task : tasks) {
-            if (!task.roles.isEmpty() && !task.hasRole($.system.getRoles())) {
+
+        for (TaskDef task : tasks) {
+            if (!task.roles.isEmpty() && !task.hasRole($.sys.getRoles())) {
                 continue;
             }
 
@@ -122,14 +111,13 @@ public class TaskRunner {
         return runResult;
     }
 
-    private Result _runSingleTask(Task<TaskResult> task, boolean thisIsMe) {
+    private Result _runSingleTask(TaskDef task, boolean thisIsMe) {
         Result result = null;
         try {
             if (!thisIsMe) {
                 result = runWithDependencies(task);
             } else {
-                task.setCtx($);
-                result = task.run(this).result;
+                result = task.newSession($).run(this).result;
             }
         } catch (Exception ignore) {
             logger.error("", ignore);
@@ -146,8 +134,8 @@ public class TaskRunner {
         return runResult;
     }
 
-    public void runRollback(Task<TaskResult> task) {
-        task.setCtx($);
+    public void runRollback(Task task) {
+        task.set$($);
         task.onRollback();
     }
 }

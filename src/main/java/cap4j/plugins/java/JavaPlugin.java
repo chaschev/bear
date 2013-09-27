@@ -50,28 +50,28 @@ public class JavaPlugin extends Plugin {
     public final InstallationTask setup = new InstallationTask() {
         @Override
         protected TaskResult run(TaskRunner runner) {
-            system.rm($.var(javaSharedBuildDirPath));
-            system.mkdirs($.var(javaSharedBuildDirPath));
+            sys.rm($.var(javaSharedBuildDirPath));
+            sys.mkdirs($.var(javaSharedBuildDirPath));
 
             final File localDFile = new File(global.localCtx.var(
-                system.isNativeUnix() ? javaLinuxDistributionPath : javaWindowsDistributionPath));
+                sys.isNativeUnix() ? javaLinuxDistributionPath : javaWindowsDistributionPath));
 
             if (!localDFile.exists()) {
                 throw new RuntimeException("expecting java distribution at " + localDFile.getAbsolutePath());
             }
 
-            system.upload($.var(javaDistributionPath), localDFile);
+            sys.upload($.var(javaDistributionPath), localDFile);
 
             final String distrName = $.var(javaDistributionName);
             if (distrName.endsWith("gz")) {
-                system.run(
-                    system.newCommandLine()
+                sys.run(
+                    sys.newCommandLine()
                         .timeoutSec(30)
                         .cd($.var(javaSharedBuildDirPath))
                         .addRaw("tar xvf").a(distrName)
                 );
             } else {
-                system.script()
+                sys.script()
                     .cd($.var(javaSharedBuildDirPath))
                     .line().addRaw("chmod u+x %s", distrName).build()
                     .line()
@@ -80,9 +80,9 @@ public class JavaPlugin extends Plugin {
                     .run();
             }
 
-            String jdkDirName = system.capture(String.format("cd %s && ls -w 1 | grep -v gz | grep -v bin", $.var(javaSharedBuildDirPath))).trim();
+            String jdkDirName = sys.capture(String.format("cd %s && ls -w 1 | grep -v gz | grep -v bin", $.var(javaSharedBuildDirPath))).trim();
 
-            system.run(system.script()
+            sys.run(sys.script()
                 .line().sudo().addRaw("rm -r /var/lib/java").build()
                 .line().sudo().addRaw("rm -r /var/lib/jdks/%s", jdkDirName).build()
                 .line().sudo().addRaw("mkdir -p /var/lib/jdks").build()

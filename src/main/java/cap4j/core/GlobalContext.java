@@ -17,11 +17,12 @@
 package cap4j.core;
 
 import cap4j.plugins.Plugin;
-import cap4j.plugins.PluginSessionContext;
+import cap4j.task.Task;
 import cap4j.session.DynamicVariable;
 import cap4j.session.GenericUnixLocalEnvironment;
 import cap4j.session.SystemEnvironment;
 import cap4j.session.Variables;
+import cap4j.task.TaskRunner;
 import cap4j.task.Tasks;
 import com.chaschev.chutils.util.Exceptions;
 import com.google.common.base.Predicates;
@@ -82,7 +83,7 @@ public class GlobalContext {
             return plugin;
         }
 
-        public <T extends Plugin<T>> PluginSessionContext<T> getSessionContext(Class<T> aClass, SessionContext $){
+        public <T extends Plugin<T>> Task<T> getSessionContext(Class<T> aClass, SessionContext $){
             try {
                 final T plugin = getPlugin(aClass);
 
@@ -124,7 +125,9 @@ public class GlobalContext {
     public final VariablesLayer localVars;
 
     public final SessionContext localCtx;
+
     public final Cap cap;
+
     protected Properties properties = new Properties();
 
     private GlobalContext() {
@@ -132,14 +135,13 @@ public class GlobalContext {
         local = SystemUtils.IS_OS_WINDOWS ?
             new GenericUnixLocalEnvironment("local", this) : new GenericUnixLocalEnvironment("local", this);
         localVars = SystemEnvironment.newSessionVars(this, local);
-        localCtx = new SessionContext(this, local);
+
+        final TaskRunner localRunner = new TaskRunner(null, this);
+
+        localCtx = local.newCtx(localRunner);
+
         tasks = new Tasks(this);
-
     }
-
-//    protected GlobalContext() {
-//
-//    }
 
     public VariablesLayer gvars() {
         return variablesLayer;
@@ -174,7 +176,7 @@ public class GlobalContext {
         return (T) plugins.get(pluginClass);
     }
 
-    public <T extends Plugin> PluginSessionContext<T> newPluginSession(Class<T> pluginClass, SessionContext $) {
+    public <T extends Plugin> Task<T> newPluginSession(Class<T> pluginClass, SessionContext $) {
         return plugins.getSessionContext(pluginClass, $);
     }
 

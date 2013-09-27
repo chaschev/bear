@@ -20,7 +20,7 @@ import cap4j.cli.CommandLine;
 import cap4j.cli.Script;
 import cap4j.core.GlobalContext;
 import cap4j.core.SessionContext;
-import cap4j.plugins.PluginSessionContext;
+import cap4j.task.Task;
 import cap4j.task.InstallationTask;
 import com.google.common.base.Function;
 import com.google.common.collect.Lists;
@@ -40,7 +40,7 @@ public class SvnCLI extends VcsCLI<SvnCLI> {
     }
 
     @Override
-    public PluginSessionContext<SvnCLI> newSession(SessionContext $) {
+    public Task<SvnCLI> newSession(SessionContext $) {
         return new SvnCLISession($);
     }
 
@@ -61,7 +61,7 @@ public class SvnCLI extends VcsCLI<SvnCLI> {
 
         @Override
         public Script checkout(String revision, String destination, Map<String, String> params) {
-            return $.system.script().line(commandPrefix("checkout", params)
+            return $.sys.script().line(commandPrefix("checkout", params)
                 .a("-r" + revision,
                     scmRepository(),
                     destination));
@@ -69,7 +69,7 @@ public class SvnCLI extends VcsCLI<SvnCLI> {
 
         @Override
         public Script sync(String revision, String destination, Map<String, String> params) {
-            return $.system.script().line(commandPrefix("switch", params)
+            return $.sys.script().line(commandPrefix("switch", params)
                 .a("-r" + revision,
                     scmRepository(),
                     destination));
@@ -83,7 +83,7 @@ public class SvnCLI extends VcsCLI<SvnCLI> {
         @SuppressWarnings("unchecked")
         @Override
         public Script<BranchInfoResult> queryRevision(String revision, Map<String, String> params) {
-            return $.system.script().line(commandPrefix("info", params)
+            return $.sys.script().line(commandPrefix("info", params)
                 .a("-r" + revision,
                     scmRepository())
                 .cd($(cap.releasePath))
@@ -100,7 +100,7 @@ public class SvnCLI extends VcsCLI<SvnCLI> {
 
         @Override
         public Script export(String revision, String destination, Map<String, String> params) {
-            return $.system.script().line(commandPrefix("export", params)
+            return $.sys.script().line(commandPrefix("export", params)
                 .a("-r" + revision,
                     scmRepository(),
                     destination));

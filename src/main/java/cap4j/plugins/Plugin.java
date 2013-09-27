@@ -19,7 +19,6 @@ package cap4j.plugins;
 import cap4j.core.Cap;
 import cap4j.core.DependencyResult;
 import cap4j.core.GlobalContext;
-import cap4j.core.SessionContext;
 import cap4j.session.DynamicVariable;
 import cap4j.task.InstallationTask;
 import com.chaschev.chutils.util.OpenBean2;
@@ -41,11 +40,7 @@ public abstract class Plugin<T extends Plugin> {
         name = getClass().getSimpleName();
     }
 
-    public PluginSessionContext<T> newSession(SessionContext $){
-        return new PluginSessionContext<T>($) {
 
-        };
-    }
 
     public static void nameVars(Object obj) {
         final Class<?> aClass = obj.getClass();

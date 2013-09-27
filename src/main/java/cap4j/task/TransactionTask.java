@@ -28,16 +28,16 @@ import java.util.List;
 /**
  * @author Andrey Chaschev chaschev@gmail.com
  */
-public class TransactionTask extends Task {
+public class TransactionTask extends TaskDef {
     private static final Logger logger = LoggerFactory.getLogger(GenericUnixRemoteEnvironment.class);
 
-    List<Task<TaskResult>> tasks;
+    List<TaskDef> tasks;
 
-    public TransactionTask(List<Task<TaskResult>> tasks) {
+    public TransactionTask(List<TaskDef> tasks) {
         this.tasks = tasks;
     }
 
-    public TransactionTask(Task... tasks) {
+    public TransactionTask(TaskDef... tasks) {
         this.tasks = (ArrayList) Lists.newArrayList(tasks);
         name = "transaction of " + tasks.length + " tasks";
     }
@@ -46,7 +46,7 @@ public class TransactionTask extends Task {
     protected TaskResult run(TaskRunner runner) {
         Result result = null;
         try {
-            result = runner.run(tasks);
+            result = runner.runMany(tasks);
         } catch (Exception e) {
             logger.warn("", e);
             result = Result.ERROR;
@@ -54,7 +54,7 @@ public class TransactionTask extends Task {
 
         if (result != Result.OK) {
             //let's keep it simple
-            for (Task<TaskResult> task : tasks) {
+            for (TaskDef task : tasks) {
                 runner.runRollback(task);
             }
         }
