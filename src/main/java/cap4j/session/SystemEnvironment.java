@@ -20,7 +20,7 @@ import cap4j.cli.CommandLine;
 import cap4j.cli.Script;
 import cap4j.core.*;
 import cap4j.scm.CommandLineResult;
-import cap4j.scm.GitCLI;
+import cap4j.scm.GitCLIPlugin;
 import cap4j.task.TaskRunner;
 import com.google.common.base.Joiner;
 import net.schmizz.sshj.connection.channel.direct.Session;
@@ -77,7 +77,7 @@ public abstract class SystemEnvironment {
             @Override
             public void act(Session session, Session.Shell shell) throws Exception {
                 if (text.contains("password")) {
-                    GitCLI.answer(session, password);
+                    GitCLIPlugin.answer(session, password);
                 }
             }
         };

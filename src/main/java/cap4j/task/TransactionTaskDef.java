@@ -16,6 +16,7 @@
 
 package cap4j.task;
 
+import cap4j.core.SessionContext;
 import cap4j.session.GenericUnixRemoteEnvironment;
 import cap4j.session.Result;
 import com.google.common.collect.Lists;
@@ -28,37 +29,42 @@ import java.util.List;
 /**
  * @author Andrey Chaschev chaschev@gmail.com
  */
-public class TransactionTask extends TaskDef {
+public class TransactionTaskDef extends TaskDef {
     private static final Logger logger = LoggerFactory.getLogger(GenericUnixRemoteEnvironment.class);
 
     List<TaskDef> tasks;
 
-    public TransactionTask(List<TaskDef> tasks) {
+    public TransactionTaskDef(List<TaskDef> tasks) {
         this.tasks = tasks;
     }
 
-    public TransactionTask(TaskDef... tasks) {
+    public TransactionTaskDef(TaskDef... tasks) {
         this.tasks = (ArrayList) Lists.newArrayList(tasks);
         name = "transaction of " + tasks.length + " tasks";
     }
 
     @Override
-    protected TaskResult run(TaskRunner runner) {
-        Result result = null;
-        try {
-            result = runner.runMany(tasks);
-        } catch (Exception e) {
-            logger.warn("", e);
-            result = Result.ERROR;
-        }
+    public Task newSession(SessionContext $) {
+        return new Task(this, $) {
+            @Override
+            protected TaskResult run(TaskRunner runner) {
+                Result result = null;
+                try {
+                    result = runner.runMany(tasks);
+                } catch (Exception e) {
+                    logger.warn("", e);
+                    result = Result.ERROR;
+                }
 
-        if (result != Result.OK) {
-            //let's keep it simple
-            for (TaskDef task : tasks) {
-                runner.runRollback(task);
+                if (result != Result.OK) {
+                    //let's keep it simple
+                    for (TaskDef task : tasks) {
+                        runner.runRollback(task);
+                    }
+                }
+
+                return new TaskResult(result);
             }
-        }
-
-        return new TaskResult(result);
+        };
     }
 }

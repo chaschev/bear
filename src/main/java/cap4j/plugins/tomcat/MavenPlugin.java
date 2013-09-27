@@ -16,11 +16,13 @@
 
 package cap4j.plugins.tomcat;
 
+import cap4j.core.DependencyResult;
 import cap4j.core.GlobalContext;
+import cap4j.core.SessionContext;
 import cap4j.core.VarFun;
 import cap4j.plugins.ZippedToolPlugin;
 import cap4j.task.InstallationTask;
-import cap4j.task.TaskResult;
+import cap4j.task.InstallationTaskDef;
 import cap4j.task.TaskRunner;
 import org.apache.commons.lang3.StringUtils;
 
@@ -54,36 +56,41 @@ public class MavenPlugin extends ZippedToolPlugin {
 
     }
 
-    public final InstallationTask setup = new ZippedToolTask("setup maven") {
+    public final InstallationTaskDef<ZippedTool> install = new ZippedToolTaskDef<ZippedTool>() {
         @Override
-        protected TaskResult run(TaskRunner runner) {
-            clean();
+        public ZippedTool newSession(SessionContext $) {
+            return new ZippedTool(this, $) {
+                @Override
+                protected DependencyResult run(TaskRunner runner) {
+                    clean();
 
-            download();
+                    download();
 
-            buildExtractionToHomeDir();
+                    buildExtractionToHomeDir();
 
-            shortCut("mvn", "mvn");
+                    shortCut("mvn", "mvn");
 
-            return extractAndVerify();
-        }
+                    return extractAndVerify();
+                }
 
-        @Override
-        protected String extractVersion(String output) {
-            return StringUtils.substringBetween(
-                output,
-                "Apache Maven ", " ");
-        }
+                @Override
+                protected String extractVersion(String output) {
+                    return StringUtils.substringBetween(
+                        output,
+                        "Apache Maven ", " ");
+                }
 
-        @Override
-        protected String createVersionCommandLine() {
-            return "mvn --version";
+                @Override
+                protected String createVersionCommandLine() {
+                    return "mvn --version";
+                }
+            };
         }
     };
 
 
     @Override
-    public InstallationTask getSetup() {
-        return setup;
+    public InstallationTaskDef<? extends InstallationTask> getInstall() {
+        return install;
     }
 }

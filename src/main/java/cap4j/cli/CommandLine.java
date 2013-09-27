@@ -17,7 +17,7 @@
 package cap4j.cli;
 
 import cap4j.scm.CommandLineResult;
-import cap4j.scm.VcsCLI;
+import cap4j.scm.VcsCLIPlugin;
 import cap4j.session.Result;
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
@@ -114,37 +114,37 @@ public abstract class CommandLine<T extends CommandLineResult> {
     }
 
     public CommandLine<T> semicolon() {
-        strings.add(new VcsCLI.CommandLineOperator(";"));
+        strings.add(new VcsCLIPlugin.CommandLineOperator(";"));
         return this;
     }
 
     public CommandLine<T> redirectFrom(String path) {
-        strings.add(new VcsCLI.CommandLineOperator("<" + path));
+        strings.add(new VcsCLIPlugin.CommandLineOperator("<" + path));
         return this;
     }
 
     public CommandLine<T> redirectTo(String path) {
-        strings.add(new VcsCLI.CommandLineOperator(">" + path));
+        strings.add(new VcsCLIPlugin.CommandLineOperator(">" + path));
         return this;
     }
 
     public CommandLine<T> addRaw(String format, String... args) {
-        strings.add(new VcsCLI.CommandLineOperator(String.format(format, args)));
+        strings.add(new VcsCLIPlugin.CommandLineOperator(String.format(format, args)));
         return this;
     }
 
     public CommandLine<T> addRaw(String s) {
-        strings.add(new VcsCLI.CommandLineOperator(s));
+        strings.add(new VcsCLIPlugin.CommandLineOperator(s));
         return this;
     }
 
     public CommandLine<T> stty() {
-        strings.add(new VcsCLI.CommandLineOperator("stty -echo;"));
+        strings.add(new VcsCLIPlugin.CommandLineOperator("stty -echo;"));
         return this;
     }
 
     public CommandLine<T> sudo() {
-        strings.add(new VcsCLI.CommandLineOperator("stty -echo; sudo "));
+        strings.add(new VcsCLIPlugin.CommandLineOperator("stty -echo; sudo "));
         return this;
     }
 
@@ -163,12 +163,12 @@ public abstract class CommandLine<T extends CommandLineResult> {
     }
 
     public CommandLine<T> bash() {
-        strings.add(new VcsCLI.CommandLineOperator("bash -c"));
+        strings.add(new VcsCLIPlugin.CommandLineOperator("bash -c"));
         return this;
     }
 
     public CommandLine<T> setVar(String k, String v) {
-        strings.add(new VcsCLI.CommandLineOperator("export " + k + "=" + v + "; "));
+        strings.add(new VcsCLIPlugin.CommandLineOperator("export " + k + "=" + v + "; "));
         return this;
     }
 

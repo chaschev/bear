@@ -20,8 +20,8 @@ import cap4j.cli.CommandLine;
 import cap4j.cli.Script;
 import cap4j.core.GlobalContext;
 import cap4j.core.SessionContext;
-import cap4j.task.Task;
-import cap4j.task.InstallationTask;
+import cap4j.task.InstallationTaskDef;
+import cap4j.task.TaskDef;
 import com.google.common.base.Function;
 import com.google.common.collect.Lists;
 import org.apache.commons.lang3.StringUtils;
@@ -34,19 +34,29 @@ import java.util.Map;
 /**
  * @author Andrey Chaschev chaschev@gmail.com
  */
-public class SvnCLI extends VcsCLI<SvnCLI> {
-    public SvnCLI(GlobalContext global) {
+public class SvnCLIPlugin extends VcsCLIPlugin<SvnCLIPlugin> {
+    public SvnCLIPlugin(GlobalContext global) {
         super(global);
     }
 
+    public final TaskDef<SvnCLISession> SVN_STUB_TASK = new TaskDef<SvnCLISession>() {
+        @Override
+        public SvnCLISession newSession(SessionContext $) {
+            return SvnCLIPlugin.this.newSession($);
+        }
+    };
+
+
     @Override
-    public Task<SvnCLI> newSession(SessionContext $) {
-        return new SvnCLISession($);
+    public SvnCLISession newSession(SessionContext $) {
+        return new SvnCLISession(SVN_STUB_TASK, $);
     }
 
-    public class SvnCLISession extends Session<SvnCLI> {
-        public SvnCLISession(SessionContext $) {
-            super($);
+    public class SvnCLISession extends Session {
+
+
+        protected SvnCLISession(TaskDef parent, SessionContext $) {
+            super(parent, $);
         }
 
         @Override
@@ -166,8 +176,8 @@ public class SvnCLI extends VcsCLI<SvnCLI> {
     }
 
     @Override
-    public InstallationTask getSetup() {
-        return InstallationTask.nop();
+    public InstallationTaskDef getInstall() {
+        return InstallationTaskDef.EMPTY;
     }
 
     public static final class LsResult extends CommandLineResult {

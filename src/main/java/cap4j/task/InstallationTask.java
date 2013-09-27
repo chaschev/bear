@@ -34,6 +34,11 @@ public abstract class InstallationTask extends Task{
         public Dependency asInstalledDependency() {
             return Dependency.NONE;
         }
+
+        @Override
+        protected TaskResult run(TaskRunner runner) {
+            return TaskResult.OK;
+        }
     };
 
     public static InstallationTask nop() {

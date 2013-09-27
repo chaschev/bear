@@ -6,7 +6,7 @@ import cap4j.plugins.HavingContext;
 /**
  * @author Andrey Chaschev chaschev@gmail.com
  */
-public class Task extends HavingContext<Task> {
+public abstract class Task extends HavingContext<Task> {
     private TaskDef parent;
 
     public Task(TaskDef parent, SessionContext $) {
@@ -15,12 +15,13 @@ public class Task extends HavingContext<Task> {
         this.parent = parent;
     }
 
-    protected TaskResult run(TaskRunner runner) {
-        throw new UnsupportedOperationException("todo");
-    }
+    protected abstract TaskResult run(TaskRunner runner) ;
 
     private static final Task NOP_TASK = new Task(null, null) {
-
+        @Override
+        protected TaskResult run(TaskRunner runner) {
+            return TaskResult.OK;
+        }
     };
 
     public static Task nop() {

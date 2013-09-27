@@ -16,13 +16,14 @@
 
 package cap4j.plugins.java;
 
-import cap4j.core.Dependency;
 import cap4j.core.GlobalContext;
+import cap4j.core.SessionContext;
 import cap4j.plugins.Plugin;
 import cap4j.session.DynamicVariable;
 import cap4j.session.SystemEnvironment;
 import cap4j.session.Variables;
-import cap4j.task.InstallationTask;
+import cap4j.task.InstallationTaskDef;
+import cap4j.task.Task;
 import cap4j.task.TaskResult;
 import cap4j.task.TaskRunner;
 
@@ -47,63 +48,68 @@ public class JavaPlugin extends Plugin {
         javaDistributionName,
         javaDistributionPath;
 
-    public final InstallationTask setup = new InstallationTask() {
+    public final InstallationTaskDef setup = new InstallationTaskDef() {
         @Override
-        protected TaskResult run(TaskRunner runner) {
-            sys.rm($.var(javaSharedBuildDirPath));
-            sys.mkdirs($.var(javaSharedBuildDirPath));
+        public Task newSession(SessionContext $) {
+            return new Task(this, $) {
+                @Override
+                protected TaskResult run(TaskRunner runner) {
+                    $.sys.rm($.var(javaSharedBuildDirPath));
+                    $.sys.mkdirs($.var(javaSharedBuildDirPath));
 
-            final File localDFile = new File(global.localCtx.var(
-                sys.isNativeUnix() ? javaLinuxDistributionPath : javaWindowsDistributionPath));
+                    final File localDFile = new File(global.localCtx.var(
+                        $.sys.isNativeUnix() ? javaLinuxDistributionPath : javaWindowsDistributionPath));
 
-            if (!localDFile.exists()) {
-                throw new RuntimeException("expecting java distribution at " + localDFile.getAbsolutePath());
-            }
+                    if (!localDFile.exists()) {
+                        throw new RuntimeException("expecting java distribution at " + localDFile.getAbsolutePath());
+                    }
 
-            sys.upload($.var(javaDistributionPath), localDFile);
+                    $.sys.upload($.var(javaDistributionPath), localDFile);
 
-            final String distrName = $.var(javaDistributionName);
-            if (distrName.endsWith("gz")) {
-                sys.run(
-                    sys.newCommandLine()
-                        .timeoutSec(30)
-                        .cd($.var(javaSharedBuildDirPath))
-                        .addRaw("tar xvf").a(distrName)
-                );
-            } else {
-                sys.script()
-                    .cd($.var(javaSharedBuildDirPath))
-                    .line().addRaw("chmod u+x %s", distrName).build()
-                    .line()
-                    .timeoutSec(30)
-                    .addRaw("./%s", distrName).build()
-                    .run();
-            }
+                    final String distrName = $.var(javaDistributionName);
+                    if (distrName.endsWith("gz")) {
+                        $.sys.run(
+                            $.sys.newCommandLine()
+                                .timeoutSec(30)
+                                .cd($.var(javaSharedBuildDirPath))
+                                .addRaw("tar xvf").a(distrName)
+                        );
+                    } else {
+                        $.sys.script()
+                            .cd($.var(javaSharedBuildDirPath))
+                            .line().addRaw("chmod u+x %s", distrName).build()
+                            .line()
+                            .timeoutSec(30)
+                            .addRaw("./%s", distrName).build()
+                            .run();
+                    }
 
-            String jdkDirName = sys.capture(String.format("cd %s && ls -w 1 | grep -v gz | grep -v bin", $.var(javaSharedBuildDirPath))).trim();
+                    String jdkDirName = $.sys.capture(String.format("cd %s && ls -w 1 | grep -v gz | grep -v bin", $.var(javaSharedBuildDirPath))).trim();
 
-            sys.run(sys.script()
-                .line().sudo().addRaw("rm -r /var/lib/java").build()
-                .line().sudo().addRaw("rm -r /var/lib/jdks/%s", jdkDirName).build()
-                .line().sudo().addRaw("mkdir -p /var/lib/jdks").build()
-                .line().sudo().addRaw("mv %s/%s /var/lib/jdks", $.var(javaSharedBuildDirPath), jdkDirName).build()
-                .line().sudo().addRaw("ln -s /var/lib/jdks/%s /var/lib/java", jdkDirName).build()
-                .line().sudo().addRaw("chmod -R g+r,o+r /var/lib/java").build()
-                .line().sudo().addRaw("chmod u+x,g+x,o+x /var/lib/java/bin/*").build()
-                .line().sudo().addRaw("rm /usr/bin/java").build()
-                .line().sudo().addRaw("ln -s /var/lib/java/bin/java /usr/bin/java").build()
-                .line().sudo().addRaw("rm /usr/bin/javac").build()
-                .line().sudo().addRaw("ln -s /var/lib/java/bin/javac /usr/bin/javac").build(),
-                SystemEnvironment.passwordCallback($.var(cap.sshPassword))
-            );
+                    $.sys.run($.sys.script()
+                        .line().sudo().addRaw("rm -r /var/lib/java").build()
+                        .line().sudo().addRaw("rm -r /var/lib/jdks/%s", jdkDirName).build()
+                        .line().sudo().addRaw("mkdir -p /var/lib/jdks").build()
+                        .line().sudo().addRaw("mv %s/%s /var/lib/jdks", $.var(javaSharedBuildDirPath), jdkDirName).build()
+                        .line().sudo().addRaw("ln -s /var/lib/jdks/%s /var/lib/java", jdkDirName).build()
+                        .line().sudo().addRaw("chmod -R g+r,o+r /var/lib/java").build()
+                        .line().sudo().addRaw("chmod u+x,g+x,o+x /var/lib/java/bin/*").build()
+                        .line().sudo().addRaw("rm /usr/bin/java").build()
+                        .line().sudo().addRaw("ln -s /var/lib/java/bin/java /usr/bin/java").build()
+                        .line().sudo().addRaw("rm /usr/bin/javac").build()
+                        .line().sudo().addRaw("ln -s /var/lib/java/bin/javac /usr/bin/javac").build(),
+                        SystemEnvironment.passwordCallback($.var(cap.sshPassword))
+                    );
 
-            return TaskResult.OK;
+                    return TaskResult.OK;
+                }
+
+
+            };
+
         }
 
-        @Override
-        public Dependency asInstalledDependency() {
-            return Dependency.NONE;
-        }
+
     };
 
 
@@ -120,7 +126,7 @@ public class JavaPlugin extends Plugin {
 
 
     @Override
-    public InstallationTask getSetup() {
+    public InstallationTaskDef getInstall() {
         return setup;
     }
 }

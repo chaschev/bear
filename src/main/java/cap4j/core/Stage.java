@@ -22,9 +22,7 @@ import cap4j.session.Result;
 import cap4j.session.SystemEnvironment;
 import cap4j.session.SystemEnvironments;
 import cap4j.strategy.BaseStrategy;
-import cap4j.task.Task;
-import cap4j.task.TaskResult;
-import cap4j.task.TaskRunner;
+import cap4j.task.*;
 import com.chaschev.chutils.util.OpenBean2;
 import com.google.common.base.Predicates;
 import com.google.common.collect.Iterables;
@@ -54,7 +52,7 @@ public class Stage {
      */
     public void run() {
         final String var = global.localCtx.var(global.cap.task);
-        Task task = (Task) OpenBean2.getFieldValue2(global.tasks, var);
+        TaskDef task = (TaskDef) OpenBean2.getFieldValue2(global.tasks, var);
         runTask(task);
     }
 
@@ -75,14 +73,15 @@ public class Stage {
                     $.sys.connect();
 
                     if ($.var(environment.cap.verifyPlugins)) {
-                        DependencyResult r  = new DependencyResult(Result.OK);
+                        DependencyResult r = new DependencyResult(Result.OK);
 
                         for (Plugin plugin : global.getGlobalPlugins()) {
                             r.join(plugin.checkPluginDependencies());
 
-                            if(!task.isSetupTask()){
-                                runner.run(plugin.getSetup()
-                                    .asInstalledDependency());
+                            if (!task.isSetupTask()) {
+                                r.join(plugin.getInstall().newSession($)
+                                    .asInstalledDependency().checkDeps());
+
 //                                plugin.newSession($).
 //                                r.join(plugin.getSetup()
 //                                    .asInstalledDependency()

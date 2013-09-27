@@ -21,11 +21,14 @@ import cap4j.cli.Script;
 import cap4j.core.GlobalContext;
 import cap4j.core.SessionContext;
 import cap4j.plugins.Plugin;
-import cap4j.task.Task;
 import cap4j.session.DynamicVariable;
 import cap4j.session.GenericUnixRemoteEnvironment;
 import cap4j.session.SystemEnvironment;
 import cap4j.session.Variables;
+import cap4j.task.Task;
+import cap4j.task.TaskDef;
+import cap4j.task.TaskResult;
+import cap4j.task.TaskRunner;
 
 import java.util.Collections;
 import java.util.Map;
@@ -33,9 +36,9 @@ import java.util.Map;
 /**
  * @author Andrey Chaschev chaschev@gmail.com
  */
-public abstract class VcsCLI<T extends VcsCLI> extends Plugin<T> {
+public abstract class VcsCLIPlugin<T extends VcsCLIPlugin> extends Plugin {
 
-    protected VcsCLI(GlobalContext global) {
+    protected VcsCLIPlugin(GlobalContext global) {
         super(global);
     }
 
@@ -56,9 +59,16 @@ public abstract class VcsCLI<T extends VcsCLI> extends Plugin<T> {
         return Collections.emptyMap();
     }
 
-    public abstract class Session<T extends VcsCLI> extends Task<T> {
-        public Session(SessionContext $) {
-            super($);
+    public abstract Session newSession(SessionContext $);
+
+    public abstract class Session extends Task {
+        protected Session(TaskDef parent, SessionContext $) {
+            super(parent, $);
+        }
+
+        @Override
+        protected TaskResult run(TaskRunner runner) {
+            throw new UnsupportedOperationException("VCS task cannot be run");
         }
 
         public Script checkout(String revision, String destination, Map<String, String> params) {
@@ -116,7 +126,7 @@ public abstract class VcsCLI<T extends VcsCLI> extends Plugin<T> {
             return SystemEnvironment.passwordCallback($.var(cap.vcsPassword));
         }
 
-        public CommandLine<SvnCLI.LsResult> ls(String path) {
+        public CommandLine<SvnCLIPlugin.LsResult> ls(String path) {
             return ls(path, emptyParams());
         }
 

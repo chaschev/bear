@@ -20,7 +20,7 @@ import cap4j.core.Cap;
 import cap4j.core.GlobalContext;
 import cap4j.core.SessionContext;
 import cap4j.plugins.Plugin;
-import cap4j.scm.VcsCLI;
+import cap4j.scm.VcsCLIPlugin;
 import cap4j.session.Result;
 import com.google.common.base.Preconditions;
 import org.apache.commons.lang3.time.StopWatch;
@@ -60,7 +60,7 @@ public class Tasks {
     public final TaskDef setup = new TaskDef() {
         @Override
         public Task newSession(SessionContext $) {
-            return new Task(deploy, $) {
+            return new Task(setup, $) {
                 @Override
                 protected TaskResult run(TaskRunner runner) {
                     final String appLogs = $(cap.appLogsPath);
@@ -83,10 +83,10 @@ public class Tasks {
 
                     if ($.var(cap.verifyPlugins)) {
                         for (Plugin plugin : global.getGlobalPlugins()) {
-                            if (plugin.getSetup().setCtx($).asInstalledDependency().checkDeps().result.nok()) {
+                            if (plugin.getInstall().setCtx($).asInstalledDependency().checkDeps().result.nok()) {
                                 if ($(cap.autoInstallPlugins)) {
                                     $.log("plugin %s was not installed. installing it...", plugin);
-                                    runner.run(plugin.getSetup());
+                                    runner.run(plugin.getInstall());
                                 } else {
                                     $.warn("plugin %s was not installed (autoSetup is off)", plugin);
                                 }
@@ -103,10 +103,10 @@ public class Tasks {
     public final TaskDef update = new TaskDef() {
         @Override
         public Task newSession(SessionContext $) {
-            return new Task(deploy, $) {
+            return new Task(update, $) {
                 @Override
                 protected TaskResult run(TaskRunner runner) {
-                    return new TaskResult(runner.run(new TransactionTask(
+                    return new TaskResult(runner.run(new TransactionTaskDef(
                         updateCode,
                         createSymlink
                     )));
@@ -118,7 +118,7 @@ public class Tasks {
     public final TaskDef updateCode = new TaskDef() {
         @Override
         public Task newSession(SessionContext $) {
-            return new Task(deploy, $) {
+            return new Task(updateCode, $) {
                 @Override
                 protected TaskResult run(TaskRunner runner) {
                     return new TaskResult(
@@ -140,7 +140,7 @@ public class Tasks {
     public final TaskDef finalizeTouchCode = new TaskDef() {
         @Override
         public Task newSession(SessionContext $) {
-            return new Task(deploy, $) {
+            return new Task(finalizeTouchCode, $) {
                 @Override
                 protected TaskResult run(TaskRunner runner) {
                     $.sys.chmod("g+w", true, $(cap.getLatestReleasePath));
@@ -154,7 +154,7 @@ public class Tasks {
     public final TaskDef createSymlink = new TaskDef() {
         @Override
         public Task newSession(SessionContext $) {
-            return new Task(deploy, $) {
+            return new Task(createSymlink, $) {
                 @Override
                 protected TaskResult run(TaskRunner runner) {
                     return new TaskResult($.sys.link($(cap.getLatestReleasePath), $(cap.currentPath)));
@@ -175,7 +175,7 @@ public class Tasks {
     public final TaskDef vcsUpdate = new TaskDef() {
         @Override
         public Task newSession(SessionContext $) {
-            return new Task(deploy, $) {
+            return new Task(vcsUpdate, $) {
                 @Override
                 protected TaskResult run(TaskRunner runner) {
                     $.log("updating the project, please wait...");
@@ -183,16 +183,16 @@ public class Tasks {
                     StopWatch sw = new StopWatch();
                     sw.start();
 
-                    final VcsCLI.Session vcsCLI = $(cap.vcs);
+                    final VcsCLIPlugin.Session vcsCLI = $(cap.vcs);
 
                     final String destPath = $(cap.vcsBranchLocalPath);
 
                     final cap4j.cli.Script line;
 
                     if (!$.sys.exists(destPath)) {
-                        line = vcsCLI.checkout($(cap.revision), destPath, VcsCLI.emptyParams());
+                        line = vcsCLI.checkout($(cap.revision), destPath, VcsCLIPlugin.emptyParams());
                     } else {
-                        line = vcsCLI.sync($(cap.revision), destPath, VcsCLI.emptyParams());
+                        line = vcsCLI.sync($(cap.revision), destPath, VcsCLIPlugin.emptyParams());
                     }
 
                     line.timeoutMs(600 * 1000);

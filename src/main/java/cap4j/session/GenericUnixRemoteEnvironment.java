@@ -22,9 +22,9 @@ import cap4j.core.Cap;
 import cap4j.core.GlobalContext;
 import cap4j.core.MarkedBuffer;
 import cap4j.scm.CommandLineResult;
-import cap4j.scm.GitCLI;
+import cap4j.scm.GitCLIPlugin;
 import cap4j.scm.RemoteCommandLine;
-import cap4j.scm.VcsCLI;
+import cap4j.scm.VcsCLIPlugin;
 import com.google.common.collect.Lists;
 import net.schmizz.sshj.SSHClient;
 import net.schmizz.sshj.common.IOUtils;
@@ -164,7 +164,7 @@ public class GenericUnixRemoteEnvironment extends SystemEnvironment {
                 List strings = line.strings;
 
                 for (Object string : strings) {
-                    if (string instanceof VcsCLI.CommandLineOperator) {
+                    if (string instanceof VcsCLIPlugin.CommandLineOperator) {
                         sb.append(string);
                     } else {
                         sb.append('"').append(string).append('"');
@@ -197,7 +197,7 @@ public class GenericUnixRemoteEnvironment extends SystemEnvironment {
                             if (text.contains("sudo") && text.contains("password")) {
                                 buffer.markStart();
 
-                                GitCLI.answer(session, ctx().var(cap.sshPassword));
+                                GitCLIPlugin.answer(session, ctx().var(cap.sshPassword));
                             }
                         }
                     }

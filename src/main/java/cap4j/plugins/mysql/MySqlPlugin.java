@@ -16,18 +16,12 @@
 
 package cap4j.plugins.mysql;
 
-import cap4j.core.Cap;
-import cap4j.core.Dependency;
-import cap4j.core.GlobalContext;
-import cap4j.core.VarFun;
+import cap4j.core.*;
 import cap4j.plugins.Plugin;
 import cap4j.scm.CommandLineResult;
-import cap4j.scm.GitCLI;
+import cap4j.scm.GitCLIPlugin;
 import cap4j.session.*;
-import cap4j.task.InstallationTask;
-import cap4j.task.Task;
-import cap4j.task.TaskResult;
-import cap4j.task.TaskRunner;
+import cap4j.task.*;
 import net.schmizz.sshj.connection.channel.direct.Session;
 import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTime;
@@ -85,51 +79,51 @@ public class MySqlPlugin extends Plugin {
         super(global);
     }
 
-    public final InstallationTask setup = new InstallationTask() {
+    public final InstallationTaskDef setup = new InstallationTaskDef() {
         @Override
-        protected TaskResult run(TaskRunner runner) {
-            final Version version = computeRealClientVersion(sys);
+        public Task newSession(SessionContext $) {
+            return new Task(this, $) {
+                @Override
+                protected TaskResult run(TaskRunner runner) {
+                    final Version version = computeRealClientVersion($.sys);
 
-            final boolean installedVersionOk = version != null && $.var(getVersion).matches(version);
+                    final boolean installedVersionOk = version != null && $.var(getVersion).matches(version);
 
-            Result r = Result.OK;
+                    Result r = Result.OK;
 
-            if (!installedVersionOk) {
-                sys.sudo().run(sys.newCommandLine().sudo().addSplit("rpm -Uvh http://mirror.webtatic.com/yum/el6/latest.rpm"));
-                r = sys.getPackageManager().installPackage(new SystemEnvironment.PackageInfo($.var(clientPackage))).result;
-            }
+                    if (!installedVersionOk) {
+                        $.sys.sudo().run($.sys.newCommandLine().sudo().addSplit("rpm -Uvh http://mirror.webtatic.com/yum/el6/latest.rpm"));
+                        r = $.sys.getPackageManager().installPackage(new SystemEnvironment.PackageInfo($.var(clientPackage))).result;
+                    }
 
-            Version serverVersion = computeRealServerVersion(runner);
+                    Version serverVersion = computeRealServerVersion(runner);
 
-            if (serverVersion == null) {
-                r = sys.getPackageManager().installPackage(new SystemEnvironment.PackageInfo($.var(serverPackage))).result;
-            }
+                    if (serverVersion == null) {
+                        r = $.sys.getPackageManager().installPackage(new SystemEnvironment.PackageInfo($.var(serverPackage))).result;
+                    }
 
-            sys.sudo().run(sys.newCommandLine().timeoutSec(30).sudo().addSplit("service mysqld start"));
+                    $.sys.sudo().run($.sys.newCommandLine().timeoutSec(30).sudo().addSplit("service mysqld start"));
 
-            sys.sudo().run(sys.newCommandLine().sudo().addSplit(MessageFormat.format("mysqladmin -u {0} password", $.var(MySqlPlugin.this.adminUser))).addRaw("'" + $.var(MySqlPlugin.this.adminPassword) + "'"));
-            sys.sudo().run(sys.newCommandLine().sudo().addSplit(MessageFormat.format("mysqladmin -u {0} -h {1} password",
-                $.var(MySqlPlugin.this.adminUser), $.var(cap.sessionHostname))).addRaw("'" + $.var(MySqlPlugin.this.adminPassword) + "'"));
+                    $.sys.sudo().run($.sys.newCommandLine().sudo().addSplit(MessageFormat.format("mysqladmin -u {0} password", $.var(MySqlPlugin.this.adminUser))).addRaw("'" + $.var(MySqlPlugin.this.adminPassword) + "'"));
+                    $.sys.sudo().run($.sys.newCommandLine().sudo().addSplit(MessageFormat.format("mysqladmin -u {0} -h {1} password",
+                        $.var(MySqlPlugin.this.adminUser), $.var(cap.sessionHostname))).addRaw("'" + $.var(MySqlPlugin.this.adminPassword) + "'"));
 
-            final String createDatabaseSql = MessageFormat.format(
-                "CREATE DATABASE {0};\n" +
-                    "GRANT ALL PRIVILEGES ON {0}.* TO {1}@localhost IDENTIFIED BY '{2}';\n",
-                $.var(MySqlPlugin.this.dbName),
-                $.var(MySqlPlugin.this.user),
-                $.var(MySqlPlugin.this.password)
-            );
+                    final String createDatabaseSql = MessageFormat.format(
+                        "CREATE DATABASE {0};\n" +
+                            "GRANT ALL PRIVILEGES ON {0}.* TO {1}@localhost IDENTIFIED BY '{2}';\n",
+                        $.var(MySqlPlugin.this.dbName),
+                        $.var(MySqlPlugin.this.user),
+                        $.var(MySqlPlugin.this.password)
+                    );
 
-            r = Result.and(r, runScript(runner, createDatabaseSql,
-                $.var(MySqlPlugin.this.adminUser),
-                $.var(MySqlPlugin.this.adminPassword)
-            ).result);
+                    r = Result.and(r, runScript(runner, createDatabaseSql,
+                        $.var(MySqlPlugin.this.adminUser),
+                        $.var(MySqlPlugin.this.adminPassword)
+                    ).result);
 
-            return new TaskResult(r);
-        }
-
-        @Override
-        public Dependency asInstalledDependency() {
-            return Dependency.NONE;
+                    return new TaskResult(r);
+                }
+            };
         }
     };
 
@@ -166,64 +160,88 @@ public class MySqlPlugin extends Plugin {
     }
 
 
-    public final Task getUsers = new Task() {
+    public final TaskDef getUsers = new TaskDef() {
         @Override
-        protected TaskResult run(TaskRunner runner) {
-            return new TaskResult(runScript(runner, "SELECT User FROM mysql.user;"));
+        public Task newSession(SessionContext $) {
+            return new Task(this, $) {
+                @Override
+                protected TaskResult run(TaskRunner runner) {
+                    return new TaskResult(runScript(runner, "SELECT User FROM mysql.user;"));
+                }
+            };
         }
     };
 
-    public final Task runScript = new Task() {
-        @Override
-        protected TaskResult run(TaskRunner runner) {
-            final String s = Question.freeQuestion("Enter sql to execute: ");
+    public final TaskDef runScript = new TaskDef() {
 
-            return new TaskResult(runScript(runner, s));
+        @Override
+        public Task newSession(SessionContext $) {
+            return new Task(this, $) {
+                @Override
+                protected TaskResult run(TaskRunner runner) {
+                    final String s = Question.freeQuestion("Enter sql to execute: ");
+
+                    return new TaskResult(runScript(runner, s));
+                }            };
         }
     };
 
-    public final Task createDump = new Task() {
+    public final TaskDef createDump = new TaskDef() {
+
+
         @Override
-        protected TaskResult run(TaskRunner runner) {
-            Question.freeQuestionWithOption("Enter a filename", $.var(dumpName), dumpName);
+        public Task newSession(SessionContext $) {
+            return new Task(this, $) {
+                @Override
+                protected TaskResult run(TaskRunner runner) {
+                    Question.freeQuestionWithOption("Enter a filename", $.var(dumpName), dumpName);
 
-            sys.mkdirs($.var(dumpsDirPath));
+                    $.sys.mkdirs($.var(dumpsDirPath));
 
-            sys.run(sys.newCommandLine()
-                .stty()
-                .addSplit(String.format("mysqldump --user=%s -p %s", $.var(user), $.var(dbName)))
-                .pipe()
-                .addSplit("bzip2 --best")
-                .redirectTo($.var(dumpPath))
-                , mysqlPasswordCallback($.var(password)));
+                    $.sys.run($.sys.newCommandLine()
+                        .stty()
+                        .addSplit(String.format("mysqldump --user=%s -p %s", $.var(user), $.var(dbName)))
+                        .pipe()
+                        .addSplit("bzip2 --best")
+                        .redirectTo($.var(dumpPath))
+                        , mysqlPasswordCallback($.var(password)));
 
-            return TaskResult.OK;
+                    return TaskResult.OK;
+                }            };
         }
     };
 
-    public final Task createAndFetchDump = new Task() {
+    public final TaskDef createAndFetchDump = new TaskDef() {
         @Override
-        protected TaskResult run(TaskRunner runner) {
-            runner.run(createDump);
+        public Task newSession(SessionContext $) {
+            return new Task(this, $) {
+                @Override
+                protected TaskResult run(TaskRunner runner) {
+                    runner.run(createDump);
 
-            sys.download($.var(dumpPath));
+                    $.sys.download($.var(dumpPath));
 
-            return TaskResult.OK;
+                    return TaskResult.OK;
+                }
+            };
         }
     };
 
-    public final Task restoreDump = new Task() {
+    public final TaskDef restoreDump = new TaskDef() {
         @Override
-        protected TaskResult run(TaskRunner runner) {
-            Question.freeQuestionWithOption("Enter a filepath", $.var(dumpName), dumpName);
+        public Task newSession(SessionContext $) {
+            return new Task(this, $) {
+                @Override
+                protected TaskResult run(TaskRunner runner) {
+                    Question.freeQuestionWithOption("Enter a filepath", $.var(dumpName), dumpName);
+                    final CommandLineResult r = $.sys.run($.sys.newCommandLine()
+                        .addSplit(String.format("bzcat %s", $.var(dumpPath)))
+                        .pipe()
+                        .addSplit(String.format("mysql --user=%s -p %s", $.var(user), $.var(dbName))),
+                        mysqlPasswordCallback($.var(password)));
 
-            final CommandLineResult r = sys.run(sys.newCommandLine()
-                .addSplit(String.format("bzcat %s", $.var(dumpPath)))
-                .pipe()
-                .addSplit(String.format("mysql --user=%s -p %s", $.var(user), $.var(dbName))),
-                mysqlPasswordCallback($.var(password)));
-
-            return new TaskResult(r);
+                    return new TaskResult(r);
+                }            };
         }
     };
 
@@ -246,7 +264,7 @@ public class MySqlPlugin extends Plugin {
             @Override
             public void act(Session session, Session.Shell shell) throws Exception {
                 if (text.contains("Enter password:")) {
-                    GitCLI.answer(session, pw);
+                    GitCLIPlugin.answer(session, pw);
                 }
             }
         };
@@ -254,7 +272,7 @@ public class MySqlPlugin extends Plugin {
 
 
     @Override
-    public InstallationTask getSetup() {
+    public InstallationTaskDef getInstall() {
         return setup;
     }
 }

@@ -18,7 +18,7 @@ package cap4j.core;
 
 import cap4j.plugins.Plugin;
 import cap4j.scm.BranchInfoResult;
-import cap4j.scm.VcsCLI;
+import cap4j.scm.VcsCLIPlugin;
 import cap4j.session.DynamicVariable;
 import cap4j.strategy.BaseStrategy;
 import com.google.common.base.Preconditions;
@@ -103,7 +103,7 @@ public class Cap {
 
     realRevision = strVar("Update revision from vcs").setDynamic(new VarFun<String>() {
         public String apply() {
-            final VcsCLI.Session vcsCLI = $.var(vcs);
+            final VcsCLIPlugin.Session vcsCLI = $.var(vcs);
             final cap4j.cli.Script<BranchInfoResult> line =
                 vcsCLI.queryRevision($.var(revision), Collections.<String, String>emptyMap())
                 .timeoutMs(20000);
@@ -218,19 +218,19 @@ public class Cap {
         }
     });
 
-    public final DynamicVariable<VcsCLI.Session> vcs = new DynamicVariable<VcsCLI.Session>("vcs", "VCS adapter").setDynamic(new VarFun<VcsCLI.Session>() {
-        public VcsCLI.Session apply() {
-            Class<? extends VcsCLI> vcsCLI = null;
+    public final DynamicVariable<VcsCLIPlugin.Session> vcs = new DynamicVariable<VcsCLIPlugin.Session>("vcs", "VCS adapter").setDynamic(new VarFun<VcsCLIPlugin.Session>() {
+        public VcsCLIPlugin.Session apply() {
+            Class<? extends VcsCLIPlugin> vcsCLI = null;
 
             for (Class<? extends Plugin> aClass : global.getPluginClasses()) {
-                if(VcsCLI.class.isAssignableFrom(aClass)){
-                    vcsCLI = (Class<? extends VcsCLI>) aClass;
+                if(VcsCLIPlugin.class.isAssignableFrom(aClass)){
+                    vcsCLI = (Class<? extends VcsCLIPlugin>) aClass;
                 }
             }
 
             Preconditions.checkNotNull(vcsCLI, "add a VCS plugin!");
 
-            final VcsCLI.Session pluginSessionContext = (VcsCLI.Session) global.newPluginSession(vcsCLI, $);
+            final VcsCLIPlugin.Session pluginSessionContext = (VcsCLIPlugin.Session) global.newPluginSession(vcsCLI, $);
             return pluginSessionContext;
         }
     });

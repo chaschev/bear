@@ -58,7 +58,7 @@ public abstract class TaskDef<TASK extends Task> {
         return !Sets.intersection(this.roles, roles).isEmpty();
     }
 
-    public Task depends(Task... tasks) {
+    public TaskDef depends(Task... tasks) {
         Collections.addAll((List) dependsOnTasks, tasks);
 
         return this;
@@ -68,7 +68,7 @@ public abstract class TaskDef<TASK extends Task> {
 
     }
 
-    public TaskDef<T> addBeforeTask(Task task) {
+    public TaskDef addBeforeTask(TaskDef task) {
         beforeTasks.add(task);
         return this;
     }
@@ -108,4 +108,11 @@ public abstract class TaskDef<TASK extends Task> {
         this.setupTask = setupTask;
         return this;
     }
+
+    public static final TaskDef EMPTY = new TaskDef() {
+        @Override
+        public Task newSession(SessionContext $) {
+            throw new UnsupportedOperationException();
+        }
+    };
 }

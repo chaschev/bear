@@ -35,7 +35,7 @@ public class Rollback extends Plugin {
     }
 
     @Override
-    public InstallationTask getSetup() {
+    public InstallationTaskDef getInstall() {
         return InstallationTask.nop();
     }
 

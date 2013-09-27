@@ -61,7 +61,7 @@ public class GlobalContext {
             try {
                 final Plugin plugin = newPluginInstance(aClass);
 
-                plugin.getSetup().setCtx(localCtx);
+                plugin.getInstall().setCtx(localCtx);
 
                 pluginMap.put(aClass, plugin);
             } catch (Exception e) {
@@ -83,7 +83,7 @@ public class GlobalContext {
             return plugin;
         }
 
-        public <T extends Plugin<T>> Task<T> getSessionContext(Class<T> aClass, SessionContext $){
+        public <T extends Plugin> Task getSessionContext(Class<T> aClass, SessionContext $){
             try {
                 final T plugin = getPlugin(aClass);
 
@@ -176,7 +176,7 @@ public class GlobalContext {
         return (T) plugins.get(pluginClass);
     }
 
-    public <T extends Plugin> Task<T> newPluginSession(Class<T> pluginClass, SessionContext $) {
+    public <T extends Plugin> Task newPluginSession(Class<T> pluginClass, SessionContext $) {
         return plugins.getSessionContext(pluginClass, $);
     }
 

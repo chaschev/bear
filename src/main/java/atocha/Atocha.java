@@ -21,6 +21,7 @@ import cap4j.plugins.Plugin;
 import cap4j.session.DynamicVariable;
 import cap4j.session.Variables;
 import cap4j.task.InstallationTask;
+import cap4j.task.InstallationTaskDef;
 
 /**
  * @author Andrey Chaschev chaschev@gmail.com
@@ -35,7 +36,7 @@ public class Atocha extends Plugin {
     }
 
     @Override
-    public InstallationTask getSetup() {
-        return InstallationTask.nop();
+    public InstallationTaskDef<InstallationTask> getInstall() {
+        return InstallationTaskDef.EMPTY;
     }
 }

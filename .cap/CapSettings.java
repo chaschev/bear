@@ -6,7 +6,7 @@ import cap4j.plugins.grails.GrailsBuilder;
 import cap4j.plugins.grails.GrailsPlugin;
 import cap4j.plugins.java.JavaPlugin;
 import cap4j.plugins.tomcat.TomcatPlugin;
-import cap4j.scm.VcsCLI;
+import cap4j.scm.VcsCLIPlugin;
 import cap4j.strategy.BaseStrategy;
 import cap4j.strategy.SymlinkEntry;
 import com.google.common.collect.Lists;
@@ -90,16 +90,16 @@ public class CapSettings extends ICapSettings {
                         StopWatch sw = new StopWatch();
                         sw.start();
 
-                        final VcsCLI.Session vcsCLI = $.var(cap.vcs);
+                        final VcsCLIPlugin.Session vcsCLI = $.var(cap.vcs);
 
                         final String destPath = $.var(cap.vcsBranchLocalPath);
 
                         final cap4j.cli.Script line;
 
                         if (!$.sys.exists(destPath)) {
-                            line = vcsCLI.checkout($.var(cap.revision), destPath, VcsCLI.emptyParams());
+                            line = vcsCLI.checkout($.var(cap.revision), destPath, VcsCLIPlugin.emptyParams());
                         } else {
-                            line = vcsCLI.sync($.var(cap.revision), destPath, VcsCLI.emptyParams());
+                            line = vcsCLI.sync($.var(cap.revision), destPath, VcsCLIPlugin.emptyParams());
                         }
 
                         line.timeoutMs(600 * 1000);

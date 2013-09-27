@@ -22,9 +22,7 @@ import cap4j.plugins.java.JavaPlugin;
 import cap4j.session.DynamicVariable;
 import cap4j.session.SystemEnvironment;
 import cap4j.session.Variables;
-import cap4j.task.InstallationTask;
-import cap4j.task.Task;
-import cap4j.task.TaskResult;
+import cap4j.task.*;
 import com.google.common.base.Predicate;
 import org.apache.commons.lang3.StringUtils;
 
@@ -66,14 +64,25 @@ public abstract class ZippedToolPlugin extends Plugin{
         buildPath = concat(myDirPath, "/build");
     }
 
+    protected abstract class ZippedToolTaskDef<T extends ZippedTool> extends InstallationTaskDef<T>{
 
-    protected abstract class ZippedTool<T extends ZippedToolPlugin> extends InstallationTask<T> {
-        public ZippedTool(SessionContext $) {
-            super($);
+    }
+
+    protected abstract class ZippedTool extends InstallationTask {
+        protected ZippedTool(TaskDef parent, SessionContext $) {
+            super(parent, $);
         }
+
+        @Override
+        protected DependencyResult run(TaskRunner runner) {
+            throw new UnsupportedOperationException("todo implement!");
+        }
+
+        protected Script extractToHomeScript;
 
         protected abstract String extractVersion(String output);
         protected abstract String createVersionCommandLine();
+
 
         @Override
         public Dependency asInstalledDependency() {
@@ -91,43 +100,33 @@ public abstract class ZippedToolPlugin extends Plugin{
             ));
             return dep;
         }
-    }
-
-    protected abstract class ZippedToolTask extends InstallationTask<TaskResult> {
-        protected ZippedToolTask(String name) {
-            super(name);
-        }
 
         protected void clean(){
-            sys.rm($(buildPath));
-            sys.mkdirs($(buildPath));
+            $.sys.rm($(buildPath));
+            $.sys.mkdirs($(buildPath));
         }
 
         protected void download(){
-            if(!sys.exists(sys.joinPath($(myDirPath), $(distrFilename)))){
-                sys.script()
+            if(!$.sys.exists($.sys.joinPath($(myDirPath), $(distrFilename)))){
+                $.sys.script()
                     .cd($(myDirPath))
                     .line().timeoutMin(60).addRaw("wget %s", $(distrWwwAddress)).build()
                 .run();
             }
         }
 
-        protected Script extractToHomeScript;
-
-        protected abstract String extractVersion(String output);
-        protected abstract String createVersionCommandLine();
 
         protected Script buildExtractionToHomeDir(){
             final String _distrFilename = $(distrFilename);
 
-            extractToHomeScript = new Script(sys)
+            extractToHomeScript = new Script($.sys)
                 .cd($(buildPath));
 
             if(_distrFilename.endsWith("tar.gz")){
-                extractToHomeScript.add(sys.line().timeoutMin(1).addRaw("tar xvfz ../%s", _distrFilename));
+                extractToHomeScript.add($.sys.line().timeoutMin(1).addRaw("tar xvfz ../%s", _distrFilename));
             }else
             if(_distrFilename.endsWith("zip")){
-                extractToHomeScript.add(sys.line().timeoutMin(1).addRaw("unzip ../%s", $(distrFilename)));
+                extractToHomeScript.add($.sys.line().timeoutMin(1).addRaw("unzip ../%s", $(distrFilename)));
             }
 
             extractToHomeScript
@@ -142,33 +141,19 @@ public abstract class ZippedToolPlugin extends Plugin{
         }
 
         protected Script shortCut(String newCommandName, String sourceExecutableName){
-            return extractToHomeScript.add(sys.line().sudo().addRaw("rm /usr/bin/%s", newCommandName))
-                .add(sys.line().sudo().addRaw("ln -s %s/bin/%s /usr/bin/%s", $(homePath), sourceExecutableName, newCommandName));
+            return extractToHomeScript.add($.sys.line().sudo().addRaw("rm /usr/bin/%s", newCommandName))
+                .add($.sys.line().sudo().addRaw("ln -s %s/bin/%s /usr/bin/%s", $(homePath), sourceExecutableName, newCommandName));
         }
 
 
-        @Override
         public DependencyResult checkDeps(boolean throwException){
-//            $.log("verifying version for %s...", $(toolDistrName));
-//
-//            final Dependency dep = installedDependency();
-//
-//            final DependencyResult r = dep.checkDeps();
-//
-//            if(r.result.ok()){
-//                $.log("version is ok for %s", $(versionName));
-//            }
-//
-//            if(r.result.nok() && throwException){
-//                throw new DependencyException(r.toString());
-//            }
               return DependencyResult.OK;
         }
 
 
 
         protected DependencyResult extractAndVerify() {
-            sys.run(extractToHomeScript,
+            $.sys.run(extractToHomeScript,
                 SystemEnvironment.passwordCallback($.var(cap.sshPassword))
             );
 

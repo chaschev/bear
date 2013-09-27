@@ -21,6 +21,7 @@ import cap4j.core.DependencyResult;
 import cap4j.core.GlobalContext;
 import cap4j.session.DynamicVariable;
 import cap4j.task.InstallationTask;
+import cap4j.task.InstallationTaskDef;
 import com.chaschev.chutils.util.OpenBean2;
 import com.google.common.base.Preconditions;
 
@@ -29,7 +30,7 @@ import java.lang.reflect.Field;
 /**
  * @author Andrey Chaschev chaschev@gmail.com
  */
-public abstract class Plugin<T extends Plugin> {
+public abstract class Plugin {
     public String name;
     public final Cap cap;
     protected GlobalContext global;
@@ -66,7 +67,7 @@ public abstract class Plugin<T extends Plugin> {
 
     }
 
-    public abstract InstallationTask getSetup();
+    public abstract InstallationTaskDef<? extends InstallationTask> getInstall();
 
     public DependencyResult checkPluginDependencies(){
         return DependencyResult.OK;

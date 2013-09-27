@@ -22,7 +22,7 @@ import cap4j.plugins.java.JavaPlugin;
 import cap4j.session.DynamicVariable;
 import cap4j.session.Variables;
 import cap4j.task.InstallationTask;
-import cap4j.task.TaskResult;
+import cap4j.task.InstallationTaskDef;
 import cap4j.task.TaskRunner;
 import org.apache.commons.lang3.StringUtils;
 
@@ -85,31 +85,36 @@ public class GrailsPlugin extends ZippedToolPlugin {
     }
 
 
-    public final InstallationTask setup = new ZippedToolTask("install grails") {
+    public final InstallationTaskDef<ZippedTool> install = new ZippedToolTaskDef<ZippedTool>() {
         @Override
-        protected TaskResult run(TaskRunner runner) {
-            clean();
+        public ZippedTool newSession(SessionContext $) {
+            return new ZippedTool(this, $) {
+                @Override
+                protected DependencyResult run(TaskRunner runner) {
+                    clean();
 
-            download();
+                    download();
 
-            buildExtractionToHomeDir();
+                    buildExtractionToHomeDir();
 
-            shortCut("grails", "grails");
-            shortCut("startGrails", "startGrails");
+                    shortCut("grails", "grails");
+                    shortCut("startGrails", "startGrails");
 
-            return extractAndVerify();
-        }
+                    return extractAndVerify();
+                }
 
-        @Override
-        protected String extractVersion(String output) {
-            return StringUtils.substringAfter(
-                output,
-                "version: ");
-        }
+                @Override
+                protected String extractVersion(String output) {
+                    return StringUtils.substringAfter(
+                        output,
+                        "version: ");
+                }
 
-        @Override
-        protected String createVersionCommandLine() {
-            return "grails --version";
+                @Override
+                protected String createVersionCommandLine() {
+                    return "grails --version";
+                }
+            };
         }
     };
 
@@ -119,7 +124,7 @@ public class GrailsPlugin extends ZippedToolPlugin {
     }
 
     @Override
-    public InstallationTask getSetup() {
-        return setup;
+    public InstallationTaskDef<? extends InstallationTask> getInstall() {
+        return install;
     }
 }

@@ -173,7 +173,7 @@ public class TomcatPlugin extends Plugin {
 
 
     @Override
-    public InstallationTask getSetup() {
+    public InstallationTaskDef getInstall() {
         return setup;
     }
 }

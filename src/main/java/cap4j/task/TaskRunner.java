@@ -134,8 +134,7 @@ public class TaskRunner {
         return runResult;
     }
 
-    public void runRollback(Task task) {
-        task.set$($);
-        task.onRollback();
+    public void runRollback(TaskDef task) {
+        task.newSession($).onRollback();
     }
 }

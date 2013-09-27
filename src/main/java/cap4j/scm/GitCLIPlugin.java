@@ -23,7 +23,8 @@ import cap4j.core.SessionContext;
 import cap4j.session.DynamicVariable;
 import cap4j.session.GenericUnixRemoteEnvironment;
 import cap4j.session.Variables;
-import cap4j.task.InstallationTask;
+import cap4j.task.InstallationTaskDef;
+import cap4j.task.TaskDef;
 import com.google.common.base.Function;
 import net.schmizz.sshj.common.IOUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -43,7 +44,7 @@ import static java.util.Collections.addAll;
 /**
  * @author Andrey Chaschev chaschev@gmail.com
  */
-public class GitCLI extends VcsCLI<GitCLI> {
+public class GitCLIPlugin extends VcsCLIPlugin<GitCLIPlugin> {
     public final DynamicVariable<Integer> cloneDepth = newVar(-1);
     public final DynamicVariable<Boolean>
         enableSubmodules = newVar(false),
@@ -51,19 +52,26 @@ public class GitCLI extends VcsCLI<GitCLI> {
 
     public final DynamicVariable<String> remote;
 
-    public GitCLI(GlobalContext global) {
+    public final TaskDef<GitCLISession> GIT_STUB_TASK = new TaskDef<GitCLISession>() {
+        @Override
+        public GitCLISession newSession(SessionContext $) {
+            return GitCLIPlugin.this.newSession($);
+        }
+    };
+
+    public GitCLIPlugin(GlobalContext global) {
         super(global);
         remote = Variables.<String>dynamic("remote user").setEqualTo(cap.vcsUsername);
     }
 
     @Override
     public GitCLISession newSession(SessionContext $) {
-        return new GitCLISession($);
+        return new GitCLISession(GIT_STUB_TASK, $);
     }
 
-    public class GitCLISession extends Session<GitCLI> {
-        public GitCLISession(SessionContext $) {
-            super($);
+    public class GitCLISession extends Session {
+        public GitCLISession(TaskDef parent, SessionContext $) {
+            super(parent, $);
         }
 
         @Override
@@ -192,7 +200,7 @@ public class GitCLI extends VcsCLI<GitCLI> {
             //this will break the logic a bit
             String newRevision = null;
 
-            final SvnCLI.LsResult lsResult = $.sys.run(lsRemote(revision).timeoutSec(10), passwordCallback());
+            final SvnCLIPlugin.LsResult lsResult = $.sys.run(lsRemote(revision).timeoutSec(10), passwordCallback());
 
             for (String s : lsResult.getFiles()) {
                 final String rev = StringUtils.substringBefore(s, "|");
@@ -266,22 +274,22 @@ public class GitCLI extends VcsCLI<GitCLI> {
             throw new UnsupportedOperationException("todo: log");
         }
 
-        public CommandLine<SvnCLI.LsResult> ls(String path, Map<String, String> params) {
+        public CommandLine<SvnCLIPlugin.LsResult> ls(String path, Map<String, String> params) {
             //noinspection unchecked
             return commandPrefix("ls", params)
-                .a(path).setParser(new Function<String, SvnCLI.LsResult>() {
-                    public SvnCLI.LsResult apply(String s) {
-                        return new SvnCLI.LsResult(s, convertLsOutput(s));
+                .a(path).setParser(new Function<String, SvnCLIPlugin.LsResult>() {
+                    public SvnCLIPlugin.LsResult apply(String s) {
+                        return new SvnCLIPlugin.LsResult(s, convertLsOutput(s));
                     }
                 });
         }
 
-        public CommandLine<SvnCLI.LsResult> lsRemote(String revision) {
+        public CommandLine<SvnCLIPlugin.LsResult> lsRemote(String revision) {
             //noinspection unchecked
             return commandPrefix("ls-remote", emptyParams())
-                .a($(cap.repositoryURI), revision).setParser(new Function<String, SvnCLI.LsResult>() {
-                    public SvnCLI.LsResult apply(String s) {
-                        return new SvnCLI.LsResult(s, convertLsOutput(s));
+                .a($(cap.repositoryURI), revision).setParser(new Function<String, SvnCLIPlugin.LsResult>() {
+                    public SvnCLIPlugin.LsResult apply(String s) {
+                        return new SvnCLIPlugin.LsResult(s, convertLsOutput(s));
                     }
                 });
         }
@@ -312,8 +320,8 @@ public class GitCLI extends VcsCLI<GitCLI> {
     }
 
     @Override
-    public InstallationTask getSetup() {
-        return InstallationTask.nop();
+    public InstallationTaskDef getInstall() {
+        return InstallationTaskDef.EMPTY;
     }
 
     public static void answer(net.schmizz.sshj.connection.channel.direct.Session session, String what) throws IOException {

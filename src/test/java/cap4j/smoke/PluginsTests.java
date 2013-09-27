@@ -27,7 +27,7 @@ import cap4j.plugins.grails.GrailsPlugin;
 import cap4j.plugins.java.JavaPlugin;
 import cap4j.plugins.tomcat.MavenPlugin;
 import cap4j.plugins.tomcat.TomcatPlugin;
-import cap4j.scm.GitCLI;
+import cap4j.scm.GitCLIPlugin;
 import cap4j.strategy.BaseStrategy;
 import cap4j.strategy.SymlinkEntry;
 import com.google.common.collect.Lists;
@@ -66,7 +66,7 @@ public class PluginsTests {
                         MavenPlugin.class,
                         TomcatPlugin.class,
                         GrailsPlugin.class,
-                        GitCLI.class
+                        GitCLIPlugin.class
                     );
                 }
             };

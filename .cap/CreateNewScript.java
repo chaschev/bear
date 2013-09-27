@@ -1,8 +1,8 @@
 import cap4j.core.*;
 import cap4j.cli.CommandLine;
 import cap4j.main.Script;
-import cap4j.scm.SvnCLI;
-import cap4j.scm.VcsCLI;
+import cap4j.scm.SvnCLIPlugin;
+import cap4j.scm.VcsCLIPlugin;
 import cap4j.session.Question;
 import cap4j.session.SystemEnvironment;
 import com.google.common.base.Function;
@@ -90,13 +90,13 @@ public class CreateNewScript extends Script {
     }
 
     private static List<String> remoteVcsLs(Cap cap, SystemEnvironment remoteEnv, SessionContext $, final String dir) {
-        final VcsCLI.Session vcsCLI = $.var(cap.vcs);
+        final VcsCLIPlugin.Session vcsCLI = $.var(cap.vcs);
 
-        final CommandLine<SvnCLI.LsResult> line = vcsCLI.ls($.joinPath(cap.repositoryURI, dir));
+        final CommandLine<SvnCLIPlugin.LsResult> line = vcsCLI.ls($.joinPath(cap.repositoryURI, dir));
 
         line.timeoutMs(20000);
 
-        final SvnCLI.LsResult result = remoteEnv.run(line, vcsCLI.passwordCallback());
+        final SvnCLIPlugin.LsResult result = remoteEnv.run(line, vcsCLI.passwordCallback());
 
         return Lists.transform(result.getFiles(), new Function<String, String>() {
             public String apply(String input) {
