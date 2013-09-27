@@ -107,7 +107,7 @@ public class GrailsPlugin extends ZippedToolPlugin {
                 protected String extractVersion(String output) {
                     return StringUtils.substringAfter(
                         output,
-                        "version: ");
+                        "version: ").trim();
                 }
 
                 @Override

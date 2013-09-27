@@ -23,6 +23,7 @@ import cap4j.core.GlobalContext;
 import cap4j.core.SessionContext;
 import cap4j.plugins.java.JavaPlugin;
 import cap4j.scm.CommandLineResult;
+import cap4j.session.Result;
 import cap4j.task.Task;
 import cap4j.task.TaskDef;
 import cap4j.task.TaskRunner;
@@ -72,6 +73,10 @@ public class GrailsBuilder extends TaskDef {
                         warName));
 
                 final CommandLineResult clResult = script.run();
+
+                if(clResult.text.contains("Use --stacktrace to see the full trace")){
+                    clResult.result = Result.ERROR;
+                }
 
                 return new GrailsBuildResult(clResult.result, $.joinPath(projectPath, warName));
             }
