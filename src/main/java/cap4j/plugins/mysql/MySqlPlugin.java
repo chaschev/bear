@@ -104,21 +104,21 @@ public class MySqlPlugin extends Plugin {
 
                     $.sys.sudo().run($.sys.newCommandLine().timeoutSec(30).sudo().addSplit("service mysqld start"));
 
-                    $.sys.sudo().run($.sys.newCommandLine().sudo().addSplit(MessageFormat.format("mysqladmin -u {0} password", $(MySqlPlugin.this.adminUser))).addRaw("'" + $(MySqlPlugin.this.adminPassword) + "'"));
+                    $.sys.sudo().run($.sys.newCommandLine().sudo().addSplit(MessageFormat.format("mysqladmin -u {0} password", $(adminUser))).addRaw("'" + $(adminPassword) + "'"));
                     $.sys.sudo().run($.sys.newCommandLine().sudo().addSplit(MessageFormat.format("mysqladmin -u {0} -h {1} password",
-                        $(MySqlPlugin.this.adminUser), $(cap.sessionHostname))).addRaw("'" + $(MySqlPlugin.this.adminPassword) + "'"));
+                        $(adminUser), $(cap.sessionHostname))).addRaw("'" + $(adminPassword) + "'"));
 
                     final String createDatabaseSql = MessageFormat.format(
                         "CREATE DATABASE {0};\n" +
                             "GRANT ALL PRIVILEGES ON {0}.* TO {1}@localhost IDENTIFIED BY '{2}';\n",
-                        $(MySqlPlugin.this.dbName),
-                        $(MySqlPlugin.this.user),
-                        $(MySqlPlugin.this.password)
+                        $(dbName),
+                        $(user),
+                        $(password)
                     );
 
                     r = Result.and(r, runScript(runner, createDatabaseSql,
-                        $(MySqlPlugin.this.adminUser),
-                        $(MySqlPlugin.this.adminPassword)
+                        $(adminUser),
+                        $(adminPassword)
                     ).result);
 
                     return new TaskResult(r);

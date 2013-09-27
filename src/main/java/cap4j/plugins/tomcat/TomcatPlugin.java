@@ -48,14 +48,10 @@ public class TomcatPlugin extends ZippedToolPlugin {
         tomcatHttpsPort = Variables.newVar("8443"),
         keystrokePassword = Variables.dynamic(""),
         catalinaHome = Variables.newVar("/usr/share/tomcat6"),
-        catalinaExecutable = Variables.newVar("/usr/sbin/tomcat6"),
+        catalinaExecutable = Variables.newVar("/usr/sbin/tomcat6");
 
 
-    distrWwwAddress = Variables.dynamic(new VarFun<String>() {
-        public String apply() {
-            return MessageFormat.format("http://apache-mirror.rbc.ru/pub/apache/tomcat/tomcat-7/v{0}/bin/apache-tomcat-{0}.tar.gz", $.var(version));
-        }
-    });
+
 
     public TomcatPlugin(GlobalContext global) {
         super(global);
@@ -66,6 +62,12 @@ public class TomcatPlugin extends ZippedToolPlugin {
 
         webapps = condition(cap.isUnix, webappsUnix, webappsWin);
         warPath = Variables.joinPath("warPath", webapps, warName);
+
+        distrWwwAddress.setDynamic(new VarFun<String>() {
+            public String apply() {
+                return MessageFormat.format("http://apache-mirror.rbc.ru/pub/apache/tomcat/tomcat-7/v{0}/bin/apache-tomcat-{0}.tar.gz", $(version));
+            }
+        });
     }
 
     public void initPlugin() {

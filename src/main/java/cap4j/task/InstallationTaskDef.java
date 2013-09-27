@@ -9,7 +9,7 @@ public abstract class InstallationTaskDef<TASK extends InstallationTask> extends
     public static final InstallationTaskDef<InstallationTask> EMPTY = new InstallationTaskDef<InstallationTask>() {
         @Override
         public InstallationTask newSession(SessionContext $) {
-            throw new UnsupportedOperationException();
+            return InstallationTask.nop();
         }
     };
 }
