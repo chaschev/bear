@@ -230,8 +230,7 @@ public class Cap {
 
             Preconditions.checkNotNull(vcsCLI, "add a VCS plugin!");
 
-            final VcsCLIPlugin.Session pluginSessionContext = (VcsCLIPlugin.Session) global.newPluginSession(vcsCLI, $);
-            return pluginSessionContext;
+            return (VcsCLIPlugin.Session) global.newPluginSession(vcsCLI, $);
         }
     });
 

@@ -35,21 +35,27 @@ public class Rollback extends Plugin {
     }
 
     @Override
-    public InstallationTaskDef getInstall() {
-        return InstallationTask.nop();
+    public InstallationTaskDef<InstallationTask> getInstall() {
+        return InstallationTaskDef.EMPTY;
     }
 
     public final TaskDef pointToPreviousRelease = new TaskDef() {
-        @Override
-        protected TaskResult run(TaskRunner runner) {
-            requirePreviousRelease($);
 
-            return new TaskResult(
-                sys.script()
-                    .line().sudo().addRaw("rm -r %s", $.var(cap.currentPath)).build()
-                    .line().sudo().addRaw("ln -s %s %s", $.var(cap.getPreviousReleasePath), $.var(cap.currentPath)).build()
-                    .run()
-            );
+        @Override
+        public Task newSession(SessionContext $) {
+            return new Task(this, $) {
+                @Override
+                protected TaskResult run(TaskRunner runner) {
+                    requirePreviousRelease($);
+
+                    return new TaskResult(
+                        $.sys.script()
+                            .line().sudo().addRaw("rm -r %s", $.var(cap.currentPath)).build()
+                            .line().sudo().addRaw("ln -s %s %s", $.var(cap.getPreviousReleasePath), $.var(cap.currentPath)).build()
+                            .run()
+                    );
+                }
+            };
         }
     }.desc("[internal] Points the current symlink at the previous release.\n" +
         "      This is called by the rollback sequence, and should rarely (if\n" +
@@ -57,31 +63,48 @@ public class Rollback extends Plugin {
 
     public final TaskDef cleanup = new TaskDef() {
         @Override
-        protected TaskResult run(TaskRunner runner) {
-            return new TaskResult(
-                sys.run(
-                    sys.line().sudo().addRaw("if [ `readlink #{%s}` != #{%s} ]; then #{try_sudo} rm -rf #{%s}; fi",
-                        $.var(cap.currentPath), $.var(cap.releasePath), $.var(cap.releasePath)))
-            );
+        public Task newSession(SessionContext $) {
+            return new Task(this, $) {
+                @Override
+                protected TaskResult run(TaskRunner runner) {
+                    return new TaskResult(
+                        $.sys.run(
+                            $.sys.line().sudo().addRaw("if [ `readlink #{%s}` != #{%s} ]; then #{try_sudo} rm -rf #{%s}; fi",
+                                $.var(cap.currentPath), $.var(cap.releasePath), $.var(cap.releasePath)))
+                    );
+                }
+
+            };
         }
     };
 
     public final TaskDef code = new TaskDef() {
         @Override
-        protected TaskResult run(TaskRunner runner) {
-            return new TaskResult(Result.and(
-                runner.run(pointToPreviousRelease),
-                runner.run(cleanup)));
+        public Task newSession(SessionContext $) {
+            return new Task(this, $) {
+                @Override
+                protected TaskResult run(TaskRunner runner) {
+                    return new TaskResult(Result.and(
+                        runner.run(pointToPreviousRelease),
+                        runner.run(cleanup)));
+                }
+
+            };
         }
     };
 
     public final TaskDef $default = new TaskDef() {
         @Override
-        protected TaskResult run(TaskRunner runner) {
-            return new TaskResult(Result.and(
-                runner.run(pointToPreviousRelease),
-                runner.run(global.tasks.restartApp),
-                runner.run(cleanup)));
+        public Task newSession(SessionContext $) {
+            return new Task(this, $) {
+                @Override
+                protected TaskResult run(TaskRunner runner) {
+                    return new TaskResult(Result.and(
+                        runner.run(pointToPreviousRelease),
+                        runner.run(global.tasks.restartApp),
+                        runner.run(cleanup)));
+                }
+            };
         }
     };
 

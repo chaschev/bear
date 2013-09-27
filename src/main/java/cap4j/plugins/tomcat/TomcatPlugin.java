@@ -16,48 +16,28 @@
 
 package cap4j.plugins.tomcat;
 
-import cap4j.cli.Script;
-import cap4j.core.Dependency;
+import cap4j.core.DependencyResult;
 import cap4j.core.GlobalContext;
+import cap4j.core.SessionContext;
 import cap4j.core.VarFun;
-import cap4j.plugins.Plugin;
-import cap4j.plugins.java.JavaPlugin;
-import cap4j.scm.CommandLineResult;
+import cap4j.plugins.ZippedToolPlugin;
 import cap4j.session.DynamicVariable;
-import cap4j.session.SystemEnvironment;
 import cap4j.session.Variables;
-import cap4j.task.InstallationTask;
-import cap4j.task.Task;
-import cap4j.task.TaskResult;
-import cap4j.task.TaskRunner;
-import com.google.common.base.Preconditions;
+import cap4j.task.*;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
 
 import java.text.MessageFormat;
 
-import static cap4j.session.Variables.concat;
 import static cap4j.session.Variables.condition;
 
 /**
  * @author Andrey Chaschev chaschev@gmail.com
  */
-public class TomcatPlugin extends Plugin {
+public class TomcatPlugin extends ZippedToolPlugin {
     public final DynamicVariable<String>
-        version = Variables.newVar("7.0.42"),
-        versionName = concat("apache-tomcat-", version),
-        distrFilename = concat("apache-tomcat-", version, ".tar.gz"),
-        homePath = Variables.newVar("/var/lib/tomcat").setDesc("Tomcat root dir"),
-        homeParentPath = Variables.dynamic(new VarFun<String>() {
-            public String apply() {
-                return StringUtils.substringBeforeLast($.var(homePath), "/");
-            }
-        }),
-        homeVersionPath = concat(homeParentPath, "/", versionName).setDesc("i.e. /var/lib/tomcat-7.0.42"),
-        currentVersionPath = concat(homeParentPath, "/", versionName),
-
     webappsUnix = Variables.strVar("/var/lib/tomcat6/webapps").defaultTo("/var/lib/tomcat6/webapps"),
-        webappsWin = Variables.dynamicNotSet("webappsWin", ""),
+        webappsWin = Variables.dynamic(""),
         webapps,
         warName = Variables.strVar("i.e. ROOT.war"),
         warPath,
@@ -70,8 +50,6 @@ public class TomcatPlugin extends Plugin {
         catalinaHome = Variables.newVar("/usr/share/tomcat6"),
         catalinaExecutable = Variables.newVar("/usr/sbin/tomcat6"),
 
-    myDirPath,
-        buildPath,
 
     distrWwwAddress = Variables.dynamic(new VarFun<String>() {
         public String apply() {
@@ -82,85 +60,69 @@ public class TomcatPlugin extends Plugin {
     public TomcatPlugin(GlobalContext global) {
         super(global);
 
-        myDirPath = Variables.joinPath(cap.sharedPath, "tomcat");
-        buildPath = Variables.joinPath(myDirPath, "build");
+        version.defaultTo("7.0.42", true);
+        toolname.defaultTo("tomcat", true);
+        toolDistrName.defaultTo("apache-tomcat", true);
+
         webapps = condition(cap.isUnix, webappsUnix, webappsWin);
         warPath = Variables.joinPath("warPath", webapps, warName);
     }
 
     public void initPlugin() {
-        global.tasks.restartApp.addBeforeTask(new Task() {
+        global.tasks.restartApp.addBeforeTask(new TaskDef() {
             @Override
-            protected TaskResult run(TaskRunner runner) {
-                sys.sudo().rm($.var(warCacheDirs));
-                sys.sudo().run($.newCommandLine()
-                    .a("service", "tomcat6", "stop")
-                    .semicolon()
-                    .sudo()
-                    .a("service", "tomcat6", "start")
-                    .timeoutMin(2)
-                );
+            public Task newSession(SessionContext $) {
+                return new Task(this, $) {
+                    @Override
+                    protected TaskResult run(TaskRunner runner) {
+                        $.sys.sudo().rm($.var(warCacheDirs));
+                        $.sys.sudo().run($.newCommandLine()
+                            .a("service", "tomcat6", "stop")
+                            .semicolon()
+                            .sudo()
+                            .a("service", "tomcat6", "start")
+                            .timeoutMin(2)
+                        );
 
-                return TaskResult.OK;
+                        return TaskResult.OK;
+                    }                };
             }
         });
     }
 
-    public final InstallationTask setup = new InstallationTask() {
+    public final InstallationTaskDef<ZippedTool> install = new ZippedToolTaskDef<ZippedTool>() {
         @Override
-        protected TaskResult run(TaskRunner runner) {
-            sys.rm($.var(buildPath));
-            sys.mkdirs($.var(buildPath));
+        public ZippedTool newSession(SessionContext $) {
+            return new ZippedTool(this, $) {
+                @Override
+                protected DependencyResult run(TaskRunner runner) {
+                    clean();
 
-            if (!sys.exists(sys.joinPath($.var(myDirPath), $.var(distrFilename)))) {
-                sys.run(new Script(sys)
-                    .cd($.var(myDirPath))
-                    .add(sys.line().timeoutMin(60).addRaw("wget %s", $.var(distrWwwAddress))));
-            }
+                    download();
 
-            final String homeParentPath = StringUtils.substringBeforeLast($.var(homePath), "/");
+                    buildExtractionToHomeDir();
 
-            final CommandLineResult r = sys.run(new Script(sys)
-                .cd($.var(buildPath))
-                .add(sys.line().timeoutMin(1).addRaw("tar xvfz ../%s", $.var(distrFilename)))
-                .add(sys.line().sudo().addRaw("rm -r %s", $.var(homePath)))
-                .add(sys.line().sudo().addRaw("rm -r %s", $.var(homeVersionPath)))
-                .add(sys.line().sudo().addRaw("mv %s %s", $(buildPath) + "/" + $(versionName), homeParentPath))
-                .add(sys.line().sudo().addRaw("ln -s %s %s", $.var(currentVersionPath), $.var(homePath)))
-                .add(sys.line().sudo().addRaw("chmod -R g+r,o+r %s", $.var(homePath)))
-                .add(sys.line().sudo().addRaw("chmod u+x,g+x,o+x %s/bin/*", $.var(homePath)))
+                    shortCut("tomcatStart", "startup.sh");
+                    shortCut("tomcatStop", "shutdown.sh");
+                    shortCut("tomcatVersion", "version.sh");
 
-                .add(sys.line().sudo().addRaw("rm /usr/bin/tomcatStart"))
-                .add(sys.line().sudo().addRaw("ln -s %s/bin/startup.sh /usr/bin/tomcatStart", $.var(homePath)))
-                .add(sys.line().sudo().addRaw("rm /usr/bin/tomcatStop"))
-                .add(sys.line().sudo().addRaw("ln -s %s/bin/shutdown.sh /usr/bin/tomcatStop", $.var(homePath)))
-                .add(sys.line().sudo().addRaw("rm /usr/bin/tomcatVersion"))
-                .add(sys.line().sudo().addRaw("ln -s %s/bin/version.sh /usr/bin/tomcatVersion", $.var(homePath))),
+                    return extractAndVerify();
+                }
 
-                SystemEnvironment.passwordCallback($.var(cap.sshPassword))
-            );
+                @Override
+                protected String extractVersion(String output) {
+                    return StringUtils.substringBetween(
+                        output,
+                        "Server version: Apache Tomcat/", "\r");
+                }
 
-            System.out.println("verifying version...");
-            final String versionText = sys.run(sys.line().setVar("JAVA_HOME", $.var(global.getPlugin(JavaPlugin.class).homePath)).addRaw("tomcatVersion")).text.trim();
-            final String installedVersion = StringUtils.substringBetween(
-                versionText,
-                "Server version: Apache Tomcat/", "\r");
-
-            Preconditions.checkArgument($.var(version).equals(installedVersion),
-                "versions don't match: %s (installed) vs %s (actual)", installedVersion, $.var(version));
-
-            System.out.printf("successfully installed Tomcat %s%n", $.var(version));
-
-            return new TaskResult(r);
-        }
-
-        @Override
-        public Dependency asInstalledDependency() {
-            return Dependency.NONE;
+                @Override
+                protected String createVersionCommandLine() {
+                    return "tomcatVersion";
+                }
+            };
         }
     };
-
-
 
     public final DynamicVariable<String[]> warCacheDirs = Variables.dynamic(new VarFun<String[]>() {
         public String[] apply() {
@@ -173,7 +135,7 @@ public class TomcatPlugin extends Plugin {
 
 
     @Override
-    public InstallationTaskDef getInstall() {
-        return setup;
+    public InstallationTaskDef<ZippedTool> getInstall() {
+        return install;
     }
 }

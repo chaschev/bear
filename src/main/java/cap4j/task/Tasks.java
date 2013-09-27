@@ -40,7 +40,10 @@ public class Tasks {
     }
 
     public final TaskDef restartApp = new TaskDef() {
-
+        @Override
+        public Task newSession(SessionContext $) {
+            return Task.nop();
+        }
     };
 
     public final TaskDef deploy = new TaskDef() {
@@ -83,7 +86,7 @@ public class Tasks {
 
                     if ($.var(cap.verifyPlugins)) {
                         for (Plugin plugin : global.getGlobalPlugins()) {
-                            if (plugin.getInstall().setCtx($).asInstalledDependency().checkDeps().result.nok()) {
+                            if (plugin.getInstall().newSession($).asInstalledDependency().checkDeps().result.nok()) {
                                 if ($(cap.autoInstallPlugins)) {
                                     $.log("plugin %s was not installed. installing it...", plugin);
                                     runner.run(plugin.getInstall());

@@ -61,8 +61,6 @@ public class GlobalContext {
             try {
                 final Plugin plugin = newPluginInstance(aClass);
 
-                plugin.getInstall().setCtx(localCtx);
-
                 pluginMap.put(aClass, plugin);
             } catch (Exception e) {
                 throw Exceptions.runtime(e);

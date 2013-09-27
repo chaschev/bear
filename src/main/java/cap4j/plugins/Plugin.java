@@ -19,9 +19,11 @@ package cap4j.plugins;
 import cap4j.core.Cap;
 import cap4j.core.DependencyResult;
 import cap4j.core.GlobalContext;
+import cap4j.core.SessionContext;
 import cap4j.session.DynamicVariable;
 import cap4j.task.InstallationTask;
 import cap4j.task.InstallationTaskDef;
+import cap4j.task.Task;
 import com.chaschev.chutils.util.OpenBean2;
 import com.google.common.base.Preconditions;
 
@@ -41,7 +43,9 @@ public abstract class Plugin {
         name = getClass().getSimpleName();
     }
 
-
+    public Task newSession(SessionContext $){
+        throw new UnsupportedOperationException("todo");
+    }
 
     public static void nameVars(Object obj) {
         final Class<?> aClass = obj.getClass();

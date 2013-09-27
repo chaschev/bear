@@ -1,12 +1,12 @@
 import atocha.Atocha;
 import cap4j.core.*;
 import cap4j.plugins.Plugin;
-import cap4j.plugins.grails.GrailsBuildResult;
 import cap4j.plugins.grails.GrailsBuilder;
 import cap4j.plugins.grails.GrailsPlugin;
 import cap4j.plugins.java.JavaPlugin;
 import cap4j.plugins.tomcat.TomcatPlugin;
 import cap4j.scm.VcsCLIPlugin;
+import cap4j.session.Result;
 import cap4j.strategy.BaseStrategy;
 import cap4j.strategy.SymlinkEntry;
 import com.google.common.collect.Lists;
@@ -113,9 +113,9 @@ public class CapSettings extends ICapSettings {
                         String warPath = $.var(grails.releaseWarPath);
 
                         if (!$.sys.exists(warPath) || !$.var(global.getPlugin(Atocha.class).reuseWar)) {
-                            final GrailsBuildResult r = new GrailsBuilder(global).run(null);
+                            final Result r = $.runner.run(new GrailsBuilder(global));
 
-                            if (r.result.nok()) {
+                            if (r.nok()) {
                                 throw new IllegalStateException("failed to build WAR");
                             }
                         }

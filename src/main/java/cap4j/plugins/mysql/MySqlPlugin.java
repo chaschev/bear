@@ -51,27 +51,27 @@ public class MySqlPlugin extends Plugin {
         mysqlTempScriptPath = Variables.dynamic(new VarFun<String>() {
             @Override
             public String apply() {
-                return $.sys.joinPath($.var(cap.sharedPath), $.var(mysqlTempScriptName));
+                return $.sys.joinPath($(cap.sharedPath), $(mysqlTempScriptName));
             }
         }),
         dumpName = Variables.dynamic(new VarFun<String>() {
             @Override
             public String apply() {
                 return String.format("dump_%s_%s.GMT_%s.sql",
-                    $.var(cap.applicationName), Cap.RELEASE_FORMATTER.print(new DateTime()), $.var(cap.sessionHostname));
+                    $(cap.applicationName), Cap.RELEASE_FORMATTER.print(new DateTime()), $(cap.sessionHostname));
             }
         }),
         dumpsDirPath = Variables.joinPath(cap.sharedPath, "dumps"),
         dumpPath = Variables.dynamic(new VarFun<String>() {
             public String apply() {
-                return $.sys.joinPath($.var(dumpsDirPath), $.var(dumpName) + ".bz2");
+                return $.sys.joinPath($(dumpsDirPath), $(dumpName) + ".bz2");
             }
         });
 
     public final DynamicVariable<Version> getVersion = Variables.dynamic(new VarFun<Version>() {
         @Override
         public Version apply() {
-            return Version.fromString($.var(version));
+            return Version.fromString($(version));
         }
     });
 
@@ -87,38 +87,38 @@ public class MySqlPlugin extends Plugin {
                 protected TaskResult run(TaskRunner runner) {
                     final Version version = computeRealClientVersion($.sys);
 
-                    final boolean installedVersionOk = version != null && $.var(getVersion).matches(version);
+                    final boolean installedVersionOk = version != null && $(getVersion).matches(version);
 
                     Result r = Result.OK;
 
                     if (!installedVersionOk) {
                         $.sys.sudo().run($.sys.newCommandLine().sudo().addSplit("rpm -Uvh http://mirror.webtatic.com/yum/el6/latest.rpm"));
-                        r = $.sys.getPackageManager().installPackage(new SystemEnvironment.PackageInfo($.var(clientPackage))).result;
+                        r = $.sys.getPackageManager().installPackage(new SystemEnvironment.PackageInfo($(clientPackage))).result;
                     }
 
                     Version serverVersion = computeRealServerVersion(runner);
 
                     if (serverVersion == null) {
-                        r = $.sys.getPackageManager().installPackage(new SystemEnvironment.PackageInfo($.var(serverPackage))).result;
+                        r = $.sys.getPackageManager().installPackage(new SystemEnvironment.PackageInfo($(serverPackage))).result;
                     }
 
                     $.sys.sudo().run($.sys.newCommandLine().timeoutSec(30).sudo().addSplit("service mysqld start"));
 
-                    $.sys.sudo().run($.sys.newCommandLine().sudo().addSplit(MessageFormat.format("mysqladmin -u {0} password", $.var(MySqlPlugin.this.adminUser))).addRaw("'" + $.var(MySqlPlugin.this.adminPassword) + "'"));
+                    $.sys.sudo().run($.sys.newCommandLine().sudo().addSplit(MessageFormat.format("mysqladmin -u {0} password", $(MySqlPlugin.this.adminUser))).addRaw("'" + $(MySqlPlugin.this.adminPassword) + "'"));
                     $.sys.sudo().run($.sys.newCommandLine().sudo().addSplit(MessageFormat.format("mysqladmin -u {0} -h {1} password",
-                        $.var(MySqlPlugin.this.adminUser), $.var(cap.sessionHostname))).addRaw("'" + $.var(MySqlPlugin.this.adminPassword) + "'"));
+                        $(MySqlPlugin.this.adminUser), $(cap.sessionHostname))).addRaw("'" + $(MySqlPlugin.this.adminPassword) + "'"));
 
                     final String createDatabaseSql = MessageFormat.format(
                         "CREATE DATABASE {0};\n" +
                             "GRANT ALL PRIVILEGES ON {0}.* TO {1}@localhost IDENTIFIED BY '{2}';\n",
-                        $.var(MySqlPlugin.this.dbName),
-                        $.var(MySqlPlugin.this.user),
-                        $.var(MySqlPlugin.this.password)
+                        $(MySqlPlugin.this.dbName),
+                        $(MySqlPlugin.this.user),
+                        $(MySqlPlugin.this.password)
                     );
 
                     r = Result.and(r, runScript(runner, createDatabaseSql,
-                        $.var(MySqlPlugin.this.adminUser),
-                        $.var(MySqlPlugin.this.adminPassword)
+                        $(MySqlPlugin.this.adminUser),
+                        $(MySqlPlugin.this.adminPassword)
                     ).result);
 
                     return new TaskResult(r);
@@ -182,7 +182,8 @@ public class MySqlPlugin extends Plugin {
                     final String s = Question.freeQuestion("Enter sql to execute: ");
 
                     return new TaskResult(runScript(runner, s));
-                }            };
+                }
+            };
         }
     };
 
@@ -194,20 +195,21 @@ public class MySqlPlugin extends Plugin {
             return new Task(this, $) {
                 @Override
                 protected TaskResult run(TaskRunner runner) {
-                    Question.freeQuestionWithOption("Enter a filename", $.var(dumpName), dumpName);
+                    Question.freeQuestionWithOption("Enter a filename", $(dumpName), dumpName);
 
-                    $.sys.mkdirs($.var(dumpsDirPath));
+                    $.sys.mkdirs($(dumpsDirPath));
 
-                    $.sys.run($.sys.newCommandLine()
+                    $.sys.run($.sys.line()
                         .stty()
-                        .addSplit(String.format("mysqldump --user=%s -p %s", $.var(user), $.var(dbName)))
+                        .addSplit(String.format("mysqldump --user=%s -p %s", $(user), $(dbName)))
                         .pipe()
                         .addSplit("bzip2 --best")
-                        .redirectTo($.var(dumpPath))
-                        , mysqlPasswordCallback($.var(password)));
+                        .redirectTo($(dumpPath))
+                        , mysqlPasswordCallback($(password)));
 
                     return TaskResult.OK;
-                }            };
+                }
+            };
         }
     };
 
@@ -219,7 +221,7 @@ public class MySqlPlugin extends Plugin {
                 protected TaskResult run(TaskRunner runner) {
                     runner.run(createDump);
 
-                    $.sys.download($.var(dumpPath));
+                    $.sys.download($(dumpPath));
 
                     return TaskResult.OK;
                 }
@@ -233,15 +235,16 @@ public class MySqlPlugin extends Plugin {
             return new Task(this, $) {
                 @Override
                 protected TaskResult run(TaskRunner runner) {
-                    Question.freeQuestionWithOption("Enter a filepath", $.var(dumpName), dumpName);
+                    Question.freeQuestionWithOption("Enter a filepath", $(dumpName), dumpName);
                     final CommandLineResult r = $.sys.run($.sys.newCommandLine()
-                        .addSplit(String.format("bzcat %s", $.var(dumpPath)))
+                        .addSplit(String.format("bzcat %s", $(dumpPath)))
                         .pipe()
-                        .addSplit(String.format("mysql --user=%s -p %s", $.var(user), $.var(dbName))),
-                        mysqlPasswordCallback($.var(password)));
+                        .addSplit(String.format("mysql --user=%s -p %s", $(user), $(dbName))),
+                        mysqlPasswordCallback($(password)));
 
                     return new TaskResult(r);
-                }            };
+                }
+            };
         }
     };
 
