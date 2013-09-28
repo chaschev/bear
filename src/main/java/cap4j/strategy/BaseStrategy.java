@@ -20,6 +20,7 @@ import cap4j.core.*;
 import cap4j.plugins.HavingContext;
 import cap4j.session.Result;
 import cap4j.session.Variables;
+import cap4j.task.TaskResult;
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
@@ -122,7 +123,7 @@ public abstract class BaseStrategy<CHILD extends BaseStrategy>  extends HavingCo
     /**
      * Inside a thread now.
      */
-    public Result deploy(){
+    public TaskResult deploy(){
         try {
             Preconditions.checkNotNull(prepareRemoteDataBarrier, "prepareRemoteDataBarrier is null");
             Preconditions.checkNotNull(updateRemoteFilesBarrier, "updateRemoteFilesBarrier is null");
@@ -144,10 +145,10 @@ public abstract class BaseStrategy<CHILD extends BaseStrategy>  extends HavingCo
 
             updateRemoteFilesBarrier.await(240, TimeUnit.SECONDS);
 
-            return Result.OK;
+            return TaskResult.OK;
         } catch (Exception e) {
             logger.warn("", e);
-            return Result.ERROR;
+            return new TaskResult(Result.ERROR, e.toString());
         }
     }
 

@@ -6,9 +6,9 @@ import cap4j.plugins.grails.GrailsPlugin;
 import cap4j.plugins.java.JavaPlugin;
 import cap4j.plugins.tomcat.TomcatPlugin;
 import cap4j.scm.VcsCLIPlugin;
-import cap4j.session.Result;
 import cap4j.strategy.BaseStrategy;
 import cap4j.strategy.SymlinkEntry;
+import cap4j.task.TaskResult;
 import com.google.common.collect.Lists;
 import org.apache.commons.lang3.time.StopWatch;
 import org.slf4j.Logger;
@@ -41,7 +41,7 @@ public class CapSettings extends ICapSettings {
         factory.registerPluginsPhase = new GlobalContextFactory.RegisterPluginsPhase() {
             @Override
             public List<Class<? extends Plugin>> registerPlugins(VariablesLayer vars) {
-                return Lists.newArrayList(
+                return Lists.<Class<? extends Plugin>>newArrayList(
                     TomcatPlugin.class,
                     GrailsPlugin.class,
                     JavaPlugin.class);
@@ -113,7 +113,7 @@ public class CapSettings extends ICapSettings {
                         String warPath = $.var(grails.releaseWarPath);
 
                         if (!$.sys.exists(warPath) || !$.var(global.getPlugin(Atocha.class).reuseWar)) {
-                            final Result r = $.runner.run(new GrailsBuilder(global));
+                            final TaskResult r = $.runner.run(new GrailsBuilder(global));
 
                             if (r.nok()) {
                                 throw new IllegalStateException("failed to build WAR");

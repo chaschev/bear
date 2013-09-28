@@ -16,119 +16,88 @@
 
 package cap4j.plugins.java;
 
-import cap4j.core.Dependency;
+import cap4j.core.DependencyResult;
 import cap4j.core.GlobalContext;
 import cap4j.core.SessionContext;
-import cap4j.plugins.Plugin;
+import cap4j.plugins.ZippedToolPlugin;
 import cap4j.session.DynamicVariable;
-import cap4j.session.SystemEnvironment;
 import cap4j.session.Variables;
-import cap4j.task.*;
+import cap4j.task.InstallationTask;
+import cap4j.task.InstallationTaskDef;
+import cap4j.task.TaskRunner;
+import org.apache.commons.lang3.StringUtils;
 
 import java.io.File;
 
-import static cap4j.session.Variables.newVar;
+import static cap4j.session.Variables.concat;
 
 /**
  * @author Andrey Chaschev chaschev@gmail.com
  */
-public class JavaPlugin extends Plugin {
+public class JavaPlugin extends ZippedToolPlugin {
     public DynamicVariable<String>
+        localDistrPath;
 
-        homePath = newVar("/var/lib/java"),
-
-    javaSharedDirPath,
-        javaSharedBuildDirPath,
-        javaLinuxDistributionName = Variables.strVar(),
-        javaWindowsDistributionName = Variables.strVar(),
-        javaLinuxDistributionPath,
-        javaWindowsDistributionPath,
-        javaDistributionName,
-        javaDistributionPath;
-
-    public final InstallationTaskDef<InstallationTask> install = new InstallationTaskDef<InstallationTask>() {
+    public final InstallationTaskDef<ZippedTool> install = new ZippedToolTaskDef<ZippedTool>() {
         @Override
-        public InstallationTask newSession(SessionContext $) {
-            return new InstallationTask(this, $) {
+        public ZippedTool newSession(SessionContext $) {
+            return new ZippedTool(this, $) {
                 @Override
-                protected TaskResult run(TaskRunner runner) {
-                    $.sys.rm($(javaSharedBuildDirPath));
-                    $.sys.mkdirs($(javaSharedBuildDirPath));
+                protected DependencyResult run(TaskRunner runner) {
+                    clean();
 
-                    final File localDFile = new File(global.localCtx.var(
-                        $.sys.isNativeUnix() ? javaLinuxDistributionPath : javaWindowsDistributionPath));
+                    final File localDFile = new File(global.localCtx.var(localDistrPath));
 
                     if (!localDFile.exists()) {
-                        throw new RuntimeException("expecting java distribution at " + localDFile.getAbsolutePath());
+                        return new DependencyResult($(toolname))
+                            .add("expecting java distribution at " + localDFile.getAbsolutePath() + ". you may download it from Oracle.com site");
                     }
 
-                    $.sys.upload($(javaDistributionPath), localDFile);
+                    $.sys.upload($(myDirPath), localDFile);
 
-                    final String distrName = $(javaDistributionName);
-                    if (distrName.endsWith("gz")) {
-                        $.sys.run(
-                            $.sys.line()
-                                .timeoutSec(30)
-                                .cd($(javaSharedBuildDirPath))
-                                .addRaw("tar xvf").a(distrName)
-                        );
-                    } else {
-                        $.sys.script()
-                            .cd($(javaSharedBuildDirPath))
-                            .line().addRaw("chmod u+x %s", distrName).build()
-                            .line()
-                            .timeoutSec(30)
-                            .addRaw("./%s", distrName).build()
-                            .run();
-                    }
+                    extractToHomeDir();
 
-                    String jdkDirName = $.sys.capture(String.format("cd %s && ls -w 1 | grep -v gz | grep -v bin", $(javaSharedBuildDirPath))).trim();
+                    shortCut("java", "java");
+                    shortCut("javah", "javah");
+                    shortCut("javac", "javac");
 
-                    $.sys.run($.sys.script()
-                        .line().sudo().addRaw("rm -r /var/lib/java").build()
-                        .line().sudo().addRaw("rm -r /var/lib/jdks/%s", jdkDirName).build()
-                        .line().sudo().addRaw("mkdir -p /var/lib/jdks").build()
-                        .line().sudo().addRaw("mv %s/%s /var/lib/jdks", $(javaSharedBuildDirPath), jdkDirName).build()
-                        .line().sudo().addRaw("ln -s /var/lib/jdks/%s /var/lib/java", jdkDirName).build()
-                        .line().sudo().addRaw("chmod -R g+r,o+r /var/lib/java").build()
-                        .line().sudo().addRaw("chmod u+x,g+x,o+x /var/lib/java/bin/*").build()
-                        .line().sudo().addRaw("rm /usr/bin/java").build()
-                        .line().sudo().addRaw("ln -s /var/lib/java/bin/java /usr/bin/java").build()
-                        .line().sudo().addRaw("rm /usr/bin/javac").build()
-                        .line().sudo().addRaw("ln -s /var/lib/java/bin/javac /usr/bin/javac").build(),
-                        SystemEnvironment.passwordCallback($(cap.sshPassword))
-                    );
-
-                    return TaskResult.OK;
+                    return verify();
                 }
-
 
                 @Override
-                public Dependency asInstalledDependency() {
-                    return Dependency.NONE;
+                protected String extractVersion(String output) {
+                    return StringUtils.substringBetween(
+                        output,
+                        "java version \"", "\"");
+                }
+
+                @Override
+                protected String createVersionCommandLine() {
+                    return "java -version";
                 }
             };
-
         }
-
-
     };
+
 
 
     public JavaPlugin(GlobalContext global) {
         super(global);
-        javaSharedDirPath = Variables.joinPath(cap.sharedPath, "java");
-        javaSharedBuildDirPath = Variables.joinPath(javaSharedDirPath, "build");
-        javaLinuxDistributionPath = Variables.joinPath(javaSharedBuildDirPath, javaLinuxDistributionName);
-        javaWindowsDistributionPath = Variables.joinPath(javaSharedBuildDirPath, javaWindowsDistributionName);
-        javaDistributionName = Variables.condition(cap.isNativeUnix, javaLinuxDistributionName, javaLinuxDistributionName);
-        javaDistributionPath = Variables.condition(cap.isNativeUnix, javaLinuxDistributionPath, javaWindowsDistributionPath);
+
+//        version.defaultTo("1.7.0_40");
+        toolname.defaultTo("jdk");
+        version.setDesc("version return by java, i.e. 1.7.0_40");
+        versionName.setDesc("distribution file name with extension, i.e jdk-7u40-linux-x64");
+        toolDistrName.setEqualTo(versionName);
+        distrFilename.setEqualTo(concat(versionName, ".gz"));
+
+        localDistrPath = Variables.joinPath(myDirPath, distrFilename);
 
     }
 
 
     @Override
-    public InstallationTaskDef<InstallationTask> getInstall() {
+    public InstallationTaskDef<? extends InstallationTask> getInstall() {
         return install;
     }
 }

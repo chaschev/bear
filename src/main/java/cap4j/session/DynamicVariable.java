@@ -109,7 +109,7 @@ public class DynamicVariable<T> implements Nameable<T> {
     }
 
     public DynamicVariable<T> defaultTo(T defaultValue) {
-        return defaultTo(defaultValue, false);
+        return defaultTo(defaultValue, true);
     }
 
     public DynamicVariable<T> defaultTo(T defaultValue, boolean force) {

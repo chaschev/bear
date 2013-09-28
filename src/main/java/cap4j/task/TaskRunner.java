@@ -17,9 +17,9 @@
 package cap4j.task;
 
 import cap4j.core.Cap;
-import cap4j.core.SessionContext;
 import cap4j.core.GlobalContext;
-import cap4j.session.Result;
+import cap4j.core.SessionContext;
+import cap4j.scm.CommandLineResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -29,7 +29,6 @@ import java.util.LinkedHashSet;
 import java.util.List;
 
 import static cap4j.session.Result.ERROR;
-import static cap4j.session.Result.OK;
 
 /**
  * @author Andrey Chaschev chaschev@gmail.com
@@ -48,54 +47,56 @@ public class TaskRunner {
         this.cap = global.cap;
     }
 
-    public Result run(TaskDef task) {
+    public TaskResult run(TaskDef task) {
         return runWithDependencies(task);
     }
 
-    public Result run(TaskDef... tasks) {
+    public TaskResult run(TaskDef... tasks) {
         return runMany((List) Arrays.asList(tasks));
     }
 
-    public Result runMany(Iterable<TaskDef> tasks) {
+    public TaskResult runMany(Iterable<TaskDef> tasks) {
         for (TaskDef task : tasks) {
-            final Result result = runWithDependencies(task);
+            final TaskResult result = runWithDependencies(task);
 
-            if (result != OK) {
+            if (result != TaskResult.OK) {
                 return result;
             }
         }
 
-        return OK;
+        return TaskResult.OK;
     }
 
 
     //////
 
-    protected Result runWithDependencies(TaskDef taskDef) {
+    protected TaskResult runWithDependencies(TaskDef taskDef) {
         logger.info("starting task '{}'", taskDef.name);
 
         if (tasksExecuted.contains(taskDef)) {
-            return OK;
+            return TaskResult.OK;
         }
 
-        return Result.and(
-            runCollectionOfTasks(taskDef.dependsOnTasks, taskDef.name + ": depending tasks", false),
-            runCollectionOfTasks(taskDef.beforeTasks, taskDef.name + ": before tasks", false),
-            runMe(taskDef),
-            runCollectionOfTasks(taskDef.afterTasks, taskDef.name + ": after tasks", false)
-        );
+        TaskResult last =
+            runCollectionOfTasks(taskDef.dependsOnTasks, taskDef.name + ": depending tasks", false);
+
+        last = last.nok() ? last : runCollectionOfTasks(taskDef.beforeTasks, taskDef.name + ": before tasks", false);
+        last = last.nok() ? last : runMe(taskDef);
+        last = last.nok() ? last : runCollectionOfTasks(taskDef.afterTasks, taskDef.name + ": after tasks", false);
+
+        return last;
     }
 
-    private Result runMe(TaskDef task) {
+    private TaskResult runMe(TaskDef task) {
         return runCollectionOfTasks(Collections.singletonList(task), task.name + ": running myself", true);
     }
 
-    private Result runCollectionOfTasks(List<TaskDef> tasks, String desc, boolean thisIsMe) {
+    private TaskResult runCollectionOfTasks(List<TaskDef> tasks, String desc, boolean thisIsMe) {
         if (!tasks.isEmpty() && !desc.isEmpty()) {
             logger.info(desc);
         }
 
-        Result runResult = OK;
+        TaskResult runResult = TaskResult.OK;
 
         for (TaskDef task : tasks) {
             if (!task.roles.isEmpty() && !task.hasRole($.sys.getRoles())) {
@@ -104,34 +105,27 @@ public class TaskRunner {
 
             runResult = _runSingleTask(task, thisIsMe);
 
-            if (runResult != OK) {
+            if (runResult.nok()) {
                 break;
             }
         }
         return runResult;
     }
 
-    private Result _runSingleTask(TaskDef task, boolean thisIsMe) {
-        Result result = null;
+    private TaskResult _runSingleTask(TaskDef task, boolean thisIsMe) {
+        TaskResult result = null;
         try {
             if (!thisIsMe) {
                 result = runWithDependencies(task);
             } else {
-                result = task.newSession($).run(this).result;
+                result = task.newSession($).run(this);
             }
-        } catch (Exception ignore) {
-            logger.error("", ignore);
+        } catch (Exception e) {
+            logger.error("", e);
+            result = new TaskResult(ERROR, new CommandLineResult(e.toString(), ERROR));
         }
 
-        Result runResult;
-
-        if (result == null || result != OK) {
-            runResult = ERROR;
-        } else {
-            runResult = OK;
-        }
-
-        return runResult;
+        return result;
     }
 
     public void runRollback(TaskDef task) {

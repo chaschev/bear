@@ -48,22 +48,22 @@ public class TransactionTaskDef extends TaskDef {
         return new Task(this, $) {
             @Override
             protected TaskResult run(TaskRunner runner) {
-                Result result = null;
+                TaskResult result = null;
                 try {
                     result = runner.runMany(tasks);
                 } catch (Exception e) {
                     logger.warn("", e);
-                    result = Result.ERROR;
+                    result = new TaskResult(Result.ERROR, e.toString());
                 }
 
-                if (result != Result.OK) {
+                if (result.nok()) {
                     //let's keep it simple
                     for (TaskDef task : tasks) {
                         runner.runRollback(task);
                     }
                 }
 
-                return new TaskResult(result);
+                return result;
             }
         };
     }

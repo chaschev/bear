@@ -30,13 +30,14 @@ import org.apache.commons.lang3.StringUtils;
 import java.text.MessageFormat;
 
 import static cap4j.session.Variables.condition;
+import static cap4j.session.Variables.joinPath;
 
 /**
  * @author Andrey Chaschev chaschev@gmail.com
  */
 public class TomcatPlugin extends ZippedToolPlugin {
     public final DynamicVariable<String>
-    webappsUnix = Variables.strVar("/var/lib/tomcat6/webapps").defaultTo("/var/lib/tomcat6/webapps"),
+    webappsUnix = joinPath(homePath, "webapps"),
         webappsWin = Variables.dynamic(""),
         webapps,
         warName = Variables.strVar("i.e. ROOT.war"),
@@ -51,8 +52,6 @@ public class TomcatPlugin extends ZippedToolPlugin {
         catalinaExecutable = Variables.newVar("/usr/sbin/tomcat6");
 
 
-
-
     public TomcatPlugin(GlobalContext global) {
         super(global);
 
@@ -60,8 +59,9 @@ public class TomcatPlugin extends ZippedToolPlugin {
         toolname.defaultTo("tomcat", true);
         toolDistrName.defaultTo("apache-tomcat", true);
 
+//        webapps = condition(cap.isUnix, webappsUnix, webappsWin);
         webapps = condition(cap.isUnix, webappsUnix, webappsWin);
-        warPath = Variables.joinPath("warPath", webapps, warName);
+        warPath = joinPath(webapps, warName);
 
         distrWwwAddress.setDynamic(new VarFun<String>() {
             public String apply() {
@@ -78,13 +78,18 @@ public class TomcatPlugin extends ZippedToolPlugin {
                     @Override
                     protected TaskResult run(TaskRunner runner) {
                         $.sys.sudo().rm($.var(warCacheDirs));
-                        $.sys.sudo().run($.newCommandLine()
-                            .a("service", "tomcat6", "stop")
-                            .semicolon()
-                            .sudo()
-                            .a("service", "tomcat6", "start")
-                            .timeoutMin(2)
-                        );
+                        $.sys.script()
+                            .line().addRaw("tomcatStop").build()
+                            .line().addRaw("tomcatStart").build()
+                            .timeoutSec(60)
+                            .run();
+//                        $.sys.sudo().run($.newCommandLine()
+//                            .a("service", "tomcat6", "stop")
+//                            .semicolon()
+//                            .sudo()
+//                            .a("service", "tomcat6", "start")
+//                            .timeoutMin(2)
+//                        );
 
                         return TaskResult.OK;
                     }                };
@@ -102,13 +107,17 @@ public class TomcatPlugin extends ZippedToolPlugin {
 
                     download();
 
-                    buildExtractionToHomeDir();
+                    extractToHomeDir();
 
                     shortCut("tomcatStart", "startup.sh");
                     shortCut("tomcatStop", "shutdown.sh");
                     shortCut("tomcatVersion", "version.sh");
 
-                    return extractAndVerify();
+                    DependencyResult result = verify();
+
+                    $.sys.move($(webapps)+"/ROOT", $(webapps)+"/conf");
+
+                    return result;
                 }
 
                 @Override

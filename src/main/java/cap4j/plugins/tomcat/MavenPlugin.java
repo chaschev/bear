@@ -66,11 +66,11 @@ public class MavenPlugin extends ZippedToolPlugin {
 
                     download();
 
-                    buildExtractionToHomeDir();
+                    extractToHomeDir();
 
                     shortCut("mvn", "mvn");
 
-                    return extractAndVerify();
+                    return verify();
                 }
 
                 @Override

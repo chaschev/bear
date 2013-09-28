@@ -20,6 +20,7 @@ import cap4j.cli.Script;
 import cap4j.core.*;
 import cap4j.plugins.java.JavaPlugin;
 import cap4j.session.DynamicVariable;
+import cap4j.session.GenericUnixRemoteEnvironment;
 import cap4j.session.SystemEnvironment;
 import cap4j.session.Variables;
 import cap4j.task.*;
@@ -39,8 +40,8 @@ import static cap4j.session.Variables.dynamic;
  */
 public abstract class ZippedToolPlugin extends Plugin{
     public final DynamicVariable<String>
-        version = dynamic("version of the tool"),
-        toolname = dynamic("i.e. maven"),
+        version = dynamic("version of the tool, a string which is return by a tool identifying it's version"),
+        toolname = dynamic("this will be the name of home folder, i.e. maven, jdk"),
         toolDistrName = Variables.strVar("i.e. apache-tomcat").setEqualTo(toolname),
         versionName = concat(toolDistrName, "-", version).setDesc("i.e. apache-maven-3.0.5"),
         distrFilename = concat(versionName, ".tar.gz"),
@@ -116,33 +117,57 @@ public abstract class ZippedToolPlugin extends Plugin{
         }
 
 
-        protected Script buildExtractionToHomeDir(){
+        protected Script extractToHomeDir(){
             final String _distrFilename = $(distrFilename);
 
-            extractToHomeScript = new Script($.sys)
-                .cd($(buildPath));
+            Script script = $.sys.script()
+                .cd($(buildPath))
+                .timeoutSec(60);
 
             if(_distrFilename.endsWith("tar.gz")){
-                extractToHomeScript.add($.sys.line().timeoutMin(1).addRaw("tar xvfz ../%s", _distrFilename));
+                script.line().addRaw("tar xvfz ../%s", _distrFilename).build();
             }else
             if(_distrFilename.endsWith("zip")){
-                extractToHomeScript.add($.sys.line().timeoutMin(1).addRaw("unzip ../%s", $(distrFilename)));
+                script.line().addRaw("unzip ../%s", _distrFilename).build();
+            }if(_distrFilename.endsWith("bin")){
+                script
+                    .line().addRaw("chmod u+x %s", _distrFilename).build()
+                    .line().addRaw("./%s", _distrFilename).build();
             }
 
-            extractToHomeScript
+            script
+                .timeoutSec(60)
+                .run();
+
+            String toolDirName = $.sys.capture(String.format("cd %s && ls -w 1", $(buildPath))).trim();
+
+            if(!toolDirName.equals($(versionName))){
+                $.warn("tool version name is not equal to tool dir name: (expected) %s vs (actual) %s. setting new tool name to %s", $(versionName), toolDirName, toolDirName);
+                versionName.defaultTo(toolDirName);
+            }
+
+            $.sys.script()
                 .line().sudo().addRaw("rm -r %s", $(homePath)).build()
                 .line().sudo().addRaw("rm -r %s", $(homeVersionPath)).build()
                 .line().sudo().addRaw("mv %s %s", $(buildPath) + "/" + $(versionName), $(homeParentPath)).build()
                 .line().sudo().addRaw("ln -s %s %s", $(currentVersionPath), $(homePath)).build()
                 .line().sudo().addRaw("chmod -R g+r,o+r %s", $(homePath)).build()
-                .line().sudo().addRaw("chmod u+x,g+x,o+x %s/bin/*", $(homePath)).build();
+                .line().sudo().addRaw("chmod u+x,g+x,o+x %s/bin/*", $(homePath)).build()
+                .run(sshCallback());
 
-            return extractToHomeScript;
+
+            return script;
         }
 
-        protected Script shortCut(String newCommandName, String sourceExecutableName){
-            return extractToHomeScript.add($.sys.line().sudo().addRaw("rm /usr/bin/%s", newCommandName))
-                .add($.sys.line().sudo().addRaw("ln -s %s/bin/%s /usr/bin/%s", $(homePath), sourceExecutableName, newCommandName));
+        private GenericUnixRemoteEnvironment.SshSession.WithSession sshCallback() {
+            return SystemEnvironment.passwordCallback($.var(cap.sshPassword));
+        }
+
+        protected void shortCut(String newCommandName, String sourceExecutableName){
+            $.sys.script()
+                .line().sudo().addRaw("rm /usr/bin/%s", newCommandName).build()
+                .line().sudo().addRaw("ln -s %s/bin/%s /usr/bin/%s", $(homePath), sourceExecutableName, newCommandName).build()
+                .run(sshCallback());
         }
 
 
@@ -152,14 +177,10 @@ public abstract class ZippedToolPlugin extends Plugin{
 
 
 
-        protected DependencyResult extractAndVerify() {
-            $.sys.run(extractToHomeScript,
-                SystemEnvironment.passwordCallback($.var(cap.sshPassword))
-            );
-
+        protected DependencyResult verify() {
             final DependencyResult r = asInstalledDependency().checkDeps();
 
-            if(r.result.ok()){
+            if(r.ok()){
                 $.log("%s has been installed", $(versionName));
             }
             return r;

@@ -9,9 +9,9 @@ import cap4j.plugins.java.JavaPlugin;
 import cap4j.plugins.tomcat.MavenPlugin;
 import cap4j.plugins.tomcat.TomcatPlugin;
 import cap4j.scm.GitCLIPlugin;
-import cap4j.session.Result;
 import cap4j.strategy.BaseStrategy;
 import cap4j.strategy.SymlinkEntry;
+import cap4j.task.TaskResult;
 import com.google.common.collect.Lists;
 
 import java.util.List;
@@ -44,6 +44,7 @@ public class SetupPluginsSettings extends ICapSettings {
                     TomcatPlugin.class,
                     GrailsPlugin.class,
                     GitCLIPlugin.class
+                    ,Atocha.class
                 );
             }
         };
@@ -57,7 +58,10 @@ public class SetupPluginsSettings extends ICapSettings {
 
         tomcat.warName.setEqualTo(grails.warName);
 
-        grails.version.defaultTo("2.3.0", true);
+        java.versionName.defaultTo("jdk-7u40-linux-x64");
+        java.version.defaultTo("1.7.0_40");
+
+        grails.version.defaultTo("2.0.4", true);
 
         cap.stages.defaultTo(
             new Stages()
@@ -83,7 +87,7 @@ public class SetupPluginsSettings extends ICapSettings {
                         String warPath = $(grails.releaseWarPath);
 
                         if (!$.sys.exists(warPath) || !$(global.getPlugin(Atocha.class).reuseWar)) {
-                            final Result r = $.runner.run(new GrailsBuilder(global));
+                            final TaskResult r = $.runner.run(new GrailsBuilder(global));
 
                             if (r.nok()) {
                                 throw new IllegalStateException("failed to build WAR");

@@ -31,6 +31,12 @@ public class TaskResult {
         this.result = cliResult.result;
     }
 
+    public TaskResult(Result result, String text) {
+        this.result = result;
+        cliResult = new CommandLineResult(text, result);
+    }
+
+
     public TaskResult(Result result) {
         this.result = result;
     }
@@ -41,4 +47,31 @@ public class TaskResult {
     }
 
     public static final TaskResult OK = new TaskResult(Result.OK);
+
+    public static TaskResult and(TaskResult... results){
+        for (TaskResult result : results) {
+            if(!result.ok()){
+                return result;
+            }
+        }
+
+        return results[results.length - 1];
+    }
+
+    public boolean ok() {
+        return result.ok();
+    }
+
+    public boolean nok() {
+        return result.nok();
+    }
+
+    @Override
+    public String toString() {
+        final StringBuilder sb = new StringBuilder("TaskResult{");
+        sb.append("result=").append(result);
+        sb.append(", cliResult=").append(cliResult);
+        sb.append('}');
+        return sb.toString();
+    }
 }

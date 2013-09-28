@@ -3,7 +3,7 @@ top priority:
 - (ok) rollback command
 - test error messages by setting incorrect rights at each step
 -- (ok) reuse setup task validation
--- dependencies
+-- (ok) dependencies
 - test revert to previous when deploy fails
 - stop when errors
 - think of unit testing
@@ -17,6 +17,7 @@ utils:
 
 features:
 
+- tomcat plugin: configurable rights as of a service
 - (ok) jdk plugin
 - (ok) grails plugin
 - (ok) tomcat plugin

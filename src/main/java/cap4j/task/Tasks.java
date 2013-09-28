@@ -21,7 +21,6 @@ import cap4j.core.GlobalContext;
 import cap4j.core.SessionContext;
 import cap4j.plugins.Plugin;
 import cap4j.scm.VcsCLIPlugin;
-import cap4j.session.Result;
 import com.google.common.base.Preconditions;
 import org.apache.commons.lang3.time.StopWatch;
 
@@ -52,9 +51,9 @@ public class Tasks {
             return new Task(deploy, $) {
                 @Override
                 protected TaskResult run(TaskRunner runner) {
-                    return new TaskResult(runner.run(
+                    return runner.run(
                         update,
-                        restartApp));
+                        restartApp);
                 }
             };
         }
@@ -66,10 +65,9 @@ public class Tasks {
             return new Task(setup, $) {
                 @Override
                 protected TaskResult run(TaskRunner runner) {
-                    final String appLogs = $(cap.appLogsPath);
                     final String[] dirs = {
                         $(cap.deployTo), $(cap.releasesPath), $(cap.vcsCheckoutPath),
-                        appLogs
+                        $(cap.sharedPath), $(cap.appLogsPath)
                     };
 
                     $.sys.sudo().mkdirs(dirs);
@@ -81,15 +79,19 @@ public class Tasks {
                     $.sys.sudo().chmod("g+w", true, dirs);
 
                     if (!appUser.equals(sshUser)) {
-                        $.sys.sudo().chown(appUser + "." + appUser, true, appLogs);
+                        $.sys.sudo().chown(appUser + "." + appUser, true, $(cap.appLogsPath));
                     }
 
                     if ($.var(cap.verifyPlugins)) {
                         for (Plugin plugin : global.getGlobalPlugins()) {
-                            if (plugin.getInstall().newSession($).asInstalledDependency().checkDeps().result.nok()) {
+                            if (plugin.getInstall().newSession($).asInstalledDependency().checkDeps().nok()) {
                                 if ($(cap.autoInstallPlugins)) {
                                     $.log("plugin %s was not installed. installing it...", plugin);
-                                    runner.run(plugin.getInstall());
+                                    TaskResult run = runner.run(plugin.getInstall());
+                                    if(!run.ok()){
+                                        $.error("could not install %s:%n%s", plugin, run);
+                                        break;
+                                    }
                                 } else {
                                     $.warn("plugin %s was not installed (autoSetup is off)", plugin);
                                 }
@@ -109,10 +111,10 @@ public class Tasks {
             return new Task(update, $) {
                 @Override
                 protected TaskResult run(TaskRunner runner) {
-                    return new TaskResult(runner.run(new TransactionTaskDef(
+                    return runner.run(new TransactionTaskDef(
                         updateCode,
                         createSymlink
-                    )));
+                    ));
                 }
             };
         }
@@ -124,11 +126,9 @@ public class Tasks {
             return new Task(updateCode, $) {
                 @Override
                 protected TaskResult run(TaskRunner runner) {
-                    return new TaskResult(
-                        Result.and($(cap.newStrategy).deploy(),
-                            runner.run(finalizeTouchCode)
-                        )
-                    );
+                    return TaskResult.and(
+                            $(cap.newStrategy).deploy(),
+                            runner.run(finalizeTouchCode));
                 }
 
                 @Override

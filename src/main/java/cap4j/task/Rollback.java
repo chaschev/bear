@@ -19,7 +19,6 @@ package cap4j.task;
 import cap4j.core.GlobalContext;
 import cap4j.core.SessionContext;
 import cap4j.plugins.Plugin;
-import cap4j.session.Result;
 
 /**
  * @author Andrey Chaschev chaschev@gmail.com
@@ -84,9 +83,9 @@ public class Rollback extends Plugin {
             return new Task(this, $) {
                 @Override
                 protected TaskResult run(TaskRunner runner) {
-                    return new TaskResult(Result.and(
+                    return TaskResult.and(
                         runner.run(pointToPreviousRelease),
-                        runner.run(cleanup)));
+                        runner.run(cleanup));
                 }
 
             };
@@ -99,10 +98,10 @@ public class Rollback extends Plugin {
             return new Task(this, $) {
                 @Override
                 protected TaskResult run(TaskRunner runner) {
-                    return new TaskResult(Result.and(
+                    return TaskResult.and(
                         runner.run(pointToPreviousRelease),
                         runner.run(global.tasks.restartApp),
-                        runner.run(cleanup)));
+                        runner.run(cleanup));
                 }
             };
         }

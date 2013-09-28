@@ -50,11 +50,14 @@ public class Cap {
 
     public final DynamicVariable<String>
 
-        applicationsPath = strVar("System apps folder").setDynamic(new VarFun<String>() {
+
+    applicationsPath = strVar("System apps folder").setDynamic(new VarFun<String>() {
         public String apply() {
             return $.sys.isNativeUnix() ? "/var/lib" : "c:";
         }
     }),
+
+    cap4jPath = joinPath(applicationsPath, "cap4j"),
 
     logsPath = strVar("System apps folder").setDynamic(new VarFun<String>() {
         public String apply() {
@@ -116,7 +119,7 @@ public class Cap {
 
     releasesPath = joinPath("releasesPath", deployTo, releasesDirName),
         currentPath = joinPath("currentPath", deployTo, currentDirName),
-        sharedPath = joinPath("sharedPath", deployTo, sharedDirName),
+        sharedPath = joinPath("sharedPath", cap4jPath, sharedDirName),
 
     releasePath = joinPath("releasesPath", releasesPath, releaseName),
 

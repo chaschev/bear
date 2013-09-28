@@ -17,6 +17,7 @@
 package cap4j.cli;
 
 import cap4j.scm.CommandLineResult;
+import cap4j.session.GenericUnixRemoteEnvironment;
 import cap4j.session.Result;
 import cap4j.session.SystemEnvironment;
 import com.google.common.base.Function;
@@ -42,7 +43,7 @@ public class Script <T extends CommandLineResult>{
         }
 
         @Override
-        public CommandLineResult run() {
+        public CommandLineResult run(GenericUnixRemoteEnvironment.SshSession.WithSession callback) {
             return result;
         }
 
@@ -94,6 +95,10 @@ public class Script <T extends CommandLineResult>{
         return system.run(this);
     }
 
+    public CommandLineResult run(GenericUnixRemoteEnvironment.SshSession.WithSession callback) {
+        return system.run(this, callback);
+    }
+
     public Script<T> setParser(Function<String, T> parser) {
         this.parser = parser;
         return this;
@@ -107,6 +112,10 @@ public class Script <T extends CommandLineResult>{
         }
 
         return (T) new CommandLineResult(text, Result.OK);
+    }
+
+    public Script<T> timeoutSec(int sec) {
+        return timeoutMs(1000 * sec);
     }
 
     public Script<T> timeoutMs(int ms) {

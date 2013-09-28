@@ -51,7 +51,7 @@ public class GlobalContext {
     public final Plugins plugins = new Plugins();
 
     public class Plugins{
-        public final Map<Class<? extends Plugin>, Plugin> pluginMap = new HashMap<Class<? extends Plugin>, Plugin>();
+        public final Map<Class<? extends Plugin>, Plugin> pluginMap = new LinkedHashMap<Class<? extends Plugin>, Plugin>();
 
         public boolean isSession(Class<? extends Plugin> aClass){
             return pluginMap.get(aClass) == null && pluginMap.containsKey(aClass);

@@ -20,11 +20,15 @@ import cap4j.cli.CommandLine;
 import cap4j.session.DynamicVariable;
 import cap4j.session.SystemEnvironment;
 import cap4j.task.TaskRunner;
+import org.joda.time.DateTime;
+import org.joda.time.format.DateTimeFormat;
+import org.joda.time.format.DateTimeFormatter;
 
 /**
  * @author Andrey Chaschev chaschev@gmail.com
  */
 public class SessionContext {
+    public static final DateTimeFormatter TIME_FORMATTER = DateTimeFormat.forPattern("HH:mm:ss:SSS");
     //    public final GlobalContext globalContext;
     public final VariablesLayer sessionVariablesLayer;
     private final GlobalContext global;
@@ -95,10 +99,20 @@ public class SessionContext {
     }
 
     public void warn(String s, Object... params) {
+        logLevel(s, "WARN", params);
+    }
+
+    public void error(String s, Object... params) {
+        logLevel(s, "ERROR", params);
+    }
+
+    private void logLevel(String s, String level, Object[] params) {
+        // and here's how to get the String representation
+
         if (!s.endsWith("%n") && !s.endsWith("\n")) {
             s += "\n";
         }
 
-        System.out.printf("[WARN]: " + s, params);
+        System.out.printf(new DateTime().toString(TIME_FORMATTER) + " " + level + " " + s, params);
     }
 }

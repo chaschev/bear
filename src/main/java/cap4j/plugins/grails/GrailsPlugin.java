@@ -95,12 +95,12 @@ public class GrailsPlugin extends ZippedToolPlugin {
 
                     download();
 
-                    buildExtractionToHomeDir();
+                    extractToHomeDir();
 
                     shortCut("grails", "grails");
                     shortCut("startGrails", "startGrails");
 
-                    return extractAndVerify();
+                    return verify();
                 }
 
                 @Override

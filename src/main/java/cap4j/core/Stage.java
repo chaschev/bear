@@ -89,12 +89,17 @@ public class Stage {
                             }
                         }
 
-                        if (r.result.nok()) {
+                        if (r.nok()) {
                             throw new DependencyException(r.toString());
                         }
                     }
 
-                    final Result run = runner.run(task);
+                    final TaskResult run = runner.run(task);
+
+                    if(!run.ok()){
+                        System.out.println(run);
+                    }
+
                 }
             });
         }

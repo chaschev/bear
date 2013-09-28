@@ -16,6 +16,7 @@
 
 package cap4j.smoke;
 
+import atocha.Atocha;
 import cap4j.core.GlobalContextFactory;
 import cap4j.main.Cap4j;
 import cap4j.main.Script;
@@ -52,6 +53,8 @@ public class PluginsTests {
             cap.stage.defaultTo("vm02");
             cap.task.defaultTo("deploy");
             cap.clean.defaultTo(false, true);
+
+            global.getPlugin(Atocha.class).reuseWar.defaultTo(true, true);
 
             cap.vcsBranchName.defaultTo("master");
 

@@ -38,14 +38,18 @@ public class DependencyResult extends TaskResult {
         super(result);
     }
 
-    public void add(String message) {
+    public DependencyResult add(String message) {
         initMessages();
 
         if(name != null){
-            message = "[" + name + "]: ";
+            message = "[" + name + "]: " + message;
         }
 
         messages.add(message);
+
+        result = Result.ERROR;
+
+        return this;
     }
 
     private void initMessages() {
@@ -65,6 +69,7 @@ public class DependencyResult extends TaskResult {
 
     public void join(DependencyResult other) {
         initMessages();
+
         if(other.messages != null){
             messages.addAll(other.messages);
         }
