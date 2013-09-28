@@ -18,6 +18,7 @@ package cap4j.strategy;
 
 import cap4j.core.*;
 import cap4j.plugins.HavingContext;
+import cap4j.scm.CommandLineResult;
 import cap4j.session.Result;
 import cap4j.session.Variables;
 import cap4j.task.TaskResult;
@@ -148,7 +149,7 @@ public abstract class BaseStrategy<CHILD extends BaseStrategy>  extends HavingCo
             return TaskResult.OK;
         } catch (Exception e) {
             logger.warn("", e);
-            return new TaskResult(Result.ERROR, e.toString());
+            return new CommandLineResult(e.toString(), Result.ERROR);
         }
     }
 

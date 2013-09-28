@@ -32,6 +32,8 @@ import java.text.MessageFormat;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static cap4j.task.TaskResult.and;
+
 /**
  * @author Andrey Chaschev chaschev@gmail.com
  */
@@ -51,7 +53,7 @@ public class MySqlPlugin extends Plugin {
         mysqlTempScriptPath = Variables.dynamic(new VarFun<String>() {
             @Override
             public String apply() {
-                return $.sys.joinPath($(cap.sharedPath), $(mysqlTempScriptName));
+                return $.sys.joinPath($(cap.projectSharedPath), $(mysqlTempScriptName));
             }
         }),
         dumpName = Variables.dynamic(new VarFun<String>() {
@@ -61,7 +63,7 @@ public class MySqlPlugin extends Plugin {
                     $(cap.applicationName), Cap.RELEASE_FORMATTER.print(new DateTime()), $(cap.sessionHostname));
             }
         }),
-        dumpsDirPath = Variables.joinPath(cap.sharedPath, "dumps"),
+        dumpsDirPath = Variables.joinPath(cap.projectSharedPath, "dumps"),
         dumpPath = Variables.dynamic(new VarFun<String>() {
             public String apply() {
                 return $.sys.joinPath($(dumpsDirPath), $(dumpName) + ".bz2");
@@ -89,17 +91,17 @@ public class MySqlPlugin extends Plugin {
 
                     final boolean installedVersionOk = version != null && $(getVersion).matches(version);
 
-                    Result r = Result.OK;
+                    TaskResult r = TaskResult.OK;
 
                     if (!installedVersionOk) {
                         $.sys.sudo().run($.sys.newCommandLine().sudo().addSplit("rpm -Uvh http://mirror.webtatic.com/yum/el6/latest.rpm"));
-                        r = $.sys.getPackageManager().installPackage(new SystemEnvironment.PackageInfo($(clientPackage))).result;
+                        r = and(r, $.sys.getPackageManager().installPackage(new SystemEnvironment.PackageInfo($(clientPackage))));
                     }
 
                     Version serverVersion = computeRealServerVersion(runner);
 
                     if (serverVersion == null) {
-                        r = $.sys.getPackageManager().installPackage(new SystemEnvironment.PackageInfo($(serverPackage))).result;
+                        r = and(r, $.sys.getPackageManager().installPackage(new SystemEnvironment.PackageInfo($(serverPackage))));
                     }
 
                     $.sys.sudo().run($.sys.newCommandLine().timeoutSec(30).sudo().addSplit("service mysqld start"));
@@ -116,12 +118,12 @@ public class MySqlPlugin extends Plugin {
                         $(password)
                     );
 
-                    r = Result.and(r, runScript(runner, createDatabaseSql,
+                    r = and(r, runScript(runner, createDatabaseSql,
                         $(adminUser),
                         $(adminPassword)
-                    ).result);
+                    ));
 
-                    return new TaskResult(r);
+                    return r;
                 }
             };
         }
@@ -166,7 +168,7 @@ public class MySqlPlugin extends Plugin {
             return new Task(this, $) {
                 @Override
                 protected TaskResult run(TaskRunner runner) {
-                    return new TaskResult(runScript(runner, "SELECT User FROM mysql.user;"));
+                    return runScript(runner, "SELECT User FROM mysql.user;");
                 }
             };
         }
@@ -181,7 +183,7 @@ public class MySqlPlugin extends Plugin {
                 protected TaskResult run(TaskRunner runner) {
                     final String s = Question.freeQuestion("Enter sql to execute: ");
 
-                    return new TaskResult(runScript(runner, s));
+                    return runScript(runner, s);
                 }
             };
         }
@@ -236,13 +238,12 @@ public class MySqlPlugin extends Plugin {
                 @Override
                 protected TaskResult run(TaskRunner runner) {
                     Question.freeQuestionWithOption("Enter a filepath", $(dumpName), dumpName);
-                    final CommandLineResult r = $.sys.run($.sys.newCommandLine()
+
+                    return $.sys.run($.sys.line()
                         .addSplit(String.format("bzcat %s", $(dumpPath)))
                         .pipe()
                         .addSplit(String.format("mysql --user=%s -p %s", $(user), $(dbName))),
                         mysqlPasswordCallback($(password)));
-
-                    return new TaskResult(r);
                 }
             };
         }

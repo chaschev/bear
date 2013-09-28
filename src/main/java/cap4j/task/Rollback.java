@@ -47,12 +47,10 @@ public class Rollback extends Plugin {
                 protected TaskResult run(TaskRunner runner) {
                     requirePreviousRelease($);
 
-                    return new TaskResult(
-                        $.sys.script()
+                    return $.sys.script()
                             .line().sudo().addRaw("rm -r %s", $.var(cap.currentPath)).build()
                             .line().sudo().addRaw("ln -s %s %s", $.var(cap.getPreviousReleasePath), $.var(cap.currentPath)).build()
-                            .run()
-                    );
+                            .run();
                 }
             };
         }
@@ -66,11 +64,9 @@ public class Rollback extends Plugin {
             return new Task(this, $) {
                 @Override
                 protected TaskResult run(TaskRunner runner) {
-                    return new TaskResult(
-                        $.sys.run(
+                        return $.sys.run(
                             $.sys.line().sudo().addRaw("if [ `readlink #{%s}` != #{%s} ]; then #{try_sudo} rm -rf #{%s}; fi",
-                                $.var(cap.currentPath), $.var(cap.releasePath), $.var(cap.releasePath)))
-                    );
+                                $.var(cap.currentPath), $.var(cap.releasePath), $.var(cap.releasePath)));
                 }
 
             };

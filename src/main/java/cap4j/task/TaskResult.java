@@ -16,7 +16,6 @@
 
 package cap4j.task;
 
-import cap4j.scm.CommandLineResult;
 import cap4j.session.Result;
 
 /**
@@ -24,26 +23,9 @@ import cap4j.session.Result;
  */
 public class TaskResult {
     public Result result;
-    public CommandLineResult cliResult;
-
-    public TaskResult(CommandLineResult cliResult) {
-        this.cliResult = cliResult;
-        this.result = cliResult.result;
-    }
-
-    public TaskResult(Result result, String text) {
-        this.result = result;
-        cliResult = new CommandLineResult(text, result);
-    }
-
 
     public TaskResult(Result result) {
         this.result = result;
-    }
-
-    public TaskResult(Result result, CommandLineResult cliResult) {
-        this.result = result;
-        this.cliResult = cliResult;
     }
 
     public static final TaskResult OK = new TaskResult(Result.OK);
@@ -70,8 +52,9 @@ public class TaskResult {
     public String toString() {
         final StringBuilder sb = new StringBuilder("TaskResult{");
         sb.append("result=").append(result);
-        sb.append(", cliResult=").append(cliResult);
         sb.append('}');
         return sb.toString();
     }
+
+
 }

@@ -122,7 +122,7 @@ public class TaskRunner {
             }
         } catch (Exception e) {
             logger.error("", e);
-            result = new TaskResult(ERROR, new CommandLineResult(e.toString(), ERROR));
+            result = new CommandLineResult(e.toString(), ERROR);
         }
 
         return result;

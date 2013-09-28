@@ -64,7 +64,7 @@ public class GrailsPlugin extends ZippedToolPlugin {
     ;
 
     public final DynamicVariable<Boolean>
-        clean = Variables.eql(cap.clean).setDesc("clean project before build")
+        clean = Variables.equalTo(cap.clean).setDesc("clean project before build")
     ;
 
     public GrailsPlugin(GlobalContext global) {

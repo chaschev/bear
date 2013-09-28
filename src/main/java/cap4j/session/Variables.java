@@ -100,7 +100,7 @@ public class Variables {
         });
     }
 
-    public static <T> DynamicVariable<T> eql(final DynamicVariable<T> var) {
+    public static <T> DynamicVariable<T> equalTo(final DynamicVariable<T> var) {
         return eql(null, var);
     }
 

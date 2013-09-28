@@ -17,6 +17,7 @@
 package cap4j.task;
 
 import cap4j.core.SessionContext;
+import cap4j.scm.CommandLineResult;
 import cap4j.session.GenericUnixRemoteEnvironment;
 import cap4j.session.Result;
 import com.google.common.collect.Lists;
@@ -53,7 +54,7 @@ public class TransactionTaskDef extends TaskDef {
                     result = runner.runMany(tasks);
                 } catch (Exception e) {
                     logger.warn("", e);
-                    result = new TaskResult(Result.ERROR, e.toString());
+                    result = new CommandLineResult(Result.ERROR, e.toString());
                 }
 
                 if (result.nok()) {

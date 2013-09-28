@@ -67,7 +67,9 @@ public class Tasks {
                 protected TaskResult run(TaskRunner runner) {
                     final String[] dirs = {
                         $(cap.deployTo), $(cap.releasesPath), $(cap.vcsCheckoutPath),
-                        $(cap.sharedPath), $(cap.appLogsPath)
+                        $(cap.cap4jPath),
+                        $(cap.sharedPath), $(cap.projectSharedPath),
+                        $(cap.appLogsPath)
                     };
 
                     $.sys.sudo().mkdirs(dirs);
@@ -82,7 +84,7 @@ public class Tasks {
                         $.sys.sudo().chown(appUser + "." + appUser, true, $(cap.appLogsPath));
                     }
 
-                    if ($.var(cap.verifyPlugins)) {
+                    if ($(cap.verifyPlugins)) {
                         for (Plugin plugin : global.getGlobalPlugins()) {
                             if (plugin.getInstall().newSession($).asInstalledDependency().checkDeps().nok()) {
                                 if ($(cap.autoInstallPlugins)) {

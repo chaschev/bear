@@ -17,24 +17,37 @@
 package cap4j.scm;
 
 import cap4j.session.Result;
+import cap4j.task.TaskResult;
 
 /**
  * @author Andrey Chaschev chaschev@gmail.com
  */
-public class CommandLineResult {
+public class CommandLineResult extends TaskResult{
     public String text;
-    public Result result;
     public int exitStatus;
 
-    public CommandLineResult() {
+    public CommandLineResult(String text) {
+        super((Result) null);
+        this.text = text;
+        this.exitStatus = exitStatus;
     }
 
-    public CommandLineResult(String text) {
-        this.text = text;
+    public CommandLineResult(Result result, String text) {
+        this(text, result);
     }
 
     public CommandLineResult(String text, Result result) {
+        super(result);
         this.text = text;
-        this.result = result;
+    }
+
+    @Override
+    public String toString() {
+        final StringBuilder sb = new StringBuilder("CommandLineResult{");
+        sb.append("result=").append(result);
+        sb.append("text='").append(text).append('\'');
+        sb.append(", exitStatus=").append(exitStatus);
+        sb.append('}');
+        return sb.toString();
     }
 }

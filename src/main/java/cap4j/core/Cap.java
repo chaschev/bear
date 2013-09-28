@@ -117,21 +117,22 @@ public class Cap {
         }
     }),
 
-    releasesPath = joinPath("releasesPath", deployTo, releasesDirName),
-        currentPath = joinPath("currentPath", deployTo, currentDirName),
-        sharedPath = joinPath("sharedPath", cap4jPath, sharedDirName),
+    releasesPath = joinPath(deployTo, releasesDirName),
+        currentPath = joinPath(deployTo, currentDirName),
+        sharedPath = joinPath(cap4jPath, sharedDirName),
+        projectSharedPath = joinPath(deployTo, sharedDirName),
 
-    releasePath = joinPath("releasesPath", releasesPath, releaseName),
+    releasePath = joinPath(releasesPath, releaseName),
 
-    vcsCheckoutPath = joinPath("vcsCheckoutPath", sharedPath, "vcs"),
+    vcsCheckoutPath = joinPath(projectSharedPath, "vcs"),
 
     vcsBranchName = dynamic("Relative path of the branch to use"),
 
-    vcsBranchLocalPath = joinPath("vcsBranchLocalPath", vcsCheckoutPath, vcsBranchName),
+    vcsBranchLocalPath = joinPath( vcsCheckoutPath, vcsBranchName),
 
-    vcsBranchURI = joinPath("vcsProjectURI", repositoryURI, vcsBranchName),
+    vcsBranchURI = joinPath(repositoryURI, vcsBranchName),
 
-    getLatestReleasePath = strVar("").setDynamic(new VarFun<String>() {
+    getLatestReleasePath = dynamic(new VarFun<String>() {
         public String apply() {
             final Releases r = $.var(getReleases);
 
@@ -141,7 +142,7 @@ public class Cap {
         }
     }).memoize(true),
 
-    getPreviousReleasePath = strVar("").setDynamic(new VarFun<String>() {
+    getPreviousReleasePath = dynamic(new VarFun<String>() {
         public String apply() {
             final Releases r = $.var(getReleases);
 
@@ -151,7 +152,7 @@ public class Cap {
         }
     }).memoize(true),
 
-    getCurrentRevision = strVar("").setDynamic(new VarFun<String>() {
+    getCurrentRevision = dynamic(new VarFun<String>() {
         public String apply() {
             return $.sys.readString($.joinPath(currentPath, "REVISION"), null);
         }
@@ -172,7 +173,7 @@ public class Cap {
     public final DynamicVariable<Boolean>
         useSudo = bool("").defaultTo(true),
         productionDeployment = bool("").defaultTo(true),
-        clean = eql("clean", productionDeployment),
+        clean = equalTo(productionDeployment),
         speedUpBuild = and(not("", productionDeployment), not("", clean)),
         vcsAuthCache = dynamic(""),
         vcsPreferPrompt = dynamic(""),
@@ -205,8 +206,8 @@ public class Cap {
         }
     });
 
-    public final DynamicVariable<Stages> stages = new DynamicVariable<Stages>("stages", "List of stages. Stage is collection of servers with roles and auth defined for each of the server.");
-    public final DynamicVariable<Stage> getStage = dynamic("getStage", "", new VarFun<Stage>() {
+    public final DynamicVariable<Stages> stages = new DynamicVariable<Stages>("List of stages. Stage is collection of servers with roles and auth defined for each of the server.");
+    public final DynamicVariable<Stage> getStage = dynamic(new VarFun<Stage>() {
         public Stage apply() {
             final String stageName = $.var(Cap.this.stage);
             final Stage stage = Iterables.find($.var(stages).stages, new Predicate<Stage>() {

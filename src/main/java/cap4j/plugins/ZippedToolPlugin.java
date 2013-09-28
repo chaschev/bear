@@ -118,21 +118,27 @@ public abstract class ZippedToolPlugin extends Plugin{
 
 
         protected Script extractToHomeDir(){
-            final String _distrFilename = $(distrFilename);
+            final String distrName = $(distrFilename);
 
             Script script = $.sys.script()
                 .cd($(buildPath))
                 .timeoutSec(60);
 
-            if(_distrFilename.endsWith("tar.gz")){
-                script.line().addRaw("tar xvfz ../%s", _distrFilename).build();
+            if(distrName.endsWith("tar.gz")){
+                script.line().addRaw("tar xvfz ../%s", distrName).build();
             }else
-            if(_distrFilename.endsWith("zip")){
-                script.line().addRaw("unzip ../%s", _distrFilename).build();
-            }if(_distrFilename.endsWith("bin")){
+            if(distrName.endsWith("gz")){
+                script.line().addRaw("tar xvf ../%s", distrName).build();
+            }else
+            if(distrName.endsWith("zip")){
+                script.line().addRaw("unzip ../%s", distrName).build();
+            }else
+            if(distrName.endsWith("bin")){
                 script
-                    .line().addRaw("chmod u+x %s", _distrFilename).build()
-                    .line().addRaw("./%s", _distrFilename).build();
+                    .line().addRaw("chmod u+x %s", distrName).build()
+                    .line().addRaw("./%s", distrName).build();
+            }else{
+                throw new IllegalArgumentException("unsupported archive type: " + distrName);
             }
 
             script
