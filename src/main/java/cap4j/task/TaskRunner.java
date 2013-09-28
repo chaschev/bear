@@ -16,9 +16,8 @@
 
 package cap4j.task;
 
-import cap4j.core.Cap;
-import cap4j.core.GlobalContext;
-import cap4j.core.SessionContext;
+import cap4j.core.*;
+import cap4j.plugins.HavingContext;
 import cap4j.scm.CommandLineResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,16 +32,15 @@ import static cap4j.session.Result.ERROR;
 /**
  * @author Andrey Chaschev chaschev@gmail.com
  */
-public class TaskRunner {
+public class TaskRunner extends HavingContext<TaskRunner>{
     private static final Logger logger = LoggerFactory.getLogger(TaskRunner.class);
     LinkedHashSet<TaskDef> tasksExecuted = new LinkedHashSet<TaskDef>();
 
-    public SessionContext $;
     public final GlobalContext global;
     public final Cap cap;
 
     public TaskRunner(SessionContext $, GlobalContext global) {
-        this.$ = $;
+        super($);
         this.global = global;
         this.cap = global.cap;
     }
@@ -112,15 +110,29 @@ public class TaskRunner {
         return runResult;
     }
 
-    private TaskResult _runSingleTask(TaskDef task, boolean thisIsMe) {
+    private TaskResult _runSingleTask(TaskDef taskDef, boolean thisIsMe) {
         TaskResult result = null;
         try {
             if (!thisIsMe) {
-                result = runWithDependencies(task);
+                result = runWithDependencies(taskDef);
             } else {
-                result = task.newSession($).run(this);
+                Task taskSession = taskDef.newSession($);
+
+                if($(cap.checkDependencies)){
+                    DependencyResult depsResult = taskSession.getDependencies().check();
+
+                    if(depsResult.nok()){
+                        return depsResult;
+                    }
+                }
+
+                result = taskSession.run(this);
             }
-        } catch (Exception e) {
+        }
+        catch (DependencyException e){
+            throw e;
+        }
+        catch (Exception e) {
             logger.error("", e);
             result = new CommandLineResult(e.toString(), ERROR);
         }

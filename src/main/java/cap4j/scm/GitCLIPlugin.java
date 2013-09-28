@@ -23,6 +23,7 @@ import cap4j.core.SessionContext;
 import cap4j.session.DynamicVariable;
 import cap4j.session.GenericUnixRemoteEnvironment;
 import cap4j.session.Variables;
+import cap4j.task.Dependency;
 import cap4j.task.InstallationTaskDef;
 import cap4j.task.TaskDef;
 import com.google.common.base.Function;
@@ -72,6 +73,8 @@ public class GitCLIPlugin extends VcsCLIPlugin<GitCLIPlugin> {
     public class GitCLISession extends Session {
         public GitCLISession(TaskDef parent, SessionContext $) {
             super(parent, $);
+
+            addDependency(new Dependency(GIT_STUB_TASK, "GIT", $).addCommands("git --version"));
         }
 
         @Override

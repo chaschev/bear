@@ -16,7 +16,7 @@
 
 package cap4j.plugins.tomcat;
 
-import cap4j.core.DependencyResult;
+import cap4j.task.DependencyResult;
 import cap4j.core.GlobalContext;
 import cap4j.core.SessionContext;
 import cap4j.core.VarFun;
@@ -65,12 +65,21 @@ public class TomcatPlugin extends ZippedToolPlugin {
 
         distrWwwAddress.setDynamic(new VarFun<String>() {
             public String apply() {
-                return MessageFormat.format("http://apache-mirror.rbc.ru/pub/apache/tomcat/tomcat-7/v{0}/bin/apache-tomcat-{0}.tar.gz", $(version));
+                String version = $(TomcatPlugin.this.version);
+
+                switch (version.charAt(0)){
+                    case '6':
+                        return MessageFormat.format("http://apache-mirror.rbc.ru/pub/apache/tomcat/tomcat-6/v{0}/bin/apache-tomcat-{0}.tar.gz", version);
+                    default:
+                        return MessageFormat.format("http://apache-mirror.rbc.ru/pub/apache/tomcat/tomcat-7/v{0}/bin/apache-tomcat-{0}.tar.gz", version);
+
+                }
             }
         });
     }
 
     public void initPlugin() {
+        //screen recipe is taken from here http://stackoverflow.com/a/1628217/1851024
         global.tasks.restartApp.addBeforeTask(new TaskDef() {
             @Override
             public Task newSession(SessionContext $) {
@@ -79,8 +88,8 @@ public class TomcatPlugin extends ZippedToolPlugin {
                     protected TaskResult run(TaskRunner runner) {
                         $.sys.sudo().rm($.var(warCacheDirs));
                         $.sys.script()
-                            .line().addRaw("tomcatStop").build()
-                            .line().addRaw("tomcatStart").build()
+                            .line().addRaw("catalina stop").build()
+                            .line().addRaw("nohup catalina start").build()
                             .timeoutSec(60)
                             .run();
 //                        $.sys.sudo().run($.newCommandLine()
@@ -109,9 +118,10 @@ public class TomcatPlugin extends ZippedToolPlugin {
 
                     extractToHomeDir();
 
-                    shortCut("tomcatStart", "startup.sh");
-                    shortCut("tomcatStop", "shutdown.sh");
-                    shortCut("tomcatVersion", "version.sh");
+//                    shortCut("tomcatStart", "startup.sh");
+//                    shortCut("tomcatStop", "shutdown.sh");
+//                    shortCut("tomcatVersion", "version.sh");
+                    shortCut("catalina", "catalina.sh");
 
                     DependencyResult result = verify();
 
@@ -129,7 +139,7 @@ public class TomcatPlugin extends ZippedToolPlugin {
 
                 @Override
                 protected String createVersionCommandLine() {
-                    return "tomcatVersion";
+                    return "catalina version";
                 }
             };
         }

@@ -1,11 +1,9 @@
-package cap4j.core;
+package cap4j.task;
 
 import cap4j.cli.CommandLine;
 import cap4j.cli.Script;
+import cap4j.core.SessionContext;
 import cap4j.session.Result;
-import cap4j.task.Task;
-import cap4j.task.TaskDef;
-import cap4j.task.TaskRunner;
 import com.google.common.base.Predicate;
 import com.google.common.base.Predicates;
 
@@ -15,13 +13,42 @@ import java.util.List;
 /**
  * @author Andrey Chaschev chaschev@gmail.com
  */
-public class Dependency extends Task{
+public class Dependency extends Task {
+
     String name;
+    String actual;
 
     List<Check> checks = new ArrayList<Check>();
 
+    public static DependencyResult checkDeps(Iterable<Dependency> transform) {
+        DependencyResult r = new DependencyResult(Result.OK);
 
-    public abstract class Check{
+        for (Dependency dependency : transform) {
+            r.join(dependency.checkDeps());
+        }
+
+        return r;
+    }
+
+    public Dependency addCommands(String... commands) {
+        for (String command : commands) {
+            add(new Command(
+                $.sys.line().addRaw(command),
+                new Predicate<CharSequence>() {
+                    @Override
+                    public boolean apply(CharSequence input) {
+                        return !input.toString().contains("command not found");
+                    }
+                },
+                "command '" + command + "' not found")
+            );
+        }
+
+        return this;
+    }
+
+
+    public abstract class Check {
 
         public abstract boolean check();
 
@@ -30,7 +57,7 @@ public class Dependency extends Task{
 
     public static final Dependency NONE = new Dependency("NONE");
 
-    public class Directory extends Check{
+    public class Directory extends Check {
         String path;
         boolean checkWritable;
 
@@ -39,15 +66,15 @@ public class Dependency extends Task{
         }
 
         @Override
-        public boolean check(){
+        public boolean check() {
             return $.sys.run($.sys.line().addRaw(
                 "test -d " + path
-                + (checkWritable ? " && test -x " + path: ""))).result.ok();
+                    + (checkWritable ? " && test -x " + path : ""))).result.ok();
         }
 
         @Override
         public String message() {
-            return "'" + path + "' is not a " + (checkWritable ? "": "writable ") +
+            return "'" + path + "' is not a " + (checkWritable ? "" : "writable ") +
                 "dir or does not exist";
         }
     }
@@ -70,7 +97,7 @@ public class Dependency extends Task{
         this.name = name;
     }
 
-    public class File extends Check{
+    public class File extends Check {
         String path;
         boolean checkWritable;
 
@@ -79,20 +106,20 @@ public class Dependency extends Task{
         }
 
         @Override
-        public boolean check(){
+        public boolean check() {
             return $.sys.run($.sys.line().addRaw(
                 "test -t " + path
-                    + (checkWritable ? (" && test -w " + path): ""))).result.ok();
+                    + (checkWritable ? (" && test -w " + path) : ""))).result.ok();
         }
 
         @Override
         public String message() {
-            return "'" + path + "' is not a " + (checkWritable ? "": "writable ") +
+            return "'" + path + "' is not a " + (checkWritable ? "" : "writable ") +
                 "dir or does not exist";
         }
     }
 
-    public class Command extends Check{
+    public class Command extends Check {
         Script script;
         Predicate<CharSequence> matcher;
         private final String message;
@@ -114,7 +141,7 @@ public class Dependency extends Task{
         }
 
         @Override
-        public boolean check(){
+        public boolean check() {
             return matcher.apply(script.run().text);
         }
 
@@ -153,5 +180,8 @@ public class Dependency extends Task{
         return result;
     }
 
-
+    public Dependency setActual(String actual) {
+        this.actual = actual;
+        return this;
+    }
 }

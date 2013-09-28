@@ -21,6 +21,7 @@ import cap4j.plugins.ZippedToolPlugin;
 import cap4j.plugins.java.JavaPlugin;
 import cap4j.session.DynamicVariable;
 import cap4j.session.Variables;
+import cap4j.task.DependencyResult;
 import cap4j.task.InstallationTask;
 import cap4j.task.InstallationTaskDef;
 import cap4j.task.TaskRunner;

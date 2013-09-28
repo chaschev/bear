@@ -57,6 +57,7 @@ public class SetupPluginsSettings extends ICapSettings {
         cap = global.cap;
 
         tomcat.warName.setEqualTo(grails.warName);
+        tomcat.version.defaultTo("6.0.37");
 
         java.versionName.defaultTo("jdk-7u40-linux-x64");
         java.version.defaultTo("1.7.0_40");
@@ -66,7 +67,7 @@ public class SetupPluginsSettings extends ICapSettings {
         cap.stages.defaultTo(
             new Stages()
                 .add(new Stage("vm02", global)
-                    .add(newUnixRemote("vm02", "vm02", global)))
+                    .add(newUnixRemote("vm01", "vm01", global)))
         );
 
         Cap.newStrategy.setDynamic(new VarFun<BaseStrategy>() {

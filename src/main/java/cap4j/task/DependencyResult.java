@@ -14,10 +14,9 @@
  * limitations under the License.
  */
 
-package cap4j.core;
+package cap4j.task;
 
 import cap4j.session.Result;
-import cap4j.task.TaskResult;
 
 import java.util.ArrayList;
 import java.util.List;

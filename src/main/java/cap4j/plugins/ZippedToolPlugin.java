@@ -17,18 +17,24 @@
 package cap4j.plugins;
 
 import cap4j.cli.Script;
-import cap4j.core.*;
+import cap4j.task.Dependency;
+import cap4j.task.DependencyResult;
+import cap4j.core.GlobalContext;
+import cap4j.core.SessionContext;
 import cap4j.plugins.java.JavaPlugin;
 import cap4j.session.DynamicVariable;
 import cap4j.session.GenericUnixRemoteEnvironment;
 import cap4j.session.SystemEnvironment;
 import cap4j.session.Variables;
-import cap4j.task.*;
+import cap4j.task.InstallationTask;
+import cap4j.task.InstallationTaskDef;
+import cap4j.task.TaskDef;
+import cap4j.task.TaskRunner;
+import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
 import org.apache.commons.lang3.StringUtils;
 
-import static cap4j.session.Variables.concat;
-import static cap4j.session.Variables.dynamic;
+import static cap4j.session.Variables.*;
 
 /**
  * User: chaschev
@@ -45,12 +51,8 @@ public abstract class ZippedToolPlugin extends Plugin{
         toolDistrName = Variables.strVar("i.e. apache-tomcat").setEqualTo(toolname),
         versionName = concat(toolDistrName, "-", version).setDesc("i.e. apache-maven-3.0.5"),
         distrFilename = concat(versionName, ".tar.gz"),
-        homePath = concat("/var/lib/", toolname).setDesc("Tool root dir"),
-        homeParentPath = dynamic(new VarFun<String>() {
-            public String apply() {
-                return StringUtils.substringBeforeLast($(homePath), "/");
-            }
-        }),
+        homeParentPath = newVar("/var/lib"),
+        homePath = concat(homeParentPath,"/", toolname).setDesc("Tool root dir"),
         homeVersionPath = concat(homeParentPath, "/", versionName).setDesc("i.e. /var/lib/apache-maven-7.0.42"),
         currentVersionPath = concat(homeParentPath, "/", versionName),
 
@@ -72,6 +74,10 @@ public abstract class ZippedToolPlugin extends Plugin{
     protected abstract class ZippedTool extends InstallationTask {
         protected ZippedTool(TaskDef parent, SessionContext $) {
             super(parent, $);
+
+            addDependency(new Dependency(toString(), $).addCommands(
+                "unzip",
+                "wget"));
         }
 
         @Override
@@ -83,7 +89,6 @@ public abstract class ZippedToolPlugin extends Plugin{
 
         protected abstract String extractVersion(String output);
         protected abstract String createVersionCommandLine();
-
 
         @Override
         public Dependency asInstalledDependency() {
@@ -151,6 +156,11 @@ public abstract class ZippedToolPlugin extends Plugin{
                 $.warn("tool version name is not equal to tool dir name: (expected) %s vs (actual) %s. setting new tool name to %s", $(versionName), toolDirName, toolDirName);
                 versionName.defaultTo(toolDirName);
             }
+
+            Preconditions.checkArgument(StringUtils.isNotBlank($(toolname)), "toolname is blank! you could delete /var/lib!");
+            Preconditions.checkArgument(StringUtils.isNotBlank($(versionName)), "versionName is blank! you could delete /var/lib!");
+            Preconditions.checkArgument(!"/var/lib/".equals($(homePath)));
+            Preconditions.checkArgument(!"/var/lib/".equals($(homeVersionPath)));
 
             $.sys.script()
                 .line().sudo().addRaw("rm -r %s", $(homePath)).build()

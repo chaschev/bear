@@ -17,13 +17,11 @@
 package cap4j.core;
 
 import cap4j.plugins.Plugin;
-import cap4j.task.Task;
+import cap4j.task.*;
 import cap4j.session.DynamicVariable;
 import cap4j.session.GenericUnixLocalEnvironment;
 import cap4j.session.SystemEnvironment;
 import cap4j.session.Variables;
-import cap4j.task.TaskRunner;
-import cap4j.task.Tasks;
 import com.chaschev.chutils.util.Exceptions;
 import com.google.common.base.Predicates;
 import com.google.common.collect.Iterables;
@@ -85,7 +83,16 @@ public class GlobalContext {
             try {
                 final T plugin = getPlugin(aClass);
 
-                return plugin.newSession($);
+                Task task = plugin.newSession($);
+
+                if($.var(cap.checkDependencies)){
+                    DependencyResult deps = task.getDependencies().check();
+                    if(!deps.ok()){
+                        throw new DependencyException(deps);
+                    }
+                }
+
+                return task;
             } catch (Exception e) {
                 throw Exceptions.runtime(e);
             }

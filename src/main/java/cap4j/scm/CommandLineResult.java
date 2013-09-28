@@ -45,7 +45,7 @@ public class CommandLineResult extends TaskResult{
     public String toString() {
         final StringBuilder sb = new StringBuilder("CommandLineResult{");
         sb.append("result=").append(result);
-        sb.append("text='").append(text).append('\'');
+        sb.append(", text='").append(text).append('\'');
         sb.append(", exitStatus=").append(exitStatus);
         sb.append('}');
         return sb.toString();

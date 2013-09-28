@@ -14,16 +14,27 @@
  * limitations under the License.
  */
 
-package cap4j.core;
+package cap4j.task;
 
 /**
  * @author Andrey Chaschev chaschev@gmail.com
  */
 public class DependencyException extends RuntimeException {
+    protected DependencyResult result;
+
     public DependencyException() {
+    }
+
+    public DependencyException(DependencyResult result) {
+        super(result.toString());
+        this.result = result;
     }
 
     public DependencyException(String message) {
         super(message);
+    }
+
+    public DependencyResult getResult() {
+        return result;
     }
 }

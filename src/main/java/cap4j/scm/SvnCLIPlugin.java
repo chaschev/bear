@@ -20,6 +20,7 @@ import cap4j.cli.CommandLine;
 import cap4j.cli.Script;
 import cap4j.core.GlobalContext;
 import cap4j.core.SessionContext;
+import cap4j.task.Dependency;
 import cap4j.task.InstallationTaskDef;
 import cap4j.task.TaskDef;
 import com.google.common.base.Function;
@@ -53,10 +54,10 @@ public class SvnCLIPlugin extends VcsCLIPlugin<SvnCLIPlugin> {
     }
 
     public class SvnCLISession extends Session {
-
-
         protected SvnCLISession(TaskDef parent, SessionContext $) {
             super(parent, $);
+
+            addDependency(new Dependency(SVN_STUB_TASK, "SVN", $).addCommands("svn --version"));
         }
 
         @Override

@@ -170,7 +170,7 @@ public abstract class SystemEnvironment {
 
     public SessionContext newCtx(TaskRunner runner){
         $ = new SessionContext(global, this, runner);
-        runner.$ = $;
+        runner.set$($);
         return $;
     }
 

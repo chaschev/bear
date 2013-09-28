@@ -251,13 +251,13 @@ public class MySqlPlugin extends Plugin {
 
 
     public CommandLineResult runScript(TaskRunner runner, String sql) {
-        return runScript(runner, sql, runner.$.var(user), runner.$.var(password));
+        return runScript(runner, sql, runner.$(user), runner.$(password));
     }
 
     public CommandLineResult runScript(TaskRunner runner, String sql, String user, final String pw) {
-        final String filePath = runner.$.var(mysqlTempScriptPath);
+        final String filePath = runner.$(mysqlTempScriptPath);
 
-        final SystemEnvironment sys = runner.$.sys;
+        final SystemEnvironment sys = runner.$().sys;
         sys.writeString(filePath, sql);
 
         return sys.run(sys.newCommandLine().stty().a("mysql", "-u", user, "-p").redirectFrom(filePath), mysqlPasswordCallback(pw));

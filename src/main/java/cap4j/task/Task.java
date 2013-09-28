@@ -8,6 +8,9 @@ import cap4j.plugins.HavingContext;
  */
 public abstract class Task extends HavingContext<Task> {
     private TaskDef parent;
+    private Dependencies dependencies = new Dependencies();
+
+
 
     public Task(TaskDef parent, SessionContext $) {
         super($);
@@ -28,8 +31,21 @@ public abstract class Task extends HavingContext<Task> {
         return NOP_TASK;
     }
 
+    public Dependencies getDependencies(){
+        return dependencies;
+    }
 
     protected void onRollback() {
         //todo use it
+    }
+
+    @Override
+    public String toString() {
+        return parent == null ? getClass().getSimpleName() : parent.toString();
+    }
+
+    public Task addDependency(Dependency... dependencies) {
+        this.dependencies.addDependencies(dependencies);
+        return this;
     }
 }

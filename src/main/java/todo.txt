@@ -1,3 +1,5 @@
+
+
 top priority:
 
 - (ok) rollback command
@@ -81,3 +83,8 @@ When launching with no params:
 - (ok) caching
 - (ok) releases dir
 
+os plugin:
+
+- check dep is installed
+- configure installation list
+- check/add/remove users

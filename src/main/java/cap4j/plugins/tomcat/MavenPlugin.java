@@ -16,7 +16,7 @@
 
 package cap4j.plugins.tomcat;
 
-import cap4j.core.DependencyResult;
+import cap4j.task.DependencyResult;
 import cap4j.core.GlobalContext;
 import cap4j.core.SessionContext;
 import cap4j.core.VarFun;

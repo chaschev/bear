@@ -17,13 +17,10 @@
 package cap4j.plugins;
 
 import cap4j.core.Cap;
-import cap4j.core.DependencyResult;
+import cap4j.task.*;
 import cap4j.core.GlobalContext;
 import cap4j.core.SessionContext;
 import cap4j.session.DynamicVariable;
-import cap4j.task.InstallationTask;
-import cap4j.task.InstallationTaskDef;
-import cap4j.task.Task;
 import com.chaschev.chutils.util.OpenBean2;
 import com.google.common.base.Preconditions;
 
@@ -36,6 +33,7 @@ public abstract class Plugin {
     public String name;
     public final Cap cap;
     protected GlobalContext global;
+    protected Dependencies dependencies = new Dependencies();
 
     public Plugin(GlobalContext global) {
         this.global = global;
@@ -98,5 +96,13 @@ public abstract class Plugin {
         if(plugin == null){
             r.add(plugin.getClass().getSimpleName() + " plugin is required");
         }
+    }
+
+    public Dependencies getDependencies() {
+        return dependencies;
+    }
+
+    protected final Dependencies addDependency(Dependency... dependencies) {
+        return this.dependencies.addDependencies(dependencies);
     }
 }

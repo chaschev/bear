@@ -81,11 +81,6 @@ public class Stage {
                             if (!task.isSetupTask()) {
                                 r.join(plugin.getInstall().newSession($)
                                     .asInstalledDependency().checkDeps());
-
-//                                plugin.newSession($).
-//                                r.join(plugin.getSetup()
-//                                    .asInstalledDependency()
-//                                    .checkDeps());
                             }
                         }
 

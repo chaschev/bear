@@ -21,4 +21,8 @@ public class HavingContext<CHILD> {
         this.$ = $;
         return (CHILD) this;
     }
+
+    public SessionContext $() {
+        return $;
+    }
 }

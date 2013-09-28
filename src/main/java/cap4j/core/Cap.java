@@ -192,7 +192,8 @@ public class Cap {
                 return $.sys.isUnix();
             }
         }),
-        verifyPlugins = newVar(true),
+        checkDependencies = newVar(true),
+        verifyPlugins = equalTo(checkDependencies),
         autoInstallPlugins = newVar(false),
         verbose = newVar(false)
     ;
@@ -231,6 +232,8 @@ public class Cap {
                     vcsCLI = (Class<? extends VcsCLIPlugin>) aClass;
                 }
             }
+
+
 
             Preconditions.checkNotNull(vcsCLI, "add a VCS plugin!");
 

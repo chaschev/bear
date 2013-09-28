@@ -16,7 +16,6 @@
 
 package cap4j.task;
 
-import cap4j.core.Dependency;
 import cap4j.core.SessionContext;
 
 /**
