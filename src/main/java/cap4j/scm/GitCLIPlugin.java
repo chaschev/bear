@@ -206,8 +206,8 @@ public class GitCLIPlugin extends VcsCLIPlugin<GitCLIPlugin> {
             final SvnCLIPlugin.LsResult lsResult = $.sys.run(lsRemote(revision).timeoutSec(10), passwordCallback());
 
             for (String s : lsResult.getFiles()) {
-                final String rev = StringUtils.substringBefore(s, "|");
-                final String ref = StringUtils.substringAfter(s, "|");
+                final String rev = StringUtils.substringBefore(s, "\t");
+                final String ref = StringUtils.substringAfter(s, "\t");
 
                 if (ref.replaceFirst("refs/.*?/", "").trim().equals(revision)) {
                     newRevision = rev;
@@ -221,6 +221,7 @@ public class GitCLIPlugin extends VcsCLIPlugin<GitCLIPlugin> {
             //If sha is not found on remote, try expanding from local repository
 
             newRevision = $.sys.run(commandPrefix("rev-parse", emptyParams())
+                .cd($(cap.vcsBranchLocalPath))
                 .a("--revs-only", origin() + "/" + revision)
                 .timeoutSec(10), passwordCallback()).text.trim();
 
@@ -298,17 +299,7 @@ public class GitCLIPlugin extends VcsCLIPlugin<GitCLIPlugin> {
         }
 
         private List<String> convertLsOutput(String s) {
-            return newArrayList(transform(
-                partition(newArrayList(s.split("\n")), 2), new Function<List<String>, String>() {
-                public String apply(List<String> input) {
-                    String r = input.get(0);
-                    if (input.size() > 1) {
-                        r += ":" + input.get(1);
-                    }
-
-                    return r;
-                }
-            }));
+            return newArrayList(s.split("\n"));
         }
 
         private CommandLine commandPrefix(String cmd, Map<String, String> params) {

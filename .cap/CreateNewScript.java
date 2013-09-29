@@ -50,7 +50,7 @@ public class CreateNewScript extends Script {
 
         new Question("step 3, choose a task: ",
             Lists.newArrayList("deploy", "restartApp"),
-            cap.task
+            cap.taskName
         ).ask();
 
         System.out.printf(
@@ -60,7 +60,7 @@ public class CreateNewScript extends Script {
                 "task: %s%n",
             global.var(cap.stage),
             global.var(cap.vcsBranchName),
-            global.var(cap.task)
+            global.var(cap.taskName)
         );
 
         global.console().ask("enter a script name to save to: ", cap.tempUserInput, null);
@@ -77,7 +77,7 @@ public class CreateNewScript extends Script {
                 "\tpublic void run() throws Exception {\n" +
                 "\t\tcap.stage.defaultTo(\"" + $.var(cap.stage) + "\");\n" +
                 "\t\tcap.vcsBranchName.defaultTo(\"" + $.var(cap.vcsBranchName) + "\");\n" +
-                "\t\tcap.task.defaultTo(\"" + $.var(cap.task) + "\");\n" +
+                "\t\tcap.task.defaultTo(\"" + $.var(cap.taskName) + "\");\n" +
                 "\n" +
                 "\t\tglobal.run();\n" +
                 "\t\tglobal.shutdown();\n" +

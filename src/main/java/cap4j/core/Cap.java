@@ -21,6 +21,8 @@ import cap4j.scm.BranchInfoResult;
 import cap4j.scm.VcsCLIPlugin;
 import cap4j.session.DynamicVariable;
 import cap4j.strategy.BaseStrategy;
+import cap4j.task.TaskDef;
+import com.chaschev.chutils.util.OpenBean2;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
 import com.google.common.collect.Iterables;
@@ -65,7 +67,16 @@ public class Cap {
         }
     }),
 
-    task = strVar("A task to run").defaultTo("deploy"),
+    taskName = strVar("A task to run").defaultTo("deploy");
+
+    public final DynamicVariable<TaskDef> task = dynamic(new VarFun<TaskDef>() {
+        @Override
+        public TaskDef apply() {
+            return (TaskDef) OpenBean2.getFieldValue2(global.tasks, $(taskName));
+        }
+    });
+
+    public final DynamicVariable<String>
 
     applicationName = strVar().setDesc("Your app name"),
         appLogsPath = joinPath("appLogsPath", logsPath, applicationName),

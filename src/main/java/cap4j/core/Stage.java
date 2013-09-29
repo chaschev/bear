@@ -23,7 +23,6 @@ import cap4j.session.SystemEnvironment;
 import cap4j.session.SystemEnvironments;
 import cap4j.strategy.BaseStrategy;
 import cap4j.task.*;
-import com.chaschev.chutils.util.OpenBean2;
 import com.google.common.base.Predicates;
 import com.google.common.collect.Iterables;
 import org.slf4j.Logger;
@@ -51,9 +50,7 @@ public class Stage {
      * Runs a task from task variable
      */
     public void run() {
-        final String var = global.localCtx.var(global.cap.task);
-        TaskDef task = (TaskDef) OpenBean2.getFieldValue2(global.tasks, var);
-        runTask(task);
+        runTask(global.localCtx.var(global.cap.task));
     }
 
     public void runTask(final TaskDef task) {

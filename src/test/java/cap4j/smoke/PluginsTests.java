@@ -34,7 +34,7 @@ public class PluginsTests {
         public void run() throws Exception {
             cap.stage.defaultTo("vm02");
             cap.autoInstallPlugins.defaultTo(true);
-            cap.task.defaultTo("setup");
+            cap.task.defaultTo(global.tasks.setup);
 
             global.run();
             global.shutdown();
@@ -51,7 +51,7 @@ public class PluginsTests {
         @Override
         public void run() throws Exception {
             cap.stage.defaultTo("vm02");
-            cap.task.defaultTo("restartApp");
+            cap.task.defaultTo(global.tasks.deploy);
             cap.clean.defaultTo(false, true);
 
             global.getPlugin(Atocha.class).reuseWar.defaultTo(true, true);
