@@ -12,6 +12,7 @@ top priority:
 - test rollback
 - maven installation (via dependencies:get)
 
+
 utils:
 
 - (ok) remote WAR deploy
@@ -30,7 +31,7 @@ features:
 - fix weird error messages when errors occur
 - make DynVars similar to JavaFX properties
 - validation step: validation [ validate(closure) ]
-- GitHub support
+- (ok) GitHub support
 - (ok) replace Functions with VarFunctions
 - upstart plugin
 - play plugin

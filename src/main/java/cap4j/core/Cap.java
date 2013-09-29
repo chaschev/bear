@@ -17,10 +17,10 @@
 package cap4j.core;
 
 import cap4j.plugins.Plugin;
-import cap4j.scm.BranchInfoResult;
-import cap4j.scm.VcsCLIPlugin;
+import cap4j.vcs.BranchInfoResult;
+import cap4j.vcs.VcsCLIPlugin;
 import cap4j.session.DynamicVariable;
-import cap4j.strategy.BaseStrategy;
+import cap4j.strategy.DeployStrategy;
 import cap4j.task.TaskDef;
 import com.chaschev.chutils.util.OpenBean2;
 import com.google.common.base.Preconditions;
@@ -260,6 +260,6 @@ public class Cap {
             }
         });
 
-    public static final DynamicVariable<BaseStrategy> newStrategy = dynamicNotSet("strategy", "Deployment strategy: how app files copied and built");
+    public static final DynamicVariable<DeployStrategy> newStrategy = dynamicNotSet("strategy", "Deployment strategy: how app files copied and built");
 
 }

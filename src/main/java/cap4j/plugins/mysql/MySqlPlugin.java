@@ -18,8 +18,8 @@ package cap4j.plugins.mysql;
 
 import cap4j.core.*;
 import cap4j.plugins.Plugin;
-import cap4j.scm.CommandLineResult;
-import cap4j.scm.GitCLIPlugin;
+import cap4j.vcs.CommandLineResult;
+import cap4j.vcs.GitCLIPlugin;
 import cap4j.session.*;
 import cap4j.task.*;
 import net.schmizz.sshj.connection.channel.direct.Session;

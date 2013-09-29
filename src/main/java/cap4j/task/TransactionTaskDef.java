@@ -17,7 +17,7 @@
 package cap4j.task;
 
 import cap4j.core.SessionContext;
-import cap4j.scm.CommandLineResult;
+import cap4j.vcs.CommandLineResult;
 import cap4j.session.GenericUnixRemoteEnvironment;
 import cap4j.session.Result;
 import com.google.common.collect.Lists;
@@ -58,7 +58,7 @@ public class TransactionTaskDef extends TaskDef {
                 }
 
                 if (result.nok()) {
-                    //let's keep it simple
+                    //let's keep it simple and not rollback the whole tree
                     for (TaskDef task : tasks) {
                         runner.runRollback(task);
                     }

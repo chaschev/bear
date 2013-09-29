@@ -21,7 +21,7 @@ import cap4j.session.GenericUnixRemoteEnvironment;
 import cap4j.session.Result;
 import cap4j.session.SystemEnvironment;
 import cap4j.session.SystemEnvironments;
-import cap4j.strategy.BaseStrategy;
+import cap4j.strategy.DeployStrategy;
 import cap4j.task.*;
 import com.google.common.base.Predicates;
 import com.google.common.collect.Iterables;
@@ -56,7 +56,7 @@ public class Stage {
     public void runTask(final TaskDef task) {
         GlobalContextFactory.INSTANCE.configure(environments);
 
-        BaseStrategy.setBarriers(this, global);
+        DeployStrategy.setBarriers(this, global);
 
         for (final SystemEnvironment environment : environments.getImplementations()) {
             global.taskExecutor.execute(new Runnable() {

@@ -18,7 +18,7 @@ package cap4j.strategy;
 
 import cap4j.core.*;
 import cap4j.plugins.HavingContext;
-import cap4j.scm.CommandLineResult;
+import cap4j.vcs.CommandLineResult;
 import cap4j.session.Result;
 import cap4j.session.Variables;
 import cap4j.task.TaskResult;
@@ -48,8 +48,8 @@ import static org.apache.commons.io.FileUtils.byteCountToDisplaySize;
 /**
  * mapping $releasePath/ROOT.war -> $webapps/ROOT.war
  */
-public abstract class BaseStrategy<CHILD extends BaseStrategy>  extends HavingContext<CHILD>{
-    private static final Logger logger = LoggerFactory.getLogger(BaseStrategy.class);
+public abstract class DeployStrategy extends HavingContext<DeployStrategy>{
+    private static final Logger logger = LoggerFactory.getLogger(DeployStrategy.class);
 
     protected static CyclicBarrier prepareRemoteDataBarrier;
     protected static CyclicBarrier updateRemoteFilesBarrier;
@@ -67,7 +67,7 @@ public abstract class BaseStrategy<CHILD extends BaseStrategy>  extends HavingCo
      */
     protected SymlinkRules symlinkRules = new SymlinkRules();
 
-    protected BaseStrategy(SessionContext $, GlobalContext global) {
+    protected DeployStrategy(SessionContext $, GlobalContext global) {
         super($);
         this.global = global;
         this.cap = global.cap;

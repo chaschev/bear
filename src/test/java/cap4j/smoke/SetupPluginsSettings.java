@@ -8,8 +8,8 @@ import cap4j.plugins.grails.GrailsPlugin;
 import cap4j.plugins.java.JavaPlugin;
 import cap4j.plugins.tomcat.MavenPlugin;
 import cap4j.plugins.tomcat.TomcatPlugin;
-import cap4j.scm.GitCLIPlugin;
-import cap4j.strategy.BaseStrategy;
+import cap4j.vcs.GitCLIPlugin;
+import cap4j.strategy.DeployStrategy;
 import cap4j.strategy.SymlinkEntry;
 import cap4j.task.TaskResult;
 import com.google.common.collect.Lists;
@@ -70,15 +70,15 @@ public class SetupPluginsSettings extends ICapSettings {
                     .add(newUnixRemote("vm01", "vm01", global)))
         );
 
-        Cap.newStrategy.setDynamic(new VarFun<BaseStrategy>() {
+        Cap.newStrategy.setDynamic(new VarFun<DeployStrategy>() {
 
-            public BaseStrategy apply() {
+            public DeployStrategy apply() {
 
                 grails.projectPath.setEqualTo(
                     cap.vcsBranchLocalPath
                 );
 
-                final BaseStrategy strategy = new BaseStrategy<BaseStrategy>($, global) {
+                final DeployStrategy strategy = new DeployStrategy($, global) {
                     @Override
                     protected void step_40_updateRemoteFiles() {
                         $.runner.run(global.tasks.vcsUpdate);

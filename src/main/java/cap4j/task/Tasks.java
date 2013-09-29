@@ -20,7 +20,7 @@ import cap4j.core.Cap;
 import cap4j.core.GlobalContext;
 import cap4j.core.SessionContext;
 import cap4j.plugins.Plugin;
-import cap4j.scm.VcsCLIPlugin;
+import cap4j.vcs.VcsCLIPlugin;
 import com.google.common.base.Preconditions;
 import org.apache.commons.lang3.time.StopWatch;
 

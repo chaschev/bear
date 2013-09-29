@@ -17,7 +17,7 @@
 package cap4j.session;
 
 import cap4j.cli.CommandLine;
-import cap4j.scm.CommandLineResult;
+import cap4j.vcs.CommandLineResult;
 import com.google.common.base.Predicate;
 
 import javax.annotation.Nullable;

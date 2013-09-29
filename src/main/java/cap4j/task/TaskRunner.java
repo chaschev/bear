@@ -18,7 +18,7 @@ package cap4j.task;
 
 import cap4j.core.*;
 import cap4j.plugins.HavingContext;
-import cap4j.scm.CommandLineResult;
+import cap4j.vcs.CommandLineResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

@@ -16,8 +16,8 @@
 
 package cap4j.cli;
 
-import cap4j.scm.CommandLineResult;
-import cap4j.scm.VcsCLIPlugin;
+import cap4j.vcs.CommandLineResult;
+import cap4j.vcs.VcsCLIPlugin;
 import cap4j.session.Result;
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;

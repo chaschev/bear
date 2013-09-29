@@ -21,10 +21,10 @@ import cap4j.core.AbstractConsole;
 import cap4j.core.Cap;
 import cap4j.core.GlobalContext;
 import cap4j.core.MarkedBuffer;
-import cap4j.scm.CommandLineResult;
-import cap4j.scm.GitCLIPlugin;
-import cap4j.scm.RemoteCommandLine;
-import cap4j.scm.VcsCLIPlugin;
+import cap4j.vcs.CommandLineResult;
+import cap4j.vcs.GitCLIPlugin;
+import cap4j.vcs.RemoteCommandLine;
+import cap4j.vcs.VcsCLIPlugin;
 import com.google.common.collect.Lists;
 import net.schmizz.sshj.SSHClient;
 import net.schmizz.sshj.common.IOUtils;
@@ -226,11 +226,6 @@ public class GenericUnixRemoteEnvironment extends SystemEnvironment {
 
         sshSession.withSession(withSession);
 
-//        String text = s[0] + s[1];
-//
-//        if(text.contains("ouldn") || s[0].contains("rror")){
-//            return (T) new SvnScm.CommandLineResult(text, Result.ERROR);
-//        }
         final T t = line.parseResult(withSession.text);
 
         t.result = result[0];

@@ -1,8 +1,8 @@
 import cap4j.core.*;
 import cap4j.cli.CommandLine;
 import cap4j.main.Script;
-import cap4j.scm.SvnCLIPlugin;
-import cap4j.scm.VcsCLIPlugin;
+import cap4j.vcs.SvnCLIPlugin;
+import cap4j.vcs.VcsCLIPlugin;
 import cap4j.session.Question;
 import cap4j.session.SystemEnvironment;
 import com.google.common.base.Function;

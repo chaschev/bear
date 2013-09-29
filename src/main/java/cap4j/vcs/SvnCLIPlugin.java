@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package cap4j.scm;
+package cap4j.vcs;
 
 import cap4j.cli.CommandLine;
 import cap4j.cli.Script;
@@ -74,7 +74,7 @@ public class SvnCLIPlugin extends VcsCLIPlugin<SvnCLIPlugin> {
         public Script checkout(String revision, String destination, Map<String, String> params) {
             return $.sys.script().line(commandPrefix("checkout", params)
                 .a("-r" + revision,
-                    scmRepository(),
+                    vcsRepository(),
                     destination));
         }
 
@@ -82,7 +82,7 @@ public class SvnCLIPlugin extends VcsCLIPlugin<SvnCLIPlugin> {
         public Script sync(String revision, String destination, Map<String, String> params) {
             return $.sys.script().line(commandPrefix("switch", params)
                 .a("-r" + revision,
-                    scmRepository(),
+                    vcsRepository(),
                     destination));
         }
 
@@ -96,7 +96,7 @@ public class SvnCLIPlugin extends VcsCLIPlugin<SvnCLIPlugin> {
         public Script<BranchInfoResult> queryRevision(String revision, Map<String, String> params) {
             return $.sys.script().line(commandPrefix("info", params)
                 .a("-r" + revision,
-                    scmRepository())
+                    vcsRepository())
                 .cd($(cap.releasePath))
             ).setParser(new Function<String, BranchInfoResult>() {
                 public BranchInfoResult apply(String s) {
@@ -113,7 +113,7 @@ public class SvnCLIPlugin extends VcsCLIPlugin<SvnCLIPlugin> {
         public Script export(String revision, String destination, Map<String, String> params) {
             return $.sys.script().line(commandPrefix("export", params)
                 .a("-r" + revision,
-                    scmRepository(),
+                    vcsRepository(),
                     destination));
         }
 
@@ -146,7 +146,7 @@ public class SvnCLIPlugin extends VcsCLIPlugin<SvnCLIPlugin> {
                 .a(auth());
         }
 
-        private String scmRepository() {
+        private String vcsRepository() {
             return $(cap.vcsBranchURI);
         }
 

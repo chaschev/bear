@@ -16,7 +16,7 @@
 
 package cap4j.cli;
 
-import cap4j.scm.CommandLineResult;
+import cap4j.vcs.CommandLineResult;
 import cap4j.session.GenericUnixRemoteEnvironment;
 import cap4j.session.Result;
 import cap4j.session.SystemEnvironment;

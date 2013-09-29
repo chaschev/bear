@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package cap4j.scm;
+package cap4j.vcs;
 
 import cap4j.cli.CommandLine;
 import cap4j.cli.Script;
@@ -306,10 +306,6 @@ public class GitCLIPlugin extends VcsCLIPlugin<GitCLIPlugin> {
             return $.newCommandLine()
                 .stty()
                 .a(command(), cmd).p(params);
-        }
-
-        private String scmRepository() {
-            return $(cap.vcsBranchURI);
         }
     }
 

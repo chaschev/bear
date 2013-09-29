@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package cap4j.scm;
+package cap4j.vcs;
 
 import cap4j.session.Result;
 import cap4j.task.TaskResult;

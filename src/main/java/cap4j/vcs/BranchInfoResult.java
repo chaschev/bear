@@ -14,14 +14,20 @@
  * limitations under the License.
  */
 
-package cap4j.scm;
-
-import cap4j.cli.CommandLine;
+package cap4j.vcs;
 
 /**
  * @author Andrey Chaschev chaschev@gmail.com
  */
-public class RemoteCommandLine<T extends CommandLineResult> extends CommandLine<T> {
-    public RemoteCommandLine() {
+public class BranchInfoResult extends CommandLineResult {
+    public String author;
+    public String revision;
+    public String date;
+
+    public BranchInfoResult(String author, String revision, String date) {
+        super(null);
+        this.author = author;
+        this.revision = revision;
+        this.date = date;
     }
 }

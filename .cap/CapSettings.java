@@ -5,8 +5,8 @@ import cap4j.plugins.grails.GrailsBuilder;
 import cap4j.plugins.grails.GrailsPlugin;
 import cap4j.plugins.java.JavaPlugin;
 import cap4j.plugins.tomcat.TomcatPlugin;
-import cap4j.scm.VcsCLIPlugin;
-import cap4j.strategy.BaseStrategy;
+import cap4j.vcs.VcsCLIPlugin;
+import cap4j.strategy.DeployStrategy;
 import cap4j.strategy.SymlinkEntry;
 import cap4j.task.TaskResult;
 import com.google.common.collect.Lists;
@@ -22,7 +22,7 @@ import static cap4j.session.GenericUnixRemoteEnvironment.newUnixRemote;
  * @author Andrey Chaschev chaschev@gmail.com
  */
 public class CapSettings extends ICapSettings {
-    private static final Logger logger = LoggerFactory.getLogger(BaseStrategy.class);
+    private static final Logger logger = LoggerFactory.getLogger(DeployStrategy.class);
 
     GrailsPlugin grails;
     JavaPlugin java;
@@ -74,15 +74,15 @@ public class CapSettings extends ICapSettings {
                     .add(newUnixRemote("pac-test", "10.22.13.6", global)))
         );
 
-        Cap.newStrategy.setDynamic(new VarFun<BaseStrategy>() {
+        Cap.newStrategy.setDynamic(new VarFun<DeployStrategy>() {
 
-            public BaseStrategy apply() {
+            public DeployStrategy apply() {
 
                 grails.projectPath.setEqualTo(
                     cap.vcsBranchLocalPath
                 );
 
-                final BaseStrategy strategy = new BaseStrategy($, global) {
+                final DeployStrategy strategy = new DeployStrategy($, global) {
                     @Override
                     protected void step_40_updateRemoteFiles() {
                         logger.info("updating the project, please wait...");
