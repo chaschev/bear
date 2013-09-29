@@ -16,6 +16,7 @@
 
 package cap4j.task;
 
+import cap4j.cli.Script;
 import cap4j.core.GlobalContext;
 import cap4j.core.SessionContext;
 import cap4j.plugins.Plugin;
@@ -47,9 +48,11 @@ public class Rollback extends Plugin {
                 protected TaskResult run(TaskRunner runner) {
                     requirePreviousRelease($);
 
-                    return $.sys.script()
-                            .line().sudo().addRaw("rm -r %s", $.var(cap.currentPath)).build()
-                            .line().sudo().addRaw("ln -s %s %s", $.var(cap.getPreviousReleasePath), $.var(cap.currentPath)).build()
+                    Script script = $.sys.script();
+
+                    return script
+                        .line($.sys.rmLine(script.line().sudo(), $(cap.currentPath)))
+                            .line().sudo().addRaw("ln -s %s %s", $(cap.getPreviousReleasePath), $(cap.currentPath)).build()
                             .run();
                 }
             };
@@ -65,8 +68,8 @@ public class Rollback extends Plugin {
                 @Override
                 protected TaskResult run(TaskRunner runner) {
                         return $.sys.run(
-                            $.sys.line().sudo().addRaw("if [ `readlink #{%s}` != #{%s} ]; then #{try_sudo} rm -rf #{%s}; fi",
-                                $.var(cap.currentPath), $.var(cap.releasePath), $.var(cap.releasePath)));
+                            $.sys.line().sudo().addRaw("if [ `readlink #{%s}` != #{%s} ]; then #{try_sudo} rm -rf #{%s}; fi", true,
+                                $(cap.currentPath), $(cap.releasePath), $(cap.releasePath)));
                 }
 
             };

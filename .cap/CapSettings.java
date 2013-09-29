@@ -74,15 +74,13 @@ public class CapSettings extends ICapSettings {
                     .add(newUnixRemote("pac-test", "10.22.13.6", global)))
         );
 
-        Cap.newStrategy.setDynamic(new VarFun<DeployStrategy>() {
-
+        cap.getStrategy.setDynamic(new VarFun<DeployStrategy>() {
             public DeployStrategy apply() {
-
                 grails.projectPath.setEqualTo(
                     cap.vcsBranchLocalPath
                 );
 
-                final DeployStrategy strategy = new DeployStrategy($, global) {
+                final DeployStrategy strategy = new DeployStrategy($) {
                     @Override
                     protected void step_40_updateRemoteFiles() {
                         logger.info("updating the project, please wait...");
@@ -90,16 +88,16 @@ public class CapSettings extends ICapSettings {
                         StopWatch sw = new StopWatch();
                         sw.start();
 
-                        final VcsCLIPlugin.Session vcsCLI = $.var(cap.vcs);
+                        final VcsCLIPlugin.Session vcsCLI = $(cap.vcs);
 
-                        final String destPath = $.var(cap.vcsBranchLocalPath);
+                        final String destPath = $(cap.vcsBranchLocalPath);
 
                         final cap4j.cli.Script line;
 
                         if (!$.sys.exists(destPath)) {
-                            line = vcsCLI.checkout($.var(cap.revision), destPath, VcsCLIPlugin.emptyParams());
+                            line = vcsCLI.checkout($(cap.revision), destPath, VcsCLIPlugin.emptyParams());
                         } else {
-                            line = vcsCLI.sync($.var(cap.revision), destPath, VcsCLIPlugin.emptyParams());
+                            line = vcsCLI.sync($(cap.revision), destPath, VcsCLIPlugin.emptyParams());
                         }
 
                         line.timeoutMs(600 * 1000);
@@ -110,9 +108,9 @@ public class CapSettings extends ICapSettings {
 
                         logger.info("building the project...");
 
-                        String warPath = $.var(grails.releaseWarPath);
+                        String warPath = $(grails.releaseWarPath);
 
-                        if (!$.sys.exists(warPath) || !$.var(global.getPlugin(Atocha.class).reuseWar)) {
+                        if (!$.sys.exists(warPath) || !$(global.getPlugin(Atocha.class).reuseWar)) {
                             final TaskResult r = $.runner.run(new GrailsBuilder(global));
 
                             if (r.nok()) {

@@ -17,11 +17,12 @@
 package cap4j.core;
 
 import cap4j.plugins.Plugin;
-import cap4j.vcs.BranchInfoResult;
-import cap4j.vcs.VcsCLIPlugin;
 import cap4j.session.DynamicVariable;
+import cap4j.session.Variables;
 import cap4j.strategy.DeployStrategy;
 import cap4j.task.TaskDef;
+import cap4j.vcs.BranchInfoResult;
+import cap4j.vcs.VcsCLIPlugin;
 import com.chaschev.chutils.util.OpenBean2;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
@@ -81,17 +82,17 @@ public class Cap {
     applicationName = strVar().setDesc("Your app name"),
         appLogsPath = joinPath("appLogsPath", logsPath, applicationName),
         sshUsername = strVar(""),
-        appUsername = eql("appUsername", sshUsername),
+        appUsername = equalTo("appUsername", sshUsername),
         sshPassword = dynamic(new VarFun<String>() {
             public String apply() {
-                return global.getProperty($.var(sessionHostname) + ".password");
+                return global.getProperty($(sessionHostname) + ".password");
             }
         }),
         stage = strVar("Stage to deploy to"),
         repositoryURI = strVar("Project VCS URI"),
 //        vcsType = enumConstant("vcsType", "Your VCS type", "svn", "git"),
-        vcsUsername = eql("vcsUserName", sshUsername),
-        vcsPassword = eql("vcsPassword", sshPassword),
+        vcsUsername = equalTo("vcsUserName", sshUsername),
+        vcsPassword = equalTo("vcsPassword", sshPassword),
         sessionHostname = strVar("internal variable containing the name of the current session"),
 
     tempUserInput = strVar(""),
@@ -117,9 +118,9 @@ public class Cap {
 
     realRevision = strVar("Update revision from vcs").setDynamic(new VarFun<String>() {
         public String apply() {
-            final VcsCLIPlugin.Session vcsCLI = $.var(vcs);
+            final VcsCLIPlugin.Session vcsCLI = $(vcs);
             final cap4j.cli.Script<BranchInfoResult> line =
-                vcsCLI.queryRevision($.var(revision), Collections.<String, String>emptyMap())
+                vcsCLI.queryRevision($(revision), Collections.<String, String>emptyMap())
                 .timeoutMs(20000);
 
             BranchInfoResult r = $.sys.run(line, vcsCLI.passwordCallback());
@@ -145,21 +146,21 @@ public class Cap {
 
     getLatestReleasePath = dynamic(new VarFun<String>() {
         public String apply() {
-            final Releases r = $.var(getReleases);
+            final Releases r = $(getReleases);
 
             if (r.releases.isEmpty()) return null;
 
-            return $.sys.joinPath($.var(releasesPath), r.last());
+            return $.sys.joinPath($(releasesPath), r.last());
         }
     }).memoize(true),
 
     getPreviousReleasePath = dynamic(new VarFun<String>() {
         public String apply() {
-            final Releases r = $.var(getReleases);
+            final Releases r = $(getReleases);
 
             if (r.releases.size() < 1) return null;
 
-            return $.sys.joinPath($.var(releasesPath), r.previous());
+            return $.sys.joinPath($(releasesPath), r.previous());
         }
     }).memoize(true),
 
@@ -209,20 +210,20 @@ public class Cap {
         verbose = newVar(false)
     ;
 
-    public static final DynamicVariable<Integer>
+    public final DynamicVariable<Integer>
         keepXReleases = newVar(5);
 
     public final DynamicVariable<Releases> getReleases = new DynamicVariable<Releases>("getReleases", "").setDynamic(new VarFun<Releases>() {
         public Releases apply() {
-            return new Releases($.sys.ls($.var(releasesPath)));
+            return new Releases($.sys.ls($(releasesPath)));
         }
     });
 
     public final DynamicVariable<Stages> stages = new DynamicVariable<Stages>("List of stages. Stage is collection of servers with roles and auth defined for each of the server.");
     public final DynamicVariable<Stage> getStage = dynamic(new VarFun<Stage>() {
         public Stage apply() {
-            final String stageName = $.var(Cap.this.stage);
-            final Stage stage = Iterables.find($.var(stages).stages, new Predicate<Stage>() {
+            final String stageName = $(Cap.this.stage);
+            final Stage stage = Iterables.find($(stages).stages, new Predicate<Stage>() {
                 public boolean apply(Stage s) {
                     return s.name.equals(stageName);
                 }
@@ -256,10 +257,10 @@ public class Cap {
         scriptsDir = newVar(new File(".cap")),
         settingsFile = dynamic(new VarFun<File>() {
             public File apply() {
-                return new File($.var(scriptsDir), "settings.properties");
+                return new File($(scriptsDir), "settings.properties");
             }
         });
 
-    public static final DynamicVariable<DeployStrategy> newStrategy = dynamicNotSet("strategy", "Deployment strategy: how app files copied and built");
+    public final DynamicVariable<DeployStrategy> getStrategy = Variables.<DeployStrategy>dynamic("Deployment strategy: how app files copied and built").memoize(true);
 
 }

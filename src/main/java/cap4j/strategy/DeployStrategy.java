@@ -17,11 +17,13 @@
 package cap4j.strategy;
 
 import cap4j.core.*;
-import cap4j.plugins.HavingContext;
-import cap4j.vcs.CommandLineResult;
 import cap4j.session.Result;
 import cap4j.session.Variables;
+import cap4j.task.Task;
+import cap4j.task.TaskDef;
 import cap4j.task.TaskResult;
+import cap4j.task.TaskRunner;
+import cap4j.vcs.CommandLineResult;
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
@@ -34,9 +36,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
-import static cap4j.core.Cap.keepXReleases;
-import static cap4j.core.Cap.newStrategy;
 import static org.apache.commons.io.FileUtils.byteCountToDisplaySize;
 
 /**
@@ -48,33 +49,42 @@ import static org.apache.commons.io.FileUtils.byteCountToDisplaySize;
 /**
  * mapping $releasePath/ROOT.war -> $webapps/ROOT.war
  */
-public abstract class DeployStrategy extends HavingContext<DeployStrategy>{
+public abstract class DeployStrategy extends TaskDef<Task>{
     private static final Logger logger = LoggerFactory.getLogger(DeployStrategy.class);
 
-    protected static CyclicBarrier prepareRemoteDataBarrier;
-    protected static CyclicBarrier updateRemoteFilesBarrier;
-
-    private static List<File> preparedLocalFiles;
-
     @Nullable
-    private static String deployZipPath;
+    private String deployZipPath;
     private final Cap cap;
 
     protected GlobalContext global;
+
+    protected CyclicBarrier prepareRemoteDataBarrier;;
+    protected CyclicBarrier updateRemoteFilesBarrier;
+
+    private List<File> preparedLocalFiles;
+
+    static AtomicInteger instanceCount = new AtomicInteger(0);
+
 
     /**
      * Symlink rules.
      */
     protected SymlinkRules symlinkRules = new SymlinkRules();
 
-    protected DeployStrategy(SessionContext $, GlobalContext global) {
-        super($);
-        this.global = global;
-        this.cap = global.cap;
-    }
+    protected DeployStrategy(SessionContext $) {
+        super("DEPLOY", $);
 
-    public static void setBarriers(Stage stage, final GlobalContext global) {
+        instanceCount.getAndIncrement();
+
+        Preconditions.checkArgument(instanceCount.get() < 2, "deploy instance must be one!");
+
+        this.global = $.getGlobal();
+        this.cap = global.cap;
+
         final SessionContext localCtx = global.localCtx;
+
+        Stage stage = localCtx.var(cap.getStage);
+
         prepareRemoteDataBarrier = new CyclicBarrier(stage.getEnvironments().size(), new Runnable() {
             @Override
             public void run() {
@@ -83,7 +93,7 @@ public abstract class DeployStrategy extends HavingContext<DeployStrategy>{
                 global.console().stopRecording();
 
                 logger.info("20: preparing local files");
-                preparedLocalFiles = global.var(newStrategy).step_20_prepareLocalFiles(localCtx);
+                preparedLocalFiles = global.var(cap.getStrategy).step_20_prepareLocalFiles(localCtx);
 
                 if(preparedLocalFiles.isEmpty()) return;
 
@@ -92,7 +102,7 @@ public abstract class DeployStrategy extends HavingContext<DeployStrategy>{
                 logger.info("20: zipping {} files of total size {} to: {}", preparedLocalFiles.size(),
                     byteCountToDisplaySize(countSpace(preparedLocalFiles)), tempDir);
 
-                deployZipPath = localCtx.sys.joinPath(tempDir, "deploy.zip");
+                deployZipPath = global.localCtx.sys.joinPath(tempDir, "deploy.zip");
 
                 global.local().zip(deployZipPath, Lists.transform(preparedLocalFiles, new Function<File, String>() {
                     public String apply(File f) {
@@ -107,7 +117,7 @@ public abstract class DeployStrategy extends HavingContext<DeployStrategy>{
             public void run() {
                 logger.info("50: remote update is done now");
 
-                global.var(newStrategy).step_50_whenRemoteUpdateFinished(localCtx);
+                global.var(cap.getStrategy).step_50_whenRemoteUpdateFinished(localCtx);
             }
         });
     }
@@ -121,38 +131,10 @@ public abstract class DeployStrategy extends HavingContext<DeployStrategy>{
         return size;
     }
 
-    /**
-     * Inside a thread now.
-     */
-    public TaskResult deploy(){
-        try {
-            Preconditions.checkNotNull(prepareRemoteDataBarrier, "prepareRemoteDataBarrier is null");
-            Preconditions.checkNotNull(updateRemoteFilesBarrier, "updateRemoteFilesBarrier is null");
-
-            logger.info("10: preparing remote data");
-            step_10_getPrepareRemoteData();
-
-            logger.info("10: waiting for other threads to finish ({}/{})", prepareRemoteDataBarrier.getNumberWaiting() + 1, prepareRemoteDataBarrier.getParties());
-            prepareRemoteDataBarrier.await(120, TimeUnit.SECONDS);
-
-            //now prepareRemoteDataBarrier should take it to a single-threaded local preparation
-            //step_20_prepareLocalFiles goes here hidden inside the barrier
-
-            logger.info("30: copying files to hosts");
-            _step_30_copyFilesToHosts();
-
-            logger.info("40: updating remote files");
-            _step_40_updateRemoteFiles();
-
-            updateRemoteFilesBarrier.await(240, TimeUnit.SECONDS);
-
-            return TaskResult.OK;
-        } catch (Exception e) {
-            logger.warn("", e);
-            return new CommandLineResult(e.toString(), Result.ERROR);
-        }
+    @Override
+    public Task newSession(SessionContext $) {
+        return new DeployTask($);
     }
-
 
     /**
      * Chance to ask all the hosts for the data. Waits until everyone is ready
@@ -172,58 +154,7 @@ public abstract class DeployStrategy extends HavingContext<DeployStrategy>{
         return Collections.emptyList();
     }
 
-    private void _step_30_copyFilesToHosts(){
-        updateReleasesDirs();
 
-        if(isCopyingZip()){
-            $.sys.upload($(cap.releasePath), new File(deployZipPath));
-        }
-
-        step_30_copyFilesToHosts();
-    }
-
-    private void updateReleasesDirs() {
-        $.sys.mkdirs($(cap.releasePath));
-        int keepX = $.var(keepXReleases);
-
-        if(keepX > 0){
-            final Releases releases = $.var(cap.getReleases);
-            List<String> toDelete = releases.listToDelete(keepX);
-
-            $.sys.rmCd($.var(cap.releasesPath),
-                toDelete.toArray(new String[toDelete.size()]));
-        }
-    }
-
-    protected void step_30_copyFilesToHosts(){
-        logger.info("30: skipping customization");
-    }
-
-    private void _step_40_updateRemoteFiles(){
-        if(isCopyingZip()){
-            $.sys.unzip(
-                $.joinPath($(cap.releasePath), "deploy.zip"), null
-            );
-        }
-
-        step_40_updateRemoteFiles();
-
-        logger.info("creating {} symlinks...", symlinkRules.entries.size());
-
-        for (SymlinkEntry entry : symlinkRules.entries) {
-            String srcPath;
-
-            srcPath = $(Variables.joinPath("symlinkSrc", cap.currentPath, entry.sourcePath));
-
-            $.sys.link(srcPath, $(entry.destPath), entry.owner);
-        }
-
-        writeRevision();
-    }
-
-    protected Result writeRevision(){
-        return $.sys.writeString($.joinPath(cap.releasePath, "REVISION"), $.var(cap.realRevision));
-    }
 
     protected void step_40_updateRemoteFiles(){
         logger.info("40: skipping customization");
@@ -237,11 +168,100 @@ public abstract class DeployStrategy extends HavingContext<DeployStrategy>{
         logger.info("50: skipping customization");
     }
 
-    private static boolean isCopyingZip() {
+    private boolean isCopyingZip() {
         return deployZipPath != null;
     }
 
     public SymlinkRules getSymlinkRules() {
         return symlinkRules;
+    }
+
+    public class DeployTask extends Task {
+        public DeployTask(SessionContext $) {
+            super(DeployStrategy.this, $);
+        }
+
+        @Override
+        protected TaskResult run(TaskRunner runner) {
+            try {
+                Preconditions.checkNotNull(prepareRemoteDataBarrier, "prepareRemoteDataBarrier is null");
+                Preconditions.checkNotNull(updateRemoteFilesBarrier, "updateRemoteFilesBarrier is null");
+
+                logger.info("10: preparing remote data");
+                step_10_getPrepareRemoteData();
+
+                logger.info("10: waiting for other threads to finish ({}/{})", prepareRemoteDataBarrier.getNumberWaiting() + 1, prepareRemoteDataBarrier.getParties());
+                prepareRemoteDataBarrier.await(120, TimeUnit.SECONDS);
+
+                //now prepareRemoteDataBarrier should take it to a single-threaded local preparation
+                //step_20_prepareLocalFiles goes here hidden inside the barrier
+
+                logger.info("30: copying files to hosts");
+                _step_30_copyFilesToHosts();
+
+                logger.info("40: updating remote files");
+                _step_40_updateRemoteFiles();
+
+                updateRemoteFilesBarrier.await(240, TimeUnit.SECONDS);
+
+                return TaskResult.OK;
+            } catch (Exception e) {
+                logger.warn("", e);
+                return new CommandLineResult(e.toString(), Result.ERROR);
+            }
+        }
+
+        private void _step_30_copyFilesToHosts(){
+            updateReleasesDirs();
+
+            if(isCopyingZip()){
+                $.sys.upload($(cap.releasePath), new File(deployZipPath));
+            }
+
+            step_30_copyFilesToHosts();
+        }
+
+        private void updateReleasesDirs() {
+            $.sys.mkdirs($(cap.releasePath));
+            int keepX = $(cap.keepXReleases);
+
+            if(keepX > 0){
+                final Releases releases = $(cap.getReleases);
+                List<String> toDelete = releases.listToDelete(keepX);
+
+                $.sys.rmCd($(cap.releasesPath),
+                    toDelete.toArray(new String[toDelete.size()]));
+            }
+        }
+
+        protected void step_30_copyFilesToHosts(){
+            logger.info("30: skipping customization");
+        }
+
+        private void _step_40_updateRemoteFiles(){
+            if(isCopyingZip()){
+                $.sys.unzip(
+                    $.joinPath($(cap.releasePath), "deploy.zip"), null
+                );
+            }
+
+            step_40_updateRemoteFiles();
+
+            logger.info("creating {} symlinks...", symlinkRules.entries.size());
+
+            for (SymlinkEntry entry : symlinkRules.entries) {
+                String srcPath;
+
+                srcPath = $(Variables.joinPath("symlinkSrc", cap.currentPath, entry.sourcePath));
+
+                $.sys.link(srcPath, $(entry.destPath), entry.owner);
+            }
+
+            writeRevision();
+        }
+
+        protected Result writeRevision(){
+            return $.sys.writeString($.joinPath(cap.releasePath, "REVISION"), $(cap.realRevision));
+        }
     }
 }

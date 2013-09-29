@@ -38,7 +38,7 @@ public class Variables {
     public static DynamicVariable<String> joinPath(String name, final DynamicVariable<String> root, final String... folders) {
         return strVar("").setDynamic(new VarFun<String>() {
             public String apply() {
-                return $.sys.joinPath($.var(root), $.joinPath(folders));
+                return $.sys.joinPath($(root), $.joinPath(folders));
             }
         });
     }
@@ -52,7 +52,7 @@ public class Variables {
             public String apply() {
                 return $.sys.joinPath(Iterables.transform(Arrays.asList(folders), new Function<DynamicVariable, String>() {
                     public String apply(DynamicVariable var) {
-                        return $.var((DynamicVariable<String>) var);
+                        return $((DynamicVariable<String>) var);
                     }
                 }));
             }
@@ -70,7 +70,7 @@ public class Variables {
     public static <T> DynamicVariable<Boolean> isEql(String name, final DynamicVariable<T> variable, final String to) {
         return dynamic(name, "", new VarFun<Boolean>() {
             public Boolean apply() {
-                final T v = $.var(variable);
+                final T v = $(variable);
                 return v == null ? to == null : String.valueOf(v).equals(to);
             }
         });
@@ -101,13 +101,13 @@ public class Variables {
     }
 
     public static <T> DynamicVariable<T> equalTo(final DynamicVariable<T> var) {
-        return eql(null, var);
+        return equalTo(null, var);
     }
 
-    public static <T> DynamicVariable<T> eql(String name, final DynamicVariable<T> variable) {
+    public static <T> DynamicVariable<T> equalTo(String name, final DynamicVariable<T> variable) {
         return dynamic(name, "", new VarFun<T>() {
             public T apply() {
-                return $.var(variable);
+                return $(variable);
             }
         });
     }

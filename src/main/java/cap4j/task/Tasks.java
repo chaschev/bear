@@ -129,13 +129,13 @@ public class Tasks {
                 @Override
                 protected TaskResult run(TaskRunner runner) {
                     return TaskResult.and(
-                            $(cap.newStrategy).deploy(),
-                            runner.run(finalizeTouchCode));
+                        runner.run($(cap.getStrategy)),
+                        runner.run(finalizeTouchCode));
                 }
 
                 @Override
                 protected void onRollback() {
-                    $.sys.rm($(cap.releasesPath));
+                    $.sys.rm($(cap.releasePath));
                 }
             };
         }

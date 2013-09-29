@@ -17,8 +17,6 @@
 package cap4j.plugins;
 
 import cap4j.cli.Script;
-import cap4j.task.Dependency;
-import cap4j.task.DependencyResult;
 import cap4j.core.GlobalContext;
 import cap4j.core.SessionContext;
 import cap4j.plugins.java.JavaPlugin;
@@ -26,10 +24,7 @@ import cap4j.session.DynamicVariable;
 import cap4j.session.GenericUnixRemoteEnvironment;
 import cap4j.session.SystemEnvironment;
 import cap4j.session.Variables;
-import cap4j.task.InstallationTask;
-import cap4j.task.InstallationTaskDef;
-import cap4j.task.TaskDef;
-import cap4j.task.TaskRunner;
+import cap4j.task.*;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
 import org.apache.commons.lang3.StringUtils;
@@ -76,8 +71,8 @@ public abstract class ZippedToolPlugin extends Plugin{
             super(parent, $);
 
             addDependency(new Dependency(toString(), $).addCommands(
-                "unzip",
-                "wget"));
+                "unzip -v | head -n 1",
+                " wget --version | head -n 1"));
         }
 
         @Override
@@ -162,15 +157,17 @@ public abstract class ZippedToolPlugin extends Plugin{
             Preconditions.checkArgument(!"/var/lib/".equals($(homePath)));
             Preconditions.checkArgument(!"/var/lib/".equals($(homeVersionPath)));
 
-            $.sys.script()
-                .line().sudo().addRaw("rm -r %s", $(homePath)).build()
-                .line().sudo().addRaw("rm -r %s", $(homeVersionPath)).build()
+            script = $.sys.script();
+
+            script
+                .line($.sys.rmLine(script.line().sudo(), $(homePath)))
+                .line($.sys.rmLine(script.line().sudo(), $(homeVersionPath)))
                 .line().sudo().addRaw("mv %s %s", $(buildPath) + "/" + $(versionName), $(homeParentPath)).build()
                 .line().sudo().addRaw("ln -s %s %s", $(currentVersionPath), $(homePath)).build()
                 .line().sudo().addRaw("chmod -R g+r,o+r %s", $(homePath)).build()
-                .line().sudo().addRaw("chmod u+x,g+x,o+x %s/bin/*", $(homePath)).build()
-                .run(sshCallback());
+                .line().sudo().addRaw("chmod u+x,g+x,o+x %s/bin/*", $(homePath)).build();
 
+            script.run(sshCallback());
 
             return script;
         }
@@ -180,8 +177,10 @@ public abstract class ZippedToolPlugin extends Plugin{
         }
 
         protected void shortCut(String newCommandName, String sourceExecutableName){
-            $.sys.script()
-                .line().sudo().addRaw("rm /usr/bin/%s", newCommandName).build()
+            Script script = $.sys.script();
+
+            script
+                .line($.sys.rmLine(script.line().sudo(), "/usr/bin/" + newCommandName))
                 .line().sudo().addRaw("ln -s %s/bin/%s /usr/bin/%s", $(homePath), sourceExecutableName, newCommandName).build()
                 .run(sshCallback());
         }

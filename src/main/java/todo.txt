@@ -20,6 +20,7 @@ utils:
 
 features:
 
+- download plugin: via local cache
 - tomcat plugin: configurable rights as of a service
 - (ok) jdk plugin
 - (ok) grails plugin

@@ -14,34 +14,21 @@
  * limitations under the License.
  */
 
-package cap4j.core;
-
-import cap4j.plugins.HavingContext;
-import cap4j.session.DynamicVariable;
-import cap4j.session.Variables;
+package cap4j.task;
 
 /**
  * @author Andrey Chaschev chaschev@gmail.com
  */
-public abstract class VarFun<T> extends HavingContext<VarFun<T>> {
-    protected DynamicVariable<T> var;
-
-    public VarFun() {
-        super(null);
+public class CapException extends RuntimeException {
+    public CapException() {
     }
 
-    public VarFun(SessionContext $) {
-        super($);
+    public CapException(DependencyResult result) {
+        super(result.toString());
     }
 
-
-    public abstract T apply();
-
-    protected String concat(Object... varsAndStrings) {
-        return Variables.concat($, varsAndStrings);
+    public CapException(String message) {
+        super(message);
     }
 
-    public void setVar(DynamicVariable<T> var) {
-        this.var = var;
-    }
 }

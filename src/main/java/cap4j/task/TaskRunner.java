@@ -129,6 +129,9 @@ public class TaskRunner extends HavingContext<TaskRunner>{
                 result = taskSession.run(this);
             }
         }
+        catch (CapException e){
+            throw e;
+        }
         catch (DependencyException e){
             throw e;
         }

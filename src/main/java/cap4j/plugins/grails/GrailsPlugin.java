@@ -30,29 +30,23 @@ import org.apache.commons.lang3.StringUtils;
 import static cap4j.session.Variables.*;
 
 /**
-* User: achaschev
-* Date: 8/3/13
-* Time: 11:28 PM
-*/
-
-/**
- * todo: change to zipped tool
+ * @author Andrey Chaschev chaschev@gmail.com
  */
 public class GrailsPlugin extends ZippedToolPlugin {
     public final DynamicVariable<String>
         homeParentPath = dynamic(new VarFun<String>() {
         public String apply() {
-            return StringUtils.substringBeforeLast($.var(homePath), "/");
+            return StringUtils.substringBeforeLast($(homePath), "/");
         }
     }),
         currentVersionPath = dynamic(new VarFun<String>() {
             public String apply() {
-                return $.sys.joinPath($.var(homeParentPath), "grails-" + $.var(version));
+                return $.sys.joinPath($(homeParentPath), "grails-" + $(version));
             }
         }),
         grailsBin = joinPath(homePath, "bin"),
         projectPath = dynamic("Project root dir"),
-        grailsExecName = dynamic("grails or grails.bat", new VarFun<String>() {
+        grailsExecName = dynamic("'grails' or 'grails.bat'", new VarFun<String>() {
             public String apply() {
                 return "grails" + ($.sys.isNativeUnix() ? "" : ".bat");
             }
@@ -80,7 +74,7 @@ public class GrailsPlugin extends ZippedToolPlugin {
         });
         distrWwwAddress.setDynamic(new VarFun<String>() {
             public String apply() {
-                return String.format("http://dist.springframework.org.s3.amazonaws.com/release/GRAILS/%s", $.var(distrFilename));
+                return String.format("http://dist.springframework.org.s3.amazonaws.com/release/GRAILS/%s", $(distrFilename));
             }
         });
     }

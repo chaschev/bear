@@ -16,6 +16,7 @@
 
 package cap4j.cli;
 
+import cap4j.task.CapException;
 import cap4j.vcs.CommandLineResult;
 import cap4j.vcs.VcsCLIPlugin;
 import cap4j.session.Result;
@@ -128,7 +129,15 @@ public abstract class CommandLine<T extends CommandLineResult> {
         return this;
     }
 
+
     public CommandLine<T> addRaw(String format, String... args) {
+        return addRaw(format, false, args);
+    }
+
+    public CommandLine<T> addRaw(String format, boolean force, String... args) {
+        if(format.contains("rm ") && !force){
+            throw new CapException("rm in raw mode is forbidden. Use rmLine(...) or rm(...) to avoid deleting system libs.");
+        }
         strings.add(new VcsCLIPlugin.CommandLineOperator(String.format(format, args)));
         return this;
     }

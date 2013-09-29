@@ -339,7 +339,7 @@ public class GenericUnixLocalEnvironment extends SystemEnvironment {
     }
 
     @Override
-    public CommandLine rmLine(@Nonnull String dir, String... paths) {
+    public CommandLine rmLineImpl(@Nonnull String dir, CommandLine line, String... paths) {
         throw new UnsupportedOperationException("todo GenericUnixLocalEnvironment.rmLine");
     }
 }

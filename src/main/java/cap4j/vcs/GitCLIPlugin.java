@@ -265,7 +265,7 @@ public class GitCLIPlugin extends VcsCLIPlugin<GitCLIPlugin> {
         @Override
         public Script export(String revision, String destination, Map<String, String> params) {
             return checkout(revision, destination, emptyParams())
-                .line($.sys.rmLine(".", destination + "/.git"));
+                .line($.sys.rmLine($.sys.line(), ".", destination + "/.git"));
         }
 
         @Override

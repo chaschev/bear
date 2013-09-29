@@ -19,15 +19,17 @@ package cap4j.session;
 import cap4j.cli.CommandLine;
 import cap4j.cli.Script;
 import cap4j.core.*;
+import cap4j.task.CapException;
+import cap4j.task.TaskRunner;
 import cap4j.vcs.CommandLineResult;
 import cap4j.vcs.GitCLIPlugin;
-import cap4j.task.TaskRunner;
 import com.google.common.base.Joiner;
 import net.schmizz.sshj.connection.channel.direct.Session;
+import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.io.File;
 import java.util.*;
@@ -186,7 +188,29 @@ public abstract class SystemEnvironment {
         return run(line().addRaw(s)).text;
     }
 
-    public abstract CommandLine rmLine(@Nonnull String dir, String... paths);
+    public CommandLine rmLine(CommandLine line, String... paths){
+        return rmLine(null, line, paths);
+    }
+
+    public CommandLine rmLine(@Nullable String dir, CommandLine line, String... paths){
+        for (String path : paths) {
+            if(dir != null && !dir.equals(".")){
+                path = FilenameUtils.normalize(dir + "/" + path, true);
+            }
+
+            path = FilenameUtils.normalize(path, true);
+
+            int dirLevel = StringUtils.split(path, '/').length;
+
+            if(dirLevel <= 2) {
+                throw new CapException(String.format("can't delete delete a directory on the second level or higher: %s, dir: %s", dirLevel, path));
+            }
+        }
+
+        return rmLineImpl(dir, line, paths);
+    }
+
+    protected abstract CommandLine rmLineImpl(@Nullable String dir, CommandLine line, String... paths);
 
     public static enum DownloadMethod {
         SCP, SFTP

@@ -70,7 +70,7 @@ public class SetupPluginsSettings extends ICapSettings {
                     .add(newUnixRemote("vm01", "vm01", global)))
         );
 
-        Cap.newStrategy.setDynamic(new VarFun<DeployStrategy>() {
+        cap.getStrategy.setDynamic(new VarFun<DeployStrategy>() {
 
             public DeployStrategy apply() {
 
@@ -78,7 +78,7 @@ public class SetupPluginsSettings extends ICapSettings {
                     cap.vcsBranchLocalPath
                 );
 
-                final DeployStrategy strategy = new DeployStrategy($, global) {
+                final DeployStrategy strategy = new DeployStrategy($) {
                     @Override
                     protected void step_40_updateRemoteFiles() {
                         $.runner.run(global.tasks.vcsUpdate);

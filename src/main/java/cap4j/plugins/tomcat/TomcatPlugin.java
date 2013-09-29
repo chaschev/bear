@@ -86,7 +86,7 @@ public class TomcatPlugin extends ZippedToolPlugin {
                 return new Task(this, $) {
                     @Override
                     protected TaskResult run(TaskRunner runner) {
-                        $.sys.sudo().rm($.var(warCacheDirs));
+                        $.sys.sudo().rm($(warCacheDirs));
                         $.sys.script()
                             .line().addRaw("catalina stop").build()
                             .line().addRaw("nohup catalina start").build()
@@ -147,9 +147,9 @@ public class TomcatPlugin extends ZippedToolPlugin {
 
     public final DynamicVariable<String[]> warCacheDirs = Variables.dynamic(new VarFun<String[]>() {
         public String[] apply() {
-            final String name = FilenameUtils.getBaseName($.var(warName));
+            final String name = FilenameUtils.getBaseName($(warName));
             return new String[]{
-                $.sys.joinPath($.var(webapps), name)
+                $.sys.joinPath($(webapps), name)
             };
         }
     });

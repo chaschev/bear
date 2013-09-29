@@ -218,7 +218,7 @@ public class GenericUnixRemoteEnvironment extends SystemEnvironment {
 
                 text = remoteConsole.concatOutputs().toString().trim();
 
-                logger.info("response: {}", text);
+                logger.debug("response: {}", text);
 
                 sudo = false;
             }
@@ -364,12 +364,15 @@ public class GenericUnixRemoteEnvironment extends SystemEnvironment {
 
     @Override
     public Result rmCd(@Nonnull String dir, String... paths) {
-        return run(rmLine(dir, paths)).result;
+        return run(rmLine(dir, line(), paths)).result;
     }
 
     @Override
-    public CommandLine rmLine(@Nonnull String dir, String... paths) {
-        return line().cd(dir).a("rm", "-rf").a(paths);
+    public CommandLine rmLineImpl(@Nullable String dir, CommandLine line, String... paths) {
+        if(dir != null){
+            line.cd(dir);
+        }
+        return line.a("rm", "-rf").a(paths);
     }
 
     public static class SshSession {

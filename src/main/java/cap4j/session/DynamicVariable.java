@@ -16,10 +16,9 @@
 
 package cap4j.session;
 
-import cap4j.core.SessionContext;
 import cap4j.core.Nameable;
+import cap4j.core.SessionContext;
 import cap4j.core.VarFun;
-import com.google.common.base.Preconditions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -130,17 +129,14 @@ public class DynamicVariable<T> implements Nameable<T> {
     public DynamicVariable<T> setDynamic(VarFun<T> impl) {
         this.dynamicImplementation = impl;
 
-        if (impl instanceof VarFun) {
-            VarFun<T> varFun = (VarFun<T>) impl;
-            varFun.setVar(this);
-        }
+        impl.setVar(this);
 
         defaultValue = null;
         return this;
     }
 
     public DynamicVariable<T> memoize(boolean memoize) {
-        Preconditions.checkArgument(dynamicImplementation != null, "memoization works with dynamic implementations");
+//        Preconditions.checkArgument(dynamicImplementation != null, "memoization works with dynamic implementations");
 
         this.memoize = memoize;
         return this;

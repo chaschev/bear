@@ -83,7 +83,7 @@ public class GrailsBuilder extends TaskDef {
 
             private CommandLine newGrailsCommand(String grailsExecPath) {
                 return $.sys.line()
-                    .setVar("JAVA_HOME", $.var(java.homePath))
+                    .setVar("JAVA_HOME", $(java.homePath))
                     .a(grailsExecPath)
                     .timeoutMs(600000);
             }
