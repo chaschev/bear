@@ -11,6 +11,8 @@ top priority:
 - think of unit testing
 - test rollback
 - maven installation (via dependencies:get)
+- JRuby console
+- proper logging (store on server)
 
 
 utils:
@@ -20,7 +22,7 @@ utils:
 
 features:
 
-- download plugin: via local cache
+- download plugin (wget, viaLocalCache option)
 - tomcat plugin: configurable rights as of a service
 - (ok) jdk plugin
 - (ok) grails plugin

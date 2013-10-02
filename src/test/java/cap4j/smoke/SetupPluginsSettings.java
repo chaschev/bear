@@ -24,6 +24,7 @@ import static cap4j.session.GenericUnixRemoteEnvironment.newUnixRemote;
 public class SetupPluginsSettings extends ICapSettings {
     GrailsPlugin grails;
     JavaPlugin java;
+    MavenPlugin maven;
     Cap cap;
     TomcatPlugin tomcat;
 
@@ -52,12 +53,15 @@ public class SetupPluginsSettings extends ICapSettings {
         factory.init();
 
         tomcat = global.getPlugin(TomcatPlugin.class);
+        maven = global.getPlugin(MavenPlugin.class);
         grails = global.getPlugin(GrailsPlugin.class);
         java = global.getPlugin(JavaPlugin.class);
         cap = global.cap;
 
         tomcat.warName.setEqualTo(grails.warName);
         tomcat.version.defaultTo("6.0.37");
+
+        maven.version.defaultTo("3.0.5");
 
         java.versionName.defaultTo("jdk-7u40-linux-x64");
         java.version.defaultTo("1.7.0_40");

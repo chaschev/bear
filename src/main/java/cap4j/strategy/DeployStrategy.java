@@ -18,7 +18,6 @@ package cap4j.strategy;
 
 import cap4j.core.*;
 import cap4j.session.Result;
-import cap4j.session.Variables;
 import cap4j.task.Task;
 import cap4j.task.TaskDef;
 import cap4j.task.TaskResult;
@@ -38,6 +37,7 @@ import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import static cap4j.session.Variables.joinPath;
 import static org.apache.commons.io.FileUtils.byteCountToDisplaySize;
 
 /**
@@ -182,7 +182,7 @@ public abstract class DeployStrategy extends TaskDef<Task>{
         }
 
         @Override
-        protected TaskResult run(TaskRunner runner) {
+        protected final TaskResult run(TaskRunner runner) {
             try {
                 Preconditions.checkNotNull(prepareRemoteDataBarrier, "prepareRemoteDataBarrier is null");
                 Preconditions.checkNotNull(updateRemoteFilesBarrier, "updateRemoteFilesBarrier is null");
@@ -252,7 +252,7 @@ public abstract class DeployStrategy extends TaskDef<Task>{
             for (SymlinkEntry entry : symlinkRules.entries) {
                 String srcPath;
 
-                srcPath = $(Variables.joinPath("symlinkSrc", cap.currentPath, entry.sourcePath));
+                srcPath = $(joinPath("symlinkSrc", cap.currentPath, entry.sourcePath));
 
                 $.sys.link(srcPath, $(entry.destPath), entry.owner);
             }
