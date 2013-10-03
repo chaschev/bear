@@ -12,6 +12,7 @@
         <javaHome>${env.JAVA_HOME}</javaHome>
         <rt.jar.path>${javaHome}/jre/lib/rt.jar</rt.jar.path>
         <jsse.jar.path>${javaHome}/jre/lib/jsse.jar</jsse.jar.path>
+        <fx.jar.path>${javaHome}/jre/lib/jfxrt.jar</fx.jar.path>
     </properties>
 
     <profiles>
@@ -85,6 +86,13 @@
             <groupId>com.chaschev</groupId>
             <artifactId>chutils</artifactId>
             <version>1.2-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>com.oracle</groupId>
+            <artifactId>javafx</artifactId>
+            <version>2.2.3</version>
+            <scope>system</scope>
+            <systemPath>${fx.jar.path}</systemPath>
         </dependency>
     </dependencies>
 
@@ -240,6 +248,8 @@
                     </dependency>
                 </dependencies>
             </plugin>
+
+
 
 
 <!--

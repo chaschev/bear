@@ -34,9 +34,6 @@ import java.util.concurrent.TimeUnit;
  */
 public abstract class AbstractConsole {
     public static abstract class Listener {
-        protected void commandFinished(String[] output) {
-        }
-
         protected abstract void textAdded(String text, MarkedBuffer buffer) throws Exception;
     }
 
