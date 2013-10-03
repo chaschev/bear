@@ -22,7 +22,6 @@ import cap4j.core.*;
 import cap4j.task.CapException;
 import cap4j.task.TaskRunner;
 import cap4j.vcs.CommandLineResult;
-import cap4j.vcs.GitCLIPlugin;
 import com.google.common.base.Joiner;
 import net.schmizz.sshj.connection.channel.direct.Session;
 import org.apache.commons.io.FilenameUtils;
@@ -77,9 +76,9 @@ public abstract class SystemEnvironment {
     public static GenericUnixRemoteEnvironment.SshSession.WithSession passwordCallback(final String text, final String password) {
         return new GenericUnixRemoteEnvironment.SshSession.WithSession(null, text) {
             @Override
-            public void act(Session session, Session.Shell shell) throws Exception {
+            public void act(Session.Shell shell, AbstractConsole console) throws Exception {
                 if (text.contains("password")) {
-                    GitCLIPlugin.answer(session, password);
+                    console.print(password + "\n");
                 }
             }
         };

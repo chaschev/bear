@@ -34,6 +34,8 @@ import java.util.concurrent.TimeUnit;
  */
 public abstract class AbstractConsole {
     public static abstract class Listener {
+        protected AbstractConsole console;
+
         protected abstract void textAdded(String text, MarkedBuffer buffer) throws Exception;
     }
 
@@ -41,18 +43,23 @@ public abstract class AbstractConsole {
 
     OutputStream out;
 
+    /**
+     * There are basically two copiers: for stdout and stderr which copy everything to out.
+     */
     List<MyStreamCopier> copiers = new ArrayList<MyStreamCopier>();
     List<MarkedBuffer> buffers = new ArrayList<MarkedBuffer>();
     List<Future> futures = new ArrayList<Future>();
 
     protected AbstractConsole(Listener listener) {
         this.listener = listener;
+        listener.console = this;
     }
 
 
     public void print(String s) {
         try {
             out.write(s.getBytes());
+            out.flush();
         } catch (IOException e) {
             throw Exceptions.runtime(e);
         }

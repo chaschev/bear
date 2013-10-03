@@ -27,11 +27,8 @@ import cap4j.task.Dependency;
 import cap4j.task.InstallationTaskDef;
 import cap4j.task.TaskDef;
 import com.google.common.base.Function;
-import net.schmizz.sshj.common.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 
-import java.io.IOException;
-import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -239,18 +236,18 @@ public class GitCLIPlugin extends VcsCLIPlugin<GitCLIPlugin> {
 
             return new GenericUnixRemoteEnvironment.SshSession.WithSession(null, null) {
                 @Override
-                public void act(net.schmizz.sshj.connection.channel.direct.Session session, net.schmizz.sshj.connection.channel.direct.Session.Shell shell) throws Exception {
+                public void act(net.schmizz.sshj.connection.channel.direct.Session.Shell shell, cap4j.core.AbstractConsole console) throws Exception {
                     if (text.matches(".*\\bpassword.*:.*")) {
-                        answer(session, password);
+                        console.print(password + "\n");
                     } else if (text.contains("(yes/no)")) {
                         // git is asking whether or not to connect
-                        answer(session, "yes");
+                        console.print("yes" + "\n");
                     } else if (text.contains("passphrase")) {
                         // git is asking for the passphrase for the user's key
                         throw new UnsupportedOperationException("user prompt not yet supported!");
                     } else if (text.contains("accept (t)emporarily")) {
                         // git is asking whether to accept the certificate
-                        answer(session, "t");
+                        console.print("t" + "\n");
                     }
                 }
             };
@@ -312,12 +309,6 @@ public class GitCLIPlugin extends VcsCLIPlugin<GitCLIPlugin> {
     @Override
     public InstallationTaskDef getInstall() {
         return InstallationTaskDef.EMPTY;
-    }
-
-    public static void answer(net.schmizz.sshj.connection.channel.direct.Session session, String what) throws IOException {
-        final OutputStream os = session.getOutputStream();
-        os.write((what + "\n").getBytes(IOUtils.UTF8));
-        os.flush();
     }
 
     private static boolean validRevision(String revision) {

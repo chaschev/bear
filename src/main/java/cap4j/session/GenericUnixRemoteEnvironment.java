@@ -22,7 +22,6 @@ import cap4j.core.Cap;
 import cap4j.core.GlobalContext;
 import cap4j.core.MarkedBuffer;
 import cap4j.vcs.CommandLineResult;
-import cap4j.vcs.GitCLIPlugin;
 import cap4j.vcs.RemoteCommandLine;
 import cap4j.vcs.VcsCLIPlugin;
 import com.google.common.collect.Lists;
@@ -148,7 +147,8 @@ public class GenericUnixRemoteEnvironment extends SystemEnvironment {
         final int[] exitStatus = {0};
 
         final Result[] result = {Result.ERROR};
-        final SshSession.WithSession withSession = new SshSession.WithSession(cap) {
+
+        final SshSession.WithLowLevelSession withSession = new SshSession.WithLowLevelSession(cap) {
             @Override
             public void act(final Session session, final Session.Shell shell) throws Exception {
                 StringBuilder sb = new StringBuilder(128);
@@ -189,7 +189,7 @@ public class GenericUnixRemoteEnvironment extends SystemEnvironment {
                         if (inputCallback != null) {
                             inputCallback.text = text;
                             try {
-                                inputCallback.act(session, shell);
+                                inputCallback.act(shell, console);
                             } catch (Exception e) {
                                 logger.error("", e);
                             }
@@ -197,7 +197,7 @@ public class GenericUnixRemoteEnvironment extends SystemEnvironment {
                             if (text.contains("sudo") && text.contains("password")) {
                                 buffer.markStart();
 
-                                GitCLIPlugin.answer(session, ctx().var(cap.sshPassword));
+                                console.print(ctx().var(cap.sshPassword) + "\n");
                             }
                         }
                     }
@@ -437,10 +437,21 @@ public class GenericUnixRemoteEnvironment extends SystemEnvironment {
                 this.text = text;
             }
 
+            public abstract void act(Session.Shell shell, AbstractConsole console) throws Exception;
+        }
+
+        private abstract static class WithLowLevelSession {
+            public Cap cap;
+            public String text;
+
+            protected WithLowLevelSession(Cap cap) {
+                this.cap = cap;
+            }
+
             public abstract void act(Session session, Session.Shell shell) throws Exception;
         }
 
-        public void withSession(WithSession withSession) {
+        public void withSession(WithLowLevelSession withSession) {
             try {
                 final Session s = getSession();
 //                final Session.Shell shell = s.startShell();

@@ -19,7 +19,6 @@ package cap4j.plugins.mysql;
 import cap4j.core.*;
 import cap4j.plugins.Plugin;
 import cap4j.vcs.CommandLineResult;
-import cap4j.vcs.GitCLIPlugin;
 import cap4j.session.*;
 import cap4j.task.*;
 import net.schmizz.sshj.connection.channel.direct.Session;
@@ -266,9 +265,9 @@ public class MySqlPlugin extends Plugin {
     private static GenericUnixRemoteEnvironment.SshSession.WithSession mysqlPasswordCallback(final String pw) {
         return new GenericUnixRemoteEnvironment.SshSession.WithSession(null, pw) {
             @Override
-            public void act(Session session, Session.Shell shell) throws Exception {
+            public void act(Session.Shell shell, cap4j.core.AbstractConsole console) throws Exception {
                 if (text.contains("Enter password:")) {
-                    GitCLIPlugin.answer(session, pw);
+                    console.print(pw + "\n");
                 }
             }
         };
