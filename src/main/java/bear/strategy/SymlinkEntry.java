@@ -14,29 +14,32 @@
  * limitations under the License.
  */
 
-package atocha;
+package bear.strategy;
 
-import bear.core.GlobalContext;
-import bear.plugins.Plugin;
 import bear.session.DynamicVariable;
-import bear.session.Variables;
-import bear.task.InstallationTask;
-import bear.task.InstallationTaskDef;
+
+import javax.annotation.Nullable;
 
 /**
  * @author Andrey Chaschev chaschev@gmail.com
  */
-public class Atocha extends Plugin {
+public class SymlinkEntry {
+    //path in $current
+    String sourcePath;
+    //dest path in variable
+    DynamicVariable<String> destPath;
+    //apply chown if needed
+    @Nullable
+    String owner;
 
-    public final DynamicVariable<Boolean>
-        reuseWar = Variables.bool("will skip building WAR").defaultTo(false);
-
-    public Atocha(GlobalContext global) {
-        super(global);
+    public SymlinkEntry(String sourcePath, DynamicVariable<String> destPath) {
+        this.sourcePath = sourcePath;
+        this.destPath = destPath;
     }
 
-    @Override
-    public InstallationTaskDef<InstallationTask> getInstall() {
-        return InstallationTaskDef.EMPTY;
+    public SymlinkEntry(String sourcePath, DynamicVariable<String> destPath, String owner) {
+        this.sourcePath = sourcePath;
+        this.destPath = destPath;
+        this.owner = owner;
     }
 }

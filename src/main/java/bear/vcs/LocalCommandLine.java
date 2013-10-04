@@ -14,29 +14,27 @@
  * limitations under the License.
  */
 
-package atocha;
+package bear.vcs;
 
-import bear.core.GlobalContext;
-import bear.plugins.Plugin;
-import bear.session.DynamicVariable;
-import bear.session.Variables;
-import bear.task.InstallationTask;
-import bear.task.InstallationTaskDef;
+import bear.cli.CommandLine;
+import bear.cli.Script;
+import bear.session.SystemEnvironment;
 
 /**
  * @author Andrey Chaschev chaschev@gmail.com
  */
-public class Atocha extends Plugin {
+public class LocalCommandLine<T extends CommandLineResult> extends CommandLine<T> {
+    public LocalCommandLine(SystemEnvironment sys) {
+        super(sys);
+    }
 
-    public final DynamicVariable<Boolean>
-        reuseWar = Variables.bool("will skip building WAR").defaultTo(false);
-
-    public Atocha(GlobalContext global) {
-        super(global);
+    public LocalCommandLine(Script script) {
+        super(script);
     }
 
     @Override
-    public InstallationTaskDef<InstallationTask> getInstall() {
-        return InstallationTaskDef.EMPTY;
+    public CommandLine<T> stty() {
+        return this;
     }
+
 }
