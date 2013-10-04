@@ -16,10 +16,12 @@
 
 package cap4j.cli;
 
+import cap4j.console.AbstractConsoleCommand;
+import cap4j.session.Result;
+import cap4j.session.SystemEnvironment;
 import cap4j.task.CapException;
 import cap4j.vcs.CommandLineResult;
 import cap4j.vcs.VcsCLIPlugin;
-import cap4j.session.Result;
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
 import org.apache.commons.lang3.StringUtils;
@@ -33,12 +35,10 @@ import java.util.Map;
 /**
  * @author Andrey Chaschev chaschev@gmail.com
  */
-public abstract class CommandLine<T extends CommandLineResult> {
+public abstract class CommandLine<T extends CommandLineResult> extends AbstractConsoleCommand<T> {
     public String cd = ".";
 
     public List strings = new ArrayList(4);
-
-    public int timeoutMs;
 
     protected Function<String, T> parser;
 
@@ -48,11 +48,15 @@ public abstract class CommandLine<T extends CommandLineResult> {
     @Nullable
     protected Script script;
 
-    protected CommandLine() {
+    protected SystemEnvironment sys;
+
+    protected CommandLine(SystemEnvironment sys) {
+        this.sys = sys;
     }
 
     protected CommandLine(Script script) {
         this.script = script;
+        this.sys = script.sys;
     }
 
     public CommandLine a(String... strings) {
@@ -191,5 +195,34 @@ public abstract class CommandLine<T extends CommandLineResult> {
 
     public void setScript(@Nullable Script script) {
         this.script = script;
+    }
+
+    @Override
+    public String asText() {
+        StringBuilder sb = new StringBuilder(128);
+        CommandLine line = this;
+
+        if (line.cd != null && !".".equals(line.cd)) {
+            sb.append("cd ").append(line.cd).append(" && ");
+        }
+
+        if (sys.isSudo()) {
+            sb.append("stty -echo && sudo ");
+        }
+
+        List strings = line.strings;
+
+        for (Object string : strings) {
+            if (string instanceof VcsCLIPlugin.CommandLineOperator) {
+                sb.append(string);
+            } else {
+                sb.append('"').append(string).append('"');
+            }
+
+            sb.append(" ");
+        }
+
+
+        return sb.toString();
     }
 }

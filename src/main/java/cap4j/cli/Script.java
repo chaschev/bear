@@ -16,8 +16,8 @@
 
 package cap4j.cli;
 
+import cap4j.console.ConsoleCallback;
 import cap4j.vcs.CommandLineResult;
-import cap4j.session.GenericUnixRemoteEnvironment;
 import cap4j.session.Result;
 import cap4j.session.SystemEnvironment;
 import com.google.common.base.Function;
@@ -43,7 +43,7 @@ public class Script <T extends CommandLineResult>{
         }
 
         @Override
-        public CommandLineResult run(GenericUnixRemoteEnvironment.SshSession.WithSession callback) {
+        public CommandLineResult run(ConsoleCallback callback) {
             return result;
         }
 
@@ -55,18 +55,18 @@ public class Script <T extends CommandLineResult>{
 
     public String cd = ".";
 
-    protected SystemEnvironment system;
+    protected SystemEnvironment sys;
 
     public List<CommandLine> lines = new ArrayList<CommandLine>();
 
     protected Function<String, T> parser;
 
-    public Script(SystemEnvironment system) {
-        this.system = system;
+    public Script(SystemEnvironment sys) {
+        this.sys = sys;
     }
 
     public CommandLine line() {
-        final CommandLine line = system.line(this);
+        final CommandLine line = sys.line(this);
 
         lines.add(line);
 
@@ -92,11 +92,11 @@ public class Script <T extends CommandLineResult>{
 
 
     public CommandLineResult run() {
-        return system.run(this);
+        return sys.run(this);
     }
 
-    public CommandLineResult run(GenericUnixRemoteEnvironment.SshSession.WithSession callback) {
-        return system.run(this, callback);
+    public CommandLineResult run(ConsoleCallback callback) {
+        return sys.run(this, callback);
     }
 
     public Script<T> setParser(Function<String, T> parser) {
@@ -120,8 +120,8 @@ public class Script <T extends CommandLineResult>{
 
     public Script<T> timeoutMs(int ms) {
         for (CommandLine line : lines) {
-            if(line.timeoutMs == 0){
-                line.timeoutMs = ms;
+            if(line.getTimeoutMs() == 0){
+                line.timeoutMs(ms);
             }
         }
 

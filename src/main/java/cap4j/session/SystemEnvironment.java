@@ -18,13 +18,12 @@ package cap4j.session;
 
 import cap4j.cli.CommandLine;
 import cap4j.cli.Script;
+import cap4j.console.ConsoleCallback;
 import cap4j.core.*;
-import cap4j.plugins.HavingContext;
 import cap4j.task.CapException;
 import cap4j.task.TaskRunner;
 import cap4j.vcs.CommandLineResult;
 import com.google.common.base.Joiner;
-import net.schmizz.sshj.connection.channel.direct.Session;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -37,7 +36,7 @@ import java.util.*;
 /**
  * @author Andrey Chaschev chaschev@gmail.com
  */
-public abstract class SystemEnvironment extends HavingContext<SystemEnvironment>{
+public abstract class SystemEnvironment extends cap4j.console.AbstractConsole {
     private static final Logger logger = LoggerFactory.getLogger(SystemEnvironment.class);
 
     protected boolean sudo;
@@ -51,14 +50,14 @@ public abstract class SystemEnvironment extends HavingContext<SystemEnvironment>
     protected GlobalContext global;
     private UnixFlavour unixFlavour;
 
+    protected SessionContext $;
+
     protected SystemEnvironment(String name, GlobalContext global) {
-        super(null);
         this.name = name;
         this.global = global;
     }
 
     protected SystemEnvironment(String name, String desc, GlobalContext global) {
-        super(null);
         this.name = name;
         this.desc = desc;
         this.global = global;
@@ -70,15 +69,11 @@ public abstract class SystemEnvironment extends HavingContext<SystemEnvironment>
         return new VariablesLayer(environment.getName() + " vars", globalContext.variablesLayer);
     }
 
-    public static GenericUnixRemoteEnvironment.SshSession.WithSession passwordCallback(final String password) {
-        return passwordCallback(null, password);
-    }
-
-    public static GenericUnixRemoteEnvironment.SshSession.WithSession passwordCallback(final String text, final String password) {
-        return new GenericUnixRemoteEnvironment.SshSession.WithSession(null, text) {
+    public static ConsoleCallback passwordCallback(final String password) {
+        return new ConsoleCallback() {
             @Override
-            public void act(Session.Shell shell, AbstractConsole console) throws Exception {
-                if (text.contains("password")) {
+            public void progress(Terminal console, String buffer, String wholeText) {
+                if(buffer.contains("password")){
                     console.println(password);
                 }
             }
@@ -212,6 +207,10 @@ public abstract class SystemEnvironment extends HavingContext<SystemEnvironment>
 
     protected abstract CommandLine rmLineImpl(@Nullable String dir, CommandLine line, String... paths);
 
+    public boolean isSudo() {
+        return sudo;
+    }
+
     public static enum DownloadMethod {
         SCP, SFTP
     }
@@ -235,7 +234,7 @@ public abstract class SystemEnvironment extends HavingContext<SystemEnvironment>
         return run(script, null);
     }
 
-    public <T extends CommandLineResult> T run(Script<T> script, GenericUnixRemoteEnvironment.SshSession.WithSession callback) {
+    public <T extends CommandLineResult> T run(Script<T> script, ConsoleCallback callback) {
         StringBuilder sb = new StringBuilder(1024);
         Result r = Result.OK;
 
@@ -244,10 +243,10 @@ public abstract class SystemEnvironment extends HavingContext<SystemEnvironment>
                 line.cd = script.cd;
             }
 
-            final CommandLineResult result = run(line, callback);
+            final CommandLineResult result = sendCommand(line, callback);
             sb.append(result.text);
-            sb.append("\n");
-
+//            sb.append("\n");
+//
 //            if(result.result != Result.OK){
 //                r = result.result;
 //                break;
@@ -258,10 +257,8 @@ public abstract class SystemEnvironment extends HavingContext<SystemEnvironment>
     }
 
     public <T extends CommandLineResult> T run(CommandLine<T> commandLine) {
-        return run(commandLine, null);
+        return sendCommand(commandLine, null);
     }
-
-    public abstract <T extends CommandLineResult> T run(CommandLine<T> commandLine, final GenericUnixRemoteEnvironment.SshSession.WithSession inputCallback);
 
     public abstract Result sftp(String dest, String host, String path, String user, String pw);
 
@@ -411,5 +408,14 @@ public abstract class SystemEnvironment extends HavingContext<SystemEnvironment>
             default:
                 throw new UnsupportedOperationException("todo support" + getUnixFlavour() + " !");
         }
+    }
+
+    public <T> T $(DynamicVariable<T> varName) {
+        return $.var(varName);
+    }
+
+    public SystemEnvironment set$(SessionContext $) {
+        this.$ = $;
+        return this;
     }
 }

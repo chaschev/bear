@@ -17,11 +17,19 @@
 package cap4j.vcs;
 
 import cap4j.cli.CommandLine;
+import cap4j.cli.Script;
+import cap4j.session.SystemEnvironment;
 
 /**
  * @author Andrey Chaschev chaschev@gmail.com
  */
 public class RemoteCommandLine<T extends CommandLineResult> extends CommandLine<T> {
-    public RemoteCommandLine() {
+
+    public RemoteCommandLine(SystemEnvironment sys) {
+        super(sys);
+    }
+
+    public RemoteCommandLine(Script script) {
+        super(script);
     }
 }

@@ -16,30 +16,16 @@
 
 package cap4j.plugins;
 
+import cap4j.console.AbstractConsole;
 import cap4j.core.Cap;
 import cap4j.core.GlobalContext;
 import cap4j.core.SessionContext;
 import cap4j.session.DynamicVariable;
 import cap4j.task.*;
-import cap4j.vcs.CommandLineResult;
-import com.chaschev.chutils.util.Exceptions;
 import com.chaschev.chutils.util.OpenBean2;
-import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
-import com.google.common.base.Predicate;
-import com.google.common.collect.Iterables;
 
 import java.lang.reflect.Field;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
-
-import static com.google.common.base.Predicates.equalTo;
-import static com.google.common.base.Predicates.not;
-import static com.google.common.collect.Iterables.filter;
-import static com.google.common.collect.Lists.newArrayList;
-import static org.apache.commons.lang3.StringUtils.getLevenshteinDistance;
 
 /**
  * @author Andrey Chaschev chaschev@gmail.com
@@ -103,155 +89,6 @@ public abstract class Plugin {
         }
 
         return r.updateResult();
-    }
-
-    public static class CompositeConsoleArrival {
-        ArrivalEntry[] entries;
-
-        public CompositeConsoleArrival(int size) {
-            entries = new ArrivalEntry[size];
-        }
-
-        public void addArrival(int i, CommandLineResult text) {
-            throw new UnsupportedOperationException("todo CompositeConsoleArrival.addArrival");
-        }
-
-        public static class ArrivalEntry {
-            CommandLineResult result;
-
-            public ArrivalEntry(CommandLineResult result) {
-                this.result = result;
-            }
-        }
-
-        public static class EqualityGroups{
-            List<EqualityGroup> groups = new ArrayList<EqualityGroup>();
-
-            int size;
-
-            public EqualityGroups(List<EqualityGroup> groups) {
-                this.groups = groups;
-
-                for (EqualityGroup group : groups) {
-                    size += group.size();
-                }
-            }
-
-            public Optional<EqualityGroup> getMajorityGroup(){
-                return Iterables.tryFind(groups, new Predicate<EqualityGroup>() {
-                    @Override
-                    public boolean apply(EqualityGroup input) {
-                        return input.size() > size / 2;
-                    }
-                });
-            }
-
-            public ArrayList<EqualityGroup> getMinorGroups(){
-                return newArrayList(filter(groups, not(equalTo(getMajorityGroup().orNull()))));
-            }
-        }
-
-        public static class EqualityGroup{
-            String text;
-            int firstEntry;
-            List<Integer> entries = new ArrayList<Integer>();
-
-            private EqualityGroup(String text, int firstEntry) {
-                this.text = text;
-                this.firstEntry = firstEntry;
-            }
-
-            public boolean sameGroup(ArrivalEntry entry) {
-                String otherText = entry.result.text;
-
-                return getLevenshteinDistance(text, otherText, 5000) * 1.0 /
-                    (text.length() + otherText.length()) < 5;
-            }
-
-            public void add(ArrivalEntry entry, int i) {
-                throw new UnsupportedOperationException("todo EqualityGroup.add");
-            }
-
-            public int size() {
-                return entries.size();
-            }
-        }
-
-        protected int thresholdDistance;
-
-        protected List<EqualityGroup> divideIntoGroups(){
-            List<EqualityGroup> groups = new ArrayList<EqualityGroup>();
-
-            groups.add(new EqualityGroup(entries[0].result.text, 0));
-
-            for (int i = 1; i < entries.length; i++) {
-                ArrivalEntry entry = entries[i];
-
-                for (EqualityGroup group : groups) {
-                    if(group.sameGroup(entry)){
-                        group.add(entry, i);
-                    }
-                }
-            }
-
-            return groups;
-        }
-    }
-
-    public static abstract class ConsoleCallback {
-        public abstract void progress(String buffer, String wholeText);
-        public abstract void whenDone(CommandLineResult result);
-    }
-
-    public static abstract class AbstractConsole {
-        public abstract CompositeConsoleArrival.EqualityGroups sendCommand(String text, ConsoleCallback callback, long timeoutMs);
-
-        public void sendCommand(String text, ConsoleCallback callback, long timeout, TimeUnit timeUnit){
-            sendCommand(text, callback, timeUnit.toMillis(timeout));
-        }
-    }
-
-    public static class CompositeConsole extends AbstractConsole{
-        List<AbstractConsole> consoles = new ArrayList<AbstractConsole>();
-        Progress progress;
-
-        public static abstract class Progress{
-            public abstract void on(int console, String interval, String wholeText);
-        }
-
-
-        @Override
-        public CompositeConsoleArrival.EqualityGroups sendCommand(final String text, ConsoleCallback callback, long timeoutMs) {
-            final CompositeConsoleArrival consoleArrival = new CompositeConsoleArrival(consoles.size());
-
-            final CountDownLatch latch = new CountDownLatch(consoles.size());
-
-            for (int i = 0; i < consoles.size(); i++) {
-                final AbstractConsole console = consoles.get(i);
-
-                final int finalI = i;
-                console.sendCommand(text, new ConsoleCallback() {
-                    @Override
-                    public void progress(String interval, String wholeText) {
-                        progress.on(finalI, interval, wholeText);
-                    }
-
-                    @Override
-                    public void whenDone(CommandLineResult result) {
-                        consoleArrival.addArrival(finalI, result);
-                        latch.countDown();
-                    }
-                }, timeoutMs);
-            }
-
-            try {
-                latch.await(timeoutMs, TimeUnit.MILLISECONDS);
-            } catch (InterruptedException e) {
-                throw Exceptions.runtime(e);
-            }
-
-            return new CompositeConsoleArrival.EqualityGroups(consoleArrival.divideIntoGroups());
-        }
     }
 
     public AbstractConsole getConsole(){

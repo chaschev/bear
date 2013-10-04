@@ -17,17 +17,24 @@
 package cap4j.vcs;
 
 import cap4j.cli.CommandLine;
+import cap4j.cli.Script;
+import cap4j.session.SystemEnvironment;
 
 /**
  * @author Andrey Chaschev chaschev@gmail.com
  */
 public class LocalCommandLine<T extends CommandLineResult> extends CommandLine<T> {
-    public LocalCommandLine() {
+    public LocalCommandLine(SystemEnvironment sys) {
+        super(sys);
+    }
 
+    public LocalCommandLine(Script script) {
+        super(script);
     }
 
     @Override
     public CommandLine<T> stty() {
         return this;
     }
+
 }

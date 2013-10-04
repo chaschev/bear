@@ -16,6 +16,8 @@
 
 package cap4j.session;
 
+import cap4j.console.AbstractConsoleCommand;
+import cap4j.console.ConsoleCallback;
 import cap4j.core.GlobalContext;
 import cap4j.cli.CommandLine;
 import cap4j.vcs.CommandLineResult;
@@ -134,7 +136,7 @@ public class GenericUnixLocalEnvironment extends SystemEnvironment {
 
     @Override
     public <T extends CommandLineResult> CommandLine<T> newCommandLine(Class<T> aClass) {
-        return new LocalCommandLine<T>();
+        return new LocalCommandLine<T>(this);
     }
 
 
@@ -149,19 +151,19 @@ public class GenericUnixLocalEnvironment extends SystemEnvironment {
         CommandLine<T> line;
 
         int processTimeoutMs = 60000;
-        private GenericUnixRemoteEnvironment.SshSession.WithSession inputCallback;
+        private ConsoleCallback inputCallback;
 
-        public ProcessRunner(CommandLine<T> line, ExecutorService executor) {
-            this.line = line;
+        public ProcessRunner(AbstractConsoleCommand<T> line, ExecutorService executor) {
+            this.line = (CommandLine<T>) line;
             this.executor = executor;
         }
 
-        public ProcessRunner<T> setInputCallback(GenericUnixRemoteEnvironment.SshSession.WithSession inputCallback) {
+        public ProcessRunner<T> setInputCallback(ConsoleCallback inputCallback) {
             this.inputCallback = inputCallback;
             return this;
         }
 
-        public GenericUnixRemoteEnvironment.SshSession.WithSession getInputCallback() {
+        public ConsoleCallback getInputCallback() {
             return inputCallback;
         }
 
@@ -264,19 +266,19 @@ public class GenericUnixLocalEnvironment extends SystemEnvironment {
     }
 
     @Override
-    public <T extends CommandLineResult> T run(CommandLine<T> line, final GenericUnixRemoteEnvironment.SshSession.WithSession inputCallback) {
+    public <T extends CommandLineResult> T sendCommand(final AbstractConsoleCommand<T> line, ConsoleCallback inputCallback) {
         logger.debug("command: {}", line);
 
         final ProcessRunner.ProcessResult r = new ProcessRunner<T>(line, global.localExecutor)
             .setInputCallback(inputCallback)
-            .setProcessTimeoutMs(line.timeoutMs)
+            .setProcessTimeoutMs((int) line.getTimeoutMs())
             .run();
 
         if (r.exitCode == -1) {
             return (T) new CommandLineResult(r.text, Result.ERROR);
         }
 
-        final T t = line.parseResult(r.text);
+        final T t = ((CommandLine<T>)line).parseResult(r.text);
 
         t.result = Result.OK;
 

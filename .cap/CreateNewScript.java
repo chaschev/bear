@@ -96,7 +96,7 @@ public class CreateNewScript extends Script {
 
         line.timeoutMs(20000);
 
-        final SvnCLIPlugin.LsResult result = remoteEnv.run(line, vcsCLI.passwordCallback());
+        final SvnCLIPlugin.LsResult result = remoteEnv.sendCommand(line, vcsCLI.passwordCallback());
 
         return Lists.transform(result.getFiles(), new Function<String, String>() {
             public String apply(String input) {

@@ -17,11 +17,11 @@
 package cap4j.plugins;
 
 import cap4j.cli.Script;
+import cap4j.console.ConsoleCallback;
 import cap4j.core.GlobalContext;
 import cap4j.core.SessionContext;
 import cap4j.plugins.java.JavaPlugin;
 import cap4j.session.DynamicVariable;
-import cap4j.session.GenericUnixRemoteEnvironment;
 import cap4j.session.SystemEnvironment;
 import cap4j.session.Variables;
 import cap4j.task.*;
@@ -172,7 +172,7 @@ public abstract class ZippedToolPlugin extends Plugin{
             return script;
         }
 
-        private GenericUnixRemoteEnvironment.SshSession.WithSession sshCallback() {
+        private ConsoleCallback sshCallback() {
             return SystemEnvironment.passwordCallback($.var(cap.sshPassword));
         }
 

@@ -18,10 +18,11 @@ package cap4j.vcs;
 
 import cap4j.cli.CommandLine;
 import cap4j.cli.Script;
+import cap4j.console.AbstractConsole;
+import cap4j.console.ConsoleCallback;
 import cap4j.core.GlobalContext;
 import cap4j.core.SessionContext;
 import cap4j.session.DynamicVariable;
-import cap4j.session.GenericUnixRemoteEnvironment;
 import cap4j.session.Variables;
 import cap4j.task.Dependency;
 import cap4j.task.InstallationTaskDef;
@@ -35,7 +36,7 @@ import java.util.Map;
 
 import static cap4j.session.Variables.newVar;
 import static com.chaschev.chutils.util.LangUtils.elvis;
-import static com.google.common.collect.Lists.*;
+import static com.google.common.collect.Lists.newArrayList;
 import static java.util.Collections.addAll;
 
 
@@ -200,7 +201,8 @@ public class GitCLIPlugin extends VcsCLIPlugin<GitCLIPlugin> {
             //this will break the logic a bit
             String newRevision = null;
 
-            final SvnCLIPlugin.LsResult lsResult = $.sys.run(lsRemote(revision).timeoutSec(10), passwordCallback());
+            final SvnCLIPlugin.LsResult lsResult = $.sys.sendCommand(
+                lsRemote(revision).timeoutSec(10), passwordCallback());
 
             for (String s : lsResult.getFiles()) {
                 final String rev = StringUtils.substringBefore(s, "\t");
@@ -217,7 +219,7 @@ public class GitCLIPlugin extends VcsCLIPlugin<GitCLIPlugin> {
 
             //If sha is not found on remote, try expanding from local repository
 
-            newRevision = $.sys.run(commandPrefix("rev-parse", emptyParams())
+            newRevision = $.sys.sendCommand(commandPrefix("rev-parse", emptyParams())
                 .cd($(cap.vcsBranchLocalPath))
                 .a("--revs-only", origin() + "/" + revision)
                 .timeoutSec(10), passwordCallback()).text.trim();
@@ -231,21 +233,21 @@ public class GitCLIPlugin extends VcsCLIPlugin<GitCLIPlugin> {
         }
 
         @Override
-        public GenericUnixRemoteEnvironment.SshSession.WithSession passwordCallback() {
+        public ConsoleCallback passwordCallback() {
             final String password = $(cap.vcsPassword);
 
-            return new GenericUnixRemoteEnvironment.SshSession.WithSession(null, null) {
+            return new ConsoleCallback() {
                 @Override
-                public void act(net.schmizz.sshj.connection.channel.direct.Session.Shell shell, cap4j.core.AbstractConsole console) throws Exception {
-                    if (text.matches(".*\\bpassword.*:.*")) {
+                public void progress(AbstractConsole.Terminal console, String buffer, String wholeText) {
+                    if (buffer.matches(".*\\bpassword.*:.*")) {
                         console.println(password);
-                    } else if (text.contains("(yes/no)")) {
+                    } else if (buffer.contains("(yes/no)")) {
                         // git is asking whether or not to connect
                         console.println("yes");
-                    } else if (text.contains("passphrase")) {
+                    } else if (buffer.contains("passphrase")) {
                         // git is asking for the passphrase for the user's key
                         throw new UnsupportedOperationException("user prompt not yet supported!");
-                    } else if (text.contains("accept (t)emporarily")) {
+                    } else if (buffer.contains("accept (t)emporarily")) {
                         // git is asking whether to accept the certificate
                         console.println("t");
                     }

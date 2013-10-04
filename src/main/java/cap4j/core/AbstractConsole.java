@@ -32,7 +32,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * @author Andrey Chaschev chaschev@gmail.com
  */
-public abstract class AbstractConsole {
+public abstract class AbstractConsole extends cap4j.console.AbstractConsole.Terminal{
     public static abstract class Listener {
         protected AbstractConsole console;
 

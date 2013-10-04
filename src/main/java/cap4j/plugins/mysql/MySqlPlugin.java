@@ -16,12 +16,12 @@
 
 package cap4j.plugins.mysql;
 
+import cap4j.console.ConsoleCallback;
 import cap4j.core.*;
 import cap4j.plugins.Plugin;
 import cap4j.vcs.CommandLineResult;
 import cap4j.session.*;
 import cap4j.task.*;
-import net.schmizz.sshj.connection.channel.direct.Session;
 import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
@@ -200,7 +200,7 @@ public class MySqlPlugin extends Plugin {
 
                     $.sys.mkdirs($(dumpsDirPath));
 
-                    $.sys.run($.sys.line()
+                    $.sys.sendCommand($.sys.line()
                         .stty()
                         .addSplit(String.format("mysqldump --user=%s -p %s", $(user), $(dbName)))
                         .pipe()
@@ -238,7 +238,7 @@ public class MySqlPlugin extends Plugin {
                 protected TaskResult run(TaskRunner runner) {
                     Question.freeQuestionWithOption("Enter a filepath", $(dumpName), dumpName);
 
-                    return $.sys.run($.sys.line()
+                    return $.sys.sendCommand($.sys.line()
                         .addSplit(String.format("bzcat %s", $(dumpPath)))
                         .pipe()
                         .addSplit(String.format("mysql --user=%s -p %s", $(user), $(dbName))),
@@ -259,14 +259,14 @@ public class MySqlPlugin extends Plugin {
         final SystemEnvironment sys = runner.$().sys;
         sys.writeString(filePath, sql);
 
-        return sys.run(sys.newCommandLine().stty().a("mysql", "-u", user, "-p").redirectFrom(filePath), mysqlPasswordCallback(pw));
+        return sys.sendCommand(sys.newCommandLine().stty().a("mysql", "-u", user, "-p").redirectFrom(filePath), mysqlPasswordCallback(pw));
     }
 
-    private static GenericUnixRemoteEnvironment.SshSession.WithSession mysqlPasswordCallback(final String pw) {
-        return new GenericUnixRemoteEnvironment.SshSession.WithSession(null, pw) {
+    private static ConsoleCallback mysqlPasswordCallback(final String pw) {
+        return new ConsoleCallback(){
             @Override
-            public void act(Session.Shell shell, cap4j.core.AbstractConsole console) throws Exception {
-                if (text.contains("Enter password:")) {
+            public void progress(cap4j.console.AbstractConsole.Terminal console, String buffer, String wholeText) {
+                if (buffer.contains("Enter password:")) {
                     console.println(pw);
                 }
             }

@@ -39,7 +39,7 @@ public class SessionContext {
         this.global = global;
         this.sys = sys;
         this.runner = runner;
-        sys.$ = this;
+        sys.set$(this);
         this.sessionVariablesLayer = SystemEnvironment.newSessionVars(global, sys);
         sessionVariablesLayer.putS(global.cap.sessionHostname, sys.getName());
     }

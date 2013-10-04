@@ -18,11 +18,11 @@ package cap4j.vcs;
 
 import cap4j.cli.CommandLine;
 import cap4j.cli.Script;
+import cap4j.console.ConsoleCallback;
 import cap4j.core.GlobalContext;
 import cap4j.core.SessionContext;
 import cap4j.plugins.Plugin;
 import cap4j.session.DynamicVariable;
-import cap4j.session.GenericUnixRemoteEnvironment;
 import cap4j.session.SystemEnvironment;
 import cap4j.session.Variables;
 import cap4j.task.Task;
@@ -122,7 +122,7 @@ public abstract class VcsCLIPlugin<T extends VcsCLIPlugin> extends Plugin {
 
         public abstract String head();
 
-        public GenericUnixRemoteEnvironment.SshSession.WithSession passwordCallback() {
+        public ConsoleCallback passwordCallback() {
             return SystemEnvironment.passwordCallback($.var(cap.vcsPassword));
         }
 

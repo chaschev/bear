@@ -17,13 +17,15 @@
 package cap4j.session;
 
 import cap4j.cli.CommandLine;
+import cap4j.console.AbstractConsoleCommand;
+import cap4j.console.ConsoleCallback;
 import cap4j.core.AbstractConsole;
 import cap4j.core.Cap;
 import cap4j.core.GlobalContext;
 import cap4j.core.MarkedBuffer;
 import cap4j.vcs.CommandLineResult;
 import cap4j.vcs.RemoteCommandLine;
-import cap4j.vcs.VcsCLIPlugin;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import net.schmizz.sshj.SSHClient;
 import net.schmizz.sshj.common.IOUtils;
@@ -77,9 +79,9 @@ public class GenericUnixRemoteEnvironment extends SystemEnvironment {
 
         final String[] lines = r.text.split("[\r\n]+");
 
-        if(lines.length == 1 &&
+        if (lines.length == 1 &&
             (lines[0].contains("ls: cannot access") ||
-                lines[0].contains("such file or directory"))){
+                lines[0].contains("such file or directory"))) {
             return Collections.emptyList();
         }
 
@@ -130,52 +132,38 @@ public class GenericUnixRemoteEnvironment extends SystemEnvironment {
 
     @Override
     public <T extends CommandLineResult> CommandLine<T> newCommandLine(Class<T> aClass) {
-        return new RemoteCommandLine();
+        return new RemoteCommandLine<T>(this);
     }
 
     @Override
     public <T extends CommandLineResult> T run(final CommandLine<T> line) {
-        return run(line, null);
+        return sendCommand(line, null);
     }
 
     @Override
-    public <T extends CommandLineResult> T run(final CommandLine<T> line, @Nullable final SshSession.WithSession inputCallback) {
+    public <T extends CommandLineResult> T sendCommand(
+        final AbstractConsoleCommand<T> command,
+        final ConsoleCallback callback) {
+
+        Preconditions.checkArgument(command instanceof CommandLine<?>);
+
         if (sshSession == null) {
             connect();
         }
-//        final String[] s = new String[2];
+
         final int[] exitStatus = {0};
 
         final Result[] result = {Result.ERROR};
 
+        //1. it's also blocking
+        //2. add callback
         final SshSession.WithLowLevelSession withSession = new SshSession.WithLowLevelSession(cap) {
             @Override
             public void act(final Session session, final Session.Shell shell) throws Exception {
-                StringBuilder sb = new StringBuilder(128);
 
-                if (line.cd != null && !".".equals(line.cd)) {
-                    sb.append("cd ").append(line.cd).append(" && ");
-                }
+                final Session.Command exec = session.exec(command.asText());
 
-                if (sudo) {
-                    sb.append("stty -echo && sudo ");
-                }
-
-                List strings = line.strings;
-
-                for (Object string : strings) {
-                    if (string instanceof VcsCLIPlugin.CommandLineOperator) {
-                        sb.append(string);
-                    } else {
-                        sb.append('"').append(string).append('"');
-                    }
-
-                    sb.append(" ");
-                }
-
-                final Session.Command exec = session.exec(sb.toString());
-
-                RemoteConsole remoteConsole = (RemoteConsole) new RemoteConsole(exec, new AbstractConsole.Listener() {
+                final RemoteConsole remoteConsole = (RemoteConsole) new RemoteConsole(exec, new AbstractConsole.Listener() {
                     @Override
                     public void textAdded(String textAdded, MarkedBuffer buffer) throws Exception {
                         System.out.print(textAdded);
@@ -186,10 +174,10 @@ public class GenericUnixRemoteEnvironment extends SystemEnvironment {
 
                         final String text = buffer.wholeText();
 
-                        if (inputCallback != null) {
-                            inputCallback.text = text;
+                        if (callback != null) {
                             try {
-                                inputCallback.act(shell, console);
+                                callback.progress(console,
+                                    buffer.wholeText(), buffer.interimText());
                             } catch (Exception e) {
                                 logger.error("", e);
                             }
@@ -205,7 +193,7 @@ public class GenericUnixRemoteEnvironment extends SystemEnvironment {
                     .bufSize(session.getRemoteMaxPacketSize())
                     .spawn(global.localExecutor);
 
-                exec.join(getTimeout(line), TimeUnit.MILLISECONDS);
+                exec.join((int) getTimeout(command), TimeUnit.MILLISECONDS);
 
                 remoteConsole.stopStreamCopiers();
                 remoteConsole.awaitStreamCopiers(5, TimeUnit.MILLISECONDS);
@@ -226,7 +214,7 @@ public class GenericUnixRemoteEnvironment extends SystemEnvironment {
 
         sshSession.withSession(withSession);
 
-        final T t = line.parseResult(withSession.text);
+        final T t = ((CommandLine<T>)command).parseResult(withSession.text);
 
         t.result = result[0];
 
@@ -234,8 +222,8 @@ public class GenericUnixRemoteEnvironment extends SystemEnvironment {
 
     }
 
-    private <T extends CommandLineResult> int getTimeout(CommandLine<T> line) {
-        return line.timeoutMs == 0 ? getTimeout() : line.timeoutMs;
+    private <T extends CommandLineResult> long getTimeout(AbstractConsoleCommand<T> line) {
+        return line.getTimeoutMs() == 0 ? getTimeout() : line.getTimeoutMs();
     }
 
     @Override
@@ -369,7 +357,7 @@ public class GenericUnixRemoteEnvironment extends SystemEnvironment {
 
     @Override
     public CommandLine rmLineImpl(@Nullable String dir, CommandLine line, String... paths) {
-        if(dir != null){
+        if (dir != null) {
             line.cd(dir);
         }
         return line.a("rm", "-rf").a(paths);
@@ -422,22 +410,6 @@ public class GenericUnixRemoteEnvironment extends SystemEnvironment {
             }
 
             return ssh;
-        }
-
-        public abstract static class WithSession {
-            public Cap cap;
-            public String text;
-
-            protected WithSession(Cap cap) {
-                this.cap = cap;
-            }
-
-            protected WithSession(Cap cap, String text) {
-                this.cap = cap;
-                this.text = text;
-            }
-
-            public abstract void act(Session.Shell shell, AbstractConsole console) throws Exception;
         }
 
         private abstract static class WithLowLevelSession {
