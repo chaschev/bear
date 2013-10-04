@@ -267,7 +267,7 @@ public class MySqlPlugin extends Plugin {
             @Override
             public void act(Session.Shell shell, cap4j.core.AbstractConsole console) throws Exception {
                 if (text.contains("Enter password:")) {
-                    console.print(pw + "\n");
+                    console.println(pw);
                 }
             }
         };

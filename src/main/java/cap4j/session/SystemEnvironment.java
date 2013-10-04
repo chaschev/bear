@@ -19,6 +19,7 @@ package cap4j.session;
 import cap4j.cli.CommandLine;
 import cap4j.cli.Script;
 import cap4j.core.*;
+import cap4j.plugins.HavingContext;
 import cap4j.task.CapException;
 import cap4j.task.TaskRunner;
 import cap4j.vcs.CommandLineResult;
@@ -36,7 +37,7 @@ import java.util.*;
 /**
  * @author Andrey Chaschev chaschev@gmail.com
  */
-public abstract class SystemEnvironment {
+public abstract class SystemEnvironment extends HavingContext<SystemEnvironment>{
     private static final Logger logger = LoggerFactory.getLogger(SystemEnvironment.class);
 
     protected boolean sudo;
@@ -45,19 +46,19 @@ public abstract class SystemEnvironment {
     private int defaultTimeout = 5000;
     private int singleTimeout = -1;
 
-    public SessionContext $;
-
     public Cap cap;
 
     protected GlobalContext global;
     private UnixFlavour unixFlavour;
 
     protected SystemEnvironment(String name, GlobalContext global) {
+        super(null);
         this.name = name;
         this.global = global;
     }
 
     protected SystemEnvironment(String name, String desc, GlobalContext global) {
+        super(null);
         this.name = name;
         this.desc = desc;
         this.global = global;
@@ -78,7 +79,7 @@ public abstract class SystemEnvironment {
             @Override
             public void act(Session.Shell shell, AbstractConsole console) throws Exception {
                 if (text.contains("password")) {
-                    console.print(password + "\n");
+                    console.println(password);
                 }
             }
         };
@@ -175,7 +176,7 @@ public abstract class SystemEnvironment {
         return $;
     }
 
-    public SessionContext ctx() {
+    public SessionContext $() {
         return $;
     }
 

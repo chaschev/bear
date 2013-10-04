@@ -56,6 +56,10 @@ public abstract class AbstractConsole {
     }
 
 
+    public void println(String s) {
+        print(s + "\n");
+    }
+
     public void print(String s) {
         try {
             out.write(s.getBytes());

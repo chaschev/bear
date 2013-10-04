@@ -238,16 +238,16 @@ public class GitCLIPlugin extends VcsCLIPlugin<GitCLIPlugin> {
                 @Override
                 public void act(net.schmizz.sshj.connection.channel.direct.Session.Shell shell, cap4j.core.AbstractConsole console) throws Exception {
                     if (text.matches(".*\\bpassword.*:.*")) {
-                        console.print(password + "\n");
+                        console.println(password);
                     } else if (text.contains("(yes/no)")) {
                         // git is asking whether or not to connect
-                        console.print("yes" + "\n");
+                        console.println("yes");
                     } else if (text.contains("passphrase")) {
                         // git is asking for the passphrase for the user's key
                         throw new UnsupportedOperationException("user prompt not yet supported!");
                     } else if (text.contains("accept (t)emporarily")) {
                         // git is asking whether to accept the certificate
-                        console.print("t" + "\n");
+                        console.println("t");
                     }
                 }
             };

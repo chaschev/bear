@@ -34,7 +34,7 @@ public class CreateNewScript extends Script {
         final Stage stage = global.localCtx.var(cap.getStage);
         final SystemEnvironment remoteEnv = stage.findRemoteEnvironment();
 
-        final SessionContext $ = remoteEnv.ctx();
+        final SessionContext $ = remoteEnv.$();
 
         List<String> branches = Lists.newArrayList("trunk/");
 

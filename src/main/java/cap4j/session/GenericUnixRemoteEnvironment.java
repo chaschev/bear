@@ -197,7 +197,7 @@ public class GenericUnixRemoteEnvironment extends SystemEnvironment {
                             if (text.contains("sudo") && text.contains("password")) {
                                 buffer.markStart();
 
-                                console.print(ctx().var(cap.sshPassword) + "\n");
+                                console.println($.var(cap.sshPassword));
                             }
                         }
                     }
