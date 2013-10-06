@@ -16,19 +16,18 @@
 
 package bear.plugins.tomcat;
 
-import bear.session.Variables;
-import bear.task.*;
 import bear.core.GlobalContext;
 import bear.core.SessionContext;
 import bear.core.VarFun;
 import bear.plugins.ZippedToolPlugin;
 import bear.session.DynamicVariable;
+import bear.session.Variables;
+import bear.task.*;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
 
 import java.text.MessageFormat;
 
-import static bear.session.Variables.condition;
 import static bear.session.Variables.joinPath;
 
 /**
@@ -81,10 +80,10 @@ public class TomcatPlugin extends ZippedToolPlugin {
         //screen recipe is taken from here http://stackoverflow.com/a/1628217/1851024
         global.tasks.restartApp.addBeforeTask(new TaskDef() {
             @Override
-            public Task newSession(SessionContext $) {
-                return new Task(this, $) {
+            public Task newSession(SessionContext $, final Task parent) {
+                return new Task(parent, this, $) {
                     @Override
-                    protected TaskResult run(TaskRunner runner) {
+                    protected TaskResult exec(TaskRunner runner) {
                         $.sys.sudo().rm($(warCacheDirs));
                         $.sys.script()
                             .line().addRaw("catalina stop").build()
@@ -107,10 +106,10 @@ public class TomcatPlugin extends ZippedToolPlugin {
 
     public final InstallationTaskDef<ZippedTool> install = new ZippedToolTaskDef<ZippedTool>() {
         @Override
-        public ZippedTool newSession(SessionContext $) {
-            return new ZippedTool(this, $) {
+        public ZippedTool newSession(SessionContext $, final Task parent) {
+            return new ZippedTool(parent, this, $) {
                 @Override
-                protected DependencyResult run(TaskRunner runner) {
+                protected DependencyResult exec(TaskRunner runner) {
                     clean();
 
                     download();

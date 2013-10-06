@@ -59,15 +59,15 @@ public abstract class VcsCLIPlugin<T extends VcsCLIPlugin> extends Plugin {
         return Collections.emptyMap();
     }
 
-    public abstract Session newSession(SessionContext $);
+    public abstract Session newSession(SessionContext $, Task parent);
 
     public abstract class Session extends Task {
-        protected Session(TaskDef parent, SessionContext $) {
-            super(parent, $);
+        protected Session(Task parent, TaskDef def, SessionContext $) {
+            super(parent, def, $);
         }
 
         @Override
-        protected TaskResult run(TaskRunner runner) {
+        protected TaskResult exec(TaskRunner runner) {
             throw new UnsupportedOperationException("VCS task cannot be run");
         }
 

@@ -21,10 +21,7 @@ import bear.core.SessionContext;
 import bear.plugins.ZippedToolPlugin;
 import bear.session.DynamicVariable;
 import bear.session.Variables;
-import bear.task.DependencyResult;
-import bear.task.InstallationTask;
-import bear.task.InstallationTaskDef;
-import bear.task.TaskRunner;
+import bear.task.*;
 import org.apache.commons.lang3.StringUtils;
 
 import java.io.File;
@@ -40,10 +37,10 @@ public class JavaPlugin extends ZippedToolPlugin {
 
     public final InstallationTaskDef<ZippedTool> install = new ZippedToolTaskDef<ZippedTool>() {
         @Override
-        public ZippedTool newSession(SessionContext $) {
-            return new ZippedTool(this, $) {
+        public ZippedTool newSession(SessionContext $, final Task parent) {
+            return new ZippedTool(parent, this, $) {
                 @Override
-                protected DependencyResult run(TaskRunner runner) {
+                protected DependencyResult exec(TaskRunner runner) {
                     clean();
 
                     final File localDFile = new File(global.localCtx.var(localDistrPath));

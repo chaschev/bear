@@ -67,8 +67,8 @@ public abstract class ZippedToolPlugin extends Plugin{
     }
 
     protected abstract class ZippedTool extends InstallationTask {
-        protected ZippedTool(TaskDef parent, SessionContext $) {
-            super(parent, $);
+        protected ZippedTool(Task parent, TaskDef def, SessionContext $) {
+            super(def, $, parent);
 
             addDependency(new Dependency(toString(), $).addCommands(
                 "unzip -v | head -n 1",
@@ -76,7 +76,7 @@ public abstract class ZippedToolPlugin extends Plugin{
         }
 
         @Override
-        protected DependencyResult run(TaskRunner runner) {
+        protected DependencyResult exec(TaskRunner runner) {
             throw new UnsupportedOperationException("todo implement!");
         }
 

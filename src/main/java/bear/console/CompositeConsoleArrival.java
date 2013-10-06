@@ -20,27 +20,24 @@ import static org.apache.commons.lang3.StringUtils.getLevenshteinDistance;
 /**
 * @author Andrey Chaschev chaschev@gmail.com
 */
-public class CompositeConsoleArrival {
-    private final List<ListenableFuture<CommandLineResult>> futures;
-    private final List<AbstractConsole> consoles;
+public class CompositeConsoleArrival<ENTRY> {
+    private final List<ListenableFuture<ENTRY>> futures;
+    private final List<? extends AbstractConsole> consoles;
     Future<EqualityGroups> groups;
 
-    CommandLineResult[] entries;
+    ENTRY[] entries;
 
-    public CompositeConsoleArrival(List<ListenableFuture<CommandLineResult>> futures, List<AbstractConsole> consoles, ListeningExecutorService executorService) {
+    public CompositeConsoleArrival(List<ListenableFuture<ENTRY>> futures, List<? extends AbstractConsole> consoles, ListeningExecutorService executorService) {
         this.futures = futures;
         this.consoles = consoles;
 
         for (int i = 0; i < futures.size(); i++) {
-//                futures.get(i).addListener(
-//
-//                );
 
         }
     }
 
 
-    public void addArrival(int i, CommandLineResult text) {
+    public void addArrival(int i, ENTRY entry) {
         throw new UnsupportedOperationException("todo CompositeConsoleArrival.addArrival");
     }
 
@@ -123,5 +120,13 @@ public class CompositeConsoleArrival {
 //            }
 
         return groups;
+    }
+
+    public List<ListenableFuture<ENTRY>> getFutures() {
+        return futures;
+    }
+
+    public List<? extends AbstractConsole> getConsoles() {
+        return consoles;
     }
 }

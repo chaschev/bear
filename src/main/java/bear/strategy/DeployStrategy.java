@@ -38,7 +38,6 @@ import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static bear.session.Variables.joinPath;
 import static org.apache.commons.io.FileUtils.byteCountToDisplaySize;
 
 /**
@@ -133,8 +132,8 @@ public abstract class DeployStrategy extends TaskDef<Task> {
     }
 
     @Override
-    public Task newSession(SessionContext $) {
-        return new DeployTask($);
+    public Task newSession(SessionContext $, final Task parent) {
+        return new DeployTask(parent, $);
     }
 
     /**
@@ -178,12 +177,12 @@ public abstract class DeployStrategy extends TaskDef<Task> {
     }
 
     public class DeployTask extends Task {
-        public DeployTask(SessionContext $) {
-            super(DeployStrategy.this, $);
+        public DeployTask(Task parent, SessionContext $) {
+            super(parent, DeployStrategy.this, $);
         }
 
         @Override
-        protected final TaskResult run(TaskRunner runner) {
+        protected final TaskResult exec(TaskRunner runner) {
             try {
                 Preconditions.checkNotNull(prepareRemoteDataBarrier, "prepareRemoteDataBarrier is null");
                 Preconditions.checkNotNull(updateRemoteFilesBarrier, "updateRemoteFilesBarrier is null");

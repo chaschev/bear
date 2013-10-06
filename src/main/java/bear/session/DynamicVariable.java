@@ -23,11 +23,21 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nonnull;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author Andrey Chaschev chaschev@gmail.com
  */
 public class DynamicVariable<T> implements Nameable<T> {
+
+    public interface ChangeListener<T>{
+        void changedValue(DynamicVariable<T> var, T oldValue, T newValue);
+        void changedDynamic(DynamicVariable<T> var, VarFun<T> oldFun, VarFun<T> newFun);
+    }
+
+    protected List<ChangeListener<T>> listeners;
+
     private static final Logger logger = LoggerFactory.getLogger(DynamicVariable.class);
 
     public boolean frozen;
@@ -45,6 +55,11 @@ public class DynamicVariable<T> implements Nameable<T> {
     public DynamicVariable(String name, String desc) {
         this.name = name;
         this.desc = desc;
+    }
+
+    public DynamicVariable() {
+        this.name = "-";
+        this.desc = "";
     }
 
     public DynamicVariable(String desc) {
@@ -121,18 +136,47 @@ public class DynamicVariable<T> implements Nameable<T> {
             }
         }
 
+        T oldValue = this.defaultValue;
         this.defaultValue = defaultValue;
+
+        onValueChange(oldValue, defaultValue);
 
         return this;
     }
 
     public DynamicVariable<T> setDynamic(VarFun<T> impl) {
+        VarFun<T> oldFun = this.dynamicImplementation;
         this.dynamicImplementation = impl;
 
         impl.setVar(this);
 
         defaultValue = null;
+
+        if(listeners != null){
+            for (ChangeListener<T> listener : listeners) {
+                listener.changedDynamic(this, oldFun, impl);
+            }
+        }
+
         return this;
+    }
+
+    public DynamicVariable<T> fireExternalModification(T oldValue, T newValue){
+        onValueChange(oldValue, newValue);
+
+        return this;
+    }
+
+    public void fireExternalModification() {
+        fireExternalModification(null, defaultValue);
+    }
+
+    private void onValueChange(T oldValue, T newValue) {
+        if(listeners != null){
+            for (ChangeListener<T> listener : listeners) {
+                listener.changedValue(this, oldValue, newValue);
+            }
+        }
     }
 
     public DynamicVariable<T> memoize(boolean memoize) {
@@ -189,6 +233,16 @@ public class DynamicVariable<T> implements Nameable<T> {
 
     public DynamicVariable<T> setName(String name) {
         this.name = name;
+        return this;
+    }
+
+    public DynamicVariable<T> addListener(ChangeListener<T> listener){
+        if(this.listeners == null){
+            this.listeners = new ArrayList<ChangeListener<T>>(2);
+        }
+
+        listeners.add(listener);
+
         return this;
     }
 }

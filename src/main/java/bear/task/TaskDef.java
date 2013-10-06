@@ -54,7 +54,7 @@ public abstract class TaskDef<TASK extends Task> {
         this.name = name;
     }
 
-    public abstract TASK newSession(SessionContext $);
+    public abstract TASK newSession(SessionContext $, final Task parent);
 
     public boolean hasRole(Set<Role> roles) {
         return !Sets.intersection(this.roles, roles).isEmpty();
@@ -113,7 +113,7 @@ public abstract class TaskDef<TASK extends Task> {
 
     public static final TaskDef EMPTY = new TaskDef() {
         @Override
-        public Task newSession(SessionContext $) {
+        public Task newSession(SessionContext $, final Task parent) {
             throw new UnsupportedOperationException();
         }
     };

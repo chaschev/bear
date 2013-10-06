@@ -20,10 +20,7 @@ import bear.core.GlobalContext;
 import bear.core.SessionContext;
 import bear.core.VarFun;
 import bear.plugins.ZippedToolPlugin;
-import bear.task.DependencyResult;
-import bear.task.InstallationTask;
-import bear.task.InstallationTaskDef;
-import bear.task.TaskRunner;
+import bear.task.*;
 import org.apache.commons.lang3.StringUtils;
 
 /**
@@ -58,10 +55,10 @@ public class MavenPlugin extends ZippedToolPlugin {
 
     public final InstallationTaskDef<ZippedTool> install = new ZippedToolTaskDef<ZippedTool>() {
         @Override
-        public ZippedTool newSession(SessionContext $) {
-            return new ZippedTool(this, $) {
+        public ZippedTool newSession(SessionContext $, final Task parent) {
+            return new ZippedTool(parent, this, $) {
                 @Override
-                protected DependencyResult run(TaskRunner runner) {
+                protected DependencyResult exec(TaskRunner runner) {
                     clean();
 
                     download();

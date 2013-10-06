@@ -42,7 +42,7 @@ public abstract class Plugin {
         name = getClass().getSimpleName();
     }
 
-    public Task newSession(SessionContext $){
+    public Task newSession(SessionContext $, Task parent){
         throw new UnsupportedOperationException("todo");
     }
 

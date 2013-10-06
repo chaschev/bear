@@ -75,7 +75,7 @@ public class GenericUnixRemoteEnvironment extends SystemEnvironment {
 
     @Override
     public List<String> ls(String path) {
-        final CommandLineResult r = run(newCommandLine().a("ls", "-w", "1", path));
+        final CommandLineResult r = sendCommand(newCommandLine().a("ls", "-w", "1", path));
 
         final String[] lines = r.text.split("[\r\n]+");
 
@@ -107,7 +107,7 @@ public class GenericUnixRemoteEnvironment extends SystemEnvironment {
 
         line.a("-o", file);
 
-        run(line);
+        sendCommand(line);
     }
 
     @Override
@@ -136,14 +136,16 @@ public class GenericUnixRemoteEnvironment extends SystemEnvironment {
     }
 
     @Override
-    public <T extends CommandLineResult> T run(final CommandLine<T> line) {
+    public <T extends CommandLineResult> T sendCommand(final CommandLine<T> line) {
         return sendCommand(line, null);
     }
 
     @Override
-    public <T extends CommandLineResult> T sendCommand(
+    protected  <T extends CommandLineResult> T sendCommandImpl(
         final AbstractConsoleCommand<T> command,
-        final ConsoleCallback callback) {
+        final ConsoleCallback userCallback) {
+
+        super.sendCommand(command, userCallback);
 
         Preconditions.checkArgument(command instanceof CommandLine<?>);
 
@@ -166,6 +168,7 @@ public class GenericUnixRemoteEnvironment extends SystemEnvironment {
                 final RemoteConsole remoteConsole = (RemoteConsole) new RemoteConsole(exec, new AbstractConsole.Listener() {
                     @Override
                     public void textAdded(String textAdded, MarkedBuffer buffer) throws Exception {
+                        $.logOutput(textAdded);
                         System.out.print(textAdded);
 
                         if (StringUtils.isBlank(textAdded)) {
@@ -174,10 +177,12 @@ public class GenericUnixRemoteEnvironment extends SystemEnvironment {
 
                         final String text = buffer.wholeText();
 
-                        if (callback != null) {
+                        command.append(text);
+
+                        if (userCallback != null) {
                             try {
-                                callback.progress(console,
-                                    buffer.wholeText(), buffer.interimText());
+                                userCallback.progress(console, textAdded,
+                                    buffer.wholeText());
                             } catch (Exception e) {
                                 logger.error("", e);
                             }
@@ -255,7 +260,7 @@ public class GenericUnixRemoteEnvironment extends SystemEnvironment {
 
     @Override
     public Result mkdirs(final String... dirs) {
-        run(newCommandLine()
+        sendCommand(newCommandLine()
             .a("mkdir", "-p")
             .a(dirs)
         );
@@ -282,9 +287,9 @@ public class GenericUnixRemoteEnvironment extends SystemEnvironment {
         }
 
         if (owner == null) {
-            return run(line).result;
+            return sendCommand(line).result;
         } else {
-            sudo().run(line);
+            sudo().sendCommand(line);
         }
 
         return sudo().chown(owner, true, dest);
@@ -299,7 +304,7 @@ public class GenericUnixRemoteEnvironment extends SystemEnvironment {
         line.a(user);
         line.a(files);
 
-        final CommandLineResult run = run(line);
+        final CommandLineResult run = sendCommand(line);
 
         return run.result;
     }
@@ -313,7 +318,7 @@ public class GenericUnixRemoteEnvironment extends SystemEnvironment {
         line.a(octal);
         line.a(files);
 
-        final CommandLineResult run = run(line);
+        final CommandLineResult run = sendCommand(line);
 
         return run.result;
     }
@@ -338,7 +343,7 @@ public class GenericUnixRemoteEnvironment extends SystemEnvironment {
 
     @Override
     public boolean exists(String path) {
-        final CommandLineResult run = run(newCommandLine()
+        final CommandLineResult run = sendCommand(newCommandLine()
             .a("ls", "-w", "1", path)
         );
 
@@ -352,7 +357,7 @@ public class GenericUnixRemoteEnvironment extends SystemEnvironment {
 
     @Override
     public Result rmCd(@Nonnull String dir, String... paths) {
-        return run(rmLine(dir, line(), paths)).result;
+        return sendCommand(rmLine(dir, line(), paths)).result;
     }
 
     @Override

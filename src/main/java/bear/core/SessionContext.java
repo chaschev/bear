@@ -19,10 +19,17 @@ package bear.core;
 import bear.cli.CommandLine;
 import bear.session.DynamicVariable;
 import bear.session.SystemEnvironment;
+import bear.task.Task;
+import bear.task.TaskDef;
+import bear.task.TaskResult;
 import bear.task.TaskRunner;
+import bear.task.exec.CommandExecutionEntry;
+import bear.task.exec.TaskExecutionContext;
 import org.joda.time.DateTime;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
+
+import static bear.session.Variables.dynamic;
 
 /**
  * @author Andrey Chaschev chaschev@gmail.com
@@ -34,6 +41,23 @@ public class SessionContext {
     private final GlobalContext global;
     public final SystemEnvironment sys;
     public final TaskRunner runner;
+
+    public class ExecutionContext{
+        final DynamicVariable<StringBuilder> text = dynamic(StringBuilder.class).setDesc("text appended in session").defaultTo(new StringBuilder(8192));
+        final DynamicVariable<TaskExecutionContext> rootExecutionContext = dynamic(TaskExecutionContext.class);
+        final DynamicVariable<Task> currentTask = dynamic(Task.class);
+        public final DynamicVariable<CommandExecutionEntry> currentCommand = dynamic(CommandExecutionEntry.class);
+
+        public void textAdded(String textAdded) {
+            StringBuilder sb = text.apply(SessionContext.this);
+            sb.append(textAdded);
+            text.fireExternalModification(null, sb);
+        }
+    }
+
+    protected Task currentTask;
+
+    protected ExecutionContext executionContext = new ExecutionContext();
 
     public SessionContext(GlobalContext global, SystemEnvironment sys, TaskRunner runner) {
         this.global = global;
@@ -77,10 +101,6 @@ public class SessionContext {
         return sys.getName();
     }
 
-    public boolean varB(Nameable<Boolean> var) {
-        return sessionVariablesLayer.get(this, var, null);
-    }
-
     public boolean varB(DynamicVariable<Boolean> var) {
         return sessionVariablesLayer.get(this, var);
     }
@@ -114,5 +134,33 @@ public class SessionContext {
         }
 
         System.out.printf(new DateTime().toString(TIME_FORMATTER) + " " + level + " " + s, params);
+    }
+
+    public TaskResult run(TaskDef task) {
+        return runner.run(task);
+    }
+
+    public Task getCurrentTask() {
+        return currentTask;
+    }
+
+    public void setCurrentTask(Task currentTask) {
+        if(currentTask.isRootTask()){
+            executionContext.rootExecutionContext.defaultTo(currentTask.getExecutionContext());
+        }
+
+        executionContext.currentTask.defaultTo(currentTask);
+        this.currentTask = currentTask;
+    }
+
+    public void logOutput(String textAdded) {
+        System.out.print(textAdded);
+
+        executionContext.textAdded(textAdded);
+        //todo bind other statuses !!!
+    }
+
+    public ExecutionContext getExecutionContext() {
+        return executionContext;
     }
 }

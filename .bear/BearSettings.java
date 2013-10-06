@@ -112,7 +112,7 @@ public class BearSettings extends IBearSettings {
                         String warPath = $(grails.releaseWarPath);
 
                         if (!$.sys.exists(warPath) || !$(global.getPlugin(Atocha.class).reuseWar)) {
-                            final TaskResult r = $.runner.run(new GrailsBuilder(global));
+                            final TaskResult r = $.run(new GrailsBuilder(global));
 
                             if (r.nok()) {
                                 throw new IllegalStateException("failed to build WAR");

@@ -16,15 +16,16 @@
 
 package bear.core;
 
-import bear.session.Variables;
-import bear.task.*;
 import bear.plugins.Plugin;
 import bear.session.DynamicVariable;
 import bear.session.GenericUnixLocalEnvironment;
 import bear.session.SystemEnvironment;
+import bear.session.Variables;
+import bear.task.*;
 import com.chaschev.chutils.util.Exceptions;
 import com.google.common.base.Predicates;
 import com.google.common.collect.Iterables;
+import com.google.common.util.concurrent.ListeningExecutorService;
 import org.apache.commons.lang3.SystemUtils;
 
 import java.io.File;
@@ -34,6 +35,8 @@ import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 import java.util.concurrent.*;
+
+import static com.google.common.util.concurrent.MoreExecutors.listeningDecorator;
 
 /**
  * @author Andrey Chaschev chaschev@gmail.com
@@ -79,11 +82,11 @@ public class GlobalContext {
             return plugin;
         }
 
-        public <T extends Plugin> Task getSessionContext(Class<T> aClass, SessionContext $){
+        public <T extends Plugin> Task getSessionContext(Class<T> aClass, SessionContext $, Task parent){
             try {
                 final T plugin = getPlugin(aClass);
 
-                Task task = plugin.newSession($);
+                Task task = plugin.newSession($, parent);
 
                 if($.var(bear.checkDependencies)){
                     DependencyResult deps = task.getDependencies().check();
@@ -109,11 +112,11 @@ public class GlobalContext {
         }
     }
 
-    public final ExecutorService taskExecutor = new ThreadPoolExecutor(2, 32,
+    public final ListeningExecutorService taskExecutor = listeningDecorator(new ThreadPoolExecutor(2, 32,
         5L, TimeUnit.SECONDS,
-        new LinkedBlockingQueue<Runnable>());
+        new LinkedBlockingQueue<Runnable>()));
 
-    public final ExecutorService localExecutor = new ThreadPoolExecutor(4, 64,
+    public final ListeningExecutorService localExecutor = listeningDecorator(new ThreadPoolExecutor(4, 64,
         5L, TimeUnit.SECONDS,
         new SynchronousQueue<Runnable>(),
         new ThreadFactory() {
@@ -123,7 +126,7 @@ public class GlobalContext {
                 thread.setDaemon(true);
                 return thread;
             }
-        });
+        }));
 
     public final SystemEnvironment local;
 
@@ -181,8 +184,8 @@ public class GlobalContext {
         return (T) plugins.get(pluginClass);
     }
 
-    public <T extends Plugin> Task newPluginSession(Class<T> pluginClass, SessionContext $) {
-        return plugins.getSessionContext(pluginClass, $);
+    public <T extends Plugin> Task newPluginSession(Class<T> pluginClass, SessionContext $, Task parentTask) {
+        return plugins.getSessionContext(pluginClass, $, parentTask);
     }
 
     public Set<Class<? extends Plugin>> getPluginClasses() {

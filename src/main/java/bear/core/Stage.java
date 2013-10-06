@@ -16,16 +16,22 @@
 
 package bear.core;
 
-import bear.session.GenericUnixRemoteEnvironment;
+import bear.console.AbstractConsole;
+import bear.console.CompositeConsoleArrival;
 import bear.plugins.Plugin;
+import bear.session.GenericUnixRemoteEnvironment;
 import bear.session.Result;
 import bear.session.SystemEnvironment;
-import bear.session.SystemEnvironments;
 import bear.task.*;
 import com.google.common.base.Predicates;
 import com.google.common.collect.Iterables;
+import com.google.common.util.concurrent.ListenableFuture;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.Callable;
 
 /**
  * @author Andrey Chaschev chaschev@gmail.com
@@ -36,7 +42,7 @@ public class Stage {
     public String name;
     String description;
 
-    SystemEnvironments environments = new SystemEnvironments(null);
+    List<SystemEnvironment> systemEnvironments = new ArrayList<SystemEnvironment>();
 
     GlobalContext global;
 
@@ -49,18 +55,27 @@ public class Stage {
      * Runs a task from task variable
      */
     public void run() {
-        runTask(global.localCtx.var(global.bear.task));
+        runTask(global.localCtx.var(global.bear.task)).getConsoleArrival();
     }
 
-    public void runTask(final TaskDef task) {
-        GlobalContextFactory.INSTANCE.configure(environments);
 
-//        global.var(global.cap.getStrategy).setBarriers(this, global);
 
-        for (final SystemEnvironment environment : environments.getImplementations()) {
-            global.taskExecutor.execute(new Runnable() {
+    public CompositeTaskRunContext runTask(final TaskDef task) {
+        List<? extends AbstractConsole> consoles = systemEnvironments;
+
+        final List<ListenableFuture<SessionContext>> futures = new ArrayList<ListenableFuture<SessionContext>>(consoles.size());
+
+        final CompositeConsoleArrival<SessionContext> consoleArrival = new CompositeConsoleArrival<SessionContext>(futures, consoles, global.taskExecutor);
+        final CompositeTaskRunContext compositeTaskRunContext = new CompositeTaskRunContext(consoleArrival);
+
+        for (int i = 0; i < consoles.size(); i++) {
+            AbstractConsole console = consoles.get(i);
+            final SystemEnvironment environment = (SystemEnvironment) console;
+
+            final int finalI = i;
+            ListenableFuture<SessionContext> future = global.taskExecutor.submit(new Callable<SessionContext>() {
                 @Override
-                public void run() {
+                public SessionContext call() {
                     final TaskRunner runner = new TaskRunner(null, global);
                     final SessionContext $ = environment.newCtx(runner);
 
@@ -75,7 +90,7 @@ public class Stage {
                             r.join(plugin.checkPluginDependencies());
 
                             if (!task.isSetupTask()) {
-                                r.join(plugin.getInstall().newSession($)
+                                r.join(plugin.getInstall().newSession($, $.currentTask)
                                     .asInstalledDependency().checkDeps());
                             }
                         }
@@ -87,24 +102,32 @@ public class Stage {
 
                     final TaskResult run = runner.run(task);
 
-                    if(!run.ok()){
+                    if (!run.ok()) {
                         System.out.println(run);
                     }
 
+                    compositeTaskRunContext.addArrival(finalI, $);
+
+                    return $;
                 }
             });
+
+            futures.add(future);
         }
+
+
+        return compositeTaskRunContext;
     }
 
     public Stage add(SystemEnvironment environment) {
-        environments.add(environment);
+        systemEnvironments.add(environment);
         environment.bear = global.bear;
 
         return this;
     }
 
-    public SystemEnvironments getEnvironments() {
-        return environments;
+    public List<SystemEnvironment> getEnvironments() {
+        return systemEnvironments;
     }
 
     @Override
@@ -113,13 +136,13 @@ public class Stage {
         sb.append("name='").append(name).append('\'');
         if (description != null)
             sb.append(", description='").append(description).append('\'');
-        sb.append(", environments=").append(environments);
+        sb.append(", environments=").append(systemEnvironments);
         sb.append('}');
         return sb.toString();
     }
 
     public SystemEnvironment findRemoteEnvironment() {
-        return Iterables.find(environments.getImplementations(), Predicates.instanceOf(GenericUnixRemoteEnvironment.class));
+        return Iterables.find(systemEnvironments, Predicates.instanceOf(GenericUnixRemoteEnvironment.class));
 
     }
 }

@@ -13,6 +13,18 @@ public abstract class AbstractConsole {
         }
     }
 
-    public abstract <T extends CommandLineResult> T sendCommand(AbstractConsoleCommand<T> command, ConsoleCallback callback);
+    /**
+     * @param userCallback Callback for answering questions like 'Enter password'.
+     */
+    public <T extends CommandLineResult> T sendCommand(AbstractConsoleCommand<T> command, ConsoleCallback userCallback){
+        command.textListener = new AbstractConsoleCommand.TextListener() {
+            @Override
+            public void on(CharSequence newText, StringBuilder wholeText) {
+                throw new UnsupportedOperationException("todo .on");
+            }
+        };
+
+        return null;
+    }
 
 }

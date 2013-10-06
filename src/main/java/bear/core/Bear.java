@@ -246,11 +246,9 @@ public class Bear {
                 }
             }
 
-
-
             Preconditions.checkNotNull(vcsCLI, "add a VCS plugin!");
 
-            return (VcsCLIPlugin.Session) global.newPluginSession(vcsCLI, $);
+            return (VcsCLIPlugin.Session) global.newPluginSession(vcsCLI, $, $.getCurrentTask());
         }
     });
 

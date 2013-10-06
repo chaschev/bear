@@ -16,18 +16,19 @@ import java.util.concurrent.Future;
 * @author Andrey Chaschev chaschev@gmail.com
 */
 public class CompositeConsole {
-    List<AbstractConsole> consoles;
-    Progress progress;
+    List<? extends AbstractConsole> consoles;
 
-    ListeningExecutorService executorService;
+    protected ProgressMonitor progressMonitor = new ProgressMonitor();
+
+    protected ListeningExecutorService executorService;
 
     public static abstract class Progress{
         public abstract void on(int console, String interval, String wholeText);
     }
 
-    public CompositeConsole(List<AbstractConsole> consoles, Progress progress, ExecutorService executorService) {
+    public CompositeConsole(List<? extends AbstractConsole> consoles, ProgressMonitor progressMonitor, ExecutorService executorService) {
         this.consoles = consoles;
-        this.progress = progress;
+        this.progressMonitor = progressMonitor;
         this.executorService = MoreExecutors.listeningDecorator(executorService);
     }
 
@@ -37,7 +38,7 @@ public class CompositeConsole {
     }
 
     protected CompositeConsoleArrival sendCommand(final AbstractConsoleCommand command, final ConsoleCallback callback) {
-        final CompositeConsoleCallContext callContext = new CompositeConsoleCallContext(progress, consoles);
+        final CompositeConsoleCallContext callContext = new CompositeConsoleCallContext(consoles);
 
         final CountDownLatch latch = new CountDownLatch(consoles.size());
 
@@ -53,9 +54,9 @@ public class CompositeConsole {
                 public CommandLineResult call() throws Exception {
                     CommandLineResult result = console.sendCommand(command, new ConsoleCallback() {
                         @Override
-                        public void progress(AbstractConsole.Terminal console, String interval, String wholeText) {
-                            callback.progress(console, interval, wholeText);
-                            progress.on(finalI, interval, wholeText);
+                        public void progress(AbstractConsole.Terminal terminal, String interval, String wholeText) {
+                            callback.progress(terminal, interval, wholeText);
+                            progressMonitor.progress(console, finalI, command, interval, wholeText);
                         }
                     });
 
@@ -71,5 +72,13 @@ public class CompositeConsole {
         }
 
         return new CompositeConsoleArrival(futures, consoles, executorService);
+    }
+
+    public int size() {
+        return consoles.size();
+    }
+
+    public List<? extends AbstractConsole> getConsoles() {
+        return consoles;
     }
 }

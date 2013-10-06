@@ -67,7 +67,7 @@ public class Dependency extends Task {
 
         @Override
         public boolean check() {
-            return $.sys.run($.sys.line().addRaw(
+            return $.sys.sendCommand($.sys.line().addRaw(
                 "test -d " + path
                     + (checkWritable ? " && test -x " + path : ""))).result.ok();
         }
@@ -81,18 +81,18 @@ public class Dependency extends Task {
 
 
     public Dependency(String name) {
-        super(null, null);
+        super(null, null, null);
         this.name = name;
     }
 
     public Dependency(String name, SessionContext $) {
-        super(null, $);
+        super(null, null, $);
 
         this.name = name;
     }
 
-    public Dependency(TaskDef parent, String name, SessionContext $) {
-        super(parent, $);
+    public Dependency(TaskDef def, String name, SessionContext $, Task parent) {
+        super(parent,def, $);
 
         this.name = name;
     }
@@ -107,7 +107,7 @@ public class Dependency extends Task {
 
         @Override
         public boolean check() {
-            return $.sys.run($.sys.line().addRaw(
+            return $.sys.sendCommand($.sys.line().addRaw(
                 "test -t " + path
                     + (checkWritable ? (" && test -w " + path) : ""))).result.ok();
         }
@@ -158,7 +158,7 @@ public class Dependency extends Task {
     }
 
     @Override
-    protected DependencyResult run(TaskRunner runner) {
+    protected DependencyResult exec(TaskRunner runner) {
         return checkDeps();
     }
 

@@ -14,34 +14,34 @@
  * limitations under the License.
  */
 
-package bear.task;
+package bear.task.exec;
 
-import bear.core.SessionContext;
+import bear.console.AbstractConsoleCommand;
+import bear.session.Result;
+import bear.task.TaskResult;
+import bear.vcs.CommandLineResult;
 
 /**
 * @author Andrey Chaschev chaschev@gmail.com
 */
-public abstract class InstallationTask extends Task{
-    public InstallationTask(TaskDef def, SessionContext $, Task parent) {
-        super(parent, def, $);
+public class CommandExecutionEntry extends ExecutionEntry {
+    AbstractConsoleCommand command;
+
+    protected CommandLineResult result;
+
+    public <T extends CommandLineResult> CommandExecutionEntry(AbstractConsoleCommand<T> command) {
+        this.command = command;
     }
 
-    public abstract Dependency asInstalledDependency();
+    @Override
+    public void onEnd(TaskResult result) {
+        super.onEnd(result);
 
-    private static final InstallationTask NOP_TASK = new InstallationTask(null, null, null) {
-        @Override
-        public Dependency asInstalledDependency() {
-            return Dependency.NONE;
-        }
-
-        @Override
-        protected TaskResult exec(TaskRunner runner) {
-            return TaskResult.OK;
-        }
-    };
-
-    public static InstallationTask nop() {
-        return NOP_TASK;
+        this.result = (CommandLineResult) result;
     }
 
+    @Override
+    public Result getResult() {
+        return result.result;
+    }
 }

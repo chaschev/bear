@@ -14,26 +14,22 @@
  * limitations under the License.
  */
 
-package bear.session;
+package bear.console;
 
-import bear.console.AbstractConsole;
-import bear.console.CompositeConsole;
-import bear.console.ProgressMonitor;
-
+import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.ExecutorService;
 
 /**
- * @author Andrey Chaschev chaschev@gmail.com
- */
+* @author Andrey Chaschev chaschev@gmail.com
+*/
+public class ProgressMonitor {
 
 
-//todo don't extends
-//todo change to index
-public class SystemEnvironments extends CompositeConsole{
+    public void progress(AbstractConsole console, int finalI, AbstractConsoleCommand command, String interval, String wholeText) {
 
-
-    public SystemEnvironments(List<? extends AbstractConsole> consoles, ProgressMonitor progressMonitor, ExecutorService executorService) {
-        super(consoles, progressMonitor, executorService);
     }
+
+
+    List<CompositeConsole.Progress> progressNotifiers = new ArrayList<CompositeConsole.Progress>();
+
 }

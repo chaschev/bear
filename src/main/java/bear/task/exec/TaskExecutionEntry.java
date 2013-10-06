@@ -14,26 +14,23 @@
  * limitations under the License.
  */
 
-package bear.session;
+package bear.task.exec;
 
-import bear.console.AbstractConsole;
-import bear.console.CompositeConsole;
-import bear.console.ProgressMonitor;
-
-import java.util.List;
-import java.util.concurrent.ExecutorService;
+import bear.session.Result;
+import bear.task.Task;
 
 /**
- * @author Andrey Chaschev chaschev@gmail.com
- */
+* @author Andrey Chaschev chaschev@gmail.com
+*/
+public class TaskExecutionEntry extends ExecutionEntry {
+    protected Task task;
 
+    public TaskExecutionEntry(Task task) {
+        this.task = task;
+    }
 
-//todo don't extends
-//todo change to index
-public class SystemEnvironments extends CompositeConsole{
-
-
-    public SystemEnvironments(List<? extends AbstractConsole> consoles, ProgressMonitor progressMonitor, ExecutorService executorService) {
-        super(consoles, progressMonitor, executorService);
+    @Override
+    public Result getResult() {
+        return task.getExecutionContext().taskResult.result;
     }
 }

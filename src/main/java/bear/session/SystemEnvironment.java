@@ -18,6 +18,7 @@ package bear.session;
 
 import bear.cli.CommandLine;
 import bear.console.AbstractConsole;
+import bear.console.AbstractConsoleCommand;
 import bear.console.ConsoleCallback;
 import bear.core.*;
 import bear.task.BearException;
@@ -65,6 +66,21 @@ public abstract class SystemEnvironment extends AbstractConsole {
     }
 
     protected Set<Role> roles = new LinkedHashSet<Role>();
+
+    @Override
+    public <T extends CommandLineResult> T sendCommand(AbstractConsoleCommand<T> command, ConsoleCallback userCallback) {
+        super.sendCommand(command, userCallback);
+
+        $.getCurrentTask().onCommandExecutionStart(command);
+
+        T result = sendCommandImpl(command, userCallback);
+
+        $.getCurrentTask().onCommandExecutionEnd(command, result);
+
+        return null;
+    }
+
+    protected abstract <T extends CommandLineResult> T sendCommandImpl(AbstractConsoleCommand<T> command, ConsoleCallback userCallback);
 
     public static VariablesLayer newSessionVars(GlobalContext globalContext, SystemEnvironment environment) {
         return new VariablesLayer(environment.getName() + " vars", globalContext.variablesLayer);
@@ -181,7 +197,7 @@ public abstract class SystemEnvironment extends AbstractConsole {
     }
 
     public String capture(String s) {
-        return run(line().addRaw(s)).text;
+        return sendCommand(line().addRaw(s)).text;
     }
 
     public CommandLine rmLine(CommandLine line, String... paths){
@@ -257,7 +273,7 @@ public abstract class SystemEnvironment extends AbstractConsole {
         return script.parseResult(sb.toString());
     }
 
-    public <T extends CommandLineResult> T run(CommandLine<T> commandLine) {
+    public <T extends CommandLineResult> T sendCommand(CommandLine<T> commandLine) {
         return sendCommand(commandLine, null);
     }
 
@@ -333,7 +349,7 @@ public abstract class SystemEnvironment extends AbstractConsole {
     }
 
     protected UnixFlavour computeUnixFlavour() {
-        final String text = run(newCommandLine().a("cat", "/etc/issue")).text;
+        final String text = sendCommand(newCommandLine().a("cat", "/etc/issue")).text;
 
         if (text == null) return null;
 
@@ -386,7 +402,7 @@ public abstract class SystemEnvironment extends AbstractConsole {
                 return new PackageManager() {
                     @Override
                     public CommandLineResult installPackage(PackageInfo pi) {
-                        final CommandLineResult result = SystemEnvironment.this.run(newCommandLine().timeoutMin(5).sudo().a("yum", "install", pi.getCompleteName(), "-y"));
+                        final CommandLineResult result = SystemEnvironment.this.sendCommand(newCommandLine().timeoutMin(5).sudo().a("yum", "install", pi.getCompleteName(), "-y"));
                         final String text = result.text;
 
                         if (text.contains("Complete!") ||

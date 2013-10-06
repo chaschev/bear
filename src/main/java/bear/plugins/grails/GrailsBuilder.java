@@ -47,10 +47,10 @@ public class GrailsBuilder extends TaskDef {
     }
 
     @Override
-    public Task newSession(SessionContext $) {
-        return new Task(this, $) {
+    public Task newSession(SessionContext $, final Task parent) {
+        return new Task(parent, this, $) {
             @Override
-            public GrailsBuildResult run(TaskRunner runner) {
+            public GrailsBuildResult exec(TaskRunner runner) {
                 $.log("building Grails WAR, rev: %s...", $(bear.realRevision));
 
                 final String grailsExecPath = $(grails.grailsExecPath);

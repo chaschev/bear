@@ -266,19 +266,21 @@ public class GenericUnixLocalEnvironment extends SystemEnvironment {
     }
 
     @Override
-    public <T extends CommandLineResult> T sendCommand(final AbstractConsoleCommand<T> line, ConsoleCallback inputCallback) {
-        logger.debug("command: {}", line);
+    public <T extends CommandLineResult> T sendCommandImpl(final AbstractConsoleCommand<T> command, ConsoleCallback userCallback) {
+        super.sendCommand(command, userCallback);
 
-        final ProcessRunner.ProcessResult r = new ProcessRunner<T>(line, global.localExecutor)
-            .setInputCallback(inputCallback)
-            .setProcessTimeoutMs((int) line.getTimeoutMs())
+        logger.debug("command: {}", command);
+
+        final ProcessRunner.ProcessResult r = new ProcessRunner<T>(command, global.localExecutor)
+            .setInputCallback(userCallback)
+            .setProcessTimeoutMs((int) command.getTimeoutMs())
             .run();
 
         if (r.exitCode == -1) {
             return (T) new CommandLineResult(r.text, Result.ERROR);
         }
 
-        final T t = ((CommandLine<T>)line).parseResult(r.text);
+        final T t = ((CommandLine<T>)command).parseResult(r.text);
 
         t.result = Result.OK;
 

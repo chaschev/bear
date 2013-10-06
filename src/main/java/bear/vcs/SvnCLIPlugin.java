@@ -21,6 +21,7 @@ import bear.cli.Script;
 import bear.core.GlobalContext;
 import bear.core.SessionContext;
 import bear.task.InstallationTaskDef;
+import bear.task.Task;
 import bear.task.TaskDef;
 import bear.task.Dependency;
 import com.google.common.base.Function;
@@ -42,22 +43,22 @@ public class SvnCLIPlugin extends VcsCLIPlugin<SvnCLIPlugin> {
 
     public final TaskDef<SvnCLISession> SVN_STUB_TASK = new TaskDef<SvnCLISession>() {
         @Override
-        public SvnCLISession newSession(SessionContext $) {
-            return SvnCLIPlugin.this.newSession($);
+        public SvnCLISession newSession(SessionContext $, final Task parent) {
+            return SvnCLIPlugin.this.newSession($, parent);
         }
     };
 
 
     @Override
-    public SvnCLISession newSession(SessionContext $) {
-        return new SvnCLISession(SVN_STUB_TASK, $);
+    public SvnCLISession newSession(SessionContext $, Task parent) {
+        return new SvnCLISession(parent, SVN_STUB_TASK, $);
     }
 
     public class SvnCLISession extends Session {
-        protected SvnCLISession(TaskDef parent, SessionContext $) {
-            super(parent, $);
+        protected SvnCLISession(Task parent, TaskDef def, SessionContext $) {
+            super(parent, def, $);
 
-            addDependency(new Dependency(SVN_STUB_TASK, "SVN", $).addCommands("svn --version"));
+            addDependency(new Dependency(SVN_STUB_TASK, "SVN", $, parent).addCommands("svn --version"));
         }
 
         @Override

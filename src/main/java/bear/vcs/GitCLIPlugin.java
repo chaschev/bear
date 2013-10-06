@@ -26,6 +26,7 @@ import bear.core.SessionContext;
 import bear.session.DynamicVariable;
 import bear.task.Dependency;
 import bear.task.InstallationTaskDef;
+import bear.task.Task;
 import bear.task.TaskDef;
 import com.google.common.base.Function;
 import org.apache.commons.lang3.StringUtils;
@@ -52,8 +53,8 @@ public class GitCLIPlugin extends VcsCLIPlugin<GitCLIPlugin> {
 
     public final TaskDef<GitCLISession> GIT_STUB_TASK = new TaskDef<GitCLISession>() {
         @Override
-        public GitCLISession newSession(SessionContext $) {
-            return GitCLIPlugin.this.newSession($);
+        public GitCLISession newSession(SessionContext $, final Task parent) {
+            return GitCLIPlugin.this.newSession($, parent);
         }
     };
 
@@ -63,15 +64,15 @@ public class GitCLIPlugin extends VcsCLIPlugin<GitCLIPlugin> {
     }
 
     @Override
-    public GitCLISession newSession(SessionContext $) {
-        return new GitCLISession(GIT_STUB_TASK, $);
+    public GitCLISession newSession(SessionContext $, Task parent) {
+        return new GitCLISession(parent, GIT_STUB_TASK, $);
     }
 
     public class GitCLISession extends Session {
-        public GitCLISession(TaskDef parent, SessionContext $) {
-            super(parent, $);
+        public GitCLISession(Task parent, TaskDef def, SessionContext $) {
+            super(parent, def, $);
 
-            addDependency(new Dependency(GIT_STUB_TASK, "GIT", $).addCommands("git --version"));
+            addDependency(new Dependency(GIT_STUB_TASK, "GIT", $, parent).addCommands("git --version"));
         }
 
         @Override

@@ -86,10 +86,10 @@ public class MySqlPlugin extends Plugin {
 
     public final InstallationTaskDef setup = new InstallationTaskDef() {
         @Override
-        public Task newSession(SessionContext $) {
-            return new Task(this, $) {
+        public Task newSession(SessionContext $, final Task parent) {
+            return new Task(parent, this, $) {
                 @Override
-                protected TaskResult run(TaskRunner runner) {
+                protected TaskResult exec(TaskRunner runner) {
                     final Version version = computeRealClientVersion($.sys);
 
                     final boolean installedVersionOk = version != null && $(getVersion).matches(version);
@@ -97,7 +97,7 @@ public class MySqlPlugin extends Plugin {
                     TaskResult r = TaskResult.OK;
 
                     if (!installedVersionOk) {
-                        $.sys.sudo().run($.sys.newCommandLine().sudo().addSplit("rpm -Uvh http://mirror.webtatic.com/yum/el6/latest.rpm"));
+                        $.sys.sudo().sendCommand($.sys.newCommandLine().sudo().addSplit("rpm -Uvh http://mirror.webtatic.com/yum/el6/latest.rpm"));
                         r = and(r, $.sys.getPackageManager().installPackage(new SystemEnvironment.PackageInfo($(clientPackage))));
                     }
 
@@ -107,10 +107,10 @@ public class MySqlPlugin extends Plugin {
                         r = and(r, $.sys.getPackageManager().installPackage(new SystemEnvironment.PackageInfo($(serverPackage))));
                     }
 
-                    $.sys.sudo().run($.sys.newCommandLine().timeoutSec(30).sudo().addSplit("service mysqld start"));
+                    $.sys.sudo().sendCommand($.sys.newCommandLine().timeoutSec(30).sudo().addSplit("service mysqld start"));
 
-                    $.sys.sudo().run($.sys.newCommandLine().sudo().addSplit(MessageFormat.format("mysqladmin -u {0} password", $(adminUser))).addRaw("'" + $(adminPassword) + "'"));
-                    $.sys.sudo().run($.sys.newCommandLine().sudo().addSplit(MessageFormat.format("mysqladmin -u {0} -h {1} password",
+                    $.sys.sudo().sendCommand($.sys.newCommandLine().sudo().addSplit(MessageFormat.format("mysqladmin -u {0} password", $(adminUser))).addRaw("'" + $(adminPassword) + "'"));
+                    $.sys.sudo().sendCommand($.sys.newCommandLine().sudo().addSplit(MessageFormat.format("mysqladmin -u {0} -h {1} password",
                         $(adminUser), $(bear.sessionHostname))).addRaw("'" + $(adminPassword) + "'"));
 
                     final String createDatabaseSql = MessageFormat.format(
@@ -147,7 +147,7 @@ public class MySqlPlugin extends Plugin {
     }
 
     public Version computeRealClientVersion(SystemEnvironment system) {
-        final CommandLineResult result = system.run(system.newCommandLine().a("mysql", "--version"));
+        final CommandLineResult result = system.sendCommand(system.newCommandLine().a("mysql", "--version"));
 
         final String version;
         if (result.text != null) {
@@ -167,10 +167,10 @@ public class MySqlPlugin extends Plugin {
 
     public final TaskDef getUsers = new TaskDef() {
         @Override
-        public Task newSession(SessionContext $) {
-            return new Task(this, $) {
+        public Task newSession(SessionContext $, final Task parent) {
+            return new Task(parent, this, $) {
                 @Override
-                protected TaskResult run(TaskRunner runner) {
+                protected TaskResult exec(TaskRunner runner) {
                     return runScript(runner, "SELECT User FROM mysql.user;");
                 }
             };
@@ -180,10 +180,10 @@ public class MySqlPlugin extends Plugin {
     public final TaskDef runScript = new TaskDef() {
 
         @Override
-        public Task newSession(SessionContext $) {
-            return new Task(this, $) {
+        public Task newSession(SessionContext $, final Task parent) {
+            return new Task(parent, this, $) {
                 @Override
-                protected TaskResult run(TaskRunner runner) {
+                protected TaskResult exec(TaskRunner runner) {
                     final String s = Question.freeQuestion("Enter sql to execute: ");
 
                     return runScript(runner, s);
@@ -196,10 +196,10 @@ public class MySqlPlugin extends Plugin {
 
 
         @Override
-        public Task newSession(SessionContext $) {
-            return new Task(this, $) {
+        public Task newSession(SessionContext $, final Task parent) {
+            return new Task(parent, this, $) {
                 @Override
-                protected TaskResult run(TaskRunner runner) {
+                protected TaskResult exec(TaskRunner runner) {
                     Question.freeQuestionWithOption("Enter a filename", $(dumpName), dumpName);
 
                     $.sys.mkdirs($(dumpsDirPath));
@@ -220,10 +220,10 @@ public class MySqlPlugin extends Plugin {
 
     public final TaskDef createAndFetchDump = new TaskDef() {
         @Override
-        public Task newSession(SessionContext $) {
-            return new Task(this, $) {
+        public Task newSession(SessionContext $, final Task parent) {
+            return new Task(parent, this, $) {
                 @Override
-                protected TaskResult run(TaskRunner runner) {
+                protected TaskResult exec(TaskRunner runner) {
                     runner.run(createDump);
 
                     $.sys.download($(dumpPath));
@@ -236,10 +236,10 @@ public class MySqlPlugin extends Plugin {
 
     public final TaskDef restoreDump = new TaskDef() {
         @Override
-        public Task newSession(SessionContext $) {
-            return new Task(this, $) {
+        public Task newSession(SessionContext $, final Task parent) {
+            return new Task(parent, this, $) {
                 @Override
-                protected TaskResult run(TaskRunner runner) {
+                protected TaskResult exec(TaskRunner runner) {
                     Question.freeQuestionWithOption("Enter a filepath", $(dumpName), dumpName);
 
                     return $.sys.sendCommand($.sys.line()

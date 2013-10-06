@@ -14,26 +14,30 @@
  * limitations under the License.
  */
 
-package bear.session;
+package bear.task.exec;
 
-import bear.console.AbstractConsole;
-import bear.console.CompositeConsole;
-import bear.console.ProgressMonitor;
-
-import java.util.List;
-import java.util.concurrent.ExecutorService;
+import bear.session.Result;
+import bear.task.TaskResult;
+import org.joda.time.DateTime;
 
 /**
- * @author Andrey Chaschev chaschev@gmail.com
- */
+* @author Andrey Chaschev chaschev@gmail.com
+*/
+public abstract class ExecutionEntry {
+    DateTime startedAt = new DateTime();
+    DateTime finishedAt;
 
-
-//todo don't extends
-//todo change to index
-public class SystemEnvironments extends CompositeConsole{
-
-
-    public SystemEnvironments(List<? extends AbstractConsole> consoles, ProgressMonitor progressMonitor, ExecutorService executorService) {
-        super(consoles, progressMonitor, executorService);
+    public void onEnd(TaskResult result) {
+        finishedAt = new DateTime();
     }
+
+    public DateTime getStartedAt() {
+        return startedAt;
+    }
+
+    public DateTime getFinishedAt() {
+        return finishedAt;
+    }
+
+    public abstract Result getResult() ;
 }

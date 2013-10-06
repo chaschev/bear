@@ -117,7 +117,7 @@ public class TaskRunner extends HavingContext<TaskRunner>{
             if (!thisIsMe) {
                 result = runWithDependencies(taskDef);
             } else {
-                Task taskSession = taskDef.newSession($);
+                Task taskSession = taskDef.newSession($, $.getCurrentTask());
 
                 if($(bear.checkDependencies)){
                     DependencyResult depsResult = taskSession.getDependencies().check();
@@ -126,6 +126,8 @@ public class TaskRunner extends HavingContext<TaskRunner>{
                         return depsResult;
                     }
                 }
+
+                $.setCurrentTask(taskSession);
 
                 result = taskSession.run(this);
             }
@@ -145,6 +147,6 @@ public class TaskRunner extends HavingContext<TaskRunner>{
     }
 
     public void runRollback(TaskDef task) {
-        task.newSession($).onRollback();
+        task.newSession($, $.getCurrentTask()).onRollback();
     }
 }

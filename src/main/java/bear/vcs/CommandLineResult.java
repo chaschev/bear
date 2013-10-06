@@ -24,12 +24,11 @@ import bear.task.TaskResult;
  */
 public class CommandLineResult extends TaskResult{
     public String text;
-    public int exitStatus;
+    public int exitCode;
 
     public CommandLineResult(String text) {
-        super((Result) null);
+        super(null);
         this.text = text;
-        this.exitStatus = exitStatus;
     }
 
     public CommandLineResult(Result result, String text) {
@@ -46,7 +45,7 @@ public class CommandLineResult extends TaskResult{
         final StringBuilder sb = new StringBuilder("CommandLineResult{");
         sb.append("result=").append(result);
         sb.append(", text='").append(text).append('\'');
-        sb.append(", exitStatus=").append(exitStatus);
+        sb.append(", exitCode=").append(exitCode);
         sb.append('}');
         return sb.toString();
     }

@@ -192,6 +192,10 @@ public class Variables {
         return dynamic(null, desc);
     }
 
+    public static <T> DynamicVariable<T> dynamic(Class<T> type) {
+        return new DynamicVariable<T>();
+    }
+
     static <T> DynamicVariable<T> dynamic(String name, String desc) {
         return new DynamicVariable<T>(name, desc);
     }
