@@ -43,15 +43,15 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import static bear.main.Bear.Options.*;
+import static bear.main.BearMain.Options.*;
 import static com.google.common.collect.Lists.newArrayList;
 import static com.google.common.collect.Lists.transform;
 
 /**
  * @author Andrey Chaschev chaschev@gmail.com
  */
-public class Bear {
-    public static final Logger logger = LoggerFactory.getLogger(Bear.class);
+public class BearMain {
+    public static final Logger logger = LoggerFactory.getLogger(BearMain.class);
 
     @SuppressWarnings("unchecked")
     static class Options extends JOptOptions {
@@ -131,12 +131,9 @@ public class Bear {
         System.out.printf("configuring with BearSettings.java...%n");
         final URLClassLoader classLoader = new URLClassLoader(new URL[]{buildDir.toURI().toURL()});
 
-        final Class<?> settingsClass = classLoader.loadClass("BearSettings");
-        IBearSettings c = (IBearSettings) settingsClass.newInstance();
+
 
         final GlobalContextFactory factory = GlobalContextFactory.INSTANCE;
-        factory.getGlobal().loadProperties(new File(scriptsDir, "settings.properties"));
-
         List<Class<?>> loadedScriptClasses = Lists.newArrayList(Iterables.filter(Lists.transform(filesList, new Function<File, Class<?>>() {
             public Class<?> apply(File input) {
                 try {
@@ -182,7 +179,12 @@ public class Bear {
 
             script.setProperties(global, scriptsDir);
 
-            new BearRunner(c, script).run();
+            final Class<?> settingsClass = classLoader.loadClass("BearSettings");
+
+            IBearSettings bearSettings = ((IBearSettings) settingsClass.newInstance())
+                .loadProperties(new File(scriptsDir, "settings.properties"));
+
+            new BearRunner(bearSettings, script).run();
         } else {
             System.err.printf("Didn't find script with name %s. Exiting.%n", global.var(bear.deployScript));
             System.exit(-1);
@@ -198,7 +200,7 @@ public class Bear {
         final File file = new File(bearDir, destName);
         System.out.printf("creating %s%n", file.getAbsolutePath());
 
-        IOUtils.copy(Bear.class.getResourceAsStream("/" + resource), new FileOutputStream(file));
+        IOUtils.copy(BearMain.class.getResourceAsStream("/" + resource), new FileOutputStream(file));
     }
 
     public static class BearRunner {

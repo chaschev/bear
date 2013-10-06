@@ -115,7 +115,7 @@
                 <configuration>
                     <archive>
                         <manifestEntries>
-                            <Main-Class>bear.main.Bear</Main-Class>
+                            <Main-Class>bear.main.BearMain</Main-Class>
                             <implementation-vendor>chaschev</implementation-vendor>
                             <implementation-title>${project.name}</implementation-title>
                             <implementation-version>${project.version}</implementation-version>

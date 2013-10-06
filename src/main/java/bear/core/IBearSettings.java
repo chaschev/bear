@@ -16,6 +16,11 @@
 
 package bear.core;
 
+import com.chaschev.chutils.util.Exceptions;
+
+import javax.annotation.Nullable;
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.InputStream;
 
 /**
@@ -28,6 +33,26 @@ public abstract class IBearSettings {
     protected IBearSettings(GlobalContextFactory factory) {
         this.factory = factory;
         global = factory.getGlobal();
+    }
+
+    public IBearSettings(GlobalContextFactory factory, @Nullable String resource) {
+        this(factory);
+
+        if (resource != null) {
+            try {
+                loadProperties(getClass().getResourceAsStream(resource));
+            } catch (Exception e) {
+                throw Exceptions.runtime(e);
+            }
+        }
+    }
+
+    public IBearSettings(GlobalContextFactory factory, @Nullable File file) {
+        this(factory);
+
+        if (file != null) {
+            loadProperties(file);
+        }
     }
 
     public final GlobalContext configure(GlobalContextFactory factory) throws Exception {
@@ -43,6 +68,18 @@ public abstract class IBearSettings {
 
         return this;
     }
+
+    public IBearSettings loadProperties(File file) {
+        try {
+            final FileInputStream fis = new FileInputStream(file);
+            loadProperties(fis);
+            return this;
+        } catch (Exception e) {
+            throw Exceptions.runtime(e);
+        }
+
+    }
+
 
     public GlobalContextFactory getFactory() {
         return factory;

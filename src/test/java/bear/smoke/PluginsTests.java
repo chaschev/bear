@@ -18,7 +18,7 @@ package bear.smoke;
 
 import atocha.Atocha;
 import bear.core.GlobalContextFactory;
-import bear.main.Bear;
+import bear.main.BearMain;
 import bear.main.Script;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -41,9 +41,9 @@ public class PluginsTests {
         }
 
         public static void main(String[] args) throws Exception {
-            new Bear.BearRunner(new SetupPluginsSettings(GlobalContextFactory.INSTANCE).loadProperties(
-                PluginsTests.class.getResourceAsStream("/test.properties")
-            ), new SetupPluginsScript()).run();
+            new BearMain.BearRunner(
+                new SetupPluginsSettings(GlobalContextFactory.INSTANCE, "/test.properties")
+            , new SetupPluginsScript()).run();
         }
     }
 
@@ -63,7 +63,7 @@ public class PluginsTests {
         }
 
         public static void main(String[] args) throws Exception {
-            new Bear.BearRunner(new SetupPluginsSettings(GlobalContextFactory.INSTANCE).loadProperties(
+            new BearMain.BearRunner(new SetupPluginsSettings(GlobalContextFactory.INSTANCE, "/test.properties").loadProperties(
                 PluginsTests.class.getResourceAsStream("/test.properties")
             ), new GithubGrailsAppScript()).run();
         }
