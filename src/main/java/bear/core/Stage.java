@@ -23,6 +23,9 @@ import bear.session.GenericUnixRemoteEnvironment;
 import bear.session.Result;
 import bear.session.SystemEnvironment;
 import bear.task.*;
+import bear.vcs.CommandLineResult;
+import com.chaschev.chutils.util.Exceptions;
+import com.google.common.base.Function;
 import com.google.common.base.Predicates;
 import com.google.common.collect.Iterables;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -54,18 +57,28 @@ public class Stage {
     /**
      * Runs a task from task variable
      */
-    public void run() {
-        runTask(global.localCtx.var(global.bear.task)).getConsoleArrival();
+    public CompositeTaskRunContext run() {
+        CompositeTaskRunContext taskRunContext = runTask(global.localCtx.var(global.bear.task));
+
+        CompositeConsoleArrival<SessionContext> consoleArrival = taskRunContext.getConsoleArrival();
+
+        consoleArrival.await(global.localCtx.var(global.bear.taskTimeoutSec));
+
+        return taskRunContext;
     }
-
-
 
     public CompositeTaskRunContext runTask(final TaskDef task) {
         List<? extends AbstractConsole> consoles = systemEnvironments;
 
         final List<ListenableFuture<SessionContext>> futures = new ArrayList<ListenableFuture<SessionContext>>(consoles.size());
 
-        final CompositeConsoleArrival<SessionContext> consoleArrival = new CompositeConsoleArrival<SessionContext>(futures, consoles, global.taskExecutor);
+        final CompositeConsoleArrival<SessionContext> consoleArrival = new CompositeConsoleArrival<SessionContext>(futures, consoles, new Function<SessionContext, String>() {
+            @Override
+            public String apply(SessionContext $) {
+                return $.executionContext.text.apply($).toString();
+            }
+        });
+
         final CompositeTaskRunContext compositeTaskRunContext = new CompositeTaskRunContext(consoleArrival);
 
         for (int i = 0; i < consoles.size(); i++) {
@@ -76,37 +89,51 @@ public class Stage {
             ListenableFuture<SessionContext> future = global.taskExecutor.submit(new Callable<SessionContext>() {
                 @Override
                 public SessionContext call() {
+                    final SessionContext $;
                     final TaskRunner runner = new TaskRunner(null, global);
-                    final SessionContext $ = environment.newCtx(runner);
 
-                    Thread.currentThread().setName($.threadName());
+                    $ = environment.newCtx(runner);
 
-                    $.sys.connect();
+                    try {
 
-                    if ($.var(environment.bear.verifyPlugins)) {
-                        DependencyResult r = new DependencyResult(Result.OK);
 
-                        for (Plugin plugin : global.getGlobalPlugins()) {
-                            r.join(plugin.checkPluginDependencies());
+                        Thread.currentThread().setName($.threadName());
 
-                            if (!task.isSetupTask()) {
-                                r.join(plugin.getInstall().newSession($, $.currentTask)
-                                    .asInstalledDependency().checkDeps());
+                        $.sys.connect();
+
+                        if ($.var(environment.bear.verifyPlugins)) {
+                            DependencyResult r = new DependencyResult(Result.OK);
+
+                            for (Plugin plugin : global.getGlobalPlugins()) {
+                                r.join(plugin.checkPluginDependencies());
+
+                                if (!task.isSetupTask()) {
+                                    r.join(plugin.getInstall().newSession($, $.currentTask)
+                                        .asInstalledDependency().checkDeps());
+                                }
+                            }
+
+                            if (r.nok()) {
+                                throw new DependencyException(r.toString());
                             }
                         }
 
-                        if (r.nok()) {
-                            throw new DependencyException(r.toString());
+                        final TaskResult run = runner.run(task);
+
+                        if (!run.ok()) {
+                            System.out.println(run);
                         }
+                    } catch (Throwable e) {
+                        $.executionContext.rootExecutionContext.getDefaultValue().taskResult = new CommandLineResult(Result.ERROR, e.toString());
+                        logger.warn("", e);
+                        if (e instanceof Error) {
+                            throw (Error) e;
+                        }
+                        throw Exceptions.runtime(e);
+                    }finally {
+                        compositeTaskRunContext.addArrival(finalI, $);
                     }
 
-                    final TaskResult run = runner.run(task);
-
-                    if (!run.ok()) {
-                        System.out.println(run);
-                    }
-
-                    compositeTaskRunContext.addArrival(finalI, $);
 
                     return $;
                 }

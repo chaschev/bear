@@ -208,9 +208,9 @@ public class GlobalContext {
         return getInstance().tasks;
     }
 
-    public void run() {
+    public CompositeTaskRunContext run() {
         System.out.println("running on stage...");
-        localCtx.var(bear.getStage).run();
+        return localCtx.var(bear.getStage).run();
     }
 
     public String getProperty(String s) {

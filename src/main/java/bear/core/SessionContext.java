@@ -43,9 +43,9 @@ public class SessionContext {
     public final TaskRunner runner;
 
     public class ExecutionContext{
-        final DynamicVariable<StringBuilder> text = dynamic(StringBuilder.class).setDesc("text appended in session").defaultTo(new StringBuilder(8192));
-        final DynamicVariable<TaskExecutionContext> rootExecutionContext = dynamic(TaskExecutionContext.class);
-        final DynamicVariable<Task> currentTask = dynamic(Task.class);
+        public final DynamicVariable<StringBuilder> text = dynamic(StringBuilder.class).setDesc("text appended in session").defaultTo(new StringBuilder(8192));
+        public final DynamicVariable<TaskExecutionContext> rootExecutionContext = dynamic(TaskExecutionContext.class);
+        public final DynamicVariable<Task> currentTask = dynamic(Task.class);
         public final DynamicVariable<CommandExecutionEntry> currentCommand = dynamic(CommandExecutionEntry.class);
 
         public void textAdded(String textAdded) {
@@ -157,7 +157,6 @@ public class SessionContext {
         System.out.print(textAdded);
 
         executionContext.textAdded(textAdded);
-        //todo bind other statuses !!!
     }
 
     public ExecutionContext getExecutionContext() {

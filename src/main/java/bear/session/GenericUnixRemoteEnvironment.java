@@ -145,8 +145,6 @@ public class GenericUnixRemoteEnvironment extends SystemEnvironment {
         final AbstractConsoleCommand<T> command,
         final ConsoleCallback userCallback) {
 
-        super.sendCommand(command, userCallback);
-
         Preconditions.checkArgument(command instanceof CommandLine<?>);
 
         if (sshSession == null) {

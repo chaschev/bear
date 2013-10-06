@@ -267,7 +267,6 @@ public class GenericUnixLocalEnvironment extends SystemEnvironment {
 
     @Override
     public <T extends CommandLineResult> T sendCommandImpl(final AbstractConsoleCommand<T> command, ConsoleCallback userCallback) {
-        super.sendCommand(command, userCallback);
 
         logger.debug("command: {}", command);
 

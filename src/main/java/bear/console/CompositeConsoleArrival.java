@@ -1,15 +1,18 @@
 package bear.console;
 
-import bear.vcs.CommandLineResult;
+import com.chaschev.chutils.util.Exceptions;
+import com.chaschev.chutils.util.LangUtils;
+import com.google.common.base.Function;
 import com.google.common.base.Optional;
 import com.google.common.base.Predicate;
 import com.google.common.collect.Iterables;
+import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.ListeningExecutorService;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 import static com.google.common.base.Predicates.equalTo;
 import static com.google.common.base.Predicates.not;
@@ -18,38 +21,47 @@ import static com.google.common.collect.Lists.newArrayList;
 import static org.apache.commons.lang3.StringUtils.getLevenshteinDistance;
 
 /**
-* @author Andrey Chaschev chaschev@gmail.com
-*/
+ * @author Andrey Chaschev chaschev@gmail.com
+ */
 public class CompositeConsoleArrival<ENTRY> {
     private final List<ListenableFuture<ENTRY>> futures;
     private final List<? extends AbstractConsole> consoles;
-    Future<EqualityGroups> groups;
 
-    ENTRY[] entries;
+    protected Future<EqualityGroups> groups;
 
-    public CompositeConsoleArrival(List<ListenableFuture<ENTRY>> futures, List<? extends AbstractConsole> consoles, ListeningExecutorService executorService) {
+    protected List<ENTRY> entries;
+
+    protected String[] convertedEntries;
+
+    protected Function<ENTRY, String> entryAsText;
+
+    protected double thresholdDistancePct = 5;
+
+    public CompositeConsoleArrival(
+        List<ListenableFuture<ENTRY>> futures, List<? extends AbstractConsole> consoles,
+        Function<ENTRY, String> entryAsText) {
+
         this.futures = futures;
         this.consoles = consoles;
+        this.entryAsText = entryAsText;
 
-        for (int i = 0; i < futures.size(); i++) {
-
-        }
+        entries = LangUtils.newFilledArrayList(consoles.size(), null);
     }
-
 
     public void addArrival(int i, ENTRY entry) {
-        throw new UnsupportedOperationException("todo CompositeConsoleArrival.addArrival");
+        entries.set(i, entry);
     }
 
-    public static class ArrivalEntry {
-        CommandLineResult result;
-
-        public ArrivalEntry(CommandLineResult result) {
-            this.result = result;
+    public void await(int sec) {
+        try {
+            Futures.successfulAsList(futures).get(sec, TimeUnit.SECONDS);
+        } catch (Exception e) {
+            throw Exceptions.runtime(e);
         }
     }
 
-    public static class EqualityGroups{
+
+    public static class EqualityGroups {
         List<EqualityGroup> groups = new ArrayList<EqualityGroup>();
 
         int size;
@@ -62,7 +74,7 @@ public class CompositeConsoleArrival<ENTRY> {
             }
         }
 
-        public Optional<EqualityGroup> getMajorityGroup(){
+        public Optional<EqualityGroup> getMajorityGroup() {
             return Iterables.tryFind(groups, new Predicate<EqualityGroup>() {
                 @Override
                 public boolean apply(EqualityGroup input) {
@@ -71,53 +83,55 @@ public class CompositeConsoleArrival<ENTRY> {
             });
         }
 
-        public ArrayList<EqualityGroup> getMinorGroups(){
+        public ArrayList<EqualityGroup> getMinorGroups() {
             return newArrayList(filter(groups, not(equalTo(getMajorityGroup().orNull()))));
         }
     }
 
-    public static class EqualityGroup{
+    public static class EqualityGroup<ENTRY> {
         String text;
         int firstEntry;
+        private final double thresholdDistancePct;
         List<Integer> entries = new ArrayList<Integer>();
 
-        private EqualityGroup(String text, int firstEntry) {
+        private EqualityGroup(String text, int firstEntry, double thresholdDistancePct) {
             this.text = text;
             this.firstEntry = firstEntry;
+            this.thresholdDistancePct = thresholdDistancePct;
         }
 
-        public boolean sameGroup(ArrivalEntry entry) {
-            String otherText = entry.result.text;
+        public boolean sameGroup(String otherText) {
 
             return getLevenshteinDistance(text, otherText, 5000) * 1.0 /
-                (text.length() + otherText.length()) < 5;
-        }
-
-        public void add(ArrivalEntry entry, int i) {
-            throw new UnsupportedOperationException("todo EqualityGroup.add");
+                (text.length() + otherText.length()) < thresholdDistancePct;
         }
 
         public int size() {
             return entries.size();
         }
+
+        public void add(int i) {
+            entries.add(i);
+        }
     }
 
-    protected int thresholdDistance;
+    public List<EqualityGroup> divideIntoGroups() {
+        for (int i = 0; i < futures.size(); i++) {
+            convertedEntries[i] = entryAsText.apply(entries.get(i));
+        }
 
-    protected List<EqualityGroup> divideIntoGroups(){
         List<EqualityGroup> groups = new ArrayList<EqualityGroup>();
+        groups.add(new EqualityGroup(convertedEntries[0], 0, thresholdDistancePct));
 
-//            groups.add(new EqualityGroup(entries[0].result.text, 0));
-//
-//            for (int i = 1; i < entries.length; i++) {
-//                ArrivalEntry entry = entries[i];
-//
-//                for (EqualityGroup group : groups) {
-//                    if(group.sameGroup(entry)){
-//                        group.add(entry, i);
-//                    }
-//                }
-//            }
+        for (int i = 1; i < convertedEntries.length; i++) {
+            String entryText = convertedEntries[i];
+
+            for (EqualityGroup group : groups) {
+                if (group.sameGroup(entryText)) {
+                    group.add(i);
+                }
+            }
+        }
 
         return groups;
     }

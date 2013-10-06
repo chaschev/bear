@@ -77,7 +77,7 @@ public abstract class SystemEnvironment extends AbstractConsole {
 
         $.getCurrentTask().onCommandExecutionEnd(command, result);
 
-        return null;
+        return result;
     }
 
     protected abstract <T extends CommandLineResult> T sendCommandImpl(AbstractConsoleCommand<T> command, ConsoleCallback userCallback);

@@ -17,7 +17,6 @@
 package bear.core;
 
 import bear.cli.Script;
-import bear.session.Variables;
 import bear.plugins.Plugin;
 import bear.session.DynamicVariable;
 import bear.strategy.DeployStrategy;
@@ -55,21 +54,21 @@ public class Bear {
     public final DynamicVariable<String>
 
 
-    applicationsPath = Variables.strVar("System apps folder").setDynamic(new VarFun<String>() {
+    applicationsPath = strVar("System apps folder").setDynamic(new VarFun<String>() {
         public String apply() {
             return $.sys.isNativeUnix() ? "/var/lib" : "c:";
         }
     }),
 
-    bearPath = Variables.joinPath(applicationsPath, "bear"),
+    bearPath = joinPath(applicationsPath, "bear"),
 
-    logsPath = Variables.strVar("System apps folder").setDynamic(new VarFun<String>() {
+    logsPath = strVar("System apps folder").setDynamic(new VarFun<String>() {
         public String apply() {
             return $.sys.isNativeUnix() ? "/var/log" : "c:";
         }
     }),
 
-    taskName = Variables.strVar("A task to run").defaultTo("deploy");
+    taskName = strVar("A task to run").defaultTo("deploy");
 
     public final DynamicVariable<TaskDef> task = dynamic(new VarFun<TaskDef>() {
         @Override
@@ -80,44 +79,44 @@ public class Bear {
 
     public final DynamicVariable<String>
 
-    applicationName = Variables.strVar().setDesc("Your app name"),
+    applicationName = strVar().setDesc("Your app name"),
         appLogsPath = joinPath("appLogsPath", logsPath, applicationName),
-        sshUsername = Variables.strVar(""),
-        appUsername = Variables.equalTo("appUsername", sshUsername),
+        sshUsername = strVar(""),
+        appUsername = equalTo("appUsername", sshUsername),
         sshPassword = dynamic(new VarFun<String>() {
             public String apply() {
                 return global.getProperty($(sessionHostname) + ".password");
             }
         }),
-        stage = Variables.strVar("Stage to deploy to"),
-        repositoryURI = Variables.strVar("Project VCS URI"),
+        stage = strVar("Stage to deploy to"),
+        repositoryURI = strVar("Project VCS URI"),
 //        vcsType = enumConstant("vcsType", "Your VCS type", "svn", "git"),
-        vcsUsername = Variables.equalTo("vcsUserName", sshUsername),
-        vcsPassword = Variables.equalTo("vcsPassword", sshPassword),
-        sessionHostname = Variables.strVar("internal variable containing the name of the current session"),
+        vcsUsername = equalTo("vcsUserName", sshUsername),
+        vcsPassword = equalTo("vcsPassword", sshPassword),
+        sessionHostname = strVar("internal variable containing the name of the current session"),
 
-    tempUserInput = Variables.strVar(""),
+    tempUserInput = strVar(""),
 
-    deployScript = Variables.strVar("Script to use").defaultTo("CreateNewScript"),
+    deployScript = strVar("Script to use").defaultTo("CreateNewScript"),
 
     deployTo = joinPath("deployTo", applicationsPath, applicationName).setDesc("Current release dir"),
 
-    currentDirName = Variables.strVar("Current release dir").defaultTo("current"),
-        sharedDirName = Variables.strVar("").defaultTo("shared"),
+    currentDirName = strVar("Current release dir").defaultTo("current"),
+        sharedDirName = strVar("").defaultTo("shared"),
 
-    releasesDirName = Variables.strVar("").defaultTo("releases"),
+    releasesDirName = strVar("").defaultTo("releases"),
 
-    releaseName = Variables.strVar("I.e. 20140216").defaultTo(RELEASE_FORMATTER.print(new DateTime()) + ".GMT"),
+    releaseName = strVar("I.e. 20140216").defaultTo(RELEASE_FORMATTER.print(new DateTime()) + ".GMT"),
 
-    devEnvironment = Variables.enumConstant("devEnvironment", "Development environment", "dev", "test", "prod").defaultTo("prod"),
+    devEnvironment = enumConstant("devEnvironment", "Development environment", "dev", "test", "prod").defaultTo("prod"),
 
-    revision = Variables.strVar("Get head revision").setDynamic(new VarFun<String>() {
+    revision = strVar("Get head revision").setDynamic(new VarFun<String>() {
         public String apply() {
             return vcs.apply($).head();
         }
     }),
 
-    realRevision = Variables.strVar("Update revision from vcs").setDynamic(new VarFun<String>() {
+    realRevision = strVar("Update revision from vcs").setDynamic(new VarFun<String>() {
         public String apply() {
             final VcsCLIPlugin.Session vcsCLI = $(vcs);
             final Script<BranchInfoResult> line =
@@ -137,7 +136,7 @@ public class Bear {
 
     releasePath = joinPath(releasesPath, releaseName),
 
-    vcsCheckoutPath = Variables.joinPath(projectSharedPath, "vcs"),
+    vcsCheckoutPath = joinPath(projectSharedPath, "vcs"),
 
     vcsBranchName = dynamic("Relative path of the branch to use"),
 
@@ -171,23 +170,23 @@ public class Bear {
         }
     }).memoize(true),
 
-    getLatestReleaseRevision = Variables.strVar("").setDynamic(new VarFun<String>() {
+    getLatestReleaseRevision = strVar("").setDynamic(new VarFun<String>() {
         public String apply() {
             return $.sys.readString($.joinPath(getLatestReleasePath, "REVISION"), null);
         }
     }).memoize(true),
 
-    getPreviousReleaseRevision = Variables.strVar("").setDynamic(new VarFun<String>() {
+    getPreviousReleaseRevision = strVar("").setDynamic(new VarFun<String>() {
         public String apply() {
             return $.sys.readString($.joinPath(getPreviousReleasePath, "REVISION"), null);
         }
     }).memoize(true);
 
     public final DynamicVariable<Boolean>
-        useSudo = Variables.bool("").defaultTo(true),
-        productionDeployment = Variables.bool("").defaultTo(true),
-        clean = Variables.equalTo(productionDeployment),
-        speedUpBuild = Variables.and(Variables.not("", productionDeployment), Variables.not("", clean)),
+        useSudo = bool("").defaultTo(true),
+        productionDeployment = bool("").defaultTo(true),
+        clean = equalTo(productionDeployment),
+        speedUpBuild = and(not("", productionDeployment), not("", clean)),
         vcsAuthCache = dynamic(""),
         vcsPreferPrompt = dynamic(""),
         isRemoteEnv = dynamic(new VarFun<Boolean>() {
@@ -205,14 +204,16 @@ public class Bear {
                 return $.sys.isUnix();
             }
         }),
-        checkDependencies = Variables.newVar(true),
-        verifyPlugins = Variables.equalTo(checkDependencies),
-        autoInstallPlugins = Variables.newVar(false),
-        verbose = Variables.newVar(false)
+        checkDependencies = newVar(true),
+        verifyPlugins = equalTo(checkDependencies),
+        autoInstallPlugins = newVar(false),
+        verbose = newVar(false)
     ;
 
     public final DynamicVariable<Integer>
-        keepXReleases = Variables.newVar(5);
+        keepXReleases = newVar(5),
+        taskTimeoutSec = newVar(15 * 60)
+    ;
 
     public final DynamicVariable<Releases> getReleases = new DynamicVariable<Releases>("getReleases", "").setDynamic(new VarFun<Releases>() {
         public Releases apply() {
@@ -253,13 +254,13 @@ public class Bear {
     });
 
     public final DynamicVariable<File>
-        scriptsDir = Variables.newVar(new File(".bear")),
+        scriptsDir = newVar(new File(".bear")),
         settingsFile = dynamic(new VarFun<File>() {
             public File apply() {
                 return new File($(scriptsDir), "settings.properties");
             }
         });
 
-    public final DynamicVariable<DeployStrategy> getStrategy = Variables.<DeployStrategy>dynamic("Deployment strategy: how app files copied and built").memoize(true);
+    public final DynamicVariable<DeployStrategy> getStrategy = dynamic(DeployStrategy.class).setDesc("Deployment strategy: how app files copied and built").memoize(true);
 
 }
