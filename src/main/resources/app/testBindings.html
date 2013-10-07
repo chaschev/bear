@@ -16,21 +16,60 @@
             $('#enableFirebug').click(function (e)
             {
                 e.preventDefault();
-//                window.app.enableFirebug();
+                window.app.enableFirebug();
             });
 
-            Java.log("runTests1");
-            $('#runTests1').click(function (e)
+            Java.log("classTest");
+            $('#classTest').click(function (e)
             {
                 e.preventDefault();
-                e.stopImmediatePropagation();
-                e.stopPropagation();
-                runTests1();
+                classTest();
+            });
+
+            $('#openBeanTest').click(function (e)
+            {
+                e.preventDefault();
+                openBeanTest();
+            });
+
+            $('#bindingsTest').click(function (e)
+            {
+                e.preventDefault();
+                bindingsTest();
             });
         });
 
-        function runTests1(){
-            Java.log("running tests 1");
+        function openBeanTest(){
+            try {
+                Java.log("open bean test");
+
+//                Java.log("sample instance - 1: ", Java.newInstance('chaschev.js.ex.Foo', 'hi, Foo!'))
+                Java.log("sample instance - 2: ", Java.newInstance2('chaschev.js.ex.Foo', 'hi Foo!', "lala"));
+            } catch (e) {
+                Java.printStackTrace(e);
+            }
+        }
+
+        function bindingsTest(){
+            try {
+                Java.log("bindings test");
+
+                var array = Java.Collections.newObjectArray(2);
+
+                Java.log("array", array);
+                Java.log("array - 2", [2,3]);
+
+                array[0] = 'ss';
+                array[1] = 1;
+
+                Java.log("array - 3", array);
+            } catch (e) {
+                Java.printStackTrace(e);
+            }
+        }
+
+        function classTest(){
+            Java.log("running classTest");
             try {
                 var Foo = Java.getClass('chaschev.js.ex.Foo');
 
@@ -40,15 +79,25 @@
                 Java.log(foo1.s);
             } catch (e) {
                 Java.log(e);
-                Java.log(printStackTrace(e).join("\n"));
+
+                Java.printStackTrace(e);
             }
         }
     </script>
+    <style>
+        .links{
+            text-decoration: underline;
+            color: blue;
+        }
+    </style>
 </head>
 <body>
-<a href="" id="enableFirebug">Enable firebug</a> <br/>
-<a href="" onclick="app.onClick1({'a':'b', 'c':'d'})">Click 1</a> <br/>
-<div id="runTests1">Run Tests</div> <br/>
+<div class="links">
+<div  id="enableFirebug">Enable firebug</div> <br/>
+<div id="classTest">Run Tests</div> <br/>
+<div id="openBeanTest">OpenBean test</div> <br/>
+<div id="bindingsTest">Bindings test</div> <br/>
+</div>
 
 
 </body>

@@ -16,6 +16,7 @@
 
 package bear.smoke;
 
+import chaschev.lang.OpenBean;
 import javafx.application.Application;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
@@ -29,6 +30,7 @@ import javafx.stage.Stage;
 import netscape.javascript.JSObject;
 
 import java.io.File;
+import java.util.ArrayList;
 
 /**
  * @author Andrey Chaschev chaschev@gmail.com
@@ -68,8 +70,11 @@ public class TestBindings {
                             System.out.println("ok");
                             JSObject window = (JSObject) webEngine.executeScript("window");
                             window.setMember("app", new JavaApp().enableFirebug());
-//                            window.setMember("OpenBean", OpenBean.class);
-//                            window.setMember("OpenBeanInst", new OpenBean());
+                            window.setMember("OpenBean", OpenBean.INSTANCE);
+                            window.setMember("Bindings", new Bindings());
+
+                            System.out.println("[JAVA INIT] calling JS initializer...");
+                            webEngine.executeScript("Java.init(window)");
                         }
                     }
                 });
@@ -80,6 +85,24 @@ public class TestBindings {
 
         public static void main(String[] args) {
             launch(args);
+        }
+
+        public static class Bindings{
+            public ArrayList newArrayList(){
+                return new ArrayList();
+            }
+
+            public Object[] newObjectArray(int size){
+                return new Object[size];
+            }
+
+            public Object newInstance(String className, Object... params) {
+                return OpenBean.newByClass(className, params);
+            }
+
+            public Object newInstance(String className, boolean strictly, Object... params) {
+                return OpenBean.newByClass(className, strictly, params);
+            }
         }
 
         public class JavaApp {
