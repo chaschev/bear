@@ -28,6 +28,8 @@ import javafx.scene.web.WebEvent;
 import javafx.scene.web.WebView;
 import javafx.stage.Stage;
 import netscape.javascript.JSObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -87,21 +89,44 @@ public class TestBindings {
             launch(args);
         }
 
-        public static class Bindings{
-            public ArrayList newArrayList(){
+        public static class ExceptionWrapper{
+
+            public final boolean isExceptionWrapper = true;
+
+            public String stackTrace;
+
+            public ExceptionWrapper(Throwable e) {
+                this.stackTrace = e.toString();
+            }
+        }
+
+        public static class Bindings {
+            private static final Logger logger = LoggerFactory.getLogger(Bindings.class);
+
+            public ArrayList newArrayList() {
                 return new ArrayList();
             }
 
-            public Object[] newObjectArray(int size){
+            public Object[] newObjectArray(int size) {
                 return new Object[size];
             }
 
             public Object newInstance(String className, Object... params) {
-                return OpenBean.newByClass(className, params);
+                try {
+                    return OpenBean.newByClass(className, params);
+                } catch (Exception e) {
+                    logger.warn("", e);
+                    return new ExceptionWrapper(e);
+                }
             }
 
             public Object newInstance(String className, boolean strictly, Object... params) {
-                return OpenBean.newByClass(className, strictly, params);
+                try {
+                    return OpenBean.newByClass(className, strictly, params);
+                } catch (Exception e) {
+                    logger.warn("", e);
+                    return new ExceptionWrapper(e);
+                }
             }
         }
 
@@ -120,7 +145,7 @@ public class TestBindings {
                 System.out.println("Clicked");
                 System.out.printf("%s%n", t);
                 webEngine.executeScript("Object.keys({'s':'hi'})");
-                System.out.println(((JSObject)t).call("keys"));
+                System.out.println(((JSObject) t).call("keys"));
 
                 System.out.flush();
             }

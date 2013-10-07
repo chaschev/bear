@@ -46,8 +46,10 @@
                 var Foo = Java.getClass('chaschev.js.ex.Foo');
 
                 var foo1 = new Foo("sxx", "param 2!!");
-
-                Java.log("created instance: ", foo1);
+                var foo2 = new Foo("ArrayList passed", "to java object", Java.Collections.newArrayList([1, 2, 3, 4]));
+                Java.log("created an instance: ", foo1);
+                Java.log("created an instance: ", foo2);
+                Java.log("created an instance: ", new Foo("ArrayList passed", 2, Java.Collections.newArrayList([1, 2, 3, 4])));
             } catch (e) {
                 Java.printStackTrace(e);
             }

@@ -24,6 +24,12 @@ public class Foo {
         this.s2 = s2;
     }
 
+    public Foo(String s, String s2, List list) {
+        this.s = s;
+        this.s2 = s2;
+        this.list = list;
+    }
+
     public Foo(List list) {
         this.list = list;
     }

@@ -64,7 +64,7 @@ Java.mode = navigator.userAgent.match(/Chrome\/\d\d/) ?
     (navigator.userAgent.match(/Firefox\/\d\d/) ? 'FF' : 'FX');
 
 Java.printStackTrace = function(e){
-    Java.log("[EXCEPTION] " + e, printStackTrace(e).join("\n"));
+    Java.log("[EXCEPTION] " + e);
 };
 
 Java.log = function (arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8)
@@ -154,7 +154,13 @@ Java.newInstanceArgsArray = function (className, args)
 
 //    Java.log("className&args:", className, javaArrayArgs);
 
-    return  Java.Bindings.newInstance(className, javaArrayArgs);
+    var r = Java.Bindings.newInstance(className, javaArrayArgs);
+
+    if(r.isExceptionWrapper){
+        throw r.stackTrace;
+    }
+
+    return   r;
 };
 
 Java.newInstance = function(){
@@ -171,11 +177,11 @@ Java.getClass = function(className){
     Java.log("getClass: " + className);
 
     var NewClass = function(){
-        //todo call OpenBean.newInstance
+        this.name = className;
         var args = Array.prototype.slice.call(arguments);
 
-        Java.log("NewClass<init>: ", className, args);
         this.instance = Java.newInstanceArgsArray(className, args);
+
         return this.instance;
     };
 
