@@ -24,7 +24,7 @@ Java.Collections = function(){
 };
 
 Java.Collections.newArrayList = function(arr){
-    var jList = Java.Bindings.newArrayList();
+    var jList = checkExc(Java.Bindings.newArrayList());
 
     for (var i = 0; i < arr.length; i++) {
         jList.add(arr[i]);
@@ -34,9 +34,7 @@ Java.Collections.newArrayList = function(arr){
 };
 
 Java.Collections.newObjectArray = function(size){
-//    var jList = this.newArrayList(arr);
-
-    return Java.Bindings.newObjectArray(size);
+    return checkExc(Java.Bindings.newObjectArray(size));
 };
 
 Java.Collections.toJavaArray = function(arr){
@@ -147,6 +145,15 @@ function joinArguments(args){
     return r;
 }
 
+checkExc = function (r)
+{
+    if (r && r.isExceptionWrapper) {
+        throw r.stackTrace;
+    }
+
+    return r;
+};
+
 Java.newInstanceArgsArray = function (className, args)
 {
 //    Java.log("className&args:", className, args);
@@ -154,13 +161,7 @@ Java.newInstanceArgsArray = function (className, args)
 
 //    Java.log("className&args:", className, javaArrayArgs);
 
-    var r = Java.Bindings.newInstance(className, javaArrayArgs);
-
-    if(r.isExceptionWrapper){
-        throw r.stackTrace;
-    }
-
-    return   r;
+    return checkExc(Java.Bindings.newInstance(className, javaArrayArgs));
 };
 
 Java.newInstance = function(){
@@ -177,6 +178,7 @@ Java.getClass = function(className){
     Java.log("getClass: " + className);
 
     var NewClass = function(){
+        //constructor for a new instance of NewClass which returns the unwrapped instance
         this.name = className;
         var args = Array.prototype.slice.call(arguments);
 
@@ -185,10 +187,49 @@ Java.getClass = function(className){
         return this.instance;
     };
 
-    NewClass.prototype.getInstance = function(){
-        Java.log("NewClass.getInstance: " + this.instance);
-        return this.instance;
-    };
+    // a bit more efficient version
+    // caching class desc leads to a crash for some reason...
+//    var classDesc = checkExc(Java.Bindings.getClassDesc(className));
+//
+//    var NewClass = function(){
+//
+//        var args = Array.prototype.slice.call(arguments);
+//
+//        var javaParams = Java.Collections.toJavaArray(args);
+//
+//        return checkExc(Java.Bindings.newInstanceFromDesc(classDesc, javaParams));
+//    };
+
+    var fields = checkExc(Java.Bindings.getStaticFieldNames(className));
+    var fieldValues = checkExc(Java.Bindings.getStaticFieldValues(className));
+
+    var methods = checkExc(Java.Bindings.getStaticMethods(className));
+
+    var i;
+
+    for (i = 0; i < fields.length; i++) {
+        NewClass[fields[i]] = fieldValues[i];
+    }
+
+    //may be call directly?
+
+    function newClosure(method)
+    {
+        return function ()
+        {
+            var args = Array.prototype.slice.call(arguments);
+
+            return checkExc(Java.Bindings.callStatic(className, method, Java.Collections.toJavaArray(args)));
+        };
+    }
+
+    for (i = 0; i < methods.length; i++) {
+        var closure = newClosure(methods[i]);
+
+        closure.methodName = methods[i];
+
+        NewClass[methods[i]] = closure
+    }
 
     return NewClass;
 };

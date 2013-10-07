@@ -49,7 +49,32 @@
                 var foo2 = new Foo("ArrayList passed", "to java object", Java.Collections.newArrayList([1, 2, 3, 4]));
                 Java.log("created an instance: ", foo1);
                 Java.log("created an instance: ", foo2);
-                Java.log("created an instance: ", new Foo("ArrayList passed", 2, Java.Collections.newArrayList([1, 2, 3, 4])));
+
+                Java.log("static field: ", Foo.CONSTANT);
+                Java.log("static method: ", Foo.staticFoo('hey!'));
+
+                var JFrame = Java.getClass('javax.swing.JFrame');
+
+                var jFrame = new JFrame("Title!!");
+                jFrame.setSize(400, 300);
+                jFrame.setVisible(true);
+
+                try {
+                    Java.log("created an instance: ", new Foo("ArrayList passed", 2, Java.Collections.newArrayList([1, 2, 3, 4])));
+                } catch (e) {
+                    Java.printStackTrace(e);
+                }
+
+                var start = new Date().getTime();
+                var x = 0;
+
+                for(var i = 0;i<10000.0;i++){
+                    x += new Foo("sxx").hashCode();
+                }
+
+                Java.log(x);
+
+                Java.log((new Date().getTime() - start) + " ms")
             } catch (e) {
                 Java.printStackTrace(e);
             }

@@ -63,7 +63,8 @@ public class PluginsTests {
         }
 
         public static void main(String[] args) throws Exception {
-            new BearMain.BearRunner(new SetupPluginsSettings(GlobalContextFactory.INSTANCE, "/test.properties").loadProperties(
+            new BearMain.BearRunner(
+                new SetupPluginsSettings(GlobalContextFactory.INSTANCE, "/test.properties").loadProperties(
                 PluginsTests.class.getResourceAsStream("/test.properties")
             ), new GithubGrailsAppScript()).run();
         }

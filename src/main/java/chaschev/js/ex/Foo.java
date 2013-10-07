@@ -10,6 +10,8 @@ public class Foo {
     String s2;
     List list;
 
+    public static final String CONSTANT = "FOO CONST";
+
     public Foo(String s, List list) {
         this.s = s;
         this.list = list;
@@ -42,5 +44,10 @@ public class Foo {
         sb.append(", list=").append(list);
         sb.append('}');
         return sb.toString();
+    }
+
+    public static String staticFoo(String s){
+        System.out.println("static foo: " + s);
+        return "static foo(" +  s + ")";
     }
 }
