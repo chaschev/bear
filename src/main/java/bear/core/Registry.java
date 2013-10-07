@@ -17,13 +17,14 @@
 package bear.core;
 
 import bear.task.Task;
-import com.chaschev.chutils.util.OpenBean2;
+import chaschev.lang.OpenBean;
 import org.apache.commons.lang3.StringUtils;
 
+/**
+ * @author Andrey Chaschev chaschev@gmail.com
+ */
 public enum Registry {
-    INSTANCE; /**
-     * @author Andrey Chaschev chaschev@gmail.com
-     */
+    INSTANCE;
 
     public Task getByName(String name) {
         String className;
@@ -45,6 +46,6 @@ public enum Registry {
             throw new UnsupportedOperationException("todo");
         }
 
-        return (Task) OpenBean2.getFieldValue2(Bear.class, taskName);
+        return (Task) OpenBean.getFieldValue(Bear.class, taskName);
     }
 }

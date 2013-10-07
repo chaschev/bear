@@ -28,7 +28,7 @@ import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.chaschev.chutils.util.LangUtils.elvis;
+import static chaschev.lang.LangUtils.elvis;
 
 /**
 * @author Andrey Chaschev chaschev@gmail.com

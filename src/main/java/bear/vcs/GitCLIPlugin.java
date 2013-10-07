@@ -35,7 +35,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import static com.chaschev.chutils.util.LangUtils.elvis;
+import static chaschev.lang.LangUtils.elvis;
 import static com.google.common.collect.Lists.newArrayList;
 import static java.util.Collections.addAll;
 

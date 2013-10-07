@@ -24,7 +24,7 @@ import bear.session.Result;
 import bear.session.SystemEnvironment;
 import bear.task.*;
 import bear.vcs.CommandLineResult;
-import com.chaschev.chutils.util.Exceptions;
+import chaschev.util.Exceptions;
 import com.google.common.base.Function;
 import com.google.common.base.Predicates;
 import com.google.common.collect.Iterables;

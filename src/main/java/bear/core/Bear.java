@@ -23,7 +23,7 @@ import bear.strategy.DeployStrategy;
 import bear.task.TaskDef;
 import bear.vcs.BranchInfoResult;
 import bear.vcs.VcsCLIPlugin;
-import com.chaschev.chutils.util.OpenBean2;
+import chaschev.lang.OpenBean;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
 import com.google.common.collect.Iterables;
@@ -73,7 +73,7 @@ public class Bear {
     public final DynamicVariable<TaskDef> task = dynamic(new VarFun<TaskDef>() {
         @Override
         public TaskDef apply() {
-            return (TaskDef) OpenBean2.getFieldValue2(global.tasks, $(taskName));
+            return (TaskDef) OpenBean.getFieldValue(global.tasks, $(taskName));
         }
     });
 

@@ -22,7 +22,7 @@ import bear.session.GenericUnixLocalEnvironment;
 import bear.session.SystemEnvironment;
 import bear.session.Variables;
 import bear.task.*;
-import com.chaschev.chutils.util.Exceptions;
+import chaschev.util.Exceptions;
 import com.google.common.base.Predicates;
 import com.google.common.collect.Iterables;
 import com.google.common.util.concurrent.ListeningExecutorService;

@@ -18,7 +18,7 @@ package bear.core;
 
 import bear.plugins.Plugin;
 import bear.session.SystemEnvironments;
-import com.chaschev.chutils.util.Exceptions;
+import chaschev.util.Exceptions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

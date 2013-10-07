@@ -22,7 +22,7 @@ import bear.task.*;
 import bear.console.AbstractConsole;
 import bear.core.SessionContext;
 import bear.session.DynamicVariable;
-import com.chaschev.chutils.util.OpenBean2;
+import chaschev.lang.OpenBean;
 import com.google.common.base.Preconditions;
 
 import java.lang.reflect.Field;
@@ -49,7 +49,7 @@ public abstract class Plugin {
     public static void nameVars(Object obj) {
         final Class<?> aClass = obj.getClass();
         final String className = aClass.getSimpleName();
-        final Field[] fields = OpenBean2.getClassDesc(aClass).fields;
+        final Field[] fields = OpenBean.getClassDesc(aClass).fields;
 
         try {
             for (Field field : fields) {

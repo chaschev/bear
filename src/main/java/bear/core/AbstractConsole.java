@@ -17,7 +17,7 @@
 package bear.core;
 
 import bear.ssh.MyStreamCopier;
-import com.chaschev.chutils.util.Exceptions;
+import chaschev.util.Exceptions;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;

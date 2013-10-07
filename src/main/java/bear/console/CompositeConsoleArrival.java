@@ -1,7 +1,7 @@
 package bear.console;
 
-import com.chaschev.chutils.util.Exceptions;
-import com.chaschev.chutils.util.LangUtils;
+import chaschev.util.Exceptions;
+import chaschev.lang.LangUtils;
 import com.google.common.base.Function;
 import com.google.common.base.Optional;
 import com.google.common.base.Predicate;

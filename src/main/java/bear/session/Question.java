@@ -16,7 +16,7 @@
 
 package bear.session;
 
-import com.chaschev.chutils.util.Exceptions;
+import chaschev.util.Exceptions;
 import com.google.common.collect.Lists;
 
 import java.io.BufferedReader;

@@ -16,7 +16,7 @@
 
 package bear.core;
 
-import com.chaschev.chutils.util.Exceptions;
+import chaschev.util.Exceptions;
 
 import javax.annotation.Nullable;
 import java.io.File;
