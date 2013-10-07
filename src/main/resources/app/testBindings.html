@@ -43,8 +43,11 @@
             try {
                 Java.log("open bean test");
 
-//                Java.log("sample instance - 1: ", Java.newInstance('chaschev.js.ex.Foo', 'hi, Foo!'))
-                Java.log("sample instance - 2: ", Java.newInstance2('chaschev.js.ex.Foo', 'hi Foo!', "lala"));
+                var Foo = Java.getClass('chaschev.js.ex.Foo');
+
+                var foo1 = new Foo("sxx", "param 2!!");
+
+                Java.log("created instance: ", foo1);
             } catch (e) {
                 Java.printStackTrace(e);
             }
@@ -88,6 +91,7 @@
         .links{
             text-decoration: underline;
             color: blue;
+            cursor: pointer;
         }
     </style>
 </head>

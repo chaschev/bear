@@ -129,7 +129,7 @@ Java.log = function (arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8)
 Java.log('loading java bindings library...');
 
 function joinArguments(args){
-    Java.log("args:", args.length,arguments.length, args[0], args[1]);
+    Java.log("args:", args.length, arguments.length, args[0], args[1]);
 //    args = args[0];
 
     var r = '[';
@@ -147,44 +147,24 @@ function joinArguments(args){
     return r;
 }
 
-Java.newInstance = function(arg1, arg2){
-    Java.log("args:", arg1, arg2);
-    Java.log("arguments:", joinArguments(arguments));
-    Java.log("Java.OpenBean:", Java.OpenBean);
-    Java.log("this.OpenBean:", this.OpenBean);
+Java.newInstanceArgsArray = function (className, args)
+{
+//    Java.log("className&args:", className, args);
+    var javaArrayArgs = Java.Collections.toJavaArray(args);
 
-    Java.log(Java.OpenBean);
-    Java.log(Java.OpenBean.foo2('test'));
-    Java.log(Java.OpenBean.foo2('Andrey', 'Chaschev'));
-    Java.log(Java.OpenBean.foo3('Andrey', 'Chaschev'));
+//    Java.log("className&args:", className, javaArrayArgs);
 
-    var foo = Java.OpenBean.newByClass(arg1, arg2);
-
-    Java.log("got foo!");
-
-    return  foo;
+    return  Java.Bindings.newInstance(className, javaArrayArgs);
 };
 
-Java.newInstance2 = function(){
-    Java.log("Java.newInstance2");
+Java.newInstance = function(){
     var args = Array.prototype.slice.call(arguments);
 
     var className = args[0];
 
     args = args.slice(1);
 
-//    Java.log("className&args:", className, args);
-    var javaArrayArgs = Java.Collections.toJavaArray(args);
-
-//    Java.log("className&args:", className, javaArrayArgs);
-
-
-    var foo = Java.Bindings.newInstance(className, javaArrayArgs);
-
-    Java.log("got foo!", foo);
-
-
-    return  foo;
+    return this.newInstanceArgsArray(className, args);
 };
 
 Java.getClass = function(className){
@@ -192,8 +172,10 @@ Java.getClass = function(className){
 
     var NewClass = function(){
         //todo call OpenBean.newInstance
-        Java.log("NewClass<init>: ", className, joinArguments(arguments));
-        this.instance = Java.OpenBean.newInstance2(className, arguments);
+        var args = Array.prototype.slice.call(arguments);
+
+        Java.log("NewClass<init>: ", className, args);
+        this.instance = Java.newInstanceArgsArray(className, args);
         return this.instance;
     };
 
@@ -206,10 +188,3 @@ Java.getClass = function(className){
 };
 
 
-function examples(){
-    var Foo = Java.getClass('chaschev.js.ex.Foo');
-
-    var foo1 = new Foo("s");
-
-    console.log(foo1);
-}
