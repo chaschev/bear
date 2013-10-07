@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title></title>
+    <script type="text/javascript" src="js/stacktrace.js"></script>
+    <script type="text/javascript" src="js/java-bindings.js"></script>
+    <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+    <!--<script type='text/javascript' src='js/firebug-lite.js'></script>-->
+    <script type="text/javascript">
+        Java.log("before $(document).ready(...)");
+
+        $(document).ready(function ()
+        {
+            Java.log("document loaded");
+//            window.app.onClick1({'t': 1});
+            $('#enableFirebug').click(function (e)
+            {
+                e.preventDefault();
+//                window.app.enableFirebug();
+            });
+
+            Java.log("runTests1");
+            $('#runTests1').click(function (e)
+            {
+                e.preventDefault();
+                e.stopImmediatePropagation();
+                e.stopPropagation();
+                runTests1();
+            });
+        });
+
+        function runTests1(){
+            Java.log("running tests 1");
+            try {
+                var Foo = Java.getClass('chaschev.js.ex.Foo');
+
+                var foo1 = new Foo("s");
+
+                Java.log(foo1);
+                Java.log(foo1.s);
+            } catch (e) {
+                Java.log(e);
+                Java.log(printStackTrace(e).join("\n"));
+            }
+        }
+    </script>
+</head>
+<body>
+<a href="" id="enableFirebug">Enable firebug</a> <br/>
+<a href="" onclick="app.onClick1({'a':'b', 'c':'d'})">Click 1</a> <br/>
+<div id="runTests1">Run Tests</div> <br/>
+
+
+</body>
+</html>
