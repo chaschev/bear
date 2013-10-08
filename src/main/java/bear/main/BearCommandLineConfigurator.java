@@ -156,24 +156,46 @@ public class BearCommandLineConfigurator {
         return this;
     }
 
+    public static class CompilationResult{
+        public List<Class<? extends Script>> scriptClasses = new ArrayList<Class<? extends Script>>();
+        public List<Class<? extends IBearSettings>> settingsClasses = new ArrayList<Class<? extends IBearSettings>>();
+    }
+
     private Optional<Class<? extends Script>> compileAndLoadScript() throws MalformedURLException {
+        CompilationResult result = compile();
+
+        return findScriptToRun(result.scriptClasses);
+    }
+
+    public CompilationResult compile()  {
         final List<File> filesList = compileScripts();
 
         System.out.printf("configuring with %s...%n", getSettingsFile());
 
-        classLoader = new URLClassLoader(new URL[]{getBuildDir().toURI().toURL()});
+        try {
+            classLoader = new URLClassLoader(new URL[]{getBuildDir().toURI().toURL()});
+        } catch (MalformedURLException e) {
+            throw Exceptions.runtime(e);
+        }
 
-        List<Class<? extends Script>> loadedScriptClasses = Lists.newArrayList(Iterables.filter(Lists.transform(filesList, new Function<File, Class<? extends Script>>() {
-            public Class<? extends Script> apply(File input) {
-                try {
-                    return (Class) classLoader.loadClass(getBaseName(input.getName()));
-                } catch (ClassNotFoundException e) {
-                    throw Exceptions.runtime(e);
+        CompilationResult result = new CompilationResult();
+
+        for (File file : filesList) {
+            try {
+                Class aClass = (Class) classLoader.loadClass(getBaseName(file.getName()));
+
+                if(Script.class.isAssignableFrom(aClass)){
+                    result.scriptClasses.add(aClass);
+                } else
+                if(IBearSettings.class.isAssignableFrom(aClass)){
+                    result.settingsClasses.add(aClass);
                 }
+            } catch (ClassNotFoundException e) {
+                throw Exceptions.runtime(e);
             }
-        }), Predicates.assignableFrom(Script.class)));
+        }
 
-        return findScriptToRun(loadedScriptClasses);
+        return result;
     }
 
     private Optional<Class<? extends Script>> findScriptToRun(List<Class<? extends Script>> loadedScriptClasses) {
@@ -247,6 +269,7 @@ public class BearCommandLineConfigurator {
         } else {
             System.out.printf("compilation failed.%n");
         }
+
         return filesList;
     }
 
@@ -273,6 +296,14 @@ public class BearCommandLineConfigurator {
     }
 
     public String getScriptText() throws IOException {
-        return FileUtils.readFileToString(new File(scriptsDir, scriptName));
+        return FileUtils.readFileToString(getScriptsFile());
+    }
+
+    private File getScriptsFile() {
+        return new File(scriptsDir, scriptName);
+    }
+
+    public String getSettingsText() throws IOException {
+        return FileUtils.readFileToString(settingsFile);
     }
 }

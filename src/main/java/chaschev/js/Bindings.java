@@ -2,11 +2,11 @@ package chaschev.js;
 
 import chaschev.lang.OpenBean;
 import chaschev.lang.reflect.ClassDesc;
+import chaschev.lang.reflect.MethodDesc;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Field;
-import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -79,9 +79,24 @@ public class Bindings {
         }
     }
 
+    public Object getMethods(String className) {
+        try {
+            MethodDesc[] methods = OpenBean.getClassDesc(Class.forName(className)).methods;
+            String[] r = new String[methods.length];
+
+            for (int i = 0; i < methods.length; i++) {
+                r[i] = methods[i].getName();
+            }
+
+            return r;
+        } catch (Exception e) {
+            return new ExceptionWrapper(e, "className: " + className);
+        }
+    }
+
     public Object getStaticMethods(String className) {
         try {
-            Method[] methods = OpenBean.getClassDesc(Class.forName(className)).staticMethods;
+            MethodDesc[] methods = OpenBean.getClassDesc(Class.forName(className)).staticMethods;
             String[] r = new String[methods.length];
 
             for (int i = 0; i < methods.length; i++) {
@@ -105,9 +120,7 @@ public class Bindings {
     public Object callStatic(String className, String method, Object... params){
         try {
             Class<?> aClass = Class.forName(className);
-            Method _method = OpenBean.getClassDesc(aClass).getStaticMethod(method);
-
-            return _method.invoke(aClass, params);
+            return OpenBean.getClassDesc(aClass).getStaticMethodDesc(method, false, params).invoke(aClass, params);
         } catch (Exception e) {
             return new ExceptionWrapper(e, "className: " + className +
                 ", method: " + method +

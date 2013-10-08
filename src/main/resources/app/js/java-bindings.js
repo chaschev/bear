@@ -2,10 +2,14 @@
  * @author Andrey Chaschev chaschev@gmail.com
  */
 
-Object.prototype.__keys__ = function ()
-{
-    return Object.keys(this);
-};
+//Object.prototype.__keys__ = function ()
+//{
+//    return Object.keys(this);
+//};
+//
+//Object.prototype.__keys__.toLowerCase = function(){
+//    return "";
+//}
 
 
 var Java = function(){
@@ -20,7 +24,7 @@ Java.init = function(window){
 };
 
 Java.initApp = function(){
-    Java.log("initializing Application (place your document-ready like init here)...");
+    Java.log("Java.initApp: set you initialization in Java.initApp = function(){ ... }");
 };
 
 
@@ -65,6 +69,8 @@ Java.Collections.newArray = function(arr){
 Java.mode = navigator.userAgent.match(/Chrome\/\d\d/) ?
     'Chrome' :
     (navigator.userAgent.match(/Firefox\/\d\d/) ? 'FF' : 'FX');
+
+Java.isFX = Java.mode == 'FX';
 
 Java.printStackTrace = function(e){
     Java.log("[EXCEPTION] " + e);
@@ -189,7 +195,7 @@ Java.getClass = function(className){
     var fields = checkExc(Java.Bindings.getStaticFieldNames(className));
     var fieldValues = checkExc(Java.Bindings.getStaticFieldValues(className));
 
-    var methods = checkExc(Java.Bindings.getStaticMethods(className));
+    var staticMethods = checkExc(Java.Bindings.getStaticMethods(className));
 
     var i;
 
@@ -209,12 +215,12 @@ Java.getClass = function(className){
         };
     }
 
-    for (i = 0; i < methods.length; i++) {
-        var closure = newClosure(methods[i]);
+    for (i = 0; i < staticMethods.length; i++) {
+        var closure = newClosure(staticMethods[i]);
 
-        closure.methodName = methods[i];
+        closure.methodName = staticMethods[i];
 
-        NewClass[methods[i]] = closure
+        NewClass[staticMethods[i]] = closure
     }
 
     return NewClass;

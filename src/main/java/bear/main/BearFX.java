@@ -30,6 +30,8 @@ import javafx.scene.web.WebEvent;
 import javafx.scene.web.WebView;
 import javafx.stage.Stage;
 import netscape.javascript.JSObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -42,8 +44,11 @@ public class BearFX {
     public final BearCommandLineConfigurator conf;
     public final Facade facade = new Facade();
 
-    public class Facade{
-        public Object call(String delegate, String method, Object... params) throws IOException {
+    private static final Logger logger = LoggerFactory.getLogger(BearFX.class);
+    private static final Logger jsLogger = LoggerFactory.getLogger("js");
+
+    public class Facade {
+        public Object call(String delegate, String method, Object... params) {
             try {
                 Object delegateBean = OpenBean.getFieldValue(BearFX.this, delegate);
                 return OpenBean.invoke(delegateBean, method, params);
@@ -51,6 +56,7 @@ public class BearFX {
                 return new ExceptionWrapper(e);
             }
         }
+
         public Object getScriptText() throws IOException {
             try {
                 return conf.getScriptText();
@@ -60,13 +66,22 @@ public class BearFX {
         }
     }
 
+
+    public Object call(String delegate, String method) { return facade.call(delegate, method); }
+    public Object call(String delegate, String method, Object p1) { return facade.call(delegate, method, p1); }
+    public Object call(String delegate, String method, Object p1, Object p2) { return facade.call(delegate, method, p1, p2); }
+    public Object call(String delegate, String method, Object p1, Object p2, Object p3) { return facade.call(delegate, method, p1, p2,p3); }
+    public Object call(String delegate, String method, Object p1, Object p2, Object p3, Object p4) { return facade.call(delegate, method, p1, p2,p3,p4); }
+    public Object call(String delegate, String method, Object p1, Object p2, Object p3, Object p4, Object p5) { return facade.call(delegate, method, p1, p2,p3,p4,p5); }
+    public Object call(String delegate, String method, Object p1, Object p2, Object p3, Object p4, Object p5, Object p6) { return facade.call(delegate, method, p1, p2,p3,p4,p5,p6); }
+    public Object call(String delegate, String method, Object p1, Object p2, Object p3, Object p4, Object p5, Object p6, Object p7) { return facade.call(delegate, method, p1, p2,p3,p4,p5,p6,p7); }
+    public Object call(String delegate, String method, Object p1, Object p2, Object p3, Object p4, Object p5, Object p6, Object p7, Object p8) { return facade.call(delegate, method, p1, p2,p3,p4,p5,p6,p7,p8); }
+
     public BearFX(BearCommandLineConfigurator conf) {
         this.conf = conf;
     }
 
-    public static class TestBindingsApp extends Application {
-        private BearCommandLineConfigurator configurator;
-
+    public static class BearFXApp extends Application {
         private WebEngine webEngine;
         private BearFX bearFX;
 
@@ -77,10 +92,10 @@ public class BearFX {
                 properties.load(new FileInputStream(".bear/settings.properties"));
 
                 BearCommandLineConfigurator configurator = new BearCommandLineConfigurator(
-                    "--script=" + properties.get("bear-fx.script") + " " +
-                        "--settings=" + properties.get("bear-fx.settings") + " "
+                    "--script=" + properties.get("bear-fx.script"),
+                    "--settings=.bear/" + properties.get("bear-fx.settings") + " "
                 ).setProperties(properties)
-                 .configure();
+                    .configure();
 
                 bearFX = new BearFX(configurator);
 
@@ -103,24 +118,26 @@ public class BearFX {
                 webEngine.setOnAlert(new EventHandler<WebEvent<String>>() {
                     @Override
                     public void handle(WebEvent<String> stringWebEvent) {
-                        System.out.println("alert: " + stringWebEvent.getData());
+                        jsLogger.info(stringWebEvent.getData());
                     }
                 });
 
                 webEngine.getLoadWorker().stateProperty().addListener(new ChangeListener<Worker.State>() {
                     @Override
                     public void changed(ObservableValue<? extends Worker.State> ov, Worker.State t, Worker.State t1) {
-                        System.out.println("[JAVA INIT] setting...");
+                        logger.info("[JAVA INIT] setting...");
+
                         if (t1 == Worker.State.SUCCEEDED) {
                             System.out.println("ok");
+                            logger.info("ok");
                             JSObject window = (JSObject) webEngine.executeScript("window");
                             window.setMember("bearFX", bearFX);
                             window.setMember("OpenBean", OpenBean.INSTANCE);
                             window.setMember("Bindings", new Bindings());
 
-                            System.out.println("[JAVA INIT] calling bindings JS initializer...");
+                            logger.info("[JAVA INIT] calling bindings JS initializer...");
                             webEngine.executeScript("Java.init(window);");
-                            System.out.println("[JAVA INIT] calling app JS initializer...");
+                            logger.info("[JAVA INIT] calling app JS initializer...");
                             webEngine.executeScript("Java.initApp();");
                         }
                     }

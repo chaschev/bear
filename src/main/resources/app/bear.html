@@ -1,14 +1,87 @@
 <!DOCTYPE html>
+
 <html>
 <head>
     <title></title>
 
-    <script type="text/javascript" src="js/java-bindings.js"></script>
+    <meta charset="UTF-8">
+
     <script src="js/angular.min.js"></script>
     <script src="js/jquery-2.0.3.min.js"></script>
     <script src="js/ui-bootstrap-tpls-0.6.0.js"></script>
+    <script src="js/bootstrap.js"></script>
+    <script src="js/chosen.jquery.js"></script>
+    <!--<script src="js/ace/ace.js"></script>-->
     <script src="js/bear.js"></script>
+    <script type="text/javascript" src="js/java-bindings.js"></script>
     <link rel="stylesheet" href="css/bootstrap.min.css"/>
+    <link rel="stylesheet" href="css/chosen.css"/>
+    <link rel="stylesheet" href="css/chosen-bootstrap.css"/>
+    <link href="http://netdna.bootstrapcdn.com/font-awesome/3.2.1/css/font-awesome.css" rel="stylesheet">
+    <style>
+        .aceEditor {
+            position: relative;
+            height: 300px;
+        }
+
+        #settingsText, #scriptText{
+            position: relative;
+            /*height: 300px;*/
+        }
+
+        #conTabsRootPanel {
+            /*position: relative;*/
+            height: 200px;
+        }
+
+
+    </style>
+    <script type="text/javascript">
+        Java.initApp = function(){
+            if(this.initialized){
+                return;
+            }
+
+            Java.log("started Java.initApp...");
+            this.initialized = true;
+
+//            console.log('tabs:', $('#conTabList').find('a'));
+            $('.nav.nav-tabs').find('a').click(function (e) {
+                e.preventDefault();
+                $(this).tab('show');
+            });
+
+            var settingsTextEditor = ace.edit("settingsText");
+
+            settingsTextEditor.getSession().setMode("ace/mode/java");
+            settingsTextEditor.getSession().setUseWorker(false);
+
+//            Java.log(checkExc(window.bearFX.call('conf', 'getSettingsText')) + checkExc(window.bearFX.call('conf', 'getSettingsText')));
+//            Java.log("window.bearFX: " + window.bearFX);
+
+            var scriptsEditor = ace.edit("scriptText");
+
+            scriptsEditor.getSession().setMode("ace/mode/java");
+            scriptsEditor.getSession().setUseWorker(false);
+
+            settingsTextEditor.renderer.setShowGutter(false);
+            scriptsEditor.renderer.setShowGutter(false);
+
+
+            if(Java.isFX){
+                settingsTextEditor.setValue(checkExc(window.bearFX.call('conf', 'getSettingsText')));
+                scriptsEditor.setValue(checkExc(window.bearFX.call('conf', 'getScriptText')));
+            }
+
+            $('#fileSelect').chosen();
+        };
+
+        $(document).ready(function(){
+            if(!Java.isFX){
+                Java.initApp();
+            }
+        });
+    </script>
 </head>
 <body class="design" ng-app="bear">
 <div class="btn-toolbar">
@@ -135,28 +208,30 @@
                 <h3 class="panel-title">Shell</h3>
             </div>
             <div class="panel-body">
-                <div ng-controller="TabsDemoCtrl">
+
+
+                <div id="conTabsRootPanel" ng-controller="TabsDemoCtrl">
                     <!--<button class="btn btn-small" ng-click="tabs[0].active = true">Select second tab</button>                   -->
+                    <ul id="conTabList" class="nav nav-tabs">
+                        <li></li>
+                        <li class="active"><a href="#settingsTab">Settings</a></li>
+                        <li ng-repeat="tab in tabs">
+                            <a href="#{{tab.id}}">{{tab.title}}</a>
+                        </li>
+                    </ul>
 
-                    <tabset>
-                        <tab id="settingsTab">
-                            <tab-heading>
-                                Settings script
-                            </tab-heading>
-                            <textarea id="settingsText" rows="20" class="form-control"></textarea>
-                        </tab>
-                        <tab ng-repeat="tab in tabs" heading="{{tab.title}}" active="tab.active" disabled="tab.disabled">
+                    <div class="tab-content">
+
+                        <div ng-repeat="tab in tabs" id="{{tab.id}}" class="fade in tab-pane">
                             {{tab.content}}
-                        </tab>
-                        <tab select="alertMe()">
-                            <tab-heading>
-                                <i class="icon-bell"></i> Select me for alert!
-                            </tab-heading>
-                            I've got an HTML heading, and a select callback. Pretty cool!
-                        </tab>
-                    </tabset>
-
+                        </div>
+                    </div>
                 </div>
+
+                <script src="http://d1n0x3qji82z53.cloudfront.net/src-min-noconflict/ace.js" type="text/javascript" charset="utf-8"></script>
+                <script>
+
+                </script>
             </div>
             <div class="input-group input-group-sm">
                 <input type="text" class="form-control">
@@ -184,28 +259,52 @@
                 <h3 class="panel-title">Edit script</h3>
             </div>
 
-            <div class="row">
-                <div class="col-md-2"></div>
-                <div class="col-md-8">
-                    <div class="btn-toolbar">
-                        <div class="btn-group">
-                            <button class="btn btn-default btn-xs"><span class="glyphicon glyphicon-play"></span>
-                            </button>
+            <div class="panel-body">
+                <ul id="" class="nav nav-tabs">
+                    <li class="active"><a href="#scriptTab">Script</a></li>
+                    <li class=""><a href="#settingsTab">Settings</a></li>
+                    <li>
+                        <div class="pull-right" style="width: 100%; display: inline-table;">
+                            <div style="display: inline-block">
+                                <select id="fileSelect">
+                                    <option value="Settings.java">Settings.java</option>
+                                    <option value="XX.java">XX.java</option>
+                                </select>
+                            </div>
+                            <div class="btn-toolbar" style="display: inline-block">
+                                <div class="btn-group">
+                                    <button class="btn btn-default btn-xs"><i class="icon-trash"></i></span>
+                                    </button>
+                                    <button class="btn btn-default btn-xs"><i class="icon-save"></i></span></button>
+                                    <button class="btn btn-default btn-xs"><i class="icon-play"></i></span></button>
+                                </div>
+                                <div class="btn-group">
+                                    <button class="btn btn-default btn-xs"><i class="icon-cog"></i></span></button>
+                                </div>
+                            </div>
                         </div>
-                        <div class="btn-group">
-                            <button class="btn btn-default btn-xs"><span class="glyphicon glyphicon-cog"></span>
-                            </button>
+                    </li>
+
+                </ul>
+
+                <div class="tab-content">
+                    <div id="scriptTab" class="fade in tab-pane active">
+                        <div id="scriptText" class="aceEditor">
+                            function foo(items) {
+                            var x = "All this is syntax highlighted";
+                            return x;
+                            }
                         </div>
-                        <div class="btn-group">
-                            <button class="btn btn-default btn-xs"><span class="glyphicon glyphicon-open"></span>
-                            </button>
+                    </div>
+                    <div id="settingsTab" class="fade in tab-pane">
+                        <div id="settingsText" class="aceEditor">
+                        function foo(items) {
+                            var x = "All this is syntax highlighted";
+                            return x;
+                        }
                         </div>
                     </div>
                 </div>
-            </div>
-
-            <div class="panel-body">
-                <textarea class="form-control" rows="12"></textarea>
             </div>
         </div>
 

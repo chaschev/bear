@@ -34,9 +34,9 @@ function DropdownCtrl($scope) {
 
 var TabsDemoCtrl = function ($scope) {
     $scope.tabs = [
-        { title:"vm01", content:'Dynamic content 1 <br/> <div class="input-group-btn"> <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown">Action <span class="caret"></span></button></div>' },
-        { title:"vm02", content:"Dynamic content 2" },
-        { title:"vm03", content:"Dynamic content 3" }
+        { id: "con1", title:"vm01", active: true, content:'Dynamic content 1 <br/> <div class="input-group-btn"> <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown">Action <span class="caret"></span></button></div>' },
+        { id: "con2", title:"vm02", content:"Dynamic content 2" },
+        { id: "con3", title:"vm03", content:"Dynamic content 3" }
     ];
 
 
