@@ -1,5 +1,3 @@
-package bear.smoke;
-
 import atocha.Atocha;
 import bear.core.*;
 import bear.plugins.Plugin;

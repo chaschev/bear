@@ -230,12 +230,18 @@ public class GlobalContext {
     public void loadProperties(InputStream is) throws IOException {
         properties.load(is);
 
-        final Enumeration<?> enumeration = properties.propertyNames();
+        loadProperties(properties);
+    }
+
+    public void loadProperties(Properties prop) {
+        this.properties = prop;
+
+        final Enumeration<?> enumeration = prop.propertyNames();
 
         while (enumeration.hasMoreElements()) {
             final String name = (String) enumeration.nextElement();
 
-            final Object v = properties.get(name);
+            final Object v = prop.get(name);
 
             if (v instanceof Boolean) {
                 final DynamicVariable<Boolean> value = Variables.newVar((Boolean) v).setName(name);

@@ -14,11 +14,9 @@
  * limitations under the License.
  */
 
-package bear.smoke;
-
 import atocha.Atocha;
 import bear.core.GlobalContextFactory;
-import bear.main.BearMain;
+import bear.main.BearRunner;
 import bear.main.Script;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,21 +26,6 @@ import org.slf4j.LoggerFactory;
  */
 public class PluginsTests {
     public static final Logger logger = LoggerFactory.getLogger(PluginsTests.class);
-
-    public static class SetupPluginsScript extends Script {
-        @Override
-        protected void configure() throws Exception {
-            bear.stage.defaultTo("vm02");
-            bear.autoInstallPlugins.defaultTo(true);
-            bear.task.defaultTo(global.tasks.setup);
-        }
-
-        public static void main(String[] args) throws Exception {
-            new BearMain.BearRunner(
-                new SetupPluginsSettings(GlobalContextFactory.INSTANCE, "/test.properties")
-            , new SetupPluginsScript()).run();
-        }
-    }
 
     public static class GithubGrailsAppScript extends Script {
         @Override
@@ -57,10 +40,10 @@ public class PluginsTests {
         }
 
         public static void main(String[] args) throws Exception {
-            new BearMain.BearRunner(
+            new BearRunner(
                 new SetupPluginsSettings(GlobalContextFactory.INSTANCE, "/test.properties").loadProperties(
                 PluginsTests.class.getResourceAsStream("/test.properties")
-            ), new GithubGrailsAppScript()).run();
+            ), new GithubGrailsAppScript(), GlobalContextFactory.INSTANCE).run();
         }
     }
 }

@@ -13,11 +13,16 @@ var Java = function(){
 };
 
 Java.init = function(window){
-    Java.log("initializing Java...")
+    Java.log("initializing Java...");
     Java.OpenBean = window.OpenBean;
     Java.Bindings = window.Bindings;
     Java.log("OpenBean: ", Java.OpenBean)
 };
+
+Java.initApp = function(){
+    Java.log("initializing Application (place your document-ready like init here)...");
+};
+
 
 Java.Collections = function(){
 

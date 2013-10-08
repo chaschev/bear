@@ -22,6 +22,7 @@ import javax.annotation.Nullable;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
+import java.util.Properties;
 
 /**
  * @author Andrey Chaschev chaschev@gmail.com
@@ -69,6 +70,11 @@ public abstract class IBearSettings {
     public IBearSettings loadProperties(InputStream is) throws Exception {
         global.loadProperties(is);
 
+        return this;
+    }
+
+    public IBearSettings loadProperties(Properties props) {
+        global.loadProperties(props);
         return this;
     }
 

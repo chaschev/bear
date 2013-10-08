@@ -139,6 +139,12 @@
                     <!--<button class="btn btn-small" ng-click="tabs[0].active = true">Select second tab</button>                   -->
 
                     <tabset>
+                        <tab id="settingsTab">
+                            <tab-heading>
+                                Settings script
+                            </tab-heading>
+                            <textarea id="settingsText" rows="20" class="form-control"></textarea>
+                        </tab>
                         <tab ng-repeat="tab in tabs" heading="{{tab.title}}" active="tab.active" disabled="tab.disabled">
                             {{tab.content}}
                         </tab>
@@ -190,7 +196,10 @@
                             <button class="btn btn-default btn-xs"><span class="glyphicon glyphicon-cog"></span>
                             </button>
                         </div>
-                        <div class="col-md-2"></div>
+                        <div class="btn-group">
+                            <button class="btn btn-default btn-xs"><span class="glyphicon glyphicon-open"></span>
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>

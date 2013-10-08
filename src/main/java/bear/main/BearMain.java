@@ -17,36 +17,13 @@
 package bear.main;
 
 import bear.core.GlobalContext;
-import bear.core.GlobalContextFactory;
-import bear.core.IBearSettings;
-import bear.session.Question;
-import chaschev.util.Exceptions;
 import chaschev.util.JOptOptions;
-import com.google.common.base.*;
-import com.google.common.collect.Iterables;
-import com.google.common.collect.Lists;
-import com.google.common.io.PatternFilenameFilter;
+import com.google.common.base.Optional;
 import joptsimple.OptionSpec;
-import org.apache.commons.io.FilenameUtils;
-import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.tools.JavaCompiler;
-import javax.tools.ToolProvider;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.net.URL;
-import java.net.URLClassLoader;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-
-import static bear.main.BearMain.Options.*;
 import static com.google.common.collect.Lists.newArrayList;
-import static com.google.common.collect.Lists.newArrayListWithExpectedSize;
-import static com.google.common.collect.Lists.transform;
 
 /**
  * @author Andrey Chaschev chaschev@gmail.com
@@ -56,7 +33,6 @@ public class BearMain {
 
     @SuppressWarnings("unchecked")
     static class Options extends JOptOptions {
-        public final static OptionSpec<String> HOST = parser.accepts("host", "set the database host").withRequiredArg().ofType(String.class).describedAs("host").defaultsTo("localhost");
         public final static OptionSpec<String> BEARIFY = parser.accepts("bearify", "adds bear files to the current dir").withOptionalArg().ofType(String.class).describedAs("dir").defaultsTo(".");
         public final static OptionSpec<String> SETTINGS_FILE = parser.accepts("settings", "path to BearSettings.java").withRequiredArg().ofType(String.class).describedAs("path").defaultsTo(".bear/BearSettings.java");
         public final static OptionSpec<String> SCRIPTS_DIR = parser.accepts("scriptsDir", "path to scripts dir").withRequiredArg().ofType(String.class).describedAs("path").defaultsTo(".bear");
@@ -70,159 +46,24 @@ public class BearMain {
     }
 
     public static void main(String[] args) throws Exception {
-        final Options options = new Options(args);
+        BearCommandLineConfigurator configurator = new BearCommandLineConfigurator(args).configure();
 
-        if (options.has(HELP)) {
-            System.out.println(options.printHelpOn());
+        if (configurator.shouldExit()) {
             return;
         }
 
-        if (options.has(BEARIFY)) {
-            final File bearDir = new File(options.get(BEARIFY), options.get(SCRIPTS_DIR));
-//            System.out.printf("saving to dir %s%n", bearDir.getAbsolutePath());;
-            if (!bearDir.exists()) {
-                bearDir.mkdirs();
-            }
-            copyResource("CreateNewScript.java", bearDir);
-            copyResource("CapSettings.java", bearDir);
-            copyResource("settings.properties.rename", "settings.properties", bearDir);
-            return;
-        }
-
-        final File settingsFile = new File(options.get(SETTINGS_FILE));
-        final File scriptsDir = new File(options.get(SCRIPTS_DIR));
-
-        Preconditions.checkArgument(settingsFile.exists(), settingsFile.getAbsolutePath() + " does not exist. Use --bearify to create it.");
-        Preconditions.checkArgument(scriptsDir.exists(), scriptsDir.getAbsolutePath() + " does not exist. Use --bearify to create it.");
-
-        final File[] files = scriptsDir.listFiles(new PatternFilenameFilter("^.*\\.java$"));
-
-        final ArrayList<String> params = newArrayListWithExpectedSize(files.length);
-
-        final File buildDir = new File(scriptsDir, "classes");
-
-        if (!buildDir.exists()) {
-            buildDir.mkdir();
-        }
-
-        Collections.addAll(params, "-d", buildDir.getAbsolutePath());
-        final List<File> filesList = Lists.asList(settingsFile, files);
-
-        final List<String> filePaths = Lists.transform(filesList, new Function<File, String>() {
-            public String apply(File input) {
-                return input.getAbsolutePath();
-            }
-        });
-
-        params.addAll(filePaths);
-
-        System.out.printf("compiling %s%n", params);
-
-        final JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
-
-        final int r = compiler.run(null, null, null, params.toArray(new String[params.size()]));
-
-        if (r == 0) {
-            System.out.printf("compilation OK.%n");
-        } else {
-            System.out.printf("compilation failed.%n");
-        }
-
-        System.out.printf("configuring with BearSettings.java...%n");
-        final URLClassLoader classLoader = new URLClassLoader(new URL[]{buildDir.toURI().toURL()});
-
-        final GlobalContextFactory factory = GlobalContextFactory.INSTANCE;
-        List<Class<?>> loadedScriptClasses = Lists.newArrayList(Iterables.filter(Lists.transform(filesList, new Function<File, Class<?>>() {
-            public Class<?> apply(File input) {
-                try {
-                    return classLoader.loadClass(FilenameUtils.getBaseName(input.getName()));
-                } catch (ClassNotFoundException e) {
-                    throw Exceptions.runtime(e);
-                }
-            }
-        }), new Predicate<Class<?>>() {
-            @Override
-            public boolean apply(Class<?> input) {
-                return Script.class.isAssignableFrom(input);
-            }
-        }));
-
-        final GlobalContext global = factory.getGlobal();
-        final bear.core.Bear bear = global.bear;
-
-        if (options.has(SCRIPT)) {
-            logger.info("script is set in the command line to {}", options.get(SCRIPT));
-            bear.deployScript.defaultTo(options.get(SCRIPT));
-        } else {
-            new Question("Enter a script name to run:",
-                transform(loadedScriptClasses, new Function<Class<?>, String>() {
-                    public String apply(Class<?> input) {
-                        return input.getSimpleName();
-                    }
-                }),
-                bear.deployScript).ask();
-        }
-
-        final Optional<Class<?>> scriptToRun = Iterables.tryFind(loadedScriptClasses, new Predicate<Class<?>>() {
-            @Override
-            public boolean apply(Class<?> input) {
-                return input.getName().equals(global.var(bear.deployScript));
-            }
-        });
+        Optional<Class<? extends Script>> scriptToRun = configurator.getScriptToRun();
+        GlobalContext global = configurator.getGlobal();
+        bear.core.Bear bear = configurator.getBear();
 
         if (scriptToRun.isPresent()) {
             System.out.printf("running script %s...%n", scriptToRun.get().getSimpleName());
 
-            final Script script = (Script) scriptToRun.get().newInstance();
-
-            script.setProperties(global, scriptsDir);
-
-            final Class<?> settingsClass = classLoader.loadClass("BearSettings");
-
-            IBearSettings bearSettings = ((IBearSettings) settingsClass.newInstance())
-                .loadProperties(new File(scriptsDir, "settings.properties"));
-
-            new BearRunner(bearSettings, script).run();
+            new BearRunner(configurator).run();
         } else {
             System.err.printf("Didn't find script with name %s. Exiting.%n", global.var(bear.deployScript));
             System.exit(-1);
         }
-//        System.out.println(localCtx.var(BearConstants.stages).getStages());
     }
 
-    private static void copyResource(String resource, File bearDir) throws IOException {
-        copyResource(resource, resource, bearDir);
-    }
-
-    private static void copyResource(String resource, String destName, File bearDir) throws IOException {
-        final File file = new File(bearDir, destName);
-        System.out.printf("creating %s%n", file.getAbsolutePath());
-
-        IOUtils.copy(BearMain.class.getResourceAsStream("/" + resource), new FileOutputStream(file));
-    }
-
-    public static class BearRunner {
-        private IBearSettings bearSettings;
-        private GlobalContextFactory factory;
-        private Script script;
-
-        public BearRunner(IBearSettings bearSettings, Script script) throws Exception {
-            this.bearSettings = bearSettings;
-            this.factory = GlobalContextFactory.INSTANCE;
-            this.script = script;
-
-            init();
-        }
-
-        public final BearRunner init() throws Exception {
-            bearSettings.configure(factory);
-            script.setProperties(bearSettings.getGlobal(), null);
-            return this;
-        }
-
-        public void run() throws Exception {
-            Preconditions.checkArgument(bearSettings.isConfigured(), "settings must be configured. call settings.init() to configure");
-            script.run();
-        }
-    }
 }
