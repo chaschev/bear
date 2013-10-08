@@ -126,25 +126,6 @@ Java.log = function (arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8)
 
 Java.log('loading java bindings library...');
 
-function joinArguments(args){
-    Java.log("args:", args.length, arguments.length, args[0], args[1]);
-//    args = args[0];
-
-    var r = '[';
-
-    for (var i = 0; i < args.length; i++) {
-        r += args[i];
-
-        if(i!=args.length-1){
-            r += "; ";
-        }
-    }
-
-    r += ']';
-
-    return r;
-}
-
 checkExc = function (r)
 {
     if (r && r.isExceptionWrapper) {

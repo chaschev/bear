@@ -45,6 +45,7 @@ import java.util.List;
 
 import static bear.main.BearMain.Options.*;
 import static com.google.common.collect.Lists.newArrayList;
+import static com.google.common.collect.Lists.newArrayListWithExpectedSize;
 import static com.google.common.collect.Lists.transform;
 
 /**
@@ -88,7 +89,6 @@ public class BearMain {
             return;
         }
 
-
         final File settingsFile = new File(options.get(SETTINGS_FILE));
         final File scriptsDir = new File(options.get(SCRIPTS_DIR));
 
@@ -97,7 +97,7 @@ public class BearMain {
 
         final File[] files = scriptsDir.listFiles(new PatternFilenameFilter("^.*\\.java$"));
 
-        final ArrayList<String> params = new ArrayList<String>(8 + files.length);
+        final ArrayList<String> params = newArrayListWithExpectedSize(files.length);
 
         final File buildDir = new File(scriptsDir, "classes");
 
@@ -130,8 +130,6 @@ public class BearMain {
 
         System.out.printf("configuring with BearSettings.java...%n");
         final URLClassLoader classLoader = new URLClassLoader(new URL[]{buildDir.toURI().toURL()});
-
-
 
         final GlobalContextFactory factory = GlobalContextFactory.INSTANCE;
         List<Class<?>> loadedScriptClasses = Lists.newArrayList(Iterables.filter(Lists.transform(filesList, new Function<File, Class<?>>() {
@@ -208,17 +206,23 @@ public class BearMain {
         private GlobalContextFactory factory;
         private Script script;
 
-        public BearRunner(IBearSettings bearSettings, Script script) {
+        public BearRunner(IBearSettings bearSettings, Script script) throws Exception {
             this.bearSettings = bearSettings;
             this.factory = GlobalContextFactory.INSTANCE;
             this.script = script;
+
+            init();
+        }
+
+        public final BearRunner init() throws Exception {
+            bearSettings.configure(factory);
+            script.setProperties(bearSettings.getGlobal(), null);
+            return this;
         }
 
         public void run() throws Exception {
-            bearSettings.configure(factory);
-            script
-                .setProperties(bearSettings.getGlobal(), null)
-                .run();
+            Preconditions.checkArgument(bearSettings.isConfigured(), "settings must be configured. call settings.init() to configure");
+            script.run();
         }
     }
 }

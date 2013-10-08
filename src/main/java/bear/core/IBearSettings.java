@@ -29,6 +29,7 @@ import java.io.InputStream;
 public abstract class IBearSettings {
     protected GlobalContextFactory factory;
     protected GlobalContext global;
+    private boolean configured;
 
     protected IBearSettings(GlobalContextFactory factory) {
         this.factory = factory;
@@ -57,6 +58,8 @@ public abstract class IBearSettings {
 
     public final GlobalContext configure(GlobalContextFactory factory) throws Exception {
         configureMe(factory);
+
+        configured = true;
 
         return global;
     }
@@ -87,5 +90,9 @@ public abstract class IBearSettings {
 
     public GlobalContext getGlobal() {
         return global;
+    }
+
+    public boolean isConfigured() {
+        return configured;
     }
 }

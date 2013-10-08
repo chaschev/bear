@@ -30,12 +30,18 @@ public abstract class Script {
     public GlobalContext global;
     public Bear bear;
 
-    public abstract void run() throws Exception;
+    protected abstract void configure() throws Exception;
 
     public Script setProperties(GlobalContext global, File scriptsDir) {
         this.global = global;
         this.scriptsDir = scriptsDir;
         bear = global.bear;
         return this;
+    }
+
+    public void run() throws Exception {
+        configure();
+        global.run();
+        global.shutdown();
     }
 }

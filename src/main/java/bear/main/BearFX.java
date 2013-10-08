@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package bear.smoke;
+package bear.main;
 
 import chaschev.js.Bindings;
 import chaschev.lang.OpenBean;
@@ -30,12 +30,10 @@ import javafx.scene.web.WebView;
 import javafx.stage.Stage;
 import netscape.javascript.JSObject;
 
-import java.io.File;
-
 /**
  * @author Andrey Chaschev chaschev@gmail.com
  */
-public class TestBindings {
+public class BearFX {
     public static class TestBindingsApp extends Application {
 
         private WebEngine webEngine;
@@ -53,7 +51,7 @@ public class TestBindings {
                 stage.setHeight(600);
                 stage.show();
 
-                webEngine.load(new File("src/main/resources/app/testBindings.html").toURI().toURL().toString());
+                webEngine.load(BearFX.class.getResource("/app/bear.html").toString());
 
                 webEngine.setOnAlert(new EventHandler<WebEvent<String>>() {
                     @Override
@@ -89,28 +87,6 @@ public class TestBindings {
 
         public class JavaApp {
             private String s = "test s";
-
-            public String getS() {
-                return s;
-            }
-
-            public void setS(String s) {
-                this.s = s;
-            }
-
-            public void onClick1(Object t) {
-                System.out.println("Clicked");
-                System.out.printf("%s%n", t);
-                webEngine.executeScript("Object.keys({'s':'hi'})");
-                System.out.println(((JSObject) t).call("keys"));
-
-                System.out.flush();
-            }
-
-            public void onClick2() {
-                System.out.println("onClick2");
-                webEngine.executeScript("");
-            }
 
             public JavaApp enableFirebug() {
                 System.out.println("enabling firebug!");

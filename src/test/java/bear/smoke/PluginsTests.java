@@ -31,13 +31,10 @@ public class PluginsTests {
 
     public static class SetupPluginsScript extends Script {
         @Override
-        public void run() throws Exception {
+        protected void configure() throws Exception {
             bear.stage.defaultTo("vm02");
             bear.autoInstallPlugins.defaultTo(true);
             bear.task.defaultTo(global.tasks.setup);
-
-            global.run();
-            global.shutdown();
         }
 
         public static void main(String[] args) throws Exception {
@@ -49,7 +46,7 @@ public class PluginsTests {
 
     public static class GithubGrailsAppScript extends Script {
         @Override
-        public void run() throws Exception {
+        public void configure() throws Exception {
             bear.stage.defaultTo("vm02");
             bear.task.defaultTo(global.tasks.deploy);
             bear.clean.defaultTo(false, true);
@@ -57,9 +54,6 @@ public class PluginsTests {
             global.getPlugin(Atocha.class).reuseWar.defaultTo(true, true);
 
             bear.vcsBranchName.defaultTo("master");
-
-            global.run();
-            global.shutdown();
         }
 
         public static void main(String[] args) throws Exception {

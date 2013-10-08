@@ -21,7 +21,7 @@ import static com.google.common.collect.Lists.transform;
  */
 public class CreateNewScript extends Script {
     @Override
-    public void run() throws Exception {
+    public void configure() throws Exception {
         final Bear bear = global.bear;
 
         new Question("step 1, choose the stage: ",
