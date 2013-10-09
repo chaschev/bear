@@ -18,7 +18,44 @@
  * @author Andrey Chaschev chaschev@gmail.com
  */
 
-angular.module('bear', ['ui.bootstrap']);
+var module = angular.module('bear', ['ui.bootstrap']);
+
+module.directive('chosen',function() {
+    console.log('chosen!!');
+
+    var linker = function(scope,element,attrs) {
+        var list = attrs['chosen'];
+
+        var $element = $(element[0]);
+
+        scope.$watch(list, function(){
+            $element.trigger('liszt:updated');
+            $element.trigger("chosen:updated");
+//            console.log('chosen:updated');
+        });
+
+        scope.$watch(attrs['selectedoption'], function(newVal){
+            console.log('selectedoption watch: ', newVal);
+//            $element.trigger("chosen:updated");
+        });
+
+        $element
+            .chosen({width: "100%"})
+            .change(function(e){
+                Java.log("selected value changed to ", $element.val());
+//                scope.currentTab().selected = parseInt($element.val());
+            });
+
+
+    };
+
+    return {
+        restrict:'A',
+        link: linker
+    }
+});
+
+
 
 function DropdownCtrl($scope) {
     $scope.items = [
@@ -32,14 +69,77 @@ function DropdownCtrl($scope) {
     }
 }
 
+function FileTabsCtrl($scope) {
+    $scope.selectedTab = 'script';
+    $scope.selectedOptionIndex = 0;
+
+    $scope.scripts = {
+        files: ["DeployScript.java", "SetupScript.java"],
+        selectedFile: null
+    };
+
+    $scope.settings = {
+        files: ["Settings.java", "XX.java"],
+        selectedFile: null
+    };
+
+//    $scope.files= [{name:"Settings.java", id:1}, {name:"XX.java", id:2}];
+    $scope.currentTab = function(){
+        return ($scope.selectedTab == 'script') ?
+            $scope.scripts : $scope.settings;
+    };
+
+    $scope.files = function(){
+        return $scope.currentTab().files;
+    };
+
+    $scope.getSelectedFile = function(){
+        var currentTab = $scope.currentTab();
+
+        if(!currentTab.selectedFile){
+            currentTab.selectedFile = currentTab.files[0];
+        }
+
+        return currentTab.selectedFile;
+    };
+
+    $scope.selectedFile = $scope.getSelectedFile();
+
+
+    $scope.selectTab = function(tab){
+        $scope.selectedTab = tab.substring(0, tab.length - 3);
+        $scope.selectedFile = $scope.getSelectedFile();
+        $scope.$digest();
+    };
+
+    $scope.$watch('selectedTab', function(newVal, oldVal){
+        console.log("selectedTab watch: ",newVal, oldVal, $scope.currentTab());
+    });
+
+    $scope.$watch('currentTab()', function(newVal, oldVal){
+        console.log("currentTab watch: ", newVal, oldVal);
+    });
+
+    $scope.$watch('files()', function(newVal, oldVal){
+        console.log("files watch: ", newVal);
+    });
+
+    $scope.$watch('file', function(newVal, oldVal){
+        console.log("file watch: ", newVal);
+    });
+
+    $scope.$watch('selectedFile', function(newVal, oldVal){
+        console.log("selectedFile watch: ", newVal);
+        $scope.currentTab().selectedFile = newVal;
+    });
+}
+
 var TabsDemoCtrl = function ($scope) {
     $scope.tabs = [
         { id: "con1", title:"vm01", active: true, content:'Dynamic content 1 <br/> <div class="input-group-btn"> <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown">Action <span class="caret"></span></button></div>' },
         { id: "con2", title:"vm02", content:"Dynamic content 2" },
         { id: "con3", title:"vm03", content:"Dynamic content 3" }
     ];
-
-
 
     $scope.alertMe = function() {
         setTimeout(function() {
