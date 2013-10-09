@@ -66,7 +66,6 @@ public class BearFX {
         }
     }
 
-
     public Object call(String delegate, String method) { return facade.call(delegate, method); }
     public Object call(String delegate, String method, Object p1) { return facade.call(delegate, method, p1); }
     public Object call(String delegate, String method, Object p1, Object p2) { return facade.call(delegate, method, p1, p2); }
@@ -128,7 +127,6 @@ public class BearFX {
                         logger.info("[JAVA INIT] setting...");
 
                         if (t1 == Worker.State.SUCCEEDED) {
-                            System.out.println("ok");
                             logger.info("ok");
                             JSObject window = (JSObject) webEngine.executeScript("window");
                             window.setMember("bearFX", bearFX);

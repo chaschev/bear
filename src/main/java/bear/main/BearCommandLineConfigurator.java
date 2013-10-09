@@ -5,18 +5,24 @@ import bear.core.GlobalContext;
 import bear.core.GlobalContextFactory;
 import bear.core.IBearSettings;
 import bear.session.Question;
+import chaschev.lang.Lists2;
 import chaschev.util.Exceptions;
-import com.google.common.base.*;
+import com.google.common.base.Function;
+import com.google.common.base.Optional;
+import com.google.common.base.Preconditions;
+import com.google.common.base.Predicate;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
-import com.google.common.io.PatternFilenameFilter;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.io.filefilter.SuffixFileFilter;
+import org.apache.commons.lang3.ArrayUtils;
 
 import javax.annotation.Nullable;
 import javax.tools.JavaCompiler;
 import javax.tools.ToolProvider;
 import java.io.File;
+import java.io.FileFilter;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.MalformedURLException;
@@ -34,22 +40,23 @@ import static com.google.common.collect.Lists.transform;
 import static org.apache.commons.io.FilenameUtils.getBaseName;
 
 /**
-* @author Andrey Chaschev chaschev@gmail.com
-*/
+ * @author Andrey Chaschev chaschev@gmail.com
+ */
 public class BearCommandLineConfigurator {
     private boolean shouldExit;
     private String[] args;
     private File scriptsDir;
-    private URLClassLoader classLoader;
     private GlobalContext global;
     private Bear bear;
-    private Optional<Class<? extends Script>> scriptToRun;
+    private Optional<CompiledEntry<Class<?>>> scriptToRun;
     private GlobalContextFactory factory = GlobalContextFactory.INSTANCE;
     private BearMain.Options options;
     private File settingsFile;
     @Nullable
     private Properties properties;
     private String scriptName;
+
+    private CompileManager compileManager;
 
     public BearCommandLineConfigurator(String... args) {
         this.args = args;
@@ -74,28 +81,24 @@ public class BearCommandLineConfigurator {
         return scriptsDir;
     }
 
-    public URLClassLoader getClassLoader() {
-        return classLoader;
-    }
-
     public IBearSettings newSettings() {
         return newSettings(getBaseName(settingsFile.getName()), new File(scriptsDir, "settings.properties"));
     }
 
-    public IBearSettings newSettings(String bearSettings, File file){
+    public IBearSettings newSettings(String bearSettings, File file) {
         try {
-            final Class<?> settingsClass = classLoader.loadClass(bearSettings);
+            final CompiledEntry settingsClass = compileManager.findClass(bearSettings, false);
 
-            IBearSettings settings = (IBearSettings) settingsClass.newInstance();
+            IBearSettings settings = (IBearSettings) settingsClass.aClass.newInstance();
 
-            if(properties != null){
+            if (properties != null) {
                 settings.loadProperties(properties);
-            }else{
+            } else {
                 settings.loadProperties(file);
             }
 
-            return  settings;
-        } catch (Exception e){
+            return settings;
+        } catch (Exception e) {
             throw Exceptions.runtime(e);
         }
     }
@@ -108,7 +111,7 @@ public class BearCommandLineConfigurator {
         return bear;
     }
 
-    public Optional<Class<? extends Script>> getScriptToRun() {
+    public Optional<CompiledEntry<Class<?>>> getScriptToRun() {
         return scriptToRun;
     }
 
@@ -147,6 +150,8 @@ public class BearCommandLineConfigurator {
 
         scriptsDir = new File(options.get(SCRIPTS_DIR));
 
+        compileManager = new CompileManager(getScriptsDir(), getBuildDir());
+
         fileRequired(scriptsDir);
 
         global.localCtx().log("configuring Bear with default settings...");
@@ -156,66 +161,179 @@ public class BearCommandLineConfigurator {
         return this;
     }
 
-    public static class CompilationResult{
-        public List<Class<? extends Script>> scriptClasses = new ArrayList<Class<? extends Script>>();
-        public List<Class<? extends IBearSettings>> settingsClasses = new ArrayList<Class<? extends IBearSettings>>();
+    public static class CompilationResult {
+        public List<CompiledEntry<Class<? extends Script>>> scriptClasses = new ArrayList<CompiledEntry<Class<? extends Script>>>();
+        public List<CompiledEntry<Class<? extends IBearSettings>>> settingsClasses = new ArrayList<CompiledEntry<Class<? extends IBearSettings>>>();
+
+        public CompilationResult mergeIn() {
+            throw new UnsupportedOperationException();
+        }
     }
 
-    private Optional<Class<? extends Script>> compileAndLoadScript() throws MalformedURLException {
-        CompilationResult result = compile();
+    private Optional<CompiledEntry<Class<?>>> compileAndLoadScript() throws MalformedURLException {
+        CompilationResult result = compileManager.compileWithAll();
 
-        return findScriptToRun(result.scriptClasses);
+        return findScriptToRun((List)result.scriptClasses);
     }
 
-    public CompilationResult compile()  {
-        final List<File> filesList = compileScripts();
+    public static abstract class Compiler {
+        protected final String[] extensions = extensions();
 
-        System.out.printf("configuring with %s...%n", getSettingsFile());
+        protected File sourcesDir;
+        protected File buildDir;
 
-        try {
-            classLoader = new URLClassLoader(new URL[]{getBuildDir().toURI().toURL()});
-        } catch (MalformedURLException e) {
-            throw Exceptions.runtime(e);
+        public abstract String[] extensions();
+
+        protected Compiler(File sourcesDir, File buildDir) {
+            this.sourcesDir = sourcesDir;
+            this.buildDir = buildDir;
         }
 
-        CompilationResult result = new CompilationResult();
+        public boolean accepts(String extension) {
+            return ArrayUtils.contains(extensions, extension);
+        }
 
-        for (File file : filesList) {
-            try {
-                Class aClass = (Class) classLoader.loadClass(getBaseName(file.getName()));
+        public abstract CompilationResult compile();
+    }
 
-                if(Script.class.isAssignableFrom(aClass)){
-                    result.scriptClasses.add(aClass);
-                } else
-                if(IBearSettings.class.isAssignableFrom(aClass)){
-                    result.settingsClasses.add(aClass);
-                }
-            } catch (ClassNotFoundException e) {
-                throw Exceptions.runtime(e);
+    public static class CompileManager {
+        protected final File sourcesDir;
+        protected final File buildDir;
+        protected final JavaCompiler2 javaCompiler;
+        private CompilationResult lastCompilationResult;
+
+        public CompileManager(File sourcesDir, File buildDir) {
+            this.sourcesDir = sourcesDir;
+            this.buildDir = buildDir;
+            this.javaCompiler = new JavaCompiler2(sourcesDir, buildDir);
+        }
+
+        public CompilationResult compileWithAll() {
+            return lastCompilationResult = javaCompiler.compile();
+        }
+
+
+        public CompiledEntry findClass(final String className) {
+            CompiledEntry aClass = findClass(className, true);
+
+            if(aClass == null){
+                return findClass(className, false);
+            }else{
+                return aClass;
             }
         }
+        public CompiledEntry findClass(final String className, boolean script) {
+            Preconditions.checkNotNull(lastCompilationResult, "you need to compile first to load classes");
 
-        return result;
+            return Iterables.find(script ?
+                    lastCompilationResult.scriptClasses : lastCompilationResult.settingsClasses, new Predicate<CompiledEntry>() {
+                @Override
+                public boolean apply(CompiledEntry input) {
+                    return input.aClass.getSimpleName().equals(className);
+                }
+            });
+        }
     }
 
-    private Optional<Class<? extends Script>> findScriptToRun(List<Class<? extends Script>> loadedScriptClasses) {
+    public static class JavaCompiler2 extends Compiler {
+        private URLClassLoader classLoader;
+
+        protected JavaCompiler2(File sourcesDir, File buildDir) {
+            super(sourcesDir, buildDir);
+        }
+
+
+        @Override
+        public String[] extensions() {
+            return new String[]{"java"};
+        }
+
+        public CompilationResult compile() {
+            final List<File> filesList = compileScripts(sourcesDir);
+
+            try {
+                classLoader = new URLClassLoader(new URL[]{buildDir.toURI().toURL()});
+            } catch (MalformedURLException e) {
+                throw Exceptions.runtime(e);
+            }
+
+            CompilationResult result = new CompilationResult();
+
+            for (File file : filesList) {
+                try {
+                    Class aClass = (Class) classLoader.loadClass(getBaseName(file.getName()));
+
+                    if (Script.class.isAssignableFrom(aClass)) {
+                        result.scriptClasses.add(new CompiledEntry(aClass, file, "java"));
+                    } else if (IBearSettings.class.isAssignableFrom(aClass)) {
+                        result.settingsClasses.add(new CompiledEntry(aClass, file, "java"));
+                    }
+
+                } catch (ClassNotFoundException e) {
+                    throw Exceptions.runtime(e);
+                }
+            }
+
+            return result;
+        }
+
+        public List<File> compileScripts(File sourcesDir) {
+            FileFilter filter = new SuffixFileFilter(extensions);
+
+            final File[] files = sourcesDir.listFiles(filter);
+
+            final ArrayList<String> params = newArrayListWithExpectedSize(files.length);
+
+            if (!buildDir.exists()) {
+                buildDir.mkdir();
+            }
+
+            Collections.addAll(params, "-d", buildDir.getAbsolutePath());
+            final List<File> filesList = Lists.newArrayList(files);
+
+            final List<String> filePaths = Lists.transform(filesList, new Function<File, String>() {
+                public String apply(File input) {
+                    return input.getAbsolutePath();
+                }
+            });
+
+            params.addAll(filePaths);
+
+            System.out.printf("compiling %s%n", params);
+
+            final JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
+
+            final int r = compiler.run(null, null, null, params.toArray(new String[params.size()]));
+
+            if (r == 0) {
+                System.out.printf("compilation OK.%n");
+            } else {
+                System.out.printf("compilation failed.%n");
+            }
+
+            return filesList;
+        }
+    }
+
+
+    private Optional<CompiledEntry<Class<?>>> findScriptToRun(List<CompiledEntry<Class<?>>> compiledEntries) {
         if (isScriptNameSet()) {
             BearMain.logger.info("script is set in the command line to {}", getScriptName());
             bear.deployScript.defaultTo(getScriptName());
         } else {
             new Question("Enter a script name to run:",
-                transform(loadedScriptClasses, new Function<Class<?>, String>() {
-                    public String apply(Class<?> input) {
-                        return input.getSimpleName();
+                transform(compiledEntries, new Function<CompiledEntry<Class<?>>, String>() {
+                    public String apply(CompiledEntry<Class<?>> input) {
+                        return input.aClass.getSimpleName();
                     }
                 }),
                 bear.deployScript).ask();
         }
 
-        return Iterables.tryFind(loadedScriptClasses, new Predicate<Class<? extends Script>>() {
+        return Iterables.tryFind(compiledEntries, new Predicate<CompiledEntry<Class<?>>>() {
             @Override
-            public boolean apply(Class<? extends Script> input) {
-                return input.getName().equals(global.var(bear.deployScript));
+            public boolean apply(CompiledEntry<Class<?>> input) {
+                return input.aClass.getName().equals(global.var(bear.deployScript));
             }
         });
     }
@@ -228,50 +346,11 @@ public class BearCommandLineConfigurator {
         return elvis(scriptName, options.get(SCRIPT));
     }
 
-    private File fileRequired(File settingsFile) {
+    private static File fileRequired(File settingsFile) {
         Preconditions.checkArgument(settingsFile.exists(), settingsFile.getAbsolutePath() + " does not exist. Use --bearify to create it.");
         return settingsFile;
     }
 
-    public List<File> compileScripts() {
-        final File settingsFile = fileRequired(getSettingsFile());
-
-        final File[] files = scriptsDir.listFiles(new PatternFilenameFilter("^.*\\.java$"));
-
-        final ArrayList<String> params = newArrayListWithExpectedSize(files.length);
-
-        final File buildDir = getBuildDir();
-
-        if (!buildDir.exists()) {
-            buildDir.mkdir();
-        }
-
-        Collections.addAll(params, "-d", buildDir.getAbsolutePath());
-        final List<File> filesList = Lists.asList(settingsFile, files);
-
-        final List<String> filePaths = Lists.transform(filesList, new Function<File, String>() {
-            public String apply(File input) {
-                shouldExit = true;
-                return input.getAbsolutePath();
-            }
-        });
-
-        params.addAll(filePaths);
-
-        System.out.printf("compiling %s%n", params);
-
-        final JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
-
-        final int r = compiler.run(null, null, null, params.toArray(new String[params.size()]));
-
-        if (r == 0) {
-            System.out.printf("compilation OK.%n");
-        } else {
-            System.out.printf("compilation failed.%n");
-        }
-
-        return filesList;
-    }
 
     public File getSettingsFile() {
         return settingsFile;
@@ -305,5 +384,61 @@ public class BearCommandLineConfigurator {
 
     public String getSettingsText() throws IOException {
         return FileUtils.readFileToString(settingsFile);
+    }
+
+    public static class CompiledEntry<T extends Class<?>>{
+        public final Class<T> aClass;
+        public final File file;
+        public final String type;
+
+        public CompiledEntry(Class<T> aClass, File file, String type) {
+            this.aClass = aClass;
+            this.file = file;
+            this.type = type;
+        }
+
+        public String getName() {
+            return aClass.getSimpleName();
+        }
+
+        public String getText() {
+            try {
+                return FileUtils.readFileToString(file);
+            } catch (IOException e) {
+                throw Exceptions.runtime(e);
+            }
+        }
+
+        public void saveText(String text) {
+            try {
+                FileUtils.writeStringToFile(file, text);
+            } catch (IOException e) {
+                throw Exceptions.runtime(e);
+            }
+        }
+    }
+
+    public String[] getScriptNames(){
+        return getNames(compileManager.lastCompilationResult.scriptClasses);
+    }
+
+    public String[] getSettingsNames(){
+        return getNames(compileManager.lastCompilationResult.settingsClasses);
+    }
+
+    public String getFileText(String className){
+        return compileManager.findClass(className).getText();
+    }
+
+    public void saveFileText(String className, String text){
+        compileManager.findClass(className).saveText(text);
+    }
+
+    public void build(){
+        compileManager.compileWithAll();
+    }
+
+    private String[] getNames(List classes) {
+        return (String[]) Lists2.projectMethod(classes, "getName").toArray(new String[classes.size()]);
     }
 }

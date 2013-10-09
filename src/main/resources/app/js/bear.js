@@ -34,17 +34,7 @@ module.directive('chosen',function() {
 //            console.log('chosen:updated');
         });
 
-        scope.$watch(attrs['selectedoption'], function(newVal){
-            console.log('selectedoption watch: ', newVal);
-//            $element.trigger("chosen:updated");
-        });
-
-        $element
-            .chosen({width: "100%"})
-            .change(function(e){
-                Java.log("selected value changed to ", $element.val());
-//                scope.currentTab().selected = parseInt($element.val());
-            });
+        $element.chosen({width: "100%"});
 
 
     };
@@ -70,18 +60,10 @@ function DropdownCtrl($scope) {
 }
 
 function FileTabsCtrl($scope) {
+    Java.log("FileTabsCtrl init");
+
     $scope.selectedTab = 'script';
     $scope.selectedOptionIndex = 0;
-
-    $scope.scripts = {
-        files: ["DeployScript.java", "SetupScript.java"],
-        selectedFile: null
-    };
-
-    $scope.settings = {
-        files: ["Settings.java", "XX.java"],
-        selectedFile: null
-    };
 
 //    $scope.files= [{name:"Settings.java", id:1}, {name:"XX.java", id:2}];
     $scope.currentTab = function(){
