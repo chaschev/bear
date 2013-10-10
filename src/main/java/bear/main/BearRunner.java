@@ -22,7 +22,7 @@ public class BearRunner {
 
     public BearRunner(BearCommandLineConfigurator configurator) throws Exception{
         this.bearSettings = configurator.newSettings();
-        this.script = configurator.getScriptToRun().get().newInstance();
+        this.script = (Script) configurator.getScriptToRun().get().aClass.newInstance();
 
         factory = configurator.getFactory();
 

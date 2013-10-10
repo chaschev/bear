@@ -52,12 +52,12 @@ public class BearMain {
             return;
         }
 
-        Optional<Class<? extends Script>> scriptToRun = configurator.getScriptToRun();
+        Optional<CompiledEntry> scriptToRun = configurator.getScriptToRun();
         GlobalContext global = configurator.getGlobal();
         bear.core.Bear bear = configurator.getBear();
 
         if (scriptToRun.isPresent()) {
-            System.out.printf("running script %s...%n", scriptToRun.get().getSimpleName());
+            System.out.printf("running script %s...%n", scriptToRun.get().getName());
 
             new BearRunner(configurator).run();
         } else {

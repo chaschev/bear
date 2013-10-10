@@ -17,6 +17,8 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.filefilter.SuffixFileFilter;
 import org.apache.commons.lang3.ArrayUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
 import javax.tools.JavaCompiler;
@@ -43,12 +45,14 @@ import static org.apache.commons.io.FilenameUtils.getBaseName;
  * @author Andrey Chaschev chaschev@gmail.com
  */
 public class BearCommandLineConfigurator {
+    private static final Logger logger = LoggerFactory.getLogger(BearCommandLineConfigurator.class);
+
     private boolean shouldExit;
     private String[] args;
     private File scriptsDir;
     private GlobalContext global;
     private Bear bear;
-    private Optional<CompiledEntry<Class<?>>> scriptToRun;
+    private Optional<CompiledEntry> scriptToRun;
     private GlobalContextFactory factory = GlobalContextFactory.INSTANCE;
     private BearMain.Options options;
     private File settingsFile;
@@ -111,7 +115,7 @@ public class BearCommandLineConfigurator {
         return bear;
     }
 
-    public Optional<CompiledEntry<Class<?>>> getScriptToRun() {
+    public Optional<CompiledEntry> getScriptToRun() {
         return scriptToRun;
     }
 
@@ -156,21 +160,21 @@ public class BearCommandLineConfigurator {
 
         global.localCtx().log("configuring Bear with default settings...");
 
-        scriptToRun = compileAndLoadScript();
+//        scriptToRun = compileAndLoadScript();
 
         return this;
     }
 
     public static class CompilationResult {
-        public List<CompiledEntry<Class<? extends Script>>> scriptClasses = new ArrayList<CompiledEntry<Class<? extends Script>>>();
-        public List<CompiledEntry<Class<? extends IBearSettings>>> settingsClasses = new ArrayList<CompiledEntry<Class<? extends IBearSettings>>>();
+        public List<CompiledEntry> scriptClasses = new ArrayList<CompiledEntry>();
+        public List<CompiledEntry> settingsClasses = new ArrayList<CompiledEntry>();
 
         public CompilationResult mergeIn() {
             throw new UnsupportedOperationException();
         }
     }
 
-    private Optional<CompiledEntry<Class<?>>> compileAndLoadScript() throws MalformedURLException {
+    private Optional<CompiledEntry> compileAndLoadScript() throws MalformedURLException {
         CompilationResult result = compileManager.compileWithAll();
 
         return findScriptToRun((List)result.scriptClasses);
@@ -231,7 +235,7 @@ public class BearCommandLineConfigurator {
                 public boolean apply(CompiledEntry input) {
                     return input.aClass.getSimpleName().equals(className);
                 }
-            });
+            }, null);
         }
     }
 
@@ -316,23 +320,23 @@ public class BearCommandLineConfigurator {
     }
 
 
-    private Optional<CompiledEntry<Class<?>>> findScriptToRun(List<CompiledEntry<Class<?>>> compiledEntries) {
+    private Optional<CompiledEntry> findScriptToRun(List<CompiledEntry> compiledEntries) {
         if (isScriptNameSet()) {
             BearMain.logger.info("script is set in the command line to {}", getScriptName());
             bear.deployScript.defaultTo(getScriptName());
         } else {
             new Question("Enter a script name to run:",
-                transform(compiledEntries, new Function<CompiledEntry<Class<?>>, String>() {
-                    public String apply(CompiledEntry<Class<?>> input) {
+                transform(compiledEntries, new Function<CompiledEntry, String>() {
+                    public String apply(CompiledEntry input) {
                         return input.aClass.getSimpleName();
                     }
                 }),
                 bear.deployScript).ask();
         }
 
-        return Iterables.tryFind(compiledEntries, new Predicate<CompiledEntry<Class<?>>>() {
+        return Iterables.tryFind(compiledEntries, new Predicate<CompiledEntry>() {
             @Override
-            public boolean apply(CompiledEntry<Class<?>> input) {
+            public boolean apply(CompiledEntry input) {
                 return input.aClass.getName().equals(global.var(bear.deployScript));
             }
         });
@@ -386,38 +390,6 @@ public class BearCommandLineConfigurator {
         return FileUtils.readFileToString(settingsFile);
     }
 
-    public static class CompiledEntry<T extends Class<?>>{
-        public final Class<T> aClass;
-        public final File file;
-        public final String type;
-
-        public CompiledEntry(Class<T> aClass, File file, String type) {
-            this.aClass = aClass;
-            this.file = file;
-            this.type = type;
-        }
-
-        public String getName() {
-            return aClass.getSimpleName();
-        }
-
-        public String getText() {
-            try {
-                return FileUtils.readFileToString(file);
-            } catch (IOException e) {
-                throw Exceptions.runtime(e);
-            }
-        }
-
-        public void saveText(String text) {
-            try {
-                FileUtils.writeStringToFile(file, text);
-            } catch (IOException e) {
-                throw Exceptions.runtime(e);
-            }
-        }
-    }
-
     public String[] getScriptNames(){
         return getNames(compileManager.lastCompilationResult.scriptClasses);
     }
@@ -435,6 +407,7 @@ public class BearCommandLineConfigurator {
     }
 
     public void build(){
+
         compileManager.compileWithAll();
     }
 

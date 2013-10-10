@@ -35,8 +35,6 @@ module.directive('chosen',function() {
         });
 
         $element.chosen({width: "100%"});
-
-
     };
 
     return {
@@ -45,6 +43,26 @@ module.directive('chosen',function() {
     }
 });
 
+function BearCtrl($scope){
+    $scope.lastBuildTime = new Date();
+
+    $scope.$watch('lastBuildTime', function(){
+//        Java.log("updating fields on new build");
+
+    });
+
+    $scope.buildScripts = function(){
+        Java.log("building scripts...");
+
+        checkExc(window.bearFX.call('conf', 'build'));
+
+        Java.log("done building scripts");
+
+        $scope.lastBuildTime = new Date();
+        $scope.$digest();
+        $scope.$broadcast('buildFinished');
+    }
+}
 
 
 function DropdownCtrl($scope) {
@@ -63,7 +81,30 @@ function FileTabsCtrl($scope) {
     Java.log("FileTabsCtrl init");
 
     $scope.selectedTab = 'script';
-    $scope.selectedOptionIndex = 0;
+
+    $scope.scripts = {
+        files: ["Loading"]
+    };
+
+    $scope.settings = {
+        files: ["Loading"]
+    };
+
+    $scope.$on('buildFinished', function(e, args){
+        $scope.scripts.files = Java.returnedArrayToJS(checkExc(window.bearFX.call('conf', 'getScriptNames')));
+        $scope.settings.files = Java.returnedArrayToJS(checkExc(window.bearFX.call('conf', 'getSettingsNames')));
+
+        if($scope.selectedFile == null || $scope.selectedFile == 'Loading'){
+            $scope.scripts.selectedFile = $scope.scripts.files[0];
+            $scope.settings.selectedFile = $scope.settings.files[0];
+
+            $scope.selectedFile = $scope.scripts.files[0];
+        }
+
+        Java.log('files:', $scope.scripts.files, "selectedFile:", $scope.selectedFile);
+
+        $scope.selectTab($scope.selectedTab);
+    });
 
 //    $scope.files= [{name:"Settings.java", id:1}, {name:"XX.java", id:2}];
     $scope.currentTab = function(){
@@ -89,30 +130,35 @@ function FileTabsCtrl($scope) {
 
 
     $scope.selectTab = function(tab){
-        $scope.selectedTab = tab.substring(0, tab.length - 3);
+        Java.log('selecting tab: ' + tab);
+        $scope.selectedTab = tab;
         $scope.selectedFile = $scope.getSelectedFile();
         $scope.$digest();
     };
 
-    $scope.$watch('selectedTab', function(newVal, oldVal){
-        console.log("selectedTab watch: ",newVal, oldVal, $scope.currentTab());
+    $scope.$watch('selectedTab', function(newVal){
+        Java.log("selectedTab watch: ", newVal, "scope:", $scope.currentTab());
     });
 
-    $scope.$watch('currentTab()', function(newVal, oldVal){
-        console.log("currentTab watch: ", newVal, oldVal);
+    $scope.$watch('currentTab()', function(newVal){
+        Java.log("currentTab watch: ", newVal);
     });
 
     $scope.$watch('files()', function(newVal, oldVal){
-        console.log("files watch: ", newVal);
+        Java.log("files watch: ", newVal);
     });
 
     $scope.$watch('file', function(newVal, oldVal){
-        console.log("file watch: ", newVal);
+        Java.log("file watch: ", newVal);
     });
 
     $scope.$watch('selectedFile', function(newVal, oldVal){
-        console.log("selectedFile watch: ", newVal);
+        Java.log("selectedFile watch: ", newVal);
         $scope.currentTab().selectedFile = newVal;
+
+        var content = checkExc(window.bearFX.call('conf', 'getFileText', newVal));
+
+        ace.edit($scope.selectedTab + "Text").setValue(content);
     });
 }
 

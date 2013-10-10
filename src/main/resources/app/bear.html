@@ -8,6 +8,7 @@
 
     <script src="js/jquery-2.0.3.min.js"></script>
     <script src="js/angular.min.js"></script>
+    <script src="js/json2.js"></script>
     <script src="js/ui-bootstrap-tpls-0.6.0.js"></script>
     <script src="js/bootstrap.js"></script>
     <script src="js/chosen.jquery.js"></script>
@@ -37,6 +38,25 @@
 
     </style>
     <script type="text/javascript">
+        if (!Java.isFX) {
+            window.bearFX = {};
+            window.bearFX.call = function (){
+                //('conf', 'getFileText', newVal)
+                var args = Array.prototype.slice.call(arguments);
+
+                var bean = args[0];
+                var method = args[1];
+                args = args.slice(2);
+
+                if (bean == 'conf') {
+                    if (method == 'getFileText') {
+                        return "Text of " + args[0];
+                    }
+                }
+
+            }
+        }
+
         Java.initApp = function(){
             if(this.initialized){
                 return;
@@ -45,59 +65,38 @@
             Java.log("started Java.initApp...");
             this.initialized = true;
 
-//            console.log('tabs:', $('#conTabList').find('a'));
             $('.nav.nav-tabs').find('li>a').click(function (e) {
                 e.preventDefault();
                 var $this = $(this);
                 $this.tab('show');
                 var href = $this.attr('href');
                 var tabId = href.substring(1);
-                angular.element(href).scope().selectTab(tabId);
+                angular.element(href).scope().selectTab(tabId.substring(0, tabId.length - 3));
             });
 
+
+            function initAceEditor(editor)
+            {
+                var session = editor.getSession();
+
+                session.setMode("ace/mode/java");
+                session.setUseWorker(false);
+                session.setTabSize(2);
+
+                editor.renderer.setShowGutter(false);
+            }
+
             var settingsTextEditor = ace.edit("settingsText");
-
-            settingsTextEditor.getSession().setMode("ace/mode/java");
-            settingsTextEditor.getSession().setUseWorker(false);
-
-//            Java.log(checkExc(window.bearFX.call('conf', 'getSettingsText')) + checkExc(window.bearFX.call('conf', 'getSettingsText')));
-//            Java.log("window.bearFX: " + window.bearFX);
-
             var scriptsEditor = ace.edit("scriptText");
 
-            scriptsEditor.getSession().setMode("ace/mode/java");
-            scriptsEditor.getSession().setUseWorker(false);
-
-            settingsTextEditor.renderer.setShowGutter(false);
-            scriptsEditor.renderer.setShowGutter(false);
+            initAceEditor(settingsTextEditor);
+            initAceEditor(scriptsEditor);
 
             if(Java.isFX){
                 settingsTextEditor.setValue(checkExc(window.bearFX.call('conf', 'getSettingsText')));
                 scriptsEditor.setValue(checkExc(window.bearFX.call('conf', 'getScriptText')));
-            }
 
-            var $scope = angular.element('#FileTabsCtrl').scope();
-
-            if (Java.isFX) {
-                $scope.scripts = {
-                    files: checkExc(window.bearFX.call('conf', 'getScriptNames')),
-                    selectedFile: null
-                };
-
-                $scope.settings = {
-                    files: checkExc(window.bearFX.call('conf', 'getSettingsNames')),
-                    selectedFile: null
-                };
-            }else{
-                $scope.scripts = {
-                    files: ["DeployScript.java", "SetupScript.java"],
-                    selectedFile: null
-                };
-
-                $scope.settings = {
-                    files: ["Settings.java", "XX.java"],
-                    selectedFile: null
-                };
+                angular.element('body').scope().buildScripts();
             }
         };
 
@@ -108,7 +107,7 @@
         });
     </script>
 </head>
-<body class="design" ng-app="bear">
+<body class="design" ng-app="bear" ng-controller="BearCtrl">
 <div class="btn-toolbar">
     <div class="btn-group"><a href="#" class="btn btn-default">Button 1</a><a href="#" class="btn btn-default">Button
         2</a><a href="#" class="btn btn-default">Button 3</a></div>

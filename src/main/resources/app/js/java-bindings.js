@@ -27,7 +27,6 @@ Java.initApp = function(){
     Java.log("Java.initApp: set you initialization in Java.initApp = function(){ ... }");
 };
 
-
 Java.Collections = function(){
 
 };
@@ -56,6 +55,17 @@ Java.Collections.toJavaArray = function(arr){
     return  r;
 };
 
+Java.returnedArrayToJS = function returnedArrayToJS(javaArr){
+    var r = [];
+    var r2 = [];
+
+    for(var i = 0;i<javaArr.length;i++){
+        r[i] = javaArr[i];
+    }
+
+    return r;
+};
+
 Java.Collections.newArray = function(arr){
     var jList = this.newArrayList(arr);
 
@@ -78,7 +88,7 @@ Java.printStackTrace = function(e){
 
 Java.log = function (arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8)
 {
-    if (Java.mode == 'FX') {
+    if (Java.isFX) {
         var arr = [arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8];
         var i;
         for (i = arr.length - 1; i >= 0; i--) {
@@ -94,6 +104,17 @@ Java.log = function (arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8)
             var obj = arr[j];
             if(typeof obj == 'string'){
                 arr[j] = "'" + arr[j] + "'";
+            }else
+            if(typeof obj == 'object'){
+                if(Object.keys(obj).length == 0){
+                    arr[j] = arr[j].toString();     //for Java objects
+                }else{
+                    try {
+                        arr[j] = JSON.stringify2(obj);
+                    } catch (e) {
+                        alert("ERRROR " + e);
+                    }
+                }
             }
         }
 
