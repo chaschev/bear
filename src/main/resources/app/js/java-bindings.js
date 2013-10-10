@@ -12,9 +12,14 @@
 //}
 
 
-var Java = function(){
+if(Java == null){
+    alert('Java is not there :-(');
+    var Java = function(){
 
-};
+    };
+}else{
+    alert('Java is there!!!!');
+}
 
 Java.init = function(window){
     Java.log("initializing Java...");
@@ -80,7 +85,7 @@ Java.mode = navigator.userAgent.match(/Chrome\/\d\d/) ?
     'Chrome' :
     (navigator.userAgent.match(/Firefox\/\d\d/) ? 'FF' : 'FX');
 
-Java.isFX = Java.mode == 'FX';
+Java.isFX = Java.mode === 'FX';
 
 Java.printStackTrace = function(e){
     Java.log("[EXCEPTION] " + e);
@@ -102,17 +107,17 @@ Java.log = function (arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8)
 
         for (var j = 0; j < arr.length; j++) {
             var obj = arr[j];
-            if(typeof obj == 'string'){
+            if(typeof obj === 'string'){
                 arr[j] = "'" + arr[j] + "'";
             }else
-            if(typeof obj == 'object'){
-                if(Object.keys(obj).length == 0){
+            if(typeof obj === 'object'){
+                if(Object.keys(obj).length === 0){
                     arr[j] = arr[j].toString();     //for Java objects
                 }else{
                     try {
                         arr[j] = JSON.stringify2(obj);
                     } catch (e) {
-                        alert("ERRROR " + e);
+                        alert("ERRROR " + e + ", obj: " + obj);
                     }
                 }
             }

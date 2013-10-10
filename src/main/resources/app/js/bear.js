@@ -91,10 +91,12 @@ function FileTabsCtrl($scope) {
     };
 
     $scope.$on('buildFinished', function(e, args){
+        Java.log("buildFinished - updating files");
+
         $scope.scripts.files = Java.returnedArrayToJS(checkExc(window.bearFX.call('conf', 'getScriptNames')));
         $scope.settings.files = Java.returnedArrayToJS(checkExc(window.bearFX.call('conf', 'getSettingsNames')));
 
-        if($scope.selectedFile == null || $scope.selectedFile == 'Loading'){
+        if($scope.selectedFile == null || $scope.selectedFile === 'Loading'){
             $scope.scripts.selectedFile = $scope.scripts.files[0];
             $scope.settings.selectedFile = $scope.settings.files[0];
 
@@ -108,7 +110,7 @@ function FileTabsCtrl($scope) {
 
 //    $scope.files= [{name:"Settings.java", id:1}, {name:"XX.java", id:2}];
     $scope.currentTab = function(){
-        return ($scope.selectedTab == 'script') ?
+        return ($scope.selectedTab === 'script') ?
             $scope.scripts : $scope.settings;
     };
 
@@ -156,9 +158,11 @@ function FileTabsCtrl($scope) {
         Java.log("selectedFile watch: ", newVal);
         $scope.currentTab().selectedFile = newVal;
 
-        var content = checkExc(window.bearFX.call('conf', 'getFileText', newVal));
+        var content = window.bear.call('conf', 'getFileText', newVal);
 
-        ace.edit($scope.selectedTab + "Text").setValue(content);
+        var editor = ace.edit($scope.selectedTab + "Text");
+        var cursor = editor.selection.getCursor();
+        editor.setValue(content, cursor);
     });
 }
 

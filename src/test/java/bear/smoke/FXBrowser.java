@@ -14,27 +14,21 @@
  * limitations under the License.
  */
 
-package javafx.overloading1;
+package bear.smoke;
 
 import javafx.application.Application;
-import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableValue;
-import javafx.concurrent.Worker;
 import javafx.event.EventHandler;
 import javafx.scene.Scene;
 import javafx.scene.web.WebEngine;
 import javafx.scene.web.WebEvent;
 import javafx.scene.web.WebView;
 import javafx.stage.Stage;
-import netscape.javascript.JSObject;
-
-import java.util.Arrays;
 
 /**
  * @author Andrey Chaschev chaschev@gmail.com
  */
-public class TestOverloading {
-    public static class TestBindingsApp extends Application {
+public class FXBrowser {
+    public static class TestOnClick extends Application {
 
         private WebEngine webEngine;
 
@@ -51,7 +45,9 @@ public class TestOverloading {
                 stage.setHeight(600);
                 stage.show();
 
-                webEngine.load(TestOverloading.class.getResource("/javafx/overloading1/testOverloading.html").toURI().toURL().toString());
+
+//                webEngine.loadContent(FileUtils.readFileToString(new File("src/test/test.html")));
+                webEngine.load("http://google.com");
 
                 webEngine.setOnAlert(new EventHandler<WebEvent<String>>() {
                     @Override
@@ -60,18 +56,7 @@ public class TestOverloading {
                     }
                 });
 
-                webEngine.getLoadWorker().stateProperty().addListener(new ChangeListener<Worker.State>() {
-                    @Override
-                    public void changed(ObservableValue<? extends Worker.State> ov, Worker.State t, Worker.State t1) {
-                        System.out.println("[JAVA INIT] setting...");
-                        if (t1 == Worker.State.SUCCEEDED) {
-                            JSObject window = (JSObject) webEngine.executeScript("window");
 
-                            window.setMember("fooWhichIsOK", new FooWhichIsOk());
-                            window.setMember("foo", new Foo());
-                        }
-                    }
-                });
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -81,31 +66,6 @@ public class TestOverloading {
             launch(args);
         }
 
-        public static class FooWhichIsOk {
-            public void fooDiffName(){
-                System.out.println("FooWhichIsOk!");
-            }
 
-            public void foo(String s){
-                System.out.println("FooWhichIsOk, " + s + "!!");
-            }
-
-            public void array(Object[] params){
-                System.out.println("Arrays.asList(params) = " + Arrays.asList(params));
-            }
-        }
-
-        public static class Foo {
-            public void foo(){
-                System.out.println("Foo!");
-            }
-
-            public void foo(String s){
-                System.out.println("Foo, " + s + "!!");
-            }
-
-
-        }
     }
-
 }

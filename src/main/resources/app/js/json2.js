@@ -150,7 +150,6 @@ if (typeof JSON !== 'object') {
 // Is the value an array?
 
             if (Object.prototype.toString.apply(value) === '[object Array]') {
-
 // The value is an array. Stringify every element. Use null as a placeholder
 // for non-JSON values.
 
@@ -203,7 +202,7 @@ if (typeof JSON !== 'object') {
 
                 var temp;
             v = partial.length === 0
-                ? (((temp = value.toString()) == null) ? {} : temp)
+                ? (((temp = Object.prototype.toString.apply(value)) == null) ? {} : temp)
                 : gap
                 ? '{\n' + gap + partial.join(',\n' + gap) + '\n' + mind + '}'
                 : '{' + partial.join(',') + '}';
@@ -248,7 +247,7 @@ if (typeof JSON !== 'object') {
             if (replacer && typeof replacer !== 'function' &&
                     (typeof replacer !== 'object' ||
                     typeof replacer.length !== 'number')) {
-                throw new Error('JSON.stringify');
+                throw new Error('JSON.stringify2');
             }
 
 // Make a fake root object containing our value under the key of ''.

@@ -102,7 +102,7 @@ public class TestBindings {
                 System.out.println("Clicked");
                 System.out.printf("%s%n", t);
                 webEngine.executeScript("Object.keys({'s':'hi'})");
-                System.out.println(((JSObject) t).call("keys"));
+//                System.out.println(((JSObject) t).call("keys"));
 
                 System.out.flush();
             }

@@ -21,17 +21,17 @@
     <!--<script type='text/javascript' src='js/firebug-lite.js'></script>-->
     <script type="text/javascript">
         function testOk(){
-            try {
-                window.fooWhichIsOK.foo('test');
-            } catch (e) {
-                alert(e);
-            }
+            window.fooWhichIsOK.foo('test');
             alert('should reach this line');
         }
 
         function testFailing(){
             window.foo.foo('test');
             alert('should not reach this line');
+        }
+
+        function testArrays(){
+            window.fooWhichIsOK.array(['1', '2', 3]);
         }
     </script>
     <style>
@@ -46,6 +46,7 @@
 <div class="links">
     <div id="okTest" onclick="testOk()">Run OK Test</div>
     <div id="failingTest" onclick="testFailing()">Run Failing Test</div>
+    <div id="failingTest" onclick="testFailing()">Array arg test</div>
     <br/>
 </div></body>
 </html>

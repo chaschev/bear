@@ -2,6 +2,7 @@
 <html>
 <head>
     <title></title>
+    <script type="text/javascript" src="js/json2.js"></script>
     <script type="text/javascript" src="js/stacktrace.js"></script>
     <script type="text/javascript" src="js/java-bindings.js"></script>
     <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
@@ -12,6 +13,10 @@
         $(document).ready(function ()
         {
             Java.log("document loaded");
+
+            var ArrayList = importClass(java.lang.Class.forName("java.util.ArrayList"));
+
+            Java.log('ArrayList', ArrayList);
 //            window.app.onClick1({'t': 1});
             $('#enableFirebug').click(function (e)
             {
@@ -87,12 +92,15 @@
                 var array = Java.Collections.newObjectArray(2);
 
                 Java.log("array", array);
-                Java.log("array - 2", [2,3]);
+                Java.log("array - 2", [2, 3]);
 
                 array[0] = 'ss';
                 array[1] = 1;
 
                 Java.log("array - 3", array);
+                Java.log("array[0].keys", Object.keys(array[0]), 'typeof:', typeof  array[0], array[0].toString(), typeof 'ss');
+
+                Java.log(Java.Bindings.foo('xx'));
             } catch (e) {
                 Java.printStackTrace(e);
             }

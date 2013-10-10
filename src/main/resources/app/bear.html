@@ -57,10 +57,33 @@
             }
         }
 
+        //register facade as a part of bindings!!
+        window.bear = {
+            call: function(){
+                var args = Array.prototype.slice.call(arguments);
+
+                var bean = args[0];
+                var method = args[1];
+                args = args.slice(2);
+
+                switch (args.length){
+                    case 0:
+                        return checkExc(Java.Bindings.safeCall0(window.bearFX, bean, method));
+                    case 1:
+                        return checkExc(Java.Bindings.safeCall1(window.bearFX, bean, method, args[0]));
+                    default:
+                        throw  "window.bear.todo!!";
+                }
+            }
+        };
+
         Java.initApp = function(){
             if(this.initialized){
                 return;
             }
+
+            //window.bearFX.call('conf', 'getSettingsText')
+
 
             Java.log("started Java.initApp...");
             this.initialized = true;
@@ -93,8 +116,8 @@
             initAceEditor(scriptsEditor);
 
             if(Java.isFX){
-                settingsTextEditor.setValue(checkExc(window.bearFX.call('conf', 'getSettingsText')));
-                scriptsEditor.setValue(checkExc(window.bearFX.call('conf', 'getScriptText')));
+//                settingsTextEditor.setValue(checkExc(window.bearFX.call('conf', 'getSettingsText')));
+//                scriptsEditor.setValue(checkExc(window.bearFX.call('conf', 'getScriptText')));
 
                 angular.element('body').scope().buildScripts();
             }
@@ -232,13 +255,9 @@
                 <h3 class="panel-title">Shell</h3>
             </div>
             <div class="panel-body">
-
-
                 <div id="conTabsRootPanel" ng-controller="TabsDemoCtrl">
                     <!--<button class="btn btn-small" ng-click="tabs[0].active = true">Select second tab</button>                   -->
                     <ul id="conTabList" class="nav nav-tabs">
-                        <li></li>
-                        <li class="active"><a href="#settingsTab">Settings</a></li>
                         <li ng-repeat="tab in tabs">
                             <a href="#{{tab.id}}">{{tab.title}}</a>
                         </li>

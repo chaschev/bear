@@ -23,6 +23,14 @@ public class Bindings {
 
     public static HashMap map = new HashMap(1024);
 
+    public String foo(){
+        return "foo!";
+    }
+
+    public String foo(Object param){
+        return "foo, " + param + "!";
+    }
+
     public Object newObjectArray(int size) {
         try {
             return new Object[size];
@@ -123,6 +131,35 @@ public class Bindings {
             return OpenBean.getClassDesc(aClass).getStaticMethodDesc(method, false, params).invoke(aClass, params);
         } catch (Exception e) {
             return new ExceptionWrapper(e, "className: " + className +
+                ", method: " + method +
+                ", params: " + Arrays.asList(params)
+            );
+        }
+    }
+
+
+    public Object safeCall3(Object bean, String field, String method, Object param0, Object param1, Object param2){
+        return call(bean, field, method, param0, param1, param2);
+    }
+
+    public Object safeCall2(Object bean, String field, String method, Object param0, Object param1){
+        return call(bean, field, method, param0, param1);
+    }
+
+    public Object safeCall1(Object bean, String field, String method, Object param0){
+        return call(bean, field, method, param0);
+    }
+
+    public Object safeCall0(Object bean, String field, String method){
+        return call(bean, field, method);
+    }
+
+    public Object call(Object bean, String field, String method, Object... params){
+        try {
+            Object delegateBean = OpenBean.getFieldValue(bean, field);
+            return OpenBean.invoke(delegateBean, method, params);
+        } catch (Exception e) {
+            return new ExceptionWrapper(e, "className: " + bean.getClass().getSimpleName() +
                 ", method: " + method +
                 ", params: " + Arrays.asList(params)
             );
