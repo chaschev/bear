@@ -35,6 +35,7 @@ public class BearMain {
     static class Options extends JOptOptions {
         public final static OptionSpec<String> BEARIFY = parser.accepts("bearify", "adds bear files to the current dir").withOptionalArg().ofType(String.class).describedAs("dir").defaultsTo(".");
         public final static OptionSpec<String> SETTINGS_FILE = parser.accepts("settings", "path to BearSettings.java").withRequiredArg().ofType(String.class).describedAs("path").defaultsTo(".bear/BearSettings.java");
+        public final static OptionSpec<String> PROPERTIES_FILE = parser.accepts("props", "name of *.properties").withRequiredArg().ofType(String.class).describedAs("path").defaultsTo("settings.properties");
         public final static OptionSpec<String> SCRIPTS_DIR = parser.accepts("scriptsDir", "path to scripts dir").withRequiredArg().ofType(String.class).describedAs("path").defaultsTo(".bear");
         public final static OptionSpec<String> SCRIPT = parser.accepts("script", "script to run").withRequiredArg().ofType(String.class).describedAs("path");
 

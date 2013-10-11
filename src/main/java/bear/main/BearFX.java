@@ -102,13 +102,13 @@ public class BearFX {
         public void start(Stage stage) throws Exception {
             try {
                 Properties properties = new Properties();
-                properties.load(new FileInputStream(".bear/settings.properties"));
+                properties.load(new FileInputStream(".bear/bear-fx.properties"));
 
                 BearCommandLineConfigurator configurator = new BearCommandLineConfigurator(
                     "--script=" + properties.get("bear-fx.script"),
-                    "--settings=.bear/" + properties.get("bear-fx.settings") + " "
-                ).setProperties(properties)
-                    .configure();
+                    "--settings=" + properties.get("bear-fx.settings"),
+                    "--props=" + properties.get("bear-fx.properties")
+                ).configure();
 
                 bearFX = new BearFX(this, configurator);
 

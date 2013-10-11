@@ -26,6 +26,10 @@ public class SetupPluginsSettings extends IBearSettings {
     Bear bear;
     TomcatPlugin tomcat;
 
+    public SetupPluginsSettings(GlobalContextFactory factory) {
+        super(factory);
+    }
+
     SetupPluginsSettings(GlobalContextFactory factory, String resource) {
         super(factory, resource);
     }

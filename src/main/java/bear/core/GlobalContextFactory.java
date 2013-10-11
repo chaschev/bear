@@ -22,6 +22,7 @@ import chaschev.util.Exceptions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.util.List;
 
 /**
@@ -35,7 +36,11 @@ public class GlobalContextFactory {
     private final GlobalContext global = GlobalContext.getInstance();
 
     public GlobalContextFactory() {
-        global.loadProperties(global.localCtx.var(global.bear.settingsFile));
+        File file = global.localCtx.var(global.bear.globalPropertiesFile);
+
+        if(file.exists()){
+            global.loadProperties(file);
+        }
     }
 
     public void init() {

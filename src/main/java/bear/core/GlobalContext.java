@@ -23,6 +23,7 @@ import bear.session.SystemEnvironment;
 import bear.session.Variables;
 import bear.task.*;
 import chaschev.util.Exceptions;
+import com.google.common.base.Preconditions;
 import com.google.common.base.Predicates;
 import com.google.common.collect.Iterables;
 import com.google.common.util.concurrent.ListeningExecutorService;
@@ -228,6 +229,8 @@ public class GlobalContext {
     }
 
     public void loadProperties(InputStream is) throws IOException {
+        Preconditions.checkNotNull(is);
+
         properties.load(is);
 
         loadProperties(properties);

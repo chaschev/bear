@@ -20,6 +20,7 @@ import org.apache.commons.lang3.ArrayUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.tools.JavaCompiler;
 import javax.tools.ToolProvider;
@@ -59,6 +60,7 @@ public class BearCommandLineConfigurator {
     @Nullable
     private Properties properties;
     private String scriptName;
+    private String propertiesName;
 
     private CompileManager compileManager;
 
@@ -88,14 +90,23 @@ public class BearCommandLineConfigurator {
     }
 
     public IBearSettings newSettings() {
-        return newSettings(getBaseName(settingsFile.getName()), new File(scriptsDir, "settings.properties"));
+        return newSettings(getBaseName(settingsFile.getName()));
     }
 
-    public IBearSettings newSettings(String bearSettings, File file) {
-        try {
-            final CompiledEntry settingsClass = compileManager.findClass(bearSettings, false);
+    public IBearSettings newSettings(String bearSettings) {
+        return newSettings(bearSettings, new File(scriptsDir, propertiesName));
+    }
 
-            IBearSettings settings = (IBearSettings) settingsClass.aClass.newInstance();
+
+    public IBearSettings newSettings(String bearSettings, @Nonnull File file) {
+        Preconditions.checkNotNull(file);
+
+        try {
+            final CompiledEntry settingsEntry = compileManager.findClass(bearSettings, false);
+
+            Preconditions.checkNotNull(settingsEntry, "%s not found", bearSettings);
+
+            IBearSettings settings = (IBearSettings) settingsEntry.newInstance(factory);
 
             if (properties != null) {
                 settings.loadProperties(properties);
@@ -151,8 +162,9 @@ public class BearCommandLineConfigurator {
             return this;
         }
 
-        settingsFile = elvis(settingsFile, new File(options.get(SETTINGS_FILE)));
+        settingsFile = elvis(settingsFile, new File(scriptsDir, options.get(SETTINGS_FILE)));
         scriptName = elvis(scriptName, options.get(SCRIPT));
+        propertiesName = elvis(propertiesName, options.get(PROPERTIES_FILE));
 
         scriptsDir = new File(options.get(SCRIPTS_DIR));
 
@@ -179,7 +191,7 @@ public class BearCommandLineConfigurator {
     private Optional<CompiledEntry> compileAndLoadScript() throws MalformedURLException {
         CompilationResult result = compileManager.compileWithAll();
 
-        return findScriptToRun((List)result.scriptClasses);
+        return findScriptToRun((List) result.scriptClasses);
     }
 
     public static abstract class Compiler {
@@ -221,10 +233,10 @@ public class BearCommandLineConfigurator {
         public CompiledEntry findClass(final String className) {
             CompiledEntry aClass = findClass(className, true);
 
-            if(aClass == null){
+            if (aClass == null) {
                 aClass = findClass(className, false);
 
-                if(aClass == null){
+                if (aClass == null) {
                     throw new RuntimeException("class not found: " + className);
                 }
 
@@ -238,7 +250,7 @@ public class BearCommandLineConfigurator {
             Preconditions.checkNotNull(lastCompilationResult, "you need to compile first to load classes");
 
             return Iterables.find(script ?
-                    lastCompilationResult.scriptClasses : lastCompilationResult.settingsClasses, new Predicate<CompiledEntry>() {
+                lastCompilationResult.scriptClasses : lastCompilationResult.settingsClasses, new Predicate<CompiledEntry>() {
                 @Override
                 public boolean apply(CompiledEntry input) {
                     return input.aClass.getSimpleName().equals(className);
@@ -397,31 +409,31 @@ public class BearCommandLineConfigurator {
         return FileUtils.readFileToString(settingsFile);
     }
 
-    public String[] getScriptNames(){
+    public String[] getScriptNames() {
         return getNames(compileManager.lastCompilationResult.scriptClasses);
     }
 
-    public String[] getSettingsNames(){
+    public String[] getSettingsNames() {
         return getNames(compileManager.lastCompilationResult.settingsClasses);
     }
 
-    public String getFileText(String className){
+    public String getFileText(String className) {
         return compileManager.findClass(className).getText();
     }
 
-    public void saveFileText(String className, String text){
+    public void saveFileText(String className, String text) {
         compileManager.findClass(className).saveText(text);
     }
 
-    public void build(){
+    public void build() {
         compileManager.compileWithAll();
     }
 
-    public String getSelectedScript(){
+    public String getSelectedScript() {
         return getScriptName();
     }
 
-    public String getSelectedSettings(){
+    public String getSelectedSettings() {
         return FilenameUtils.getBaseName(getSettingsFile().getName());
     }
 
@@ -429,7 +441,7 @@ public class BearCommandLineConfigurator {
         return (String[]) Lists2.projectMethod(classes, "getName").toArray(new String[classes.size()]);
     }
 
-    public static class RunResponse{
+    public static class RunResponse {
         public List<String> hosts;
 
         public RunResponse() {
@@ -440,18 +452,16 @@ public class BearCommandLineConfigurator {
         }
     }
 
-    public void run(String scriptName, String settingsName) throws Exception{
+    public void run(String scriptName, String settingsName) throws Exception {
         logger.info("running script {}, settings: {}", scriptName, settingsName);
 
         CompiledEntry scriptEntry = compileManager.findClass(scriptName, true);
-        CompiledEntry settingsEntry = compileManager.findClass(settingsName, false);
 
         Preconditions.checkNotNull(scriptEntry, "%s not found", scriptName);
-        Preconditions.checkNotNull(settingsEntry, "%s not found", settingsName);
 
         Script script = (Script) scriptEntry.aClass.newInstance();
 
-        IBearSettings settings = (IBearSettings) settingsEntry.newInstance(factory);
+        IBearSettings settings = newSettings(settingsName);
 
         CompositeTaskRunContext context = new BearRunner(settings, script, factory)
             .init()
@@ -474,7 +484,7 @@ public class BearCommandLineConfigurator {
     }
 
 
-    public static class ConsoleEventToUI extends EventToUI{
+    public static class ConsoleEventToUI extends EventToUI {
         public int console;
         public String textAdded;
 

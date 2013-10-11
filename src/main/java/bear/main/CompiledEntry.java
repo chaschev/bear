@@ -60,4 +60,14 @@ public class CompiledEntry {
     public Object newInstance(Object... params){
         return OpenBean.newInstance(aClass, params);
     }
+
+    @Override
+    public String toString() {
+        final StringBuilder sb = new StringBuilder("CompiledEntry{");
+        sb.append("aClass=").append(aClass);
+        sb.append(", file=").append(file);
+        sb.append(", type='").append(type).append('\'');
+        sb.append('}');
+        return sb.toString();
+    }
 }

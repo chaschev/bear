@@ -255,9 +255,9 @@ public class Bear {
 
     public final DynamicVariable<File>
         scriptsDir = newVar(new File(".bear")),
-        settingsFile = dynamic(new VarFun<File>() {
+        globalPropertiesFile = dynamic(new VarFun<File>() {
             public File apply() {
-                return new File($(scriptsDir), "settings.properties");
+                return new File($(scriptsDir), "global.properties");
             }
         });
 
