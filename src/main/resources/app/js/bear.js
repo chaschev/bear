@@ -101,12 +101,8 @@ function FileTabsCtrl($scope) {
     $scope.$on('buildFinished', function(e, args){
         Java.log("buildFinished - updating files");
 
-        try {
-            $scope.scripts.files = window.bear.call('conf', 'getScriptNames');
-            $scope.settings.files = window.bear.call('conf', 'getSettingsNames');
-        } catch (e) {
-            alert(e);
-        }
+        $scope.scripts.files = window.bear.call('conf', 'getScriptNames');
+        $scope.settings.files = window.bear.call('conf', 'getSettingsNames');
 
         if($scope.selectedFile == null || $scope.selectedFile === 'Loading'){
             $scope.scripts.selectedFile = window.bear.call('conf', 'getSelectedScript');
