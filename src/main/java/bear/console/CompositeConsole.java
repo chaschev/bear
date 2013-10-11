@@ -15,6 +15,11 @@ import java.util.concurrent.Future;
 /**
 * @author Andrey Chaschev chaschev@gmail.com
 */
+
+/**
+ * @deprecated  Not used left as an idea.
+ */
+@Deprecated
 public class CompositeConsole {
     List<? extends AbstractConsole> consoles;
 
@@ -71,7 +76,7 @@ public class CompositeConsole {
             futures.add(fut);
         }
 
-        return new CompositeConsoleArrival(futures, consoles, null);
+        return new CompositeConsoleArrival(null, futures, consoles, null);
     }
 
     public int size() {

@@ -16,6 +16,7 @@
 
 package bear.main;
 
+import chaschev.lang.OpenBean;
 import chaschev.util.Exceptions;
 import org.apache.commons.io.FileUtils;
 
@@ -54,5 +55,9 @@ public class CompiledEntry {
         } catch (IOException e) {
             throw Exceptions.runtime(e);
         }
+    }
+
+    public Object newInstance(Object... params){
+        return OpenBean.newInstance(aClass, params);
     }
 }

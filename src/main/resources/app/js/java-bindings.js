@@ -60,12 +60,57 @@ Java.Collections.toJavaArray = function(arr){
     return  r;
 };
 
+Java.isReturnedArray = function(obj){
+    if(obj == null) return false;
+    if(typeof obj !== 'object') return false;
+
+    var hasFirst = obj.hasOwnProperty('0');
+    var hasSecond = obj['1'] != null;
+
+    if(obj.length == 1 && hasFirst) return true;
+    if(obj.length == 2 && hasFirst && hasSecond) return true;
+
+    return hasFirst && hasSecond && (obj['2'] != null);
+};
+
+Java.isJavaObject = function (v)
+{
+    return Object.prototype.toString.apply(v) === '[object JavaRuntimeObject]';
+};
+
+Java.getObjectClass = function(v){
+    if(this.isJavaObject(v)){
+        return v.getClass().getName().toString();
+    }
+
+    throw "not a java object: " +v;
+};
+
+Java.instanceOf = function(v, jClass){
+    return Java.isJavaObject(v) &&
+        (Java.getObjectClass(v) === jClass);
+};
+
 Java.returnedArrayToJS = function returnedArrayToJS(javaArr){
     var r = [];
-    var r2 = [];
 
     for(var i = 0;i<javaArr.length;i++){
-        r[i] = javaArr[i];
+        var v = javaArr[i];
+
+        if(Object.prototype.toString.apply(v) === '[object JavaRuntimeObject]'){
+            if(v.getClass().getName().toString() === 'java.lang.String'){
+                r[i] = v.toString();
+            }else{
+                r[i] = v;
+            }
+
+        }else{
+            r[i] = v;
+        }
+
+//        alert(r[i]);
+//        alert(typeof (r[i].toString()));
+//        alert(r[i].toString());
     }
 
     return r;
@@ -107,6 +152,12 @@ Java.log = function (arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8)
 
         for (var j = 0; j < arr.length; j++) {
             var obj = arr[j];
+            if(obj === undefined){
+                arr[j] = 'undefined';
+            }else
+            if(obj === null){
+                arr[j] = 'null';
+            }else
             if(typeof obj === 'string'){
                 arr[j] = "'" + arr[j] + "'";
             }else

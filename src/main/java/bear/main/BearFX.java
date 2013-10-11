@@ -18,6 +18,8 @@ package bear.main;
 
 import chaschev.js.Bindings;
 import chaschev.js.ExceptionWrapper;
+import chaschev.json.JacksonMapper;
+import chaschev.json.Mapper;
 import chaschev.lang.OpenBean;
 import javafx.application.Application;
 import javafx.beans.value.ChangeListener;
@@ -43,6 +45,7 @@ import java.util.Properties;
 public class BearFX {
     public final BearCommandLineConfigurator conf;
     public final Facade facade = new Facade();
+    public final BearFXApp bearFXApp;
 
     private static final Logger logger = LoggerFactory.getLogger(BearFX.class);
     private static final Logger jsLogger = LoggerFactory.getLogger("js");
@@ -76,13 +79,24 @@ public class BearFX {
     public Object call(String delegate, String method, Object p1, Object p2, Object p3, Object p4, Object p5, Object p6, Object p7) { return facade.call(delegate, method, p1, p2,p3,p4,p5,p6,p7); }
     public Object call(String delegate, String method, Object p1, Object p2, Object p3, Object p4, Object p5, Object p6, Object p7, Object p8) { return facade.call(delegate, method, p1, p2,p3,p4,p5,p6,p7,p8); }
 
-    public BearFX(BearCommandLineConfigurator conf) {
+    public BearFX(BearFXApp bearFXApp, BearCommandLineConfigurator conf) {
+        this.bearFXApp = bearFXApp;
         this.conf = conf;
+        conf.bearFX = this;
     }
 
     public static class BearFXApp extends Application {
         private WebEngine webEngine;
         private BearFX bearFX;
+
+        private final Mapper mapper = new JacksonMapper();
+        private Bindings bindings = new Bindings();
+
+        public void sendMessageToUI(EventToUI eventToUI){
+            String s = mapper.toJSON(eventToUI);
+
+            webEngine.executeScript("Java.receiveEvent(" + s + ")");
+        }
 
         @Override
         public void start(Stage stage) throws Exception {
@@ -96,7 +110,7 @@ public class BearFX {
                 ).setProperties(properties)
                     .configure();
 
-                bearFX = new BearFX(configurator);
+                bearFX = new BearFX(this, configurator);
 
                 //////////
                 //////////
@@ -131,7 +145,7 @@ public class BearFX {
                             JSObject window = (JSObject) webEngine.executeScript("window");
                             window.setMember("bearFX", bearFX);
                             window.setMember("OpenBean", OpenBean.INSTANCE);
-                            window.setMember("Bindings", new Bindings());
+                            window.setMember("Bindings", bindings);
 
                             logger.info("[JAVA INIT] calling bindings JS initializer...");
                             webEngine.executeScript("Java.init(window);");

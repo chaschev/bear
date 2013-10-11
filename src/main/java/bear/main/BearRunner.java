@@ -1,5 +1,6 @@
 package bear.main;
 
+import bear.core.CompositeTaskRunContext;
 import bear.core.GlobalContextFactory;
 import bear.core.IBearSettings;
 import com.google.common.base.Preconditions;
@@ -35,8 +36,9 @@ public class BearRunner {
         return this;
     }
 
-    public void run() throws Exception {
+    public CompositeTaskRunContext run() throws Exception {
         Preconditions.checkArgument(bearSettings.isConfigured(), "settings must be configured. call settings.init() to configure");
-        script.run();
+
+        return script.run();
     }
 }

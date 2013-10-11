@@ -1,9 +1,8 @@
 package bear.main;
 
-import bear.core.Bear;
-import bear.core.GlobalContext;
-import bear.core.GlobalContextFactory;
-import bear.core.IBearSettings;
+import bear.console.CompositeConsoleArrival;
+import bear.core.*;
+import bear.session.DynamicVariable;
 import bear.session.Question;
 import chaschev.lang.Lists2;
 import chaschev.util.Exceptions;
@@ -14,6 +13,7 @@ import com.google.common.base.Predicate;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.filefilter.SuffixFileFilter;
 import org.apache.commons.lang3.ArrayUtils;
@@ -61,6 +61,8 @@ public class BearCommandLineConfigurator {
     private String scriptName;
 
     private CompileManager compileManager;
+
+    protected BearFX bearFX;
 
     public BearCommandLineConfigurator(String... args) {
         this.args = args;
@@ -216,16 +218,22 @@ public class BearCommandLineConfigurator {
             return lastCompilationResult = javaCompiler.compile();
         }
 
-
         public CompiledEntry findClass(final String className) {
             CompiledEntry aClass = findClass(className, true);
 
             if(aClass == null){
-                return findClass(className, false);
-            }else{
+                aClass = findClass(className, false);
+
+                if(aClass == null){
+                    throw new RuntimeException("class not found: " + className);
+                }
+
+                return aClass;
+            } else {
                 return aClass;
             }
         }
+
         public CompiledEntry findClass(final String className, boolean script) {
             Preconditions.checkNotNull(lastCompilationResult, "you need to compile first to load classes");
 
@@ -245,7 +253,6 @@ public class BearCommandLineConfigurator {
         protected JavaCompiler2(File sourcesDir, File buildDir) {
             super(sourcesDir, buildDir);
         }
-
 
         @Override
         public String[] extensions() {
@@ -303,16 +310,16 @@ public class BearCommandLineConfigurator {
 
             params.addAll(filePaths);
 
-            System.out.printf("compiling %s%n", params);
+            logger.info("compiling {}", params);
 
             final JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
 
             final int r = compiler.run(null, null, null, params.toArray(new String[params.size()]));
 
             if (r == 0) {
-                System.out.printf("compilation OK.%n");
+                logger.info("compilation OK.");
             } else {
-                System.out.printf("compilation failed.%n");
+                logger.info("compilation failed.");
             }
 
             return filesList;
@@ -407,11 +414,76 @@ public class BearCommandLineConfigurator {
     }
 
     public void build(){
-
         compileManager.compileWithAll();
+    }
+
+    public String getSelectedScript(){
+        return getScriptName();
+    }
+
+    public String getSelectedSettings(){
+        return FilenameUtils.getBaseName(getSettingsFile().getName());
     }
 
     private String[] getNames(List classes) {
         return (String[]) Lists2.projectMethod(classes, "getName").toArray(new String[classes.size()]);
     }
+
+    public static class RunResponse{
+        public List<String> hosts;
+
+        public RunResponse() {
+        }
+
+        public RunResponse(List<String> hosts) {
+            this.hosts = hosts;
+        }
+    }
+
+    public void run(String scriptName, String settingsName) throws Exception{
+        logger.info("running script {}, settings: {}", scriptName, settingsName);
+
+        CompiledEntry scriptEntry = compileManager.findClass(scriptName, true);
+        CompiledEntry settingsEntry = compileManager.findClass(settingsName, false);
+
+        Preconditions.checkNotNull(scriptEntry, "%s not found", scriptName);
+        Preconditions.checkNotNull(settingsEntry, "%s not found", settingsName);
+
+        Script script = (Script) scriptEntry.aClass.newInstance();
+
+        IBearSettings settings = (IBearSettings) settingsEntry.newInstance(factory);
+
+        CompositeTaskRunContext context = new BearRunner(settings, script, factory)
+            .init()
+            .run();
+
+        CompositeConsoleArrival<SessionContext> consoleArrival = context.getConsoleArrival();
+
+        List<SessionContext> $s = consoleArrival.getEntries();
+
+        for (int i = 0; i < $s.size(); i++) {
+            SessionContext $ = $s.get(i);
+            final int finalI = i;
+
+            $.getExecutionContext().textAppended.addListener(new DynamicVariable.ChangeListener<String>() {
+                public void changedValue(DynamicVariable<String> var, String oldValue, String newValue) {
+                    bearFX.bearFXApp.sendMessageToUI(new ConsoleEventToUI(finalI, newValue));
+                }
+            });
+        }
+    }
+
+
+    public static class ConsoleEventToUI extends EventToUI{
+        public int console;
+        public String textAdded;
+
+        public ConsoleEventToUI(int console, String textAdded) {
+            super("console");
+            this.console = console;
+            this.textAdded = textAdded;
+        }
+    }
+
+
 }

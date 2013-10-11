@@ -25,6 +25,27 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class CompositeTaskRunContext {
     private final CompositeConsoleArrival<SessionContext> consoleArrival;
 
+    public final DynamicVariable<Stats> stats;
+
+    public CompositeTaskRunContext(CompositeConsoleArrival<SessionContext> consoleArrival) {
+        this.consoleArrival = consoleArrival;
+
+        stats = Variables.dynamic(Stats.class).defaultTo(new Stats(consoleArrival.getArrivedEntries().size()));
+    }
+
+    public CompositeConsoleArrival<SessionContext> getConsoleArrival() {
+        return consoleArrival;
+    }
+
+    public void addArrival(int i, SessionContext $) {
+        consoleArrival.addArrival(i, $);
+
+        boolean isOk = $.getExecutionContext().rootExecutionContext.getDefaultValue().taskResult.ok();
+
+        stats.getDefaultValue().addArrival(isOk);
+        stats.fireExternalModification();
+    }
+
     public static class Stats{
         public final AtomicInteger partiesArrived = new AtomicInteger();
         public final AtomicInteger partiesOk = new AtomicInteger();
@@ -47,26 +68,5 @@ public class CompositeTaskRunContext {
 
             partiesFailed = partiesArrived.get() - partiesOk.get();
         }
-    }
-
-    public final DynamicVariable<Stats> stats;
-
-    public CompositeTaskRunContext(CompositeConsoleArrival<SessionContext> consoleArrival) {
-        this.consoleArrival = consoleArrival;
-
-        stats = Variables.dynamic(Stats.class).defaultTo(new Stats(consoleArrival.getConsoles().size()));
-    }
-
-    public CompositeConsoleArrival<SessionContext> getConsoleArrival() {
-        return consoleArrival;
-    }
-
-    public void addArrival(int i, SessionContext $) {
-        consoleArrival.addArrival(i, $);
-
-        boolean isOk = $.getExecutionContext().rootExecutionContext.getDefaultValue().taskResult.ok();
-
-        stats.getDefaultValue().addArrival(isOk);
-        stats.fireExternalModification();
     }
 }

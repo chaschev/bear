@@ -72,7 +72,17 @@ public class Stage {
 
         final List<ListenableFuture<SessionContext>> futures = new ArrayList<ListenableFuture<SessionContext>>(consoles.size());
 
-        final CompositeConsoleArrival<SessionContext> consoleArrival = new CompositeConsoleArrival<SessionContext>(futures, consoles, new Function<SessionContext, String>() {
+        List<SessionContext> $s = new ArrayList<SessionContext>();
+
+        for (AbstractConsole console : consoles) {
+            final SystemEnvironment environment = (SystemEnvironment) console;
+
+            final TaskRunner runner = new TaskRunner(null, global);
+
+            $s.add(environment.newCtx(runner));
+        }
+
+        final CompositeConsoleArrival<SessionContext> consoleArrival = new CompositeConsoleArrival<SessionContext>($s, futures, consoles, new Function<SessionContext, String>() {
             @Override
             public String apply(SessionContext $) {
                 return $.executionContext.text.apply($).toString();
@@ -82,26 +92,21 @@ public class Stage {
         final CompositeTaskRunContext compositeTaskRunContext = new CompositeTaskRunContext(consoleArrival);
 
         for (int i = 0; i < consoles.size(); i++) {
-            AbstractConsole console = consoles.get(i);
-            final SystemEnvironment environment = (SystemEnvironment) console;
+            final SessionContext $ = $s.get(i);
+            final SystemEnvironment sys = $.getSys();
+            final TaskRunner runner = $.getRunner();
 
             final int finalI = i;
-            ListenableFuture<SessionContext> future = global.taskExecutor.submit(new Callable<SessionContext>() {
+
+            final ListenableFuture<SessionContext> future = global.taskExecutor.submit(new Callable<SessionContext>() {
                 @Override
                 public SessionContext call() {
-                    final SessionContext $;
-                    final TaskRunner runner = new TaskRunner(null, global);
-
-                    $ = environment.newCtx(runner);
-
                     try {
-
-
                         Thread.currentThread().setName($.threadName());
 
                         $.sys.connect();
 
-                        if ($.var(environment.bear.verifyPlugins)) {
+                        if ($.var(sys.bear.verifyPlugins)) {
                             DependencyResult r = new DependencyResult(Result.OK);
 
                             for (Plugin plugin : global.getGlobalPlugins()) {
@@ -133,7 +138,6 @@ public class Stage {
                     }finally {
                         compositeTaskRunContext.addArrival(finalI, $);
                     }
-
 
                     return $;
                 }

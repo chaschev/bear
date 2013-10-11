@@ -31,9 +31,9 @@ import java.util.List;
  */
 public class DynamicVariable<T> implements Nameable<T> {
 
-    public interface ChangeListener<T>{
-        void changedValue(DynamicVariable<T> var, T oldValue, T newValue);
-        void changedDynamic(DynamicVariable<T> var, VarFun<T> oldFun, VarFun<T> newFun);
+    public static abstract class ChangeListener<T>{
+        public void changedValue(DynamicVariable<T> var, T oldValue, T newValue){}
+        public void changedDynamic(DynamicVariable<T> var, VarFun<T> oldFun, VarFun<T> newFun){}
     }
 
     protected List<ChangeListener<T>> listeners;

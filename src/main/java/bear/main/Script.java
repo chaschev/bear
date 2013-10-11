@@ -17,6 +17,7 @@
 package bear.main;
 
 import bear.core.Bear;
+import bear.core.CompositeTaskRunContext;
 import bear.core.GlobalContext;
 
 import java.io.File;
@@ -39,9 +40,13 @@ public abstract class Script {
         return this;
     }
 
-    public void run() throws Exception {
+    public CompositeTaskRunContext run() throws Exception {
         configure();
-        global.run();
+
+        CompositeTaskRunContext context = global.run();
+
         global.shutdown();
+
+        return context;
     }
 }

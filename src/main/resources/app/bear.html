@@ -12,12 +12,12 @@
     <script src="js/ui-bootstrap-tpls-0.6.0.js"></script>
     <script src="js/bootstrap.js"></script>
     <script src="js/chosen.jquery.js"></script>
-    <!--<script src="js/ace/ace.js"></script>-->
     <script src="js/bear.js"></script>
     <script type="text/javascript" src="js/java-bindings.js"></script>
     <link rel="stylesheet" href="css/bootstrap.min.css"/>
     <link rel="stylesheet" href="css/chosen.css"/>
     <link rel="stylesheet" href="css/chosen-bootstrap.css"/>
+    <!--<link rel="stylesheet" href="css/font-awesome.min.css">-->
     <link href="http://netdna.bootstrapcdn.com/font-awesome/3.2.1/css/font-awesome.css" rel="stylesheet">
     <style>
         .aceEditor {
@@ -46,6 +46,7 @@
 
                 var bean = args[0];
                 var method = args[1];
+
                 args = args.slice(2);
 
                 if (bean == 'conf') {
@@ -57,23 +58,57 @@
             }
         }
 
-        //register facade as a part of bindings!!
+        //todo: register facade as a part of bindings!!
         window.bear = {
             call: function(){
                 var args = Array.prototype.slice.call(arguments);
 
                 var bean = args[0];
                 var method = args[1];
+
                 args = args.slice(2);
+
+                var r;
 
                 switch (args.length){
                     case 0:
-                        return checkExc(Java.Bindings.safeCall0(window.bearFX, bean, method));
+                        r = checkExc(Java.Bindings.safeCall0(window.bearFX, bean, method));
+                        break;
                     case 1:
-                        return checkExc(Java.Bindings.safeCall1(window.bearFX, bean, method, args[0]));
+                        r = checkExc(Java.Bindings.safeCall1(window.bearFX, bean, method, args[0]));
+                        break;
+                    case 2:
+                        r = checkExc(Java.Bindings.safeCall2(window.bearFX, bean, method, args[0], args[1]));
+                        break;
+                    case 3:
+                        r = checkExc(Java.Bindings.safeCall3(window.bearFX, bean, method, args[0], args[1], args[2]));
+                        break;
+                    case 4:
+                        r = checkExc(Java.Bindings.safeCall4(window.bearFX, bean, method, args[0], args[1], args[2], args[3]));
+                        break;
+                    case 5:
+                        r = checkExc(Java.Bindings.safeCall5(window.bearFX, bean, method, args[0], args[1], args[2], args[3], args[4]));
+                        break;
                     default:
                         throw  "window.bear.todo!!";
                 }
+
+                Java.log(r);
+
+                if(Java.isReturnedArray(r)){
+//                    Java.log('array:', r, Java.isJavaObject(r));
+                    r = Java.returnedArrayToJS(r);
+                }
+
+                return r;
+            },
+            runScript: function(){
+                var scope = angular.element('#FileTabsCtrl').scope();
+
+                Java.log('scope', scope);
+                Java.log('running script', scope.scripts.selectedFile);
+
+                this.call('conf', 'run', scope.scripts.selectedFile, scope.settings.selectedFile);
             }
         };
 
@@ -271,7 +306,7 @@
                     </div>
                 </div>
 
-                <script src="http://d1n0x3qji82z53.cloudfront.net/src-min-noconflict/ace.js" type="text/javascript" charset="utf-8"></script>
+                <script src="js/ace/ace.js" type="text/javascript" charset="utf-8"></script>
                 <script>
 
                 </script>
@@ -319,7 +354,7 @@
                                     <button class="btn btn-default btn-xs"><i class="icon-trash"></i></button>
                                     <button class="btn btn-default btn-xs"><i class="icon-refresh"></i></button>
                                     <button class="btn btn-default btn-xs"><i class="icon-save"></i></button>
-                                    <button class="btn btn-default btn-xs"><i class="icon-play"></i></button>
+                                    <button class="btn btn-default btn-xs" onclick="bear.runScript()"><i class="icon-play"></i></button>
                                 </div>
                                 <div class="btn-group">
                                     <button class="btn btn-default btn-xs"><i class="icon-cog"></i></button>
@@ -370,6 +405,7 @@
                 </ul>
             </div>
         </div>
+    </div>
 </div>
 </body>
 </html>

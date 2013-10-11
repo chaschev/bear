@@ -44,6 +44,7 @@ public class SessionContext {
 
     public class ExecutionContext{
         public final DynamicVariable<StringBuilder> text = dynamic(StringBuilder.class).setDesc("text appended in session").defaultTo(new StringBuilder(8192));
+        public final DynamicVariable<String> textAppended = dynamic(String.class).setDesc("text appended in session").defaultTo("");
         public final DynamicVariable<TaskExecutionContext> rootExecutionContext = dynamic(TaskExecutionContext.class);
         public final DynamicVariable<Task> currentTask = dynamic(Task.class);
         public final DynamicVariable<CommandExecutionEntry> currentCommand = dynamic(CommandExecutionEntry.class);
@@ -52,6 +53,7 @@ public class SessionContext {
             StringBuilder sb = text.apply(SessionContext.this);
             sb.append(textAdded);
             text.fireExternalModification(null, sb);
+            textAppended.defaultTo(textAdded);
         }
     }
 
@@ -161,5 +163,13 @@ public class SessionContext {
 
     public ExecutionContext getExecutionContext() {
         return executionContext;
+    }
+
+    public SystemEnvironment getSys() {
+        return sys;
+    }
+
+    public TaskRunner getRunner() {
+        return runner;
     }
 }

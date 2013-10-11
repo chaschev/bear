@@ -24,14 +24,16 @@ module.directive('chosen',function() {
     console.log('chosen!!');
 
     var linker = function(scope,element,attrs) {
-        var list = attrs['chosen'];
+        var selected = attrs['chosen'];
 
         var $element = $(element[0]);
 
-        scope.$watch(list, function(){
+        scope.$watch(selected, function(){
+            Java.log('model ', scope[selected], 'files: ', scope.files(), ' and updating');
+            Java.log('selected val:' + $element.html(), $element.val());
+
             $element.trigger('liszt:updated');
             $element.trigger("chosen:updated");
-//            console.log('chosen:updated');
         });
 
         $element.chosen({width: "100%"});
@@ -90,17 +92,27 @@ function FileTabsCtrl($scope) {
         files: ["Loading"]
     };
 
+    function mapArray(arr){
+        for (var i = 0; i < arr.length; i++) {
+            arr[i] = {index:i, name: arr[i]};
+        }
+    }
+
     $scope.$on('buildFinished', function(e, args){
         Java.log("buildFinished - updating files");
 
-        $scope.scripts.files = Java.returnedArrayToJS(checkExc(window.bearFX.call('conf', 'getScriptNames')));
-        $scope.settings.files = Java.returnedArrayToJS(checkExc(window.bearFX.call('conf', 'getSettingsNames')));
+        try {
+            $scope.scripts.files = window.bear.call('conf', 'getScriptNames');
+            $scope.settings.files = window.bear.call('conf', 'getSettingsNames');
+        } catch (e) {
+            alert(e);
+        }
 
         if($scope.selectedFile == null || $scope.selectedFile === 'Loading'){
-            $scope.scripts.selectedFile = $scope.scripts.files[0];
-            $scope.settings.selectedFile = $scope.settings.files[0];
+            $scope.scripts.selectedFile = window.bear.call('conf', 'getSelectedScript');
+            $scope.settings.selectedFile = window.bear.call('conf', 'getSelectedSettings');
 
-            $scope.selectedFile = $scope.scripts.files[0];
+            $scope.selectedFile = $scope.scripts.selectedFile;
         }
 
         Java.log('files:', $scope.scripts.files, "selectedFile:", $scope.selectedFile);
@@ -155,7 +167,8 @@ function FileTabsCtrl($scope) {
     });
 
     $scope.$watch('selectedFile', function(newVal, oldVal){
-        Java.log("selectedFile watch: ", newVal);
+        Java.log("selectedFile watch: " + newVal + ", updating editor");
+
         $scope.currentTab().selectedFile = newVal;
 
         var content = window.bear.call('conf', 'getFileText', newVal);
@@ -180,4 +193,10 @@ var TabsDemoCtrl = function ($scope) {
     };
 
     $scope.navType = 'pills';
+};
+
+Java.receiveEvent = function(e){
+    Java.log('received event: ', e);
+
+
 };

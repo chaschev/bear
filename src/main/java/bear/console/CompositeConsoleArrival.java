@@ -30,6 +30,7 @@ public class CompositeConsoleArrival<ENTRY> {
     protected Future<EqualityGroups> groups;
 
     protected List<ENTRY> entries;
+    protected List<ENTRY> arrivedEntries;
 
     protected String[] convertedEntries;
 
@@ -38,18 +39,21 @@ public class CompositeConsoleArrival<ENTRY> {
     protected double thresholdDistancePct = 5;
 
     public CompositeConsoleArrival(
-        List<ListenableFuture<ENTRY>> futures, List<? extends AbstractConsole> consoles,
+        List<ENTRY> entries, List<ListenableFuture<ENTRY>> futures, List<? extends AbstractConsole> consoles,
         Function<ENTRY, String> entryAsText) {
+
+        this.entries = entries;
 
         this.futures = futures;
         this.consoles = consoles;
         this.entryAsText = entryAsText;
 
-        entries = LangUtils.newFilledArrayList(consoles.size(), null);
+        arrivedEntries = LangUtils.newFilledArrayList(consoles.size(), null);
+        this.entries = new ArrayList<ENTRY>(consoles.size());
     }
 
     public void addArrival(int i, ENTRY entry) {
-        entries.set(i, entry);
+        arrivedEntries.set(i, entry);
     }
 
     public void await(int sec) {
@@ -117,7 +121,7 @@ public class CompositeConsoleArrival<ENTRY> {
 
     public List<EqualityGroup> divideIntoGroups() {
         for (int i = 0; i < futures.size(); i++) {
-            convertedEntries[i] = entryAsText.apply(entries.get(i));
+            convertedEntries[i] = entryAsText.apply(arrivedEntries.get(i));
         }
 
         List<EqualityGroup> groups = new ArrayList<EqualityGroup>();
@@ -142,5 +146,13 @@ public class CompositeConsoleArrival<ENTRY> {
 
     public List<? extends AbstractConsole> getConsoles() {
         return consoles;
+    }
+
+    public List<ENTRY> getArrivedEntries() {
+        return arrivedEntries;
+    }
+
+    public List<ENTRY> getEntries() {
+        return entries;
     }
 }
