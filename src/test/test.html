@@ -1,0 +1,52 @@
+<html>
+<body>
+<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+<script type='text/javascript'
+        src='http://getfirebug.com/firebug-lite.js#startOpened'></script>
+
+<script type="text/javascript">
+    Object.prototype.keys = function ()
+    {
+        return Object.keys(this);
+    };
+
+    alert("before $(document).ready(...)");
+
+    $(document).ready(function ()
+    {
+        alert("loaded");
+        window.app.onClick1({'t': 1});
+        $('#enableFirebug').click(function (e)
+        {
+            e.preventDefault();
+            window.app.enableFirebug();
+        });
+    });
+</script>
+
+<p>more layout!!!</p>
+<a href="" id="enableFirebug">Enable firebug</a> <br/>
+<a href="" onclick="app.onClick1({'a':'b', 'c':'d'})">Click 1</a> <br/>
+<a href="" onclick="app.onClick2()">Click 2</a> <br/>
+<!--<a href="" onclick="window.app.onClick1({'a':'b', 'c':'d'})" >Click2</a> <br/>-->
+<script type="text/javascript">
+    alert("inside JS");
+    try {
+        alert("enableFirebug");
+        $('#enableFirebug').click(function (e)
+        {
+            alert("Enable firebug - click handler");
+            e.preventDefault();
+            window.app.enableFirebug();
+        });
+        alert("importPackage");
+
+
+
+    } catch (e) {
+        alert("error!");
+        alert(e);
+    }
+</script>
+</body>
+</html>

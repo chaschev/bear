@@ -14,29 +14,30 @@
  * limitations under the License.
  */
 
-package atocha;
+package bear.task.exec;
 
-import bear.core.GlobalContext;
-import bear.plugins.Plugin;
-import bear.session.DynamicVariable;
-import bear.session.Variables;
-import bear.task.InstallationTask;
-import bear.task.InstallationTaskDef;
+import bear.session.Result;
+import bear.task.TaskResult;
+import org.joda.time.DateTime;
 
 /**
- * @author Andrey Chaschev chaschev@gmail.com
- */
-public class Atocha extends Plugin {
+* @author Andrey Chaschev chaschev@gmail.com
+*/
+public abstract class ExecutionEntry {
+    DateTime startedAt = new DateTime();
+    DateTime finishedAt;
 
-    public final DynamicVariable<Boolean>
-        reuseWar = Variables.bool("will skip building WAR").defaultTo(false);
-
-    public Atocha(GlobalContext global) {
-        super(global);
+    public void onEnd(TaskResult result) {
+        finishedAt = new DateTime();
     }
 
-    @Override
-    public InstallationTaskDef<InstallationTask> getInstall() {
-        return InstallationTaskDef.EMPTY;
+    public DateTime getStartedAt() {
+        return startedAt;
     }
+
+    public DateTime getFinishedAt() {
+        return finishedAt;
+    }
+
+    public abstract Result getResult() ;
 }

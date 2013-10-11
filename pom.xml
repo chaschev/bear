@@ -115,7 +115,7 @@
                 <configuration>
                     <archive>
                         <manifestEntries>
-                            <Main-Class>cap4j.main.Cap4j</Main-Class>
+                            <Main-Class>bear.main.BearMain</Main-Class>
                             <implementation-vendor>chaschev</implementation-vendor>
                             <implementation-title>${project.name}</implementation-title>
                             <implementation-version>${project.version}</implementation-version>
@@ -222,8 +222,8 @@
                         <!--<option>-keep class * implements chaschev.conf.ProguardKeep{*;}</option>
                         <option>-keepclassmembers class * implements chaschev.conf.ProguardKeepNames{*;}</option>-->
 
-                        <option>-keep class cap4j.**{*;}</option>
-                        <option>-keepclassmembers class cap4j.**{*;}</option>
+                        <option>-keep class bear.**{*;}</option>
+                        <option>-keepclassmembers class bear.**{*;}</option>
 
                         <option>-keep class ch.qos.logback.core.FileAppender{*;}</option>
                         <option>-keepclassmembers class ch.qos.logback.core.FileAppender{*;}</option>
@@ -288,7 +288,7 @@
                 <filtering>true</filtering>
             </resource>
             <resource>
-                <directory>.cap</directory>
+                <directory>.bear</directory>
             </resource>
         </resources>
     </build>

@@ -14,29 +14,11 @@
  * limitations under the License.
  */
 
-package atocha;
-
-import bear.core.GlobalContext;
-import bear.plugins.Plugin;
-import bear.session.DynamicVariable;
-import bear.session.Variables;
-import bear.task.InstallationTask;
-import bear.task.InstallationTaskDef;
+package bear.core;
 
 /**
  * @author Andrey Chaschev chaschev@gmail.com
  */
-public class Atocha extends Plugin {
-
-    public final DynamicVariable<Boolean>
-        reuseWar = Variables.bool("will skip building WAR").defaultTo(false);
-
-    public Atocha(GlobalContext global) {
-        super(global);
-    }
-
-    @Override
-    public InstallationTaskDef<InstallationTask> getInstall() {
-        return InstallationTaskDef.EMPTY;
-    }
+public class Role {
+    public String role;
 }

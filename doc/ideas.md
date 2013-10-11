@@ -97,40 +97,6 @@ And implementation will use this method.
 
 In a common-case scenario you send text to console and you get the response. If you send commands quickly, they are run in parallel in separate session.
 
-```java
-class AbstractConsole {
-    void sendCommand(callback(text) -> ..., int timeoutMs);
-}
-```
-
-```java
-
-class CompositeConsole {
-    List<AbstractConsole> consoles;
-
-    void sendCommand(callback(text) -> ..., int timeoutMs){
-        send to each
-        join threads and wait for the response, update data on arrival
-    }
-}
-
-
-class CompositeArrival {
-    List<Entry> entries;
-
-    class Entry{
-        DynVar<String> text;
-        ConsoleResult result; // text + result
-    }
-
-    // this method will find major differences if there are between several text outputs
-    // so the representational layer could display them
-    void findDifferences(float threshold){
-    }
-}
-
-```
-
 ### Console terminals
 
 http://terminal.jcubic.pl/examples.php, https://duckduckgo.com/tty/, https://www.docker.io/gettingstarted/#4

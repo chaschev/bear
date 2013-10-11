@@ -14,29 +14,32 @@
  * limitations under the License.
  */
 
-package atocha;
+package bear.core;
 
-import bear.core.GlobalContext;
-import bear.plugins.Plugin;
-import bear.session.DynamicVariable;
-import bear.session.Variables;
-import bear.task.InstallationTask;
-import bear.task.InstallationTaskDef;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * @author Andrey Chaschev chaschev@gmail.com
  */
-public class Atocha extends Plugin {
+public class Releases {
+    List<String> releases;
 
-    public final DynamicVariable<Boolean>
-        reuseWar = Variables.bool("will skip building WAR").defaultTo(false);
-
-    public Atocha(GlobalContext global) {
-        super(global);
+    public Releases(List<String> releases) {
+        this.releases = releases;
     }
 
-    @Override
-    public InstallationTaskDef<InstallationTask> getInstall() {
-        return InstallationTaskDef.EMPTY;
+    public String last() {
+        return releases.get(releases.size() - 1);
+    }
+
+    public String previous() {
+        return releases.get(releases.size() - 2);
+    }
+
+    public List<String> listToDelete(int keepX) {
+        if (releases.size() <= keepX) return Collections.emptyList();
+
+        return releases.subList(0, releases.size() - keepX);
     }
 }

@@ -23,7 +23,7 @@
     </appender>
 
     <appender name="FILE" class="ch.qos.logback.core.FileAppender">
-        <file>.cap/logs/cap4.log</file>
+        <file>.bear/logs/bear.log</file>
         <append>true</append>
         <encoder>
             <Pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</Pattern>

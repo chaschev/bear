@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+    <title></title>
+
+    <meta charset="UTF-8">
+
+    <script src="js/jquery-2.0.3.min.js"></script>
+    <script src="js/angular.min.js"></script>
+    <script src="js/json2.js"></script>
+    <script src="js/ui-bootstrap-tpls-0.6.0.js"></script>
+    <script src="js/bootstrap.js"></script>
+    <script src="js/chosen.jquery.js"></script>
+    <script src="js/bear.js"></script>
+    <script type="text/javascript" src="js/java-bindings.js"></script>
+    <link rel="stylesheet" href="css/bootstrap.min.css"/>
+    <link rel="stylesheet" href="css/chosen.css"/>
+    <link rel="stylesheet" href="css/chosen-bootstrap.css"/>
+    <!--<link rel="stylesheet" href="css/font-awesome.min.css">-->
+    <link href="http://netdna.bootstrapcdn.com/font-awesome/3.2.1/css/font-awesome.css" rel="stylesheet">
+    <style>
+        .aceEditor {
+            position: relative;
+            height: 300px;
+        }
+
+        #settingsText, #scriptText{
+            position: relative;
+            /*height: 300px;*/
+        }
+
+        #conTabsRootPanel {
+            /*position: relative;*/
+            height: 200px;
+        }
+
+
+    </style>
+    <script type="text/javascript">
+        if (!Java.isFX) {
+            window.bearFX = {};
+            window.bearFX.call = function (){
+                //('conf', 'getFileText', newVal)
+                var args = Array.prototype.slice.call(arguments);
+
+                var bean = args[0];
+                var method = args[1];
+
+                args = args.slice(2);
+
+                if (bean == 'conf') {
+                    if (method == 'getFileText') {
+                        return "Text of " + args[0];
+                    }
+                }
+
+            }
+        }
+
+        //todo: register facade as a part of bindings!!
+        window.bear = {
+            call: function(){
+                var args = Array.prototype.slice.call(arguments);
+
+                var bean = args[0];
+                var method = args[1];
+
+                args = args.slice(2);
+
+                var r;
+
+                switch (args.length){
+                    case 0:
+                        r = checkExc(Java.Bindings.safeCall0(window.bearFX, bean, method));
+                        break;
+                    case 1:
+                        r = checkExc(Java.Bindings.safeCall1(window.bearFX, bean, method, args[0]));
+                        break;
+                    case 2:
+                        r = checkExc(Java.Bindings.safeCall2(window.bearFX, bean, method, args[0], args[1]));
+                        break;
+                    case 3:
+                        r = checkExc(Java.Bindings.safeCall3(window.bearFX, bean, method, args[0], args[1], args[2]));
+                        break;
+                    case 4:
+                        r = checkExc(Java.Bindings.safeCall4(window.bearFX, bean, method, args[0], args[1], args[2], args[3]));
+                        break;
+                    case 5:
+                        r = checkExc(Java.Bindings.safeCall5(window.bearFX, bean, method, args[0], args[1], args[2], args[3], args[4]));
+                        break;
+                    default:
+                        throw  "window.bear.call.todo!!";
+                }
+
+                if(Java.isReturnedArray(r)){
+                    r = Java.returnedArrayToJS(r);
+                }
+
+                return r;
+            },
+            runScript: function(){
+                var scope = angular.element('#FileTabsCtrl').scope();
+
+                Java.log('scope', scope);
+                Java.log('running script', scope.scripts.selectedFile);
+
+                this.call('conf', 'run', scope.scripts.selectedFile, scope.settings.selectedFile);
+            }
+        };
+
+        alert('Java.receiveEvent!!');
+        Java.receiveEvent = function(e){
+            Java.log('received event: ', e);
+        };
+
+        Java.initApp = function(){
+            if(this.initialized){
+                return;
+            }
+
+            //window.bearFX.call('conf', 'getSettingsText')
+
+
+            Java.log("started Java.initApp...");
+            this.initialized = true;
+
+            $('.nav.nav-tabs').find('li>a').click(function (e) {
+                e.preventDefault();
+                var $this = $(this);
+                $this.tab('show');
+                var href = $this.attr('href');
+                var tabId = href.substring(1);
+                angular.element(href).scope().selectTab(tabId.substring(0, tabId.length - 3));
+            });
+
+
+            function initAceEditor(editor)
+            {
+                var session = editor.getSession();
+
+                session.setMode("ace/mode/java");
+                session.setUseWorker(false);
+                session.setTabSize(2);
+
+                editor.renderer.setShowGutter(false);
+            }
+
+            var settingsTextEditor = ace.edit("settingsText");
+            var scriptsEditor = ace.edit("scriptText");
+
+            initAceEditor(settingsTextEditor);
+            initAceEditor(scriptsEditor);
+
+            if(Java.isFX){
+//                settingsTextEditor.setValue(checkExc(window.bearFX.call('conf', 'getSettingsText')));
+//                scriptsEditor.setValue(checkExc(window.bearFX.call('conf', 'getScriptText')));
+
+                angular.element('body').scope().buildScripts();
+            }
+        };
+
+        $(document).ready(function(){
+            if(!Java.isFX){
+                Java.initApp();
+            }
+        });
+    </script>
+</head>
+<body class="design" ng-app="bear" ng-controller="BearCtrl">
+<div class="btn-toolbar">
+    <div class="btn-group"><a href="#" class="btn btn-default">Button 1</a><a href="#" class="btn btn-default">Button
+        2</a><a href="#" class="btn btn-default">Button 3</a></div>
+    <div class="btn-group"><a href="#" class="btn btn-default">Button 1</a><a href="#" class="btn btn-default">Button
+        2</a><a href="#" class="btn btn-default">Button 3</a></div>
+</div>
+<div class="row">
+    <div class="col-md-2">
+        <div class="panel panel-primary">
+            <div class="panel-heading">
+                <h3 class="panel-title">Status</h3>
+            </div>
+            <div class="panel-body">
+                <ul class="list-group">
+                    <li class="list-group-item">
+                        <span class="badge">14</span>Servers
+                    </li>
+                    <li class="list-group-item">
+                        <span class="badge">2</span>Running
+                    </li>
+                    <li class="list-group-item">
+                        <span class="badge">1</span> Failed
+                    </li>
+                    <li class="list-group-item">
+                        <span class="badge">11</span> Completed
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="panel panel-primary">
+            <div class="panel-heading">
+                <h3 class="panel-title">Environment</h3>
+            </div>
+            <div class="panel-body"><br>
+                <div class="input-group input-group-sm">
+                    <span class="input-group-addon">Stage</span>
+                    <div class="input-group">
+                        <div class="input-group-btn">
+                            <div class="dropdown" ng-controller="DropdownCtrl">
+                                <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown">Action <span class="caret"></span></button>
+                                <ul class="dropdown-menu">
+                                    <li ng-repeat="choice in items">
+                                        <a>{{choice}}</a>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div><!-- /btn-group -->
+                    </div>
+                </div>
+                <div class="input-group input-group-sm">
+                    <span class="input-group-addon">Roles</span>
+                    <div class="input-group">
+                        <div class="input-group-btn">
+                            <div class="dropdown" ng-controller="DropdownCtrl">
+                                <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown">Action <span class="caret"></span></button>
+                                <ul class="dropdown-menu">
+                                    <li ng-repeat="choice in items">
+                                        <a>{{choice}}</a>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div><!-- /btn-group -->
+                    </div>
+                </div>
+                <div class="input-group input-group-sm">
+                    <span class="input-group-addon">Hosts</span>
+                    <div class="input-group">
+                        <div class="input-group-btn">
+                            <div class="dropdown" ng-controller="DropdownCtrl">
+                                <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown">Action <span class="caret"></span></button>
+                                <ul class="dropdown-menu">
+                                    <li ng-repeat="choice in items">
+                                        <a>{{choice}}</a>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div><!-- /btn-group -->
+                    </div>
+                </div>
+
+
+            </div>
+        </div>
+    </div>
+    <div class="col-md-7">
+        <div class="panel panel-primary">
+            <div class="panel-heading">
+                <h3 class="panel-title">Live Hosts Status</h3>
+            </div>
+            <div class="panel-body">
+                <table class="table">
+                    <th>
+                        <td>Host</td>
+                        <td>Task</td>
+                        <td>Command</td>
+                        <td>Status</td>
+                    </th>
+                    <tr>
+                        <td>vm01</td>
+                        <td>deploy</td>
+                        <td>Grails build</td>
+                        <td><pre>grails war ROOT.war</pre></td>
+                        <td><div class="alert alert-info">Pending</div></td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+        <div class="panel panel-primary">
+            <div class="panel-heading">
+                <h3 class="panel-title">Hosts Log</h3>
+            </div>
+            <div class="panel-body">
+                <pre>
+10:05:34 vm01 Received answer: ... dkfjdkfj
+10:05:34 vm03 Received answer: ... fdfd
+                </pre>
+            </div>
+        </div>
+        <div class="panel panel-primary">
+            <div class="panel-heading">
+                <h3 class="panel-title">Shell</h3>
+            </div>
+            <div class="panel-body">
+                <div id="conTabsRootPanel" ng-controller="TabsDemoCtrl">
+                    <!--<button class="btn btn-small" ng-click="tabs[0].active = true">Select second tab</button>                   -->
+                    <ul id="conTabList" class="nav nav-tabs">
+                        <li ng-repeat="tab in tabs">
+                            <a href="#{{tab.id}}">{{tab.title}}</a>
+                        </li>
+                    </ul>
+
+                    <div class="tab-content">
+
+                        <div ng-repeat="tab in tabs" id="{{tab.id}}" class="fade in tab-pane">
+                            {{tab.content}}
+                        </div>
+                    </div>
+                </div>
+
+                <script src="js/ace/ace.js" type="text/javascript" charset="utf-8"></script>
+                <script>
+
+                </script>
+            </div>
+            <div class="input-group input-group-sm">
+                <input type="text" class="form-control">
+
+                <div class="input-group-btn">
+                    <div class="dropdown" ng-init="init(['a', 'b'])" ng-controller="DropdownCtrl">
+                        <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown">Action
+                            <span class="caret"></span></button>
+                        <ul class="dropdown-menu">
+                            <li ng-repeat="choice in items">
+                                <a>{{choice}}</a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+                <!-- /btn-group -->
+            </div>
+            <!-- /input-group -->
+        </div>
+    </div>
+    <div class="col-md-3" >
+
+        <div class="panel panel-primary">
+            <div class="panel-heading">
+                <h3 class="panel-title">Edit script</h3>
+            </div>
+
+            <div class="panel-body" id="FileTabsCtrl" ng-controller="FileTabsCtrl">
+                <ul id="" class="nav nav-tabs">
+                    <li class="active"><a href="#scriptTab">Script</a></li>
+                    <li class=""><a href="#settingsTab">Settings</a></li>
+                    <li>
+                        <div class="pull-right" >
+                            <div style="display: inline-block">
+                                <select id="fileSelect" chosen="selectedFile"  class="chzn-select"
+                                        ng-model="selectedFile" ng-options="file for file in files()">
+
+                                </select>
+                            </div>
+                            <div class="btn-toolbar" style="display: inline-block">
+                                <div class="btn-group">
+                                    <button class="btn btn-default btn-xs"><i class="icon-trash"></i></button>
+                                    <button class="btn btn-default btn-xs"><i class="icon-refresh"></i></button>
+                                    <button class="btn btn-default btn-xs"><i class="icon-save"></i></button>
+                                    <button class="btn btn-default btn-xs" onclick="bear.runScript()"><i class="icon-play"></i></button>
+                                </div>
+                                <div class="btn-group">
+                                    <button class="btn btn-default btn-xs"><i class="icon-cog"></i></button>
+                                </div>
+                            </div>
+                        </div>
+                    </li>
+
+                </ul>
+
+                <div class="tab-content">
+                    <div id="scriptTab" class="fade in tab-pane active" mytab>
+                        <div id="scriptText" class="aceEditor">
+                            function foo(items) {
+                            var x = "All this is syntax highlighted";
+                            return x;
+                            }
+                        </div>
+                    </div>
+                    <div id="settingsTab" class="fade in tab-pane" mytab>
+                        <div id="settingsText" class="aceEditor">
+                        function foo(items) {
+                            var x = "All this is syntax highlighted";
+                            return x;
+                        }
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="panel panel-primary">
+            <div class="panel-heading">
+                <h3 class="panel-title">History</h3>
+            </div>
+            <div class="panel-body"><br>
+                <ul class="list-group">
+                    <li class="list-group-item">
+                        <span class="badge">1m</span>mkdir -p ~/prj/bear
+                    </li>
+                    <li class="list-group-item">
+                        <span class="badge">4m</span>cd ~/prj/bear
+                    </li>
+                    <li class="list-group-item">
+                        <span class="badge">1h</span>
+                        Morbi leo risus
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

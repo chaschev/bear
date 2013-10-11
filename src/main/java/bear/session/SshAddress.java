@@ -14,29 +14,28 @@
  * limitations under the License.
  */
 
-package atocha;
-
-import bear.core.GlobalContext;
-import bear.plugins.Plugin;
-import bear.session.DynamicVariable;
-import bear.session.Variables;
-import bear.task.InstallationTask;
-import bear.task.InstallationTaskDef;
+package bear.session;
 
 /**
  * @author Andrey Chaschev chaschev@gmail.com
  */
-public class Atocha extends Plugin {
+public class SshAddress {
+    String username;
+    String password;
+    String address;
 
-    public final DynamicVariable<Boolean>
-        reuseWar = Variables.bool("will skip building WAR").defaultTo(false);
-
-    public Atocha(GlobalContext global) {
-        super(global);
+    public SshAddress(String username, String password, String address) {
+        this.username = username;
+        this.password = password;
+        this.address = address;
     }
 
     @Override
-    public InstallationTaskDef<InstallationTask> getInstall() {
-        return InstallationTaskDef.EMPTY;
+    public String toString() {
+        final StringBuilder sb = new StringBuilder("{");
+        sb.append("username='").append(username).append('\'');
+        sb.append(", address='").append(address).append('\'');
+        sb.append('}');
+        return sb.toString();
     }
 }
