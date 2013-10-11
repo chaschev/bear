@@ -14,29 +14,34 @@
  * limitations under the License.
  */
 
-package atocha;
+package bear.core;
 
-import bear.core.GlobalContext;
-import bear.plugins.Plugin;
 import bear.session.DynamicVariable;
 import bear.session.Variables;
-import bear.task.InstallationTask;
-import bear.task.InstallationTaskDef;
+import bear.plugins.HavingContext;
 
 /**
  * @author Andrey Chaschev chaschev@gmail.com
  */
-public class Atocha extends Plugin {
+public abstract class VarFun<T> extends HavingContext<VarFun<T>> {
+    protected DynamicVariable<T> var;
 
-    public final DynamicVariable<Boolean>
-        reuseWar = Variables.bool("will skip building WAR").defaultTo(false);
-
-    public Atocha(GlobalContext global) {
-        super(global);
+    public VarFun() {
+        super(null);
     }
 
-    @Override
-    public InstallationTaskDef<InstallationTask> getInstall() {
-        return InstallationTaskDef.EMPTY;
+    public VarFun(SessionContext $) {
+        super($);
+    }
+
+
+    public abstract T apply();
+
+    protected String concat(Object... varsAndStrings) {
+        return Variables.concat($, varsAndStrings);
+    }
+
+    public void setVar(DynamicVariable<T> var) {
+        this.var = var;
     }
 }

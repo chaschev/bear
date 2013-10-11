@@ -14,29 +14,26 @@
  * limitations under the License.
  */
 
-package atocha;
+package bear.session;
 
-import bear.core.GlobalContext;
-import bear.plugins.Plugin;
-import bear.session.DynamicVariable;
-import bear.session.Variables;
-import bear.task.InstallationTask;
-import bear.task.InstallationTaskDef;
+import bear.console.AbstractConsole;
+import bear.console.CompositeConsole;
+import bear.console.ProgressMonitor;
+
+import java.util.List;
+import java.util.concurrent.ExecutorService;
 
 /**
  * @author Andrey Chaschev chaschev@gmail.com
  */
-public class Atocha extends Plugin {
 
-    public final DynamicVariable<Boolean>
-        reuseWar = Variables.bool("will skip building WAR").defaultTo(false);
 
-    public Atocha(GlobalContext global) {
-        super(global);
-    }
+//todo don't extends
+//todo change to index
+public class SystemEnvironments extends CompositeConsole{
 
-    @Override
-    public InstallationTaskDef<InstallationTask> getInstall() {
-        return InstallationTaskDef.EMPTY;
+
+    public SystemEnvironments(List<? extends AbstractConsole> consoles, ProgressMonitor progressMonitor, ExecutorService executorService) {
+        super(consoles, progressMonitor, executorService);
     }
 }
