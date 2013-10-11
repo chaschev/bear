@@ -22,6 +22,7 @@ import chaschev.json.JacksonMapper;
 import chaschev.json.Mapper;
 import chaschev.lang.OpenBean;
 import javafx.application.Application;
+import javafx.application.Platform;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.concurrent.Worker;
@@ -93,9 +94,14 @@ public class BearFX {
         private Bindings bindings = new Bindings();
 
         public void sendMessageToUI(EventToUI eventToUI){
-            String s = mapper.toJSON(eventToUI);
+            final String s = mapper.toJSON(eventToUI);
 
-            webEngine.executeScript("Java.receiveEvent(" + s + ")");
+            Platform.runLater(new Runnable() {
+                @Override
+                public void run() {
+                    webEngine.executeScript("Java.receiveEvent(" + s + ")");
+                }
+            });
         }
 
         @Override

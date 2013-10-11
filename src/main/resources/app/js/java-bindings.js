@@ -91,7 +91,7 @@ Java.instanceOf = function(v, jClass){
         (Java.getObjectClass(v) === jClass);
 };
 
-Java.returnedArrayToJS = function returnedArrayToJS(javaArr){
+Java.returnedArrayToJS = function (javaArr){
     var r = [];
 
     for(var i = 0;i<javaArr.length;i++){

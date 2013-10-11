@@ -16,6 +16,8 @@ public class SetupPluginsScript extends Script {
     public static void main(String[] args) throws Exception {
         new BearRunner(
             new SetupPluginsSettings(GlobalContextFactory.INSTANCE, "/test.properties")
-        , new SetupPluginsScript(), GlobalContextFactory.INSTANCE).run();
+        , new SetupPluginsScript(), GlobalContextFactory.INSTANCE)
+            .shutdownAfterRun(true)
+            .prepareToRun();
     }
 }

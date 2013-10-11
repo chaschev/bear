@@ -60,7 +60,9 @@ public class BearMain {
         if (scriptToRun.isPresent()) {
             System.out.printf("running script %s...%n", scriptToRun.get().getName());
 
-            new BearRunner(configurator).run();
+            new BearRunner(configurator)
+                .shutdownAfterRun(true)
+                .prepareToRun();
         } else {
             System.err.printf("Didn't find script with name %s. Exiting.%n", global.var(bear.deployScript));
             System.exit(-1);

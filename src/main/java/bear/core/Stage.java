@@ -18,13 +18,10 @@ package bear.core;
 
 import bear.console.AbstractConsole;
 import bear.console.CompositeConsoleArrival;
-import bear.plugins.Plugin;
 import bear.session.GenericUnixRemoteEnvironment;
-import bear.session.Result;
 import bear.session.SystemEnvironment;
-import bear.task.*;
-import bear.vcs.CommandLineResult;
-import chaschev.util.Exceptions;
+import bear.task.TaskDef;
+import bear.task.TaskRunner;
 import com.google.common.base.Function;
 import com.google.common.base.Predicates;
 import com.google.common.collect.Iterables;
@@ -34,7 +31,6 @@ import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.Callable;
 
 /**
  * @author Andrey Chaschev chaschev@gmail.com
@@ -57,17 +53,11 @@ public class Stage {
     /**
      * Runs a task from task variable
      */
-    public CompositeTaskRunContext run() {
-        CompositeTaskRunContext taskRunContext = runTask(global.localCtx.var(global.bear.task));
-
-        CompositeConsoleArrival<SessionContext> consoleArrival = taskRunContext.getConsoleArrival();
-
-        consoleArrival.await(global.localCtx.var(global.bear.taskTimeoutSec));
-
-        return taskRunContext;
+    public CompositeTaskRunContext prepareToRun() {
+        return prepareToRunTask(global.localCtx.var(global.bear.task));
     }
 
-    public CompositeTaskRunContext runTask(final TaskDef task) {
+    public CompositeTaskRunContext prepareToRunTask(final TaskDef task) {
         List<? extends AbstractConsole> consoles = systemEnvironments;
 
         final List<ListenableFuture<SessionContext>> futures = new ArrayList<ListenableFuture<SessionContext>>(consoles.size());
@@ -89,65 +79,7 @@ public class Stage {
             }
         });
 
-        final CompositeTaskRunContext compositeTaskRunContext = new CompositeTaskRunContext(consoleArrival);
-
-        for (int i = 0; i < consoles.size(); i++) {
-            final SessionContext $ = $s.get(i);
-            final SystemEnvironment sys = $.getSys();
-            final TaskRunner runner = $.getRunner();
-
-            final int finalI = i;
-
-            final ListenableFuture<SessionContext> future = global.taskExecutor.submit(new Callable<SessionContext>() {
-                @Override
-                public SessionContext call() {
-                    try {
-                        Thread.currentThread().setName($.threadName());
-
-                        $.sys.connect();
-
-                        if ($.var(sys.bear.verifyPlugins)) {
-                            DependencyResult r = new DependencyResult(Result.OK);
-
-                            for (Plugin plugin : global.getGlobalPlugins()) {
-                                r.join(plugin.checkPluginDependencies());
-
-                                if (!task.isSetupTask()) {
-                                    r.join(plugin.getInstall().newSession($, $.currentTask)
-                                        .asInstalledDependency().checkDeps());
-                                }
-                            }
-
-                            if (r.nok()) {
-                                throw new DependencyException(r.toString());
-                            }
-                        }
-
-                        final TaskResult run = runner.run(task);
-
-                        if (!run.ok()) {
-                            System.out.println(run);
-                        }
-                    } catch (Throwable e) {
-                        $.executionContext.rootExecutionContext.getDefaultValue().taskResult = new CommandLineResult(Result.ERROR, e.toString());
-                        logger.warn("", e);
-                        if (e instanceof Error) {
-                            throw (Error) e;
-                        }
-                        throw Exceptions.runtime(e);
-                    }finally {
-                        compositeTaskRunContext.addArrival(finalI, $);
-                    }
-
-                    return $;
-                }
-            });
-
-            futures.add(future);
-        }
-
-
-        return compositeTaskRunContext;
+        return new CompositeTaskRunContext(global, task, consoleArrival);
     }
 
     public Stage add(SystemEnvironment environment) {

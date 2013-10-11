@@ -43,7 +43,9 @@ public class PluginsTests {
             new BearRunner(
                 new SetupPluginsSettings(GlobalContextFactory.INSTANCE, "/test.properties").loadProperties(
                 PluginsTests.class.getResourceAsStream("/test.properties")
-            ), new GithubGrailsAppScript(), GlobalContextFactory.INSTANCE).run();
+            ), new GithubGrailsAppScript(), GlobalContextFactory.INSTANCE)
+                .shutdownAfterRun(true)
+                .prepareToRun();
         }
     }
 }

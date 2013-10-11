@@ -49,7 +49,6 @@ public class CompositeConsoleArrival<ENTRY> {
         this.entryAsText = entryAsText;
 
         arrivedEntries = LangUtils.newFilledArrayList(consoles.size(), null);
-        this.entries = new ArrayList<ENTRY>(consoles.size());
     }
 
     public void addArrival(int i, ENTRY entry) {

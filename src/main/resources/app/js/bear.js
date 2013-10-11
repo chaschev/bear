@@ -56,7 +56,7 @@ function BearCtrl($scope){
     $scope.buildScripts = function(){
         Java.log("building scripts...");
 
-        checkExc(window.bearFX.call('conf', 'build'));
+        window.bear.call('conf', 'build');
 
         Java.log("done building scripts");
 
@@ -195,8 +195,3 @@ var TabsDemoCtrl = function ($scope) {
     $scope.navType = 'pills';
 };
 
-Java.receiveEvent = function(e){
-    Java.log('received event: ', e);
-
-
-};

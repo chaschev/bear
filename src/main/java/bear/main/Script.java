@@ -40,13 +40,9 @@ public abstract class Script {
         return this;
     }
 
-    public CompositeTaskRunContext run() throws Exception {
+    public CompositeTaskRunContext prepareToRun() throws Exception {
         configure();
 
-        CompositeTaskRunContext context = global.run();
-
-        global.shutdown();
-
-        return context;
+        return global.prepareToRun();
     }
 }

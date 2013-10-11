@@ -90,13 +90,10 @@
                         r = checkExc(Java.Bindings.safeCall5(window.bearFX, bean, method, args[0], args[1], args[2], args[3], args[4]));
                         break;
                     default:
-                        throw  "window.bear.todo!!";
+                        throw  "window.bear.call.todo!!";
                 }
 
-                Java.log(r);
-
                 if(Java.isReturnedArray(r)){
-//                    Java.log('array:', r, Java.isJavaObject(r));
                     r = Java.returnedArrayToJS(r);
                 }
 
@@ -110,6 +107,11 @@
 
                 this.call('conf', 'run', scope.scripts.selectedFile, scope.settings.selectedFile);
             }
+        };
+
+        alert('Java.receiveEvent!!');
+        Java.receiveEvent = function(e){
+            Java.log('received event: ', e);
         };
 
         Java.initApp = function(){

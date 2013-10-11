@@ -17,6 +17,7 @@ import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.filefilter.SuffixFileFilter;
 import org.apache.commons.lang3.ArrayUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -46,7 +47,7 @@ import static org.apache.commons.io.FilenameUtils.getBaseName;
  * @author Andrey Chaschev chaschev@gmail.com
  */
 public class BearCommandLineConfigurator {
-    private static final Logger logger = LoggerFactory.getLogger(BearCommandLineConfigurator.class);
+    public static final Logger logger = LoggerFactory.getLogger(BearCommandLineConfigurator.class);
 
     private boolean shouldExit;
     private String[] args;
@@ -465,7 +466,7 @@ public class BearCommandLineConfigurator {
 
         CompositeTaskRunContext context = new BearRunner(settings, script, factory)
             .init()
-            .run();
+            .prepareToRun();
 
         CompositeConsoleArrival<SessionContext> consoleArrival = context.getConsoleArrival();
 
@@ -477,10 +478,14 @@ public class BearCommandLineConfigurator {
 
             $.getExecutionContext().textAppended.addListener(new DynamicVariable.ChangeListener<String>() {
                 public void changedValue(DynamicVariable<String> var, String oldValue, String newValue) {
-                    bearFX.bearFXApp.sendMessageToUI(new ConsoleEventToUI(finalI, newValue));
+                    if(StringUtils.isNotEmpty(newValue)){
+                        bearFX.bearFXApp.sendMessageToUI(new ConsoleEventToUI(finalI, newValue));
+                    }
                 }
             });
         }
+
+        context.submitTasks();
     }
 
 
