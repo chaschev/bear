@@ -345,4 +345,9 @@ public class GenericUnixLocalEnvironment extends SystemEnvironment {
     public CommandLine rmLineImpl(@Nonnull String dir, CommandLine line, String... paths) {
         throw new UnsupportedOperationException("todo GenericUnixLocalEnvironment.rmLine");
     }
+
+    @Override
+    public String getAddress() {
+        return "localhost";
+    }
 }

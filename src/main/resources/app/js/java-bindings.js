@@ -13,7 +13,7 @@
 
 
 if(Java == null){
-    alert('Java is not there :-(');
+    console.log('Java is not there :-(');
     var Java = function(){
 
     };
@@ -162,8 +162,19 @@ Java.log = function (arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8)
                 arr[j] = "'" + arr[j] + "'";
             }else
             if(typeof obj === 'object'){
-                if(Object.keys(obj).length === 0){
-                    arr[j] = arr[j].toString();     //for Java objects
+                var strValue = Object.prototype.toString.apply(obj);
+
+                if(strValue === '[object Error]'){
+                    var message = "EXCEPTION: " + obj.toString();
+
+                    if(obj.stack != null){
+                        message += "\n" + obj.stack;
+                    }
+
+                    alert(message);
+                }else
+                if(Java.isJavaObject(obj)){
+                    arr[j] = obj.toString();     //for Java objects
                 }else{
                     try {
                         arr[j] = JSON.stringify2(obj);

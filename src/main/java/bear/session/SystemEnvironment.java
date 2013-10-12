@@ -228,6 +228,8 @@ public abstract class SystemEnvironment extends AbstractConsole {
         return sudo;
     }
 
+    public abstract String getAddress();
+
     public static enum DownloadMethod {
         SCP, SFTP
     }

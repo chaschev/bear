@@ -228,6 +228,7 @@ public class BearCommandLineConfigurator {
         }
 
         public CompilationResult compileWithAll() {
+            logger.info("compiling...");
             return lastCompilationResult = javaCompiler.compile();
         }
 
@@ -427,6 +428,7 @@ public class BearCommandLineConfigurator {
     }
 
     public void build() {
+
         compileManager.compileWithAll();
     }
 
@@ -443,17 +445,23 @@ public class BearCommandLineConfigurator {
     }
 
     public static class RunResponse {
-        public List<String> hosts;
+        public static class Host{
+            public String name;
+            public String address;
 
-        public RunResponse() {
+            public Host(String name, String address) {
+                this.name = name;
+                this.address = address;
+            }
         }
+        public List<Host> hosts;
 
-        public RunResponse(List<String> hosts) {
+        public RunResponse(List<Host> hosts) {
             this.hosts = hosts;
         }
     }
 
-    public void run(String scriptName, String settingsName) throws Exception {
+    public RunResponse run(String scriptName, String settingsName) throws Exception {
         logger.info("running script {}, settings: {}", scriptName, settingsName);
 
         CompiledEntry scriptEntry = compileManager.findClass(scriptName, true);
@@ -486,6 +494,12 @@ public class BearCommandLineConfigurator {
         }
 
         context.submitTasks();
+
+        return new RunResponse(Lists.transform(context.getConsoleArrival().getEntries(), new Function<SessionContext, RunResponse.Host>() {
+            public RunResponse.Host apply(SessionContext $) {
+                return new RunResponse.Host($.sys.getName(), $.sys.getAddress());
+            }
+        }));
     }
 
 

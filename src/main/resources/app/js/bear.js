@@ -29,9 +29,6 @@ module.directive('chosen',function() {
         var $element = $(element[0]);
 
         scope.$watch(selected, function(){
-            Java.log('model ', scope[selected], 'files: ', scope.files(), ' and updating');
-            Java.log('selected val:' + $element.html(), $element.val());
-
             $element.trigger('liszt:updated');
             $element.trigger("chosen:updated");
         });
@@ -45,8 +42,46 @@ module.directive('chosen',function() {
     }
 });
 
+var Session = function(index){
+    this.index = index;
+
+
+};
+
+
+module.directive("consoleMessage", function ($compile) {
+    return {
+        template: '<span class="consoleMessage" ng-transclude></span>',
+        restrict: 'E',
+        transclude: true,
+        link: function (scope, $el) {
+            scope.add = function(text){
+                var $prev = $el.prev();
+                var prevHtml = $prev.html();
+                if(prevHtml && prevHtml[prevHtml.length]!='\n' && prevHtml[prevHtml.length]!='\r'){
+                    var indexOfEOL = text.indexOf('\n');
+                    if(indexOfEOL == -1){
+                        $prev.append(text);
+                        text = '';
+                    }else{
+                        $prev.append(text.substring(0, indexOfEOL));
+                        text = text.substring(indexOfEOL);
+                    }
+                }
+                if(text !== ''){
+                    $el.after($compile('<ng-message>' + text + '</ng-message>')(scope));
+                }
+            }
+        }
+    };
+});
+
+
+
 function BearCtrl($scope){
     $scope.lastBuildTime = new Date();
+
+
 
     $scope.$watch('lastBuildTime', function(){
 //        Java.log("updating fields on new build");
@@ -54,11 +89,15 @@ function BearCtrl($scope){
     });
 
     $scope.buildScripts = function(){
-        Java.log("building scripts...");
+        try {
+            Java.log("building scripts...");
 
-        window.bear.call('conf', 'build');
+            window.bear.call('conf', 'build');
 
-        Java.log("done building scripts");
+            Java.log("done building scripts");
+        } catch (e) {
+            Java.log("ERROR", e);
+        }
 
         $scope.lastBuildTime = new Date();
         $scope.$digest();
@@ -101,19 +140,28 @@ function FileTabsCtrl($scope) {
     $scope.$on('buildFinished', function(e, args){
         Java.log("buildFinished - updating files");
 
-        $scope.scripts.files = window.bear.call('conf', 'getScriptNames');
-        $scope.settings.files = window.bear.call('conf', 'getSettingsNames');
+        try {
+            $scope.scripts.files = window.bear.call('conf', 'getScriptNames');
+            $scope.settings.files = window.bear.call('conf', 'getSettingsNames');
 
-        if($scope.selectedFile == null || $scope.selectedFile === 'Loading'){
-            $scope.scripts.selectedFile = window.bear.call('conf', 'getSelectedScript');
-            $scope.settings.selectedFile = window.bear.call('conf', 'getSelectedSettings');
+            if ($scope.selectedFile == null || $scope.selectedFile === 'Loading') {
+                Java.log('initializing selectedFile');
+                $scope.scripts.selectedFile = window.bear.call('conf', 'getSelectedScript');
+                $scope.settings.selectedFile = window.bear.call('conf', 'getSelectedSettings');
 
-            $scope.selectedFile = $scope.scripts.selectedFile;
+                $scope.selectedFile = $scope.scripts.selectedFile;
+            }
+
+            Java.log('files:', $scope.scripts.files, "selectedFile:", $scope.selectedFile);
+
+            $scope.selectTab($scope.selectedTab);
+        } catch (e) {
+//            Java.log(Object.prototype.toString.apply(e));
+//            Java.log(typeof e);
+//            printStackTrace(e);
+//            Java.log(e.toString());
+            Java.log(e);
         }
-
-        Java.log('files:', $scope.scripts.files, "selectedFile:", $scope.selectedFile);
-
-        $scope.selectTab($scope.selectedTab);
     });
 
 //    $scope.files= [{name:"Settings.java", id:1}, {name:"XX.java", id:2}];
@@ -167,7 +215,12 @@ function FileTabsCtrl($scope) {
 
         $scope.currentTab().selectedFile = newVal;
 
-        var content = window.bear.call('conf', 'getFileText', newVal);
+        var content;
+        if(Java.isFX){
+            content = window.bear.call('conf', 'getFileText', newVal);
+        }else{
+            content = 'Content of file <' + newVal + '>';
+        }
 
         var editor = ace.edit($scope.selectedTab + "Text");
         var cursor = editor.selection.getCursor();

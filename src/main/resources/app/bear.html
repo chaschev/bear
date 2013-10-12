@@ -13,6 +13,7 @@
     <script src="js/bootstrap.js"></script>
     <script src="js/chosen.jquery.js"></script>
     <script src="js/bear.js"></script>
+    <script src="js/stacktrace.js"></script>
     <script type="text/javascript" src="js/java-bindings.js"></script>
     <link rel="stylesheet" href="css/bootstrap.min.css"/>
     <link rel="stylesheet" href="css/chosen.css"/>
@@ -55,43 +56,106 @@
                     }
                 }
 
+                throw "todo implement: " + [bean, method, args];
             }
         }
 
         //todo: register facade as a part of bindings!!
         window.bear = {
-            call: function(){
+            jsonCall: function(){
                 var args = Array.prototype.slice.call(arguments);
 
-                var bean = args[0];
-                var method = args[1];
+                args.unshift(true);
 
-                args = args.slice(2);
+                return this._call.apply(undefined, args)
+
+            },
+            call:function(){
+                var returnJson = false;
+
+                var args = Array.prototype.slice.call(arguments);
+
+                args.unshift(returnJson);
+
+                return this._call.apply(undefined, args);
+            },
+            _call: function(){
+                var args = Array.prototype.slice.call(arguments);
+
+                var isJson = args[0];
+                var bean = args[1];
+                var method = args[2];
+
+                args = args.slice(3);
 
                 var r;
 
-                switch (args.length){
-                    case 0:
-                        r = checkExc(Java.Bindings.safeCall0(window.bearFX, bean, method));
-                        break;
-                    case 1:
-                        r = checkExc(Java.Bindings.safeCall1(window.bearFX, bean, method, args[0]));
-                        break;
-                    case 2:
-                        r = checkExc(Java.Bindings.safeCall2(window.bearFX, bean, method, args[0], args[1]));
-                        break;
-                    case 3:
-                        r = checkExc(Java.Bindings.safeCall3(window.bearFX, bean, method, args[0], args[1], args[2]));
-                        break;
-                    case 4:
-                        r = checkExc(Java.Bindings.safeCall4(window.bearFX, bean, method, args[0], args[1], args[2], args[3]));
-                        break;
-                    case 5:
-                        r = checkExc(Java.Bindings.safeCall5(window.bearFX, bean, method, args[0], args[1], args[2], args[3], args[4]));
-                        break;
-                    default:
-                        throw  "window.bear.call.todo!!";
+//              this is shorter, but does not work
+//
+//                var applyArgs = [window.bearFX, bean, method];
+//
+//                for (var i = 0; i < args.length; i++) {
+//                    applyArgs.push(args[i]);
+//                }
+//
+//                var bindingsMethod = isJson ? 'jsonSafeCall' + args.length : 'safeCall' + args.length;
+//
+//                Java.log('apply ', Java.Bindings[bindingsMethod], ' with args:', applyArgs);
+//
+//                r = Java.Bindings[bindingsMethod].apply(undefined, applyArgs);
+
+                if (!isJson) {
+//                    Java.log("_call(", window.bearFX, bean, method, args);
+
+                    switch (args.length) {
+                        case 0:
+                            r = Java.Bindings.safeCall0(window.bearFX, bean, method);
+                            break;
+                        case 1:
+                            r = Java.Bindings.safeCall1(window.bearFX, bean, method, args[0]);
+                            break;
+                        case 2:
+                            r = Java.Bindings.safeCall2(window.bearFX, bean, method, args[0], args[1]);
+                            break;
+                        case 3:
+                            r = Java.Bindings.safeCall3(window.bearFX, bean, method, args[0], args[1], args[2]);
+                            break;
+                        case 4:
+                            r = Java.Bindings.safeCall4(window.bearFX, bean, method, args[0], args[1], args[2], args[3]);
+                            break;
+                        case 5:
+                            r = Java.Bindings.safeCall5(window.bearFX, bean, method, args[0], args[1], args[2], args[3], args[4]);
+                            break;
+                        default:
+                            throw  "window.bear.call.todo!!";
+                    }
+                } else {
+
+                    switch (args.length) {
+                        case 0:
+                            r = Java.Bindings.jsonSafeCall0(window.bearFX, bean, method);
+                            break;
+                        case 1:
+                            r = Java.Bindings.jsonSafeCall1(window.bearFX, bean, method, args[0]);
+                            break;
+                        case 2:
+                            r = Java.Bindings.jsonSafeCall2(window.bearFX, bean, method, args[0], args[1]);
+                            break;
+                        case 3:
+                            r = Java.Bindings.jsonSafeCall3(window.bearFX, bean, method, args[0], args[1], args[2]);
+                            break;
+                        case 4:
+                            r = Java.Bindings.jsonSafeCall4(window.bearFX, bean, method, args[0], args[1], args[2], args[3]);
+                            break;
+                        case 5:
+                            r = Java.Bindings.jsonSafeCall5(window.bearFX, bean, method, args[0], args[1], args[2], args[3], args[4]);
+                            break;
+                        default:
+                            throw  "window.bear.call.todo!!";
+                    }
                 }
+
+                r = checkExc(r);
 
                 if(Java.isReturnedArray(r)){
                     r = Java.returnedArrayToJS(r);
@@ -100,16 +164,21 @@
                 return r;
             },
             runScript: function(){
-                var scope = angular.element('#FileTabsCtrl').scope();
+                try {
+                    var scope = angular.element('#FileTabsCtrl').scope();
 
-                Java.log('scope', scope);
-                Java.log('running script', scope.scripts.selectedFile);
+                    Java.log('scope', scope);
+                    Java.log('running script', scope.scripts.selectedFile);
 
-                this.call('conf', 'run', scope.scripts.selectedFile, scope.settings.selectedFile);
+                    var terminals = JSON.parse(this.jsonCall('conf', 'run', scope.scripts.selectedFile, scope.settings.selectedFile));
+
+                    Java.log("terminals:", terminals);
+                } catch (e) {
+                    Java.log(e);
+                }
             }
         };
 
-        alert('Java.receiveEvent!!');
         Java.receiveEvent = function(e){
             Java.log('received event: ', e);
         };
@@ -121,11 +190,10 @@
 
             //window.bearFX.call('conf', 'getSettingsText')
 
-
             Java.log("started Java.initApp...");
             this.initialized = true;
 
-            $('.nav.nav-tabs').find('li>a').click(function (e) {
+            $('#FileTabsCtrl').find('.nav.nav-tabs').find('li>a').click(function (e) {
                 e.preventDefault();
                 var $this = $(this);
                 $this.tab('show');
@@ -134,6 +202,9 @@
                 angular.element(href).scope().selectTab(tabId.substring(0, tabId.length - 3));
             });
 
+            $('#TabsDemoCtrl').find('.nav.nav-tabs').find('li>a').click(function (e) {
+                $(this).tab('show');
+            });
 
             function initAceEditor(editor)
             {
@@ -292,7 +363,7 @@
                 <h3 class="panel-title">Shell</h3>
             </div>
             <div class="panel-body">
-                <div id="conTabsRootPanel" ng-controller="TabsDemoCtrl">
+                <div id="TabsDemoCtrl" ng-controller="TabsDemoCtrl">
                     <!--<button class="btn btn-small" ng-click="tabs[0].active = true">Select second tab</button>                   -->
                     <ul id="conTabList" class="nav nav-tabs">
                         <li ng-repeat="tab in tabs">
@@ -304,6 +375,7 @@
 
                         <div ng-repeat="tab in tabs" id="{{tab.id}}" class="fade in tab-pane">
                             {{tab.content}}
+                            <console-message>Test message!!</console-message>
                         </div>
                     </div>
                 </div>

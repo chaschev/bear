@@ -518,4 +518,9 @@ public class GenericUnixRemoteEnvironment extends SystemEnvironment {
         sb.append('}');
         return sb.toString();
     }
+
+    @Override
+    public String getAddress() {
+        return sshAddress.address;
+    }
 }

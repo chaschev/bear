@@ -1,5 +1,7 @@
 package chaschev.js;
 
+import chaschev.json.JacksonMapper;
+import chaschev.json.Mapper;
 import chaschev.lang.OpenBean;
 import chaschev.lang.reflect.ClassDesc;
 import chaschev.lang.reflect.MethodDesc;
@@ -137,7 +139,38 @@ public class Bindings {
         }
     }
 
+    public Object jsonSafeCall5(Object bean, String field, String method, Object param0, Object param1, Object param2, Object param3, Object param4){
+        return jsonCall(bean, field, method, param0, param1, param2, param3, param4);
+    }
 
+    public Object jsonSafeCall4(Object bean, String field, String method, Object param0, Object param1, Object param2, Object param3){
+        return jsonCall(bean, field, method, param0, param1, param2, param3);
+    }
+
+    public Object jsonSafeCall3(Object bean, String field, String method, Object param0, Object param1, Object param2){
+        return jsonCall(bean, field, method, param0, param1, param2);
+    }
+
+    public Object jsonSafeCall2(Object bean, String field, String method, Object param0, Object param1){
+        return jsonCall(bean, field, method, param0, param1);
+    }
+
+    public Object jsonSafeCall1(Object bean, String field, String method, Object param0){
+        return jsonCall(bean, field, method, param0);
+    }
+
+    public Object jsonSafeCall0(Object bean, String field, String method){
+        return jsonCall(bean, field, method);
+    }
+
+    public Object safeCall5(Object bean, String field, String method, Object param0, Object param1, Object param2, Object param3, Object param4){
+        return call(bean, field, method, param0, param1, param2, param3, param4);
+    }
+    
+    public Object safeCall4(Object bean, String field, String method, Object param0, Object param1, Object param2, Object param3){
+        return call(bean, field, method, param0, param1, param2, param3);
+    }
+    
     public Object safeCall3(Object bean, String field, String method, Object param0, Object param1, Object param2){
         return call(bean, field, method, param0, param1, param2);
     }
@@ -154,10 +187,23 @@ public class Bindings {
         return call(bean, field, method);
     }
 
+    private final Mapper mapper = new JacksonMapper();
+
     public Object call(Object bean, String field, String method, Object... params){
+        return call(false, bean, field, method, params);
+    }
+
+    public Object jsonCall(Object bean, String field, String method, Object... params){
+        return call(true, bean, field, method, params);
+    }
+
+    public Object call(boolean returnJson, Object bean, String field, String method, Object... params){
         try {
             Object delegateBean = OpenBean.getFieldValue(bean, field);
-            return OpenBean.invoke(delegateBean, method, params);
+            Object invoke = OpenBean.invoke(delegateBean, method, params);
+            
+            return returnJson ? 
+                    mapper.toJSON(invoke) : invoke;
         } catch (Exception e) {
             return new ExceptionWrapper(e, "className: " + bean.getClass().getSimpleName() +
                 ", method: " + method +

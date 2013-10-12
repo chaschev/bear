@@ -107,3 +107,11 @@ http://terminal.jcubic.pl/examples.php, https://duckduckgo.com/tty/, https://www
 - The project started in Russia and Russia is famous for two things - vodka and bears drinking vodka
 - Name Vodka is nice, but does not remind me of super-powers
 - Saying "install it with a bear" or "bear is my weapon of choice" sounds at least less awkward then with vodka
+
+
+### UI
+
+Terminal log will contain
+
+- badges like (task 'setup') and (command 'ls xxx')
+- plain text in between
