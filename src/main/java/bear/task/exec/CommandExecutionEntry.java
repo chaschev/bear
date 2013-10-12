@@ -44,4 +44,9 @@ public class CommandExecutionEntry extends ExecutionEntry {
     public Result getResult() {
         return result.result;
     }
+
+    @Override
+    public String toString() {
+        return command.asText(false);
+    }
 }

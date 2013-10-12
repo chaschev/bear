@@ -4,6 +4,8 @@ import bear.console.CompositeConsoleArrival;
 import bear.core.*;
 import bear.session.DynamicVariable;
 import bear.session.Question;
+import bear.task.Task;
+import bear.task.exec.CommandExecutionEntry;
 import chaschev.lang.Lists2;
 import chaschev.util.Exceptions;
 import com.google.common.base.Function;
@@ -480,16 +482,28 @@ public class BearCommandLineConfigurator {
 
         List<SessionContext> $s = consoleArrival.getEntries();
 
-        for (int i = 0; i < $s.size(); i++) {
-            final SessionContext $ = $s.get(i);
-            final int finalI = i;
+        for (final SessionContext $ : $s) {
+            SessionContext.ExecutionContext execContext = $.getExecutionContext();
 
-            $.getExecutionContext().textAppended.addListener(new DynamicVariable.ChangeListener<String>() {
+            execContext.textAppended.addListener(new DynamicVariable.ChangeListener<String>() {
                 public void changedValue(DynamicVariable<String> var, String oldValue, String newValue) {
-                    if(StringUtils.isNotEmpty(newValue)){
-                        ConsoleEventToUI event = new ConsoleEventToUI($.getSys().getName(), newValue);
-                        bearFX.bearFXApp.sendMessageToUI(event);
+                    if (StringUtils.isNotEmpty(newValue)) {
+                        bearFX.bearFXApp.sendMessageToUI(new TextConsoleEventToUI($.getName(), newValue));
                     }
+                }
+            });
+
+            execContext.currentTask.addListener(new DynamicVariable.ChangeListener<Task>() {
+                @Override
+                public void changedValue(DynamicVariable<Task> var, Task oldValue, Task newValue) {
+                    bearFX.bearFXApp.sendMessageToUI(new TaskConsoleEventToUI($.getName(), newValue.toString()));
+                }
+            });
+
+            execContext.currentCommand.addListener(new DynamicVariable.ChangeListener<CommandExecutionEntry>() {
+                @Override
+                public void changedValue(DynamicVariable<CommandExecutionEntry> var, CommandExecutionEntry oldValue, CommandExecutionEntry newValue) {
+                    bearFX.bearFXApp.sendMessageToUI(new CommandConsoleEventToUI($.getName(), newValue.toString()));
                 }
             });
         }
@@ -501,18 +515,6 @@ public class BearCommandLineConfigurator {
                 return new RunResponse.Host($.sys.getName(), $.sys.getAddress());
             }
         }));
-    }
-
-
-    public static class ConsoleEventToUI extends EventToUI {
-        public String console;
-        public String textAdded;
-
-        public ConsoleEventToUI(String console, String textAdded) {
-            super("console");
-            this.console = console;
-            this.textAdded = textAdded;
-        }
     }
 
 

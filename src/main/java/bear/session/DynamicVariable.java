@@ -32,7 +32,7 @@ import java.util.List;
 public class DynamicVariable<T> implements Nameable<T> {
 
     public static abstract class ChangeListener<T>{
-        public void changedValue(DynamicVariable<T> var, T oldValue, T newValue){}
+        public abstract void changedValue(DynamicVariable<T> var, T oldValue, T newValue);
         public void changedDynamic(DynamicVariable<T> var, VarFun<T> oldFun, VarFun<T> newFun){}
     }
 

@@ -21,12 +21,23 @@ package bear.main;
 */
 public abstract class EventToUI {
     protected final String type;
+    protected final String subType;
 
     public EventToUI(String type) {
         this.type = type;
+        this.subType = null;
+    }
+
+    protected EventToUI(String type, String subType) {
+        this.type = type;
+        this.subType = subType;
     }
 
     public String getType() {
         return type;
+    }
+
+    public String getSubType() {
+        return subType;
     }
 }

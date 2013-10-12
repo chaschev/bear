@@ -172,4 +172,8 @@ public class SessionContext {
     public TaskRunner getRunner() {
         return runner;
     }
+
+    public String getName() {
+        return sys.getName();
+    }
 }

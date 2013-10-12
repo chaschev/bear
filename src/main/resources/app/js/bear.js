@@ -69,7 +69,9 @@ app.directive("consoleMessages", function ($compile) {
                 var $prev = $messages.find(".console-message:last");
                 var prevHtml = $prev.html();
 
-                Java.log($messages, $prev);
+//                Java.log($messages, $prev);
+
+                // make sure previous line ends with "\n". If it's not, we append a full line to the last element.
 
                 if(prevHtml && prevHtml[prevHtml.length -1]!='\n' && prevHtml[prevHtml.length]!='\r'){
                     var indexOfEOL = text.indexOf('\n');
@@ -85,7 +87,15 @@ app.directive("consoleMessages", function ($compile) {
                 if(text !== ''){
                     $messages.append($('<div class="console-message">' + text + '</div>'));
                 }
-            }
+            };
+
+            scope.addTask  = function(task){
+                $messages.append($('<div class="console-task btn btn-primary">' + task + '</div>'));
+            };
+
+            scope.addCommand  = function(command){
+                $messages.append($('<div class="console-command text-info">$ ' + command + '</div>'));
+            };
         }
     };
 });
@@ -168,7 +178,23 @@ function BearCtrl($scope){
                     Java.log("warning: console " + e.console + " was not found");
                 }
 
-                $console.scope().addMessage(e.textAdded);
+                var scope = $console.scope();
+
+                switch(e.subType){
+                    case 'textAdded':
+                        scope.addMessage(e.textAdded);
+                        break;
+                    case 'command':
+                        scope.addCommand(e.command);
+                        break;
+                    case 'task':
+                        scope.addTask(e.task);
+                        break;
+                    default:
+                        throw "not yet supported subType:" + e.subType;
+                }
+
+
                 break;
             default:
                 alert("not yet supported: " + e);

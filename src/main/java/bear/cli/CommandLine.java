@@ -198,7 +198,7 @@ public abstract class CommandLine<T extends CommandLineResult> extends AbstractC
     }
 
     @Override
-    public String asText() {
+    public String asText(boolean forExecution) {
         StringBuilder sb = new StringBuilder(128);
         CommandLine line = this;
 
@@ -206,7 +206,7 @@ public abstract class CommandLine<T extends CommandLineResult> extends AbstractC
             sb.append("cd ").append(line.cd).append(" && ");
         }
 
-        if (sys.isSudo()) {
+        if (forExecution && sys.isSudo()) {
             sb.append("stty -echo && sudo ");
         }
 
@@ -214,14 +214,18 @@ public abstract class CommandLine<T extends CommandLineResult> extends AbstractC
 
         for (Object string : strings) {
             if (string instanceof VcsCLIPlugin.CommandLineOperator) {
-                sb.append(string);
+                String s = string.toString();
+                if(forExecution || !s.contains("export ")){
+                    sb.append(string);
+                }
             } else {
-                sb.append('"').append(string).append('"');
+                if(forExecution) sb.append('"');
+                sb.append(string);
+                if(forExecution) sb.append('"');
             }
 
             sb.append(" ");
         }
-
 
         return sb.toString();
     }

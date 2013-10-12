@@ -15,7 +15,11 @@ public abstract class AbstractConsoleCommand<T extends CommandLineResult>{
         void on(CharSequence newText, StringBuilder wholeText);
     }
 
-    public abstract String asText();
+    public String asText(){
+        return asText(true);
+    }
+
+    public abstract String asText(boolean forExecution);
 
     public long getTimeoutMs() {
         return timeoutMs;

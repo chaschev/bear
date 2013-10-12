@@ -39,14 +39,14 @@ public class Tasks {
         Preconditions.checkNotNull(bear);
     }
 
-    public final TaskDef restartApp = new TaskDef() {
+    public final TaskDef restartApp = new TaskDef("Restart App") {
         @Override
         public Task newSession(SessionContext $, final Task parent) {
             return Task.nop();
         }
     };
 
-    public final TaskDef deploy = new TaskDef() {
+    public final TaskDef deploy = new TaskDef("Deploy") {
         @Override
         public Task newSession(SessionContext $, final Task parent) {
             return new Task(parent, this, $) {
@@ -60,7 +60,7 @@ public class Tasks {
         }
     };
 
-    public final TaskDef setup = new TaskDef() {
+    public final TaskDef setup = new TaskDef("Generic Setup") {
         @Override
         public Task newSession(SessionContext $, final Task parent) {
             return new Task(parent, setup, $) {
@@ -108,7 +108,7 @@ public class Tasks {
         }
     }.setSetupTask(true);
 
-    public final TaskDef update = new TaskDef() {
+    public final TaskDef update = new TaskDef("Update") {
         @Override
         public Task newSession(SessionContext $, final Task parent) {
             return new Task(parent, update, $) {

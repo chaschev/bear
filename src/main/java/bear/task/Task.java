@@ -69,7 +69,9 @@ public abstract class Task extends HavingContext<Task> {
 
     @Override
     public String toString() {
-        return definition == null ? getClass().getSimpleName() : definition.toString();
+        return definition == null ? getClass().getSimpleName() :
+
+            definition.getDisplayName();
     }
 
     public Task addDependency(Dependency... dependencies) {

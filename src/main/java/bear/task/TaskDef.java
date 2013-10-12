@@ -44,6 +44,22 @@ public abstract class TaskDef<TASK extends Task> {
     List<TaskDef> dependsOnTasks = new ArrayList<TaskDef>();
 
     public TaskDef() {
+        this.name = classNameToTaskName(getClass().getSimpleName()).toString();
+    }
+
+    private StringBuilder classNameToTaskName(String simpleName) {
+        int wordStart = 0;
+        StringBuilder sb = new StringBuilder(simpleName.length() + 10);
+        for (int i = 1; i < simpleName.length(); i++) {
+            if(Character.isUpperCase(simpleName.charAt(i))){
+                sb.append(simpleName.substring(wordStart, i));
+                sb.append(' ');
+                wordStart = i;
+            }
+        }
+
+        sb.append(simpleName.substring(wordStart));
+        return sb;
     }
 
     protected TaskDef(String name) {
@@ -117,4 +133,17 @@ public abstract class TaskDef<TASK extends Task> {
             throw new UnsupportedOperationException();
         }
     };
+
+    public Set<Role> getRoles() {
+        return roles;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public String getDisplayName() {
+        return getName() +
+            (roles.isEmpty() ? "" : " with roles: " + roles);
+    }
 }
