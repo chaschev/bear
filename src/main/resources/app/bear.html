@@ -5,6 +5,7 @@
     <title></title>
 
     <meta charset="UTF-8">
+    <!--<script src="js/firebug-lite.js"></script>-->
 
     <script src="js/jquery-2.0.3.min.js"></script>
     <script src="js/angular.min.js"></script>
@@ -14,7 +15,13 @@
     <script src="js/chosen.jquery.js"></script>
     <script src="js/bear.js"></script>
     <script src="js/stacktrace.js"></script>
-    <script type="text/javascript" src="js/java-bindings.js"></script>
+    <script src="js/java-bindings.js"></script>
+    <script type='text/javascript'
+            src='http://getfirebug.com/releases/lite/1.2/firebug-lite-compressed.js'></script>
+
+    <!--<script type='text/javascript'
+            src='https://getfirebug.com/releases/lite/1.4/firebug-lite.js'></script>-->
+
     <link rel="stylesheet" href="css/bootstrap.min.css"/>
     <link rel="stylesheet" href="css/chosen.css"/>
     <link rel="stylesheet" href="css/chosen-bootstrap.css"/>
@@ -34,6 +41,11 @@
         #conTabsRootPanel {
             /*position: relative;*/
             height: 200px;
+        }
+
+        .console-message{
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', 'source-code-pro', monospace;
+            font-size: 12px;
         }
 
 
@@ -62,6 +74,10 @@
 
         //todo: register facade as a part of bindings!!
         window.bear = {
+            isReady: function(){
+                return window.bearFX != null;
+
+            },
             jsonCall: function(){
                 var args = Array.prototype.slice.call(arguments);
 
@@ -162,25 +178,14 @@
                 }
 
                 return r;
-            },
-            runScript: function(){
-                try {
-                    var scope = angular.element('#FileTabsCtrl').scope();
-
-                    Java.log('scope', scope);
-                    Java.log('running script', scope.scripts.selectedFile);
-
-                    var terminals = JSON.parse(this.jsonCall('conf', 'run', scope.scripts.selectedFile, scope.settings.selectedFile));
-
-                    Java.log("terminals:", terminals);
-                } catch (e) {
-                    Java.log(e);
-                }
             }
+
         };
 
         Java.receiveEvent = function(e){
             Java.log('received event: ', e);
+
+            angular.element('#BearCtrl').scope().dispatchMessage(e);
         };
 
         Java.initApp = function(){
@@ -191,6 +196,7 @@
             //window.bearFX.call('conf', 'getSettingsText')
 
             Java.log("started Java.initApp...");
+
             this.initialized = true;
 
             $('#FileTabsCtrl').find('.nav.nav-tabs').find('li>a').click(function (e) {
@@ -238,7 +244,7 @@
         });
     </script>
 </head>
-<body class="design" ng-app="bear" ng-controller="BearCtrl">
+<body class="design" ng-app="bear" ng-controller="BearCtrl" id="BearCtrl">
 <div class="btn-toolbar">
     <div class="btn-group"><a href="#" class="btn btn-default">Button 1</a><a href="#" class="btn btn-default">Button
         2</a><a href="#" class="btn btn-default">Button 3</a></div>
@@ -363,9 +369,18 @@
                 <h3 class="panel-title">Shell</h3>
             </div>
             <div class="panel-body">
-                <div id="TabsDemoCtrl" ng-controller="TabsDemoCtrl">
-                    <!--<button class="btn btn-small" ng-click="tabs[0].active = true">Select second tab</button>                   -->
-                    <ul id="conTabList" class="nav nav-tabs">
+
+                <div id="ConsoleTabsCtrl" ng-controller="ConsoleTabsCtrl">
+                    <tabset>
+                        <tab ng-repeat="terminal in terminals.terminals"
+                             heading="{{terminal.host.name}}">
+                            <div ng-controller="ConsoleTabsChildCtrl" name="{{terminal.host.name}}">
+                                <console-messages>Console messages</console-messages>
+                            </div>
+                        </tab>
+                    </tabset>
+
+                    <!--<ul id="conTabList" class="nav nav-tabs">
                         <li ng-repeat="tab in tabs">
                             <a href="#{{tab.id}}">{{tab.title}}</a>
                         </li>
@@ -377,7 +392,7 @@
                             {{tab.content}}
                             <console-message>Test message!!</console-message>
                         </div>
-                    </div>
+                    </div>-->
                 </div>
 
                 <script src="js/ace/ace.js" type="text/javascript" charset="utf-8"></script>
@@ -428,10 +443,13 @@
                                     <button class="btn btn-default btn-xs"><i class="icon-trash"></i></button>
                                     <button class="btn btn-default btn-xs"><i class="icon-refresh"></i></button>
                                     <button class="btn btn-default btn-xs"><i class="icon-save"></i></button>
-                                    <button class="btn btn-default btn-xs" onclick="bear.runScript()"><i class="icon-play"></i></button>
+                                    <button class="btn btn-default btn-xs" ng-click="runScript()"><i class="icon-play"></i></button>
                                 </div>
                                 <div class="btn-group">
                                     <button class="btn btn-default btn-xs"><i class="icon-cog"></i></button>
+                                </div>
+                                <div class="btn-group">
+                                    <button class="btn btn-default btn-xs" onclick="enableFirebug()"><i class="icon-bug"></i></button>
                                 </div>
                             </div>
                         </div>

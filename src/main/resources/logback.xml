@@ -33,7 +33,7 @@
     <logger name="net.schmizz.sshj" level="INFO"/>
     <logger name="net.schmizz.concurrent" level="INFO"/>
 
-    <root level="debug">
+    <root level="info">
         <appender-ref ref="STDOUT" />
         <appender-ref ref="FILE" />
 

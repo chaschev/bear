@@ -25,4 +25,8 @@ public abstract class EventToUI {
     public EventToUI(String type) {
         this.type = type;
     }
+
+    public String getType() {
+        return type;
+    }
 }

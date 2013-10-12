@@ -481,13 +481,14 @@ public class BearCommandLineConfigurator {
         List<SessionContext> $s = consoleArrival.getEntries();
 
         for (int i = 0; i < $s.size(); i++) {
-            SessionContext $ = $s.get(i);
+            final SessionContext $ = $s.get(i);
             final int finalI = i;
 
             $.getExecutionContext().textAppended.addListener(new DynamicVariable.ChangeListener<String>() {
                 public void changedValue(DynamicVariable<String> var, String oldValue, String newValue) {
                     if(StringUtils.isNotEmpty(newValue)){
-                        bearFX.bearFXApp.sendMessageToUI(new ConsoleEventToUI(finalI, newValue));
+                        ConsoleEventToUI event = new ConsoleEventToUI($.getSys().getName(), newValue);
+                        bearFX.bearFXApp.sendMessageToUI(event);
                     }
                 }
             });
@@ -504,10 +505,10 @@ public class BearCommandLineConfigurator {
 
 
     public static class ConsoleEventToUI extends EventToUI {
-        public int console;
+        public String console;
         public String textAdded;
 
-        public ConsoleEventToUI(int console, String textAdded) {
+        public ConsoleEventToUI(String console, String textAdded) {
             super("console");
             this.console = console;
             this.textAdded = textAdded;

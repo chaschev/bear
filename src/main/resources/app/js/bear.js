@@ -18,9 +18,9 @@
  * @author Andrey Chaschev chaschev@gmail.com
  */
 
-var module = angular.module('bear', ['ui.bootstrap']);
+var app = angular.module('bear', ['ui.bootstrap']);
 
-module.directive('chosen',function() {
+app.directive('chosen',function() {
     console.log('chosen!!');
 
     var linker = function(scope,element,attrs) {
@@ -49,27 +49,41 @@ var Session = function(index){
 };
 
 
-module.directive("consoleMessage", function ($compile) {
+app.directive("consoleMessages", function ($compile) {
     return {
-        template: '<span class="consoleMessage" ng-transclude></span>',
+        template: '<div class="consoleMessages" ng-transclude></div>',
         restrict: 'E',
+        replace: true,
         transclude: true,
-        link: function (scope, $el) {
-            scope.add = function(text){
-                var $prev = $el.prev();
+        link: function (scope, $el, attrs) {
+            try {
+                Java.log("my terminal is: ", scope.terminal, " and scope is: ", scope);
+            } catch (e) {
+                Java.log(e);
+            }
+
+            console.log('this element: ', $el);
+            var $messages = $el;
+
+            scope.addMessage = function(text){
+                var $prev = $messages.find(".console-message:last");
                 var prevHtml = $prev.html();
-                if(prevHtml && prevHtml[prevHtml.length]!='\n' && prevHtml[prevHtml.length]!='\r'){
+
+                Java.log($messages, $prev);
+
+                if(prevHtml && prevHtml[prevHtml.length -1]!='\n' && prevHtml[prevHtml.length]!='\r'){
                     var indexOfEOL = text.indexOf('\n');
                     if(indexOfEOL == -1){
-                        $prev.append(text);
+                        $prev.append(text.replace('\n', '<br>'));
                         text = '';
                     }else{
-                        $prev.append(text.substring(0, indexOfEOL));
-                        text = text.substring(indexOfEOL);
+                        $prev.append(text.substring(0, indexOfEOL).replace('\n', '<br>'));
+                        text = text.substring(indexOfEOL).replace('\n', '<br>');
                     }
                 }
+
                 if(text !== ''){
-                    $el.after($compile('<ng-message>' + text + '</ng-message>')(scope));
+                    $messages.append($('<div class="console-message">' + text + '</div>'));
                 }
             }
         }
@@ -77,11 +91,48 @@ module.directive("consoleMessage", function ($compile) {
 });
 
 
+// @host.name
+// @host.address
+var Terminal = function(host){
+    this.host = host;
+};
+
+//
+var Terminals = function(){
+    this.terminals = [];
+};
+
+Terminals.prototype.updateHosts = function(hosts){
+    Java.log('hosts', hosts);
+    for (var i = 0; i < hosts.length; i++) {
+        var host = hosts[i];
+
+        var idx = this.indexByName(host.name);
+
+        if(idx == -1){
+            this.terminals.push(new Terminal(host));
+        }
+    }
+
+    Java.log('updated hosts: ', this.terminals);
+};
+
+Terminals.prototype.indexByName = function(name){
+    for (var i = 0; i < this.terminals.length; i++) {
+        var term = this.terminals[i];
+
+        if(term.host.name == name){
+            return i;
+        }
+    }
+
+    return -1;
+};
 
 function BearCtrl($scope){
     $scope.lastBuildTime = new Date();
 
-
+    $scope.terminals = new Terminals();
 
     $scope.$watch('lastBuildTime', function(){
 //        Java.log("updating fields on new build");
@@ -102,7 +153,27 @@ function BearCtrl($scope){
         $scope.lastBuildTime = new Date();
         $scope.$digest();
         $scope.$broadcast('buildFinished');
-    }
+    };
+
+    $scope.updateHosts = function(hosts){
+        $scope.terminals.updateHosts(hosts);
+    };
+
+    $scope.dispatchMessage = function(e){
+        switch(e.type){
+            case 'console':
+                var $console = $('#ConsoleTabsCtrl').find('.tabbable > .tab-content > .tab-pane > div[name=' + e.console +']');
+
+                if($console.length == 0){
+                    Java.log("warning: console " + e.console + " was not found");
+                }
+
+                $console.scope().addMessage(e.textAdded);
+                break;
+            default:
+                alert("not yet supported: " + e);
+        }
+    };
 }
 
 
@@ -130,6 +201,23 @@ function FileTabsCtrl($scope) {
     $scope.settings = {
         files: ["Loading"]
     };
+
+    $scope.runScript = function(){
+        try {
+//            var scope = angular.element('#FileTabsCtrl').scope();
+
+//            Java.log('scope', scope);
+            Java.log('running script', $scope.scripts.selectedFile);
+
+            var hosts = JSON.parse(window.bear.jsonCall('conf', 'run', $scope.scripts.selectedFile, $scope.settings.selectedFile));
+
+            $scope.$parent.updateHosts(hosts.hosts);
+//            Java.log("terminals: ", hosts);
+        } catch (e) {
+            Java.log(e);
+        }
+    };
+
 
     function mapArray(arr){
         for (var i = 0; i < arr.length; i++) {
@@ -211,12 +299,12 @@ function FileTabsCtrl($scope) {
     });
 
     $scope.$watch('selectedFile', function(newVal, oldVal){
-        Java.log("selectedFile watch: " + newVal + ", updating editor");
+        Java.log("selectedFile watch: ", newVal, ", updating editor");
 
         $scope.currentTab().selectedFile = newVal;
 
         var content;
-        if(Java.isFX){
+        if(Java.isFX &&  window.bear.isReady()){
             content = window.bear.call('conf', 'getFileText', newVal);
         }else{
             content = 'Content of file <' + newVal + '>';
@@ -228,19 +316,28 @@ function FileTabsCtrl($scope) {
     });
 }
 
-var TabsDemoCtrl = function ($scope) {
-    $scope.tabs = [
-        { id: "con1", title:"vm01", active: true, content:'Dynamic content 1 <br/> <div class="input-group-btn"> <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown">Action <span class="caret"></span></button></div>' },
-        { id: "con2", title:"vm02", content:"Dynamic content 2" },
-        { id: "con3", title:"vm03", content:"Dynamic content 3" }
-    ];
+var ConsoleTabsCtrl = function ($scope) {
 
-    $scope.alertMe = function() {
-        setTimeout(function() {
-            console.log("You've selected the alert tab!");
-        });
-    };
-
-    $scope.navType = 'pills';
 };
 
+var ConsoleTabsChildCtrl = function ($scope) {
+
+};
+
+function enableFirebug(){
+    try {
+        Java.log("enabling firebug");
+        if (!document.getElementById('FirebugLite')) {
+            E = document['createElement' + 'NS'] && document.documentElement.namespaceURI;
+            E = E ? document['createElement' + 'NS'](E, 'script') : document['createElement']('script');
+            E['setAttribute']('id', 'FirebugLite');
+            E['setAttribute']('src', 'https://getfirebug.com/' + 'firebug-lite.js' + '#startOpened');
+            E['setAttribute']('FirebugLite', '4');
+            (document['getElementsByTagName']('head')[0] || document['getElementsByTagName']('body')[0]).appendChild(E);
+            E = new Image;
+            E['setAttribute']('src', 'https://getfirebug.com/' + '#startOpened');
+        }
+    } catch (e) {
+        Java.log(e);
+    }
+}

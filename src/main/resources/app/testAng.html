@@ -19,72 +19,93 @@
 <head>
     <script src="js/jquery-2.0.3.min.js"></script>
     <script src="js/angular.min.js"></script>
+    <script src="js/ui-bootstrap-tpls-0.6.0.js"></script>
+    <link rel="stylesheet" href="css/bootstrap.min.css"/>
+    <link href="http://netdna.bootstrapcdn.com/font-awesome/3.2.1/css/font-awesome.css" rel="stylesheet">
+
 </head>
 
 <script type="text/javascript">
-    function MyCntrl($scope) {
-        $scope.colors = [
-            {name:'black', shade:'dark'},
-            {name:'white', shade:'light'},
-            {name:'red', shade:'dark'},
-            {name:'blue', shade:'dark'},
-            {name:'yellow', shade:'light'}
-        ];
-        $scope.color = $scope.colors[2]; // red
+    var app = angular.module("main", ['ui.bootstrap']);
 
-
-        $scope.colors2 = [
-            'black', 'red', 'white'
-        ];
-        $scope.color2 = $scope.colors2[2]; // white
-
-        $scope.$watch('color2', function(newVal){
-            console.log('color2:', newVal);
+    app.directive("ngMessage", function ($compile)
+        {
+            return {
+                template: '<div ng-transclude><b>Heading <br></b></div>',
+                restrict: 'E',
+                transclude: true,
+                link: function (scope, elm)
+                {
+                    scope.add = function (text)
+                    {
+                        elm.after($compile('<ng-message>' + text + '</ng-message>')(scope));
+                    }
+                }
+            };
         });
-    }
+
+    app.controller("TabsParentController", function ($scope) {
+
+        var setAllInactive = function() {
+            angular.forEach($scope.workspaces, function(workspace) {
+                workspace.active = false;
+            });
+        };
+
+        var addNewWorkspace = function() {
+            var id = $scope.workspaces.length + 1;
+            $scope.workspaces.push({
+                id: id,
+                name: "Workspace " + id,
+                active: true
+            });
+        };
+
+        $scope.workspaces =
+                [
+                    { id: 1, name: "Workspace 1", active:true  },
+                    { id: 2, name: "Workspace 2", active:false }
+                ];
+
+        $scope.addWorkspace = function () {
+            setAllInactive();
+            addNewWorkspace();
+        };
+
+    });
+
+    app.controller ("TabsChildController", function($scope, $log){
+
+    });
+
+
 </script>
 
-<body ng-app>
+<body ng-app="main">
 
-<div ng-controller="MyCntrl">
-    <ul>
-        <li ng-repeat="color in colors">
-            Name: <input ng-model="color.name">
-            [<a href ng-click="colors.splice($index, 1)">X</a>]
-        </li>
-        <li>
-            [<a href ng-click="colors.push({})">add</a>]
-        </li>
-    </ul>
-    <hr/>
-    Color (null not allowed):
-    <select ng-model="color" ng-options="c.name for c in colors"></select><br>
+<div ng-controller="TabsParentController">
+    <tabset>
+        <tab ng-repeat="workspace in workspaces"
+             heading="{{workspace.name}}"
+             active=workspace.active>
+            <div ng-controller="TabsChildController">
+                <div>
+                    {{$parent.workspace.id}} : {{ $parent.workspace.name}}
+                </div>
+                <input class="form-control" type="text" ng-model="workspace.name"/>
+                <input class="form-control" type="text" ng-model="messtext"/>
 
-    Color TWOOOO:
-    <select ng-model="color2" ng-options="c for c in colors2"></select><br>
+                <button ng-click="add(messtext)">Add</button>
+                <ng-message><i>Message Text</i></ng-message>
 
-    EDIT: <input type="text" ng-model="color2" />
-    <br>
-
-
-    Color (null allowed):
-      <span  class="nullable">
-        <select ng-model="color" ng-options="c.name for c in colors">
-            <option value="">-- choose color --</option>
-        </select>
-      </span><br/>
-
-    Color grouped by shade:
-    <select ng-model="color" ng-options="c.name group by c.shade for c in colors">
-    </select><br/>
-
-
-    Select <a href ng-click="color={name:'not in list'}">bogus</a>.<br>
-    <hr/>
-    Currently selected: {{ {selected_color:color}  }}
-    <div style="border:solid 1px black; height:20px"
-         ng-style="{'background-color':color.name}">
-    </div>
+            </div>
+        </tab>
+        <tab select="addWorkspace()">
+            <tab-heading>
+                <i class="icon-plus-sign"></i>
+            </tab-heading>
+        </tab>
+    </tabset>
 </div>
 
 </body>

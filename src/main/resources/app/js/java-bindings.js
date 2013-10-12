@@ -138,7 +138,7 @@ Java.printStackTrace = function(e){
 
 Java.log = function (arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8)
 {
-    if (Java.isFX) {
+    if (!Java.isFX) {
         var arr = [arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8];
         var i;
         for (i = arr.length - 1; i >= 0; i--) {
