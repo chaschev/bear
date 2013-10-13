@@ -21,31 +21,27 @@
 var app = angular.module('bear', ['ui.bootstrap']);
 
 app.directive('chosen',function() {
-    console.log('chosen!!');
-
-    var linker = function(scope,element,attrs) {
-        var selected = attrs['chosen'];
-
-        var $element = $(element[0]);
-
-        scope.$watch(selected, function(){
-            $element.trigger('liszt:updated');
-            $element.trigger("chosen:updated");
-        });
-
-        $element.chosen({width: "100%"});
-    };
-
     return {
-        restrict:'A',
-        link: linker
+        restrict: 'A',
+        link: function (scope, element, attrs)
+        {
+            var selected = attrs['chosen'];
+
+            var $element = $(element[0]);
+
+            scope.$watch(selected, function ()
+            {
+                $element.trigger('liszt:updated');
+                $element.trigger("chosen:updated");
+            });
+
+            $element.chosen({width: "100%"});
+        }
     }
 });
 
 var Session = function(index){
     this.index = index;
-
-
 };
 
 
@@ -103,17 +99,30 @@ app.directive("consoleMessages", function ($compile) {
 
 // @host.name
 // @host.address
+// @currentRootTask
+// @currentTask
+// @currentCommand
 var Terminal = function(host){
     this.host = host;
 };
 
-//
+// @stats: see Stats class in Java
 var Terminals = function(){
     this.terminals = [];
+
+    this.stats = {
+        partiesArrived: 0,
+        partiesOk: 0,
+        partiesPending: 0,
+        partiesFailed: 0,
+        partiesCount: 0,
+        rootTask: "not run"
+    };
 };
 
 Terminals.prototype.updateHosts = function(hosts){
     Java.log('updating hosts with: ', hosts);
+
     for (var i = 0; i < hosts.length; i++) {
         var host = hosts[i];
 
@@ -125,6 +134,11 @@ Terminals.prototype.updateHosts = function(hosts){
     }
 
     Java.log('updated hosts: ', this.terminals);
+};
+
+Terminals.prototype.updateStats = function(stats){
+    Java.log('updating stats with: ', stats);
+    this.stats = stats;
 };
 
 Terminals.prototype.indexByName = function(name){
@@ -194,10 +208,14 @@ function BearCtrl($scope){
                         throw "not yet supported subType:" + e.subType;
                 }
 
-
+                break;
+            case 'status':
+                $scope.$apply(function(){
+                    $scope.terminals.updateStats(e.stats);
+                });
                 break;
             default:
-                alert("not yet supported: " + e);
+                Java.log("not yet supported: ", e);
         }
     };
 }

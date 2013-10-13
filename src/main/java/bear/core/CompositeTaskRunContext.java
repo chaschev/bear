@@ -44,7 +44,7 @@ public class CompositeTaskRunContext {
         this.task = task;
         this.consoleArrival = consoleArrival;
 
-        stats = Variables.dynamic(Stats.class).defaultTo(new Stats(consoleArrival.getArrivedEntries().size()));
+        stats = Variables.dynamic(Stats.class).defaultTo(new Stats(consoleArrival.getArrivedEntries().size(), task));
     }
 
     public CompositeConsoleArrival<SessionContext> getConsoleArrival() {
@@ -63,7 +63,6 @@ public class CompositeTaskRunContext {
     public void submitTasks() {
         List<ListenableFuture<SessionContext>> futures = consoleArrival.getFutures();
         List<SessionContext> $s = consoleArrival.getEntries();
-
 
         for (int i = 0; i < $s.size(); i++) {
             final SessionContext $ = $s.get(i);
@@ -105,9 +104,11 @@ public class CompositeTaskRunContext {
                     } catch (Throwable e) {
                         $.executionContext.rootExecutionContext.getDefaultValue().taskResult = new CommandLineResult(Result.ERROR, e.toString());
                         BearCommandLineConfigurator.logger.warn("", e);
+
                         if (e instanceof Error) {
                             throw (Error) e;
                         }
+
                         throw Exceptions.runtime(e);
                     }finally {
                         addArrival(finalI, $);
@@ -119,6 +120,8 @@ public class CompositeTaskRunContext {
 
             futures.add(future);
         }
+
+        stats.fireExternalModification();
     }
 
     public static class Stats{
@@ -127,9 +130,11 @@ public class CompositeTaskRunContext {
         public int partiesPending;
         public int partiesFailed = 0;
         public final AtomicInteger partiesCount;
+        protected TaskDef rootTask;
 
-        public Stats(int count) {
+        public Stats(int count, TaskDef rootTask) {
             partiesPending = count;
+            this.rootTask = rootTask;
             partiesCount = new AtomicInteger(count);
         }
 
@@ -142,6 +147,10 @@ public class CompositeTaskRunContext {
             }
 
             partiesFailed = partiesArrived.get() - partiesOk.get();
+        }
+
+        public String getRootTask() {
+            return rootTask.getName();
         }
     }
 

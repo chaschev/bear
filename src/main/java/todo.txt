@@ -2,7 +2,9 @@
 
 top priority:
 
-- ui: test multi servers
+- ui: add status counters notices
+- ui: add current task notices
+- (ok) ui: test multi servers
 - ui: scrollable
 - ui: order messages by timestamp
 - ui: transfer logback messages (add appender)
@@ -26,11 +28,14 @@ utils:
 - (ok) remote WAR deploy
 - sql dumps
 
+general testing:
+- test failure reporting on timeouts
+- test on a vm cluster (gets a lot more errors there)
+
 features:
 
-- global task: test on a vm cluster (gets a lot more errors there)
 - global task: concise API
-- memory issue: after running two scripts memory jumps to 1.5GB
+- possible memory issue: after running two scripts memory jumps to 1.5GB
 - download plugin (wget, viaLocalCache option)
 - tomcat plugin: configurable rights as of a service
 - (ok) jdk plugin

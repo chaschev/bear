@@ -16,8 +16,8 @@
     <script src="js/bear.js"></script>
     <script src="js/stacktrace.js"></script>
     <script src="js/java-bindings.js"></script>
-    <!--<script type='text/javascript'-->
-            <!--src='http://getfirebug.com/releases/lite/1.2/firebug-lite-compressed.js'></script>-->
+    <script type='text/javascript'
+            src='http://getfirebug.com/releases/lite/1.2/firebug-lite-compressed.js'></script>
 
     <!--<script type='text/javascript'
             src='https://getfirebug.com/releases/lite/1.4/firebug-lite.js'></script>-->
@@ -268,16 +268,16 @@
             <div class="panel-body">
                 <ul class="list-group">
                     <li class="list-group-item">
-                        <span class="badge">14</span>Servers
+                        <span class="badge">{{terminals.stats.partiesCount}}</span>Servers
                     </li>
                     <li class="list-group-item">
-                        <span class="badge">2</span>Running
+                        <span class="badge">{{terminals.stats.partiesPending}}</span>Running
                     </li>
                     <li class="list-group-item">
-                        <span class="badge">1</span> Failed
+                        <span class="badge">{{terminals.stats.partiesFailed}}</span> Failed
                     </li>
                     <li class="list-group-item">
-                        <span class="badge">11</span> Completed
+                        <span class="badge">{{terminals.stats.partiesArrived}}</span> Completed
                     </li>
                 </ul>
             </div>
@@ -333,8 +333,6 @@
                         </div><!-- /btn-group -->
                     </div>
                 </div>
-
-
             </div>
         </div>
     </div>

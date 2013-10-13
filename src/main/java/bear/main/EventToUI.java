@@ -23,6 +23,8 @@ public abstract class EventToUI {
     protected final String type;
     protected final String subType;
 
+    public final long timestamp = System.currentTimeMillis();
+
     public EventToUI(String type) {
         this.type = type;
         this.subType = null;

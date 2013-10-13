@@ -508,6 +508,13 @@ public class BearCommandLineConfigurator {
             });
         }
 
+        context.stats.addListener(new DynamicVariable.ChangeListener<CompositeTaskRunContext.Stats>() {
+            @Override
+            public void changedValue(DynamicVariable<CompositeTaskRunContext.Stats> var, CompositeTaskRunContext.Stats oldValue, CompositeTaskRunContext.Stats newValue) {
+                bearFX.bearFXApp.sendMessageToUI(new GlobalStatusEventToUI(newValue));
+            }
+        });
+
         context.submitTasks();
 
         return new RunResponse(Lists.transform(context.getConsoleArrival().getEntries(), new Function<SessionContext, RunResponse.Host>() {
