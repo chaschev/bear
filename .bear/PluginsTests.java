@@ -14,10 +14,8 @@
  * limitations under the License.
  */
 
-import atocha.Atocha;
 import bear.core.GlobalContextFactory;
 import bear.main.BearRunner;
-import bear.main.Script;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -27,23 +25,22 @@ import org.slf4j.LoggerFactory;
 public class PluginsTests {
     public static final Logger logger = LoggerFactory.getLogger(PluginsTests.class);
 
-    public static class GithubGrailsAppScript extends Script {
-        @Override
-        public void configure() throws Exception {
-            bear.stage.defaultTo("vm02");
-            bear.task.defaultTo(global.tasks.deploy);
-            bear.clean.defaultTo(false, true);
-
-            global.getPlugin(Atocha.class).reuseWar.defaultTo(true, true);
-
-            bear.vcsBranchName.defaultTo("master");
+    public static class RunSetup{
+        public static void main(String[] args) throws Exception {
+            new BearRunner(
+                new SetupPluginsSettings(GlobalContextFactory.INSTANCE, "/test.properties")
+                , new SetupPluginsScript(), GlobalContextFactory.INSTANCE)
+                .shutdownAfterRun(true)
+                .prepareToRun();
         }
+    }
 
+    public static class RunDeploy{
         public static void main(String[] args) throws Exception {
             new BearRunner(
                 new SetupPluginsSettings(GlobalContextFactory.INSTANCE, "/test.properties").loadProperties(
-                PluginsTests.class.getResourceAsStream("/test.properties")
-            ), new GithubGrailsAppScript(), GlobalContextFactory.INSTANCE)
+                    PluginsTests.class.getResourceAsStream("/test.properties")
+                ), new GithubGrailsAppScript(), GlobalContextFactory.INSTANCE)
                 .shutdownAfterRun(true)
                 .prepareToRun();
         }

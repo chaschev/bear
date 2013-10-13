@@ -33,14 +33,14 @@ import org.slf4j.LoggerFactory;
 /**
  * @author Andrey Chaschev chaschev@gmail.com
  */
-public class GrailsBuilder extends TaskDef {
-    public static final Logger logger = LoggerFactory.getLogger(GrailsBuilder.class);
+public class GrailsBuilderTask extends TaskDef {
+    public static final Logger logger = LoggerFactory.getLogger(GrailsBuilderTask.class);
 
     GrailsPlugin grails;
     JavaPlugin java;
     Bear bear;
 
-    public GrailsBuilder(GlobalContext global) {
+    public GrailsBuilderTask(GlobalContext global) {
         grails = global.getPlugin(GrailsPlugin.class);
         java = global.getPlugin(JavaPlugin.class);
         bear = global.bear;

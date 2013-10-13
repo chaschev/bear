@@ -113,7 +113,7 @@ var Terminals = function(){
 };
 
 Terminals.prototype.updateHosts = function(hosts){
-    Java.log('hosts', hosts);
+    Java.log('updating hosts with: ', hosts);
     for (var i = 0; i < hosts.length; i++) {
         var host = hosts[i];
 
@@ -270,10 +270,6 @@ function FileTabsCtrl($scope) {
 
             $scope.selectTab($scope.selectedTab);
         } catch (e) {
-//            Java.log(Object.prototype.toString.apply(e));
-//            Java.log(typeof e);
-//            printStackTrace(e);
-//            Java.log(e.toString());
             Java.log(e);
         }
     });
@@ -349,21 +345,3 @@ var ConsoleTabsCtrl = function ($scope) {
 var ConsoleTabsChildCtrl = function ($scope) {
 
 };
-
-function enableFirebug(){
-    try {
-        Java.log("enabling firebug");
-        if (!document.getElementById('FirebugLite')) {
-            E = document['createElement' + 'NS'] && document.documentElement.namespaceURI;
-            E = E ? document['createElement' + 'NS'](E, 'script') : document['createElement']('script');
-            E['setAttribute']('id', 'FirebugLite');
-            E['setAttribute']('src', 'https://getfirebug.com/' + 'firebug-lite.js' + '#startOpened');
-            E['setAttribute']('FirebugLite', '4');
-            (document['getElementsByTagName']('head')[0] || document['getElementsByTagName']('body')[0]).appendChild(E);
-            E = new Image;
-            E['setAttribute']('src', 'https://getfirebug.com/' + '#startOpened');
-        }
-    } catch (e) {
-        Java.log(e);
-    }
-}

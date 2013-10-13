@@ -19,7 +19,7 @@ package bear.core;
 import bear.cli.Script;
 import bear.plugins.Plugin;
 import bear.session.DynamicVariable;
-import bear.strategy.DeployStrategy;
+import bear.strategy.DeployStrategyTask;
 import bear.task.TaskDef;
 import bear.vcs.BranchInfoResult;
 import bear.vcs.VcsCLIPlugin;
@@ -261,6 +261,6 @@ public class Bear {
             }
         });
 
-    public final DynamicVariable<DeployStrategy> getStrategy = dynamic(DeployStrategy.class).setDesc("Deployment strategy: how app files copied and built").memoize(true);
+    public final DynamicVariable<DeployStrategyTask> getStrategy = dynamic(DeployStrategyTask.class).setDesc("Deployment strategy: how app files copied and built").memoize(true);
 
 }

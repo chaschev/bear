@@ -2,6 +2,10 @@
 
 top priority:
 
+- ui: test multi servers
+- ui: scrollable
+- ui: order messages by timestamp
+- ui: transfer logback messages (add appender)
 - (ok) rollback command
 - test error messages by setting incorrect rights at each step
 -- (ok) reuse setup task validation
@@ -13,6 +17,8 @@ top priority:
 - maven installation (via dependencies:get)
 - JRuby console
 - proper logging (store on server)
+- make settings file more readable
+- idea installation (command line -> ui)
 
 
 utils:
@@ -22,6 +28,9 @@ utils:
 
 features:
 
+- global task: test on a vm cluster (gets a lot more errors there)
+- global task: concise API
+- memory issue: after running two scripts memory jumps to 1.5GB
 - download plugin (wget, viaLocalCache option)
 - tomcat plugin: configurable rights as of a service
 - (ok) jdk plugin

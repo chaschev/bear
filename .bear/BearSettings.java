@@ -2,12 +2,12 @@ import atocha.Atocha;
 import bear.cli.Script;
 import bear.core.*;
 import bear.plugins.Plugin;
-import bear.plugins.grails.GrailsBuilder;
+import bear.plugins.grails.GrailsBuilderTask;
 import bear.plugins.grails.GrailsPlugin;
 import bear.plugins.java.JavaPlugin;
 import bear.plugins.tomcat.TomcatPlugin;
+import bear.strategy.DeployStrategyTask;
 import bear.vcs.VcsCLIPlugin;
-import bear.strategy.DeployStrategy;
 import bear.strategy.SymlinkEntry;
 import bear.task.TaskResult;
 import com.google.common.collect.Lists;
@@ -23,7 +23,7 @@ import static bear.session.GenericUnixRemoteEnvironment.newUnixRemote;
  * @author Andrey Chaschev chaschev@gmail.com
  */
 public class BearSettings extends IBearSettings {
-    private static final Logger logger = LoggerFactory.getLogger(DeployStrategy.class);
+    private static final Logger logger = LoggerFactory.getLogger(DeployStrategyTask.class);
 
     GrailsPlugin grails;
     JavaPlugin java;
@@ -75,13 +75,13 @@ public class BearSettings extends IBearSettings {
                     .add(newUnixRemote("pac-test", "10.22.13.6", global)))
         );
 
-        bear.getStrategy.setDynamic(new VarFun<DeployStrategy>() {
-            public DeployStrategy apply() {
+        bear.getStrategy.setDynamic(new VarFun<DeployStrategyTask>() {
+            public DeployStrategyTask apply() {
                 grails.projectPath.setEqualTo(
                     bear.vcsBranchLocalPath
                 );
 
-                final DeployStrategy strategy = new DeployStrategy($) {
+                final DeployStrategyTask strategy = new DeployStrategyTask($) {
                     @Override
                     protected void step_40_updateRemoteFiles() {
                         logger.info("updating the project, please wait...");
@@ -112,7 +112,7 @@ public class BearSettings extends IBearSettings {
                         String warPath = $(grails.releaseWarPath);
 
                         if (!$.sys.exists(warPath) || !$(global.getPlugin(Atocha.class).reuseWar)) {
-                            final TaskResult r = $.run(new GrailsBuilder(global));
+                            final TaskResult r = $.run(new GrailsBuilderTask(global));
 
                             if (r.nok()) {
                                 throw new IllegalStateException("failed to build WAR");

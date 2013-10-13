@@ -49,8 +49,8 @@ import static org.apache.commons.io.FileUtils.byteCountToDisplaySize;
 /**
  * mapping $releasePath/ROOT.war -> $webapps/ROOT.war
  */
-public abstract class DeployStrategy extends TaskDef<Task> {
-    private static final Logger logger = LoggerFactory.getLogger(DeployStrategy.class);
+public abstract class DeployStrategyTask extends TaskDef<Task> {
+    private static final Logger logger = LoggerFactory.getLogger(DeployStrategyTask.class);
 
     @Nullable
     private String deployZipPath;
@@ -58,7 +58,7 @@ public abstract class DeployStrategy extends TaskDef<Task> {
 
     protected GlobalContext global;
 
-    protected CyclicBarrier prepareRemoteDataBarrier;;
+    protected CyclicBarrier prepareRemoteDataBarrier;
     protected CyclicBarrier updateRemoteFilesBarrier;
 
     private List<File> preparedLocalFiles;
@@ -71,8 +71,8 @@ public abstract class DeployStrategy extends TaskDef<Task> {
      */
     protected SymlinkRules symlinkRules = new SymlinkRules();
 
-    protected DeployStrategy(SessionContext $) {
-        super("DEPLOY", $);
+    protected DeployStrategyTask(SessionContext $) {
+        super("DeployStrategy", $);
 
         instanceCount.getAndIncrement();
 
@@ -178,7 +178,7 @@ public abstract class DeployStrategy extends TaskDef<Task> {
 
     public class DeployTask extends Task {
         public DeployTask(Task parent, SessionContext $) {
-            super(parent, DeployStrategy.this, $);
+            super(parent, DeployStrategyTask.this, $);
         }
 
         @Override
