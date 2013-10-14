@@ -1,7 +1,6 @@
-
-
 top priority:
 
+- ui: pending timer (http://jsfiddle.net/ganarajpr/LQGE2/)
 - ui: add status counters notices
 - ui: add current task notices
 - (ok) ui: test multi servers

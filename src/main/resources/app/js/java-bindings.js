@@ -136,46 +136,62 @@ Java.printStackTrace = function(e){
     Java.log("[EXCEPTION] " + e);
 };
 
-Java.log = function (arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8)
-{
-    if (!Java.isFX) {
-        var arr = [arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8];
-        var i;
-        for (i = arr.length - 1; i >= 0; i--) {
-            if (arr[i] == null) {
-            } else {
-                break;
-            }
+Java.log = function (){
+    var arr = Array.prototype.slice.call(arguments);
+
+    var i;
+    for (i = arr.length - 1; i >= 0; i--) {
+        if (arr[i] == null) {
+        } else {
+            break;
         }
+    }
 
-        arr = arr.slice(0, i + 1);
+    arr = arr.slice(0, i + 1);
 
-        for (var j = 0; j < arr.length; j++) {
-            var obj = arr[j];
-            if(obj === undefined){
-                arr[j] = 'undefined';
-            }else
-            if(obj === null){
-                arr[j] = 'null';
-            }else
-            if(typeof obj === 'string'){
-                arr[j] = "'" + arr[j] + "'";
-            }else
-            if(typeof obj === 'object'){
-                var strValue = Object.prototype.toString.apply(obj);
+    var hasConsole = true;
 
-                if(strValue === '[object Error]'){
-                    var message = "EXCEPTION: " + obj.toString();
+    for (var j = 0; j < arr.length; j++) {
+        var obj = arr[j];
+        if(obj === undefined){
+            arr[j] = 'undefined';
+        }else
+        if(obj === null){
+            arr[j] = 'null';
+        }else
+        if(typeof obj === 'string'){
+            arr[j] = "'" + arr[j] + "'";
+        }else
+        if(typeof obj === 'object'){
+            var strValue = Object.prototype.toString.apply(obj);
 
-                    if(obj.stack != null){
-                        message += "\n" + obj.stack;
-                    }
+            if(strValue === '[object Error]'){
+                var message = "EXCEPTION: " + obj.toString();
 
-                    alert(message);
-                }else
-                if(Java.isJavaObject(obj)){
-                    arr[j] = obj.toString();     //for Java objects
-                }else{
+                if(obj.stack != null){
+                    message += "\n" + obj.stack;
+                }
+
+                var stackEntries = obj.stack.split(/\n/);
+
+                for (var k = 0; k < stackEntries.length; k++) {
+                    var s = stackEntries[k];
+
+                    s = s.substring(s.indexOf('js/'));
+                    s = s.substring(s.indexOf('app/'));
+                    s = s.substring(s.indexOf('html/'));
+
+                    stackEntries[k] = s;
+                }
+
+                stackEntries.unshift(obj.toString());
+
+                arr[j] = stackEntries;
+            } else
+            if(Java.isJavaObject(obj)){
+                arr[j] = obj.toString();     //for Java objects
+            } else {
+                if(!hasConsole){
                     try {
                         arr[j] = JSON.stringify2(obj);
                     } catch (e) {
@@ -184,41 +200,38 @@ Java.log = function (arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8)
                 }
             }
         }
+    }
 
+    if (!hasConsole) {
         alert(arr.join(", "));
     } else {
-        if (arg8 == null) {
-            if (arg7 == null) {
-                if (arg6 == null) {
-                    if (arg5 == null) {
-                        if (arg4 == null) {
-                            if (arg3 == null) {
-                                if (arg2 == null) {
-                                    if (arg1 == null) {
-                                        console.log(arg1);
-                                    } else {
-                                        console.log(arg1);
-                                    }
-                                } else {
-                                    console.log(arg1, arg2);
-                                }
-                            } else {
-                                console.log(arg1, arg2, arg3);
-                            }
-                        } else {
-                            console.log(arg1, arg2, arg3, arg4);
-                        }
-                    } else {
-                        console.log(arg1, arg2, arg3, arg4, arg5);
-                    }
-                } else {
-                    console.log(arg1, arg2, arg3, arg4, arg5, arg6);
-                }
-            } else {
-                console.log(arg1, arg2, arg3, arg4, arg5, arg6, arg7);
-            }
-        } else {
-            console.log(arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8);
+        switch (arr.length){
+            case 1:
+                console.log(arr[0]);
+                break;
+            case 2:
+                console.log(arr[0], arr[1]);
+                break;
+            case 3:
+                console.log(arr[0], arr[1], arr[2]);
+                break;
+            case 4:
+                console.log(arr[0], arr[1], arr[2], arr[3]);
+                break;
+            case 5:
+                console.log(arr[0], arr[1], arr[2], arr[3], arr[4]);
+                break;
+            case 6:
+                console.log(arr[0], arr[1], arr[2], arr[3], arr[4], arr[5]);
+                break;
+            case 7:
+                console.log(arr[0], arr[1], arr[2], arr[3], arr[4], arr[5], arr[6]);
+                break;
+            case 8:
+                console.log(arr[0], arr[1], arr[2], arr[3], arr[4], arr[5], arr[6], arr[8]);
+                break;
+            default:
+                console.log(arr);
         }
     }
 };

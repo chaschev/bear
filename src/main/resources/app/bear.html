@@ -16,16 +16,19 @@
     <script src="js/bear.js"></script>
     <script src="js/stacktrace.js"></script>
     <script src="js/java-bindings.js"></script>
-    <script type='text/javascript'
-            src='http://getfirebug.com/releases/lite/1.2/firebug-lite-compressed.js'></script>
 
-    <!--<script type='text/javascript'
-            src='https://getfirebug.com/releases/lite/1.4/firebug-lite.js'></script>-->
+    <!--<script src="js/perfect-scrollbar.js"></script>
+    <script src="js/angular-perfect-scrollbar.js"></script>
+-->
+    <!--<script src='http://getfirebug.com/releases/lite/1.2/firebug-lite-compressed.js'></script>-->
+    <!--<script src='https://getfirebug.com/releases/lite/1.4/firebug-lite.js'></script>-->
+
+    <script src='js/firebug-lite-compressed.js'></script>
 
     <link rel="stylesheet" href="css/bootstrap.min.css"/>
     <link rel="stylesheet" href="css/chosen.css"/>
     <link rel="stylesheet" href="css/chosen-bootstrap.css"/>
-    <!--<link rel="stylesheet" href="css/font-awesome.min.css">-->
+
     <link href="http://netdna.bootstrapcdn.com/font-awesome/3.2.1/css/font-awesome.css" rel="stylesheet">
     <style>
         .aceEditor {
@@ -56,7 +59,13 @@
             font-size: 12px;
         }
 
-
+        .scroller {
+            height: 300px;
+            max-height: 300px;
+            overflow-y: auto;
+            position: relative;
+            display: block;
+        }
     </style>
     <script type="text/javascript">
         if (!Java.isFX) {
@@ -193,7 +202,11 @@
         Java.receiveEvent = function(e){
             Java.log('received event: ', e);
 
-            angular.element('#BearCtrl').scope().dispatchMessage(e);
+            try {
+                angular.element('#BearCtrl').scope().dispatchMessage(e);
+            } catch (e) {
+                Java.log("Exception", e);
+            }
         };
 
         Java.initApp = function(){
@@ -378,8 +391,10 @@
                     <tabset>
                         <tab ng-repeat="terminal in terminals.terminals"
                              heading="{{terminal.host.name}}">
-                            <div ng-controller="ConsoleTabsChildCtrl" name="{{terminal.host.name}}">
-                                <console-messages></console-messages>
+                            <div ng-controller="ConsoleTabsChildCtrl" name="{{terminal.host.name}}" class="scroller">
+                                <console-messages>
+                                    <div>{{terminal.host.name}}</div>
+                                </console-messages>
                             </div>
                         </tab>
                     </tabset>

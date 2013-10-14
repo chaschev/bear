@@ -18,7 +18,7 @@
  * @author Andrey Chaschev chaschev@gmail.com
  */
 
-var app = angular.module('bear', ['ui.bootstrap']);
+var app = angular.module('bear', ['ui.bootstrap', 'perfect_scrollbar']);
 
 app.directive('chosen',function() {
     return {
@@ -51,21 +51,46 @@ app.directive("consoleMessages", function ($compile) {
         restrict: 'E',
         replace: true,
         transclude: true,
-        link: function (scope, $el, attrs) {
+        scope: {
+        },
+        link: function ($scope, $el, attrs) {
             try {
-                Java.log("my terminal is: ", scope.terminal, " and scope is: ", scope);
+                Java.log("my el:" , $el, "my terminal is: ", $scope.terminal, " and scope is: ", $scope);
             } catch (e) {
                 Java.log(e);
             }
+            $scope.terminal = $scope.$parent.terminal;
 
-            console.log('this element: ', $el);
+            Java.log('terminal: ', $scope.terminal.host.name,'messages element: ', $el);
             var $messages = $el;
 
-            scope.addMessage = function(text){
+            $scope.$on("message", function(event, e){
+                if(e.console !== $scope.terminal.host.name){
+                    return;
+                }
+
+                Java.log('received broadcasted message: ', e);
+
+                switch(e.subType){
+                    case 'textAdded':
+                        $scope.addMessage(e.textAdded);
+                        break;
+                    case 'command':
+                        $scope.addCommand(e.command);
+                        break;
+                    case 'task':
+                        $scope.addTask(e.task);
+                        break;
+                    default:
+                        throw "not yet supported subType:" + e.subType;
+                }
+            });
+
+            $scope.addMessage = function(text){
                 var $prev = $messages.find(".console-message:last");
                 var prevHtml = $prev.html();
 
-//                Java.log($messages, $prev);
+                Java.log($messages, $prev);
 
                 // make sure previous line ends with "\n". If it's not, we append a full line to the last element.
 
@@ -83,14 +108,18 @@ app.directive("consoleMessages", function ($compile) {
                 if(text !== ''){
                     $messages.append($('<div class="console-message">' + text + '</div>'));
                 }
+
+                this.messageCount++;
             };
 
-            scope.addTask  = function(task){
+            $scope.addTask  = function(task){
                 $messages.append($('<div class="console-task btn btn-primary">' + task + '</div>'));
+                this.messageCount++;
             };
 
-            scope.addCommand  = function(command){
+            $scope.addCommand  = function(command){
                 $messages.append($('<div class="console-command text-info">$ ' + command + '</div>'));
+                this.messageCount++;
             };
         }
     };
@@ -104,6 +133,7 @@ app.directive("consoleMessages", function ($compile) {
 // @currentCommand
 var Terminal = function(host){
     this.host = host;
+    this.messageCount = 0;
 };
 
 // @stats: see Stats class in Java
@@ -186,27 +216,8 @@ function BearCtrl($scope){
     $scope.dispatchMessage = function(e){
         switch(e.type){
             case 'console':
-                var $console = $('#ConsoleTabsCtrl').find('.tabbable > .tab-content > .tab-pane > div[name=' + e.console +']');
-
-                if($console.length == 0){
-                    Java.log("warning: console " + e.console + " was not found");
-                }
-
-                var scope = $console.scope();
-
-                switch(e.subType){
-                    case 'textAdded':
-                        scope.addMessage(e.textAdded);
-                        break;
-                    case 'command':
-                        scope.addCommand(e.command);
-                        break;
-                    case 'task':
-                        scope.addTask(e.task);
-                        break;
-                    default:
-                        throw "not yet supported subType:" + e.subType;
-                }
+                Java.log('broadcasting', e);
+                $scope.$broadcast('message', e);
 
                 break;
             case 'status':
