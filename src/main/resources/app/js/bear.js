@@ -18,7 +18,7 @@
  * @author Andrey Chaschev chaschev@gmail.com
  */
 
-var app = angular.module('bear', ['ui.bootstrap', 'perfect_scrollbar']);
+var app = angular.module('bear', ['ui.bootstrap']);
 
 app.directive('chosen',function() {
     return {
@@ -55,10 +55,8 @@ app.directive("consoleMessages", function ($compile) {
         },
         link: function ($scope, $el, attrs) {
             try {
-                Java.log("my el:" , $el, "my terminal is: ", $scope.terminal, " and scope is: ", $scope);
-            } catch (e) {
-                Java.log(e);
-            }
+            Java.log("my el:" , $el, "my terminal is: ", $scope.terminal, " and scope is: ", $scope);
+
             $scope.terminal = $scope.$parent.terminal;
 
             Java.log('terminal: ', $scope.terminal.host.name,'messages element: ', $el);
@@ -81,6 +79,13 @@ app.directive("consoleMessages", function ($compile) {
                     case 'task':
                         $scope.addTask(e.task);
                         break;
+                    case 'rootTaskFinished':
+
+                        $scope.$apply(function(){
+                            $scope.terminal.lastTaskDuration = e.duration;
+                            $scope.terminal.currentTaskResult = e.result;
+                        });
+                        break;
                     default:
                         throw "not yet supported subType:" + e.subType;
                 }
@@ -90,7 +95,7 @@ app.directive("consoleMessages", function ($compile) {
                 var $prev = $messages.find(".console-message:last");
                 var prevHtml = $prev.html();
 
-                Java.log($messages, $prev);
+//                Java.log($messages, $prev);
 
                 // make sure previous line ends with "\n". If it's not, we append a full line to the last element.
 
@@ -113,14 +118,26 @@ app.directive("consoleMessages", function ($compile) {
             };
 
             $scope.addTask  = function(task){
+                $scope.$apply(function(){
+                    $scope.terminal.currentTask = task;
+                });
+
                 $messages.append($('<div class="console-task btn btn-primary">' + task + '</div>'));
                 this.messageCount++;
             };
 
             $scope.addCommand  = function(command){
+                $scope.$apply(function(){
+                    $scope.terminal.currentCommand = command;
+                    $scope.terminal.currentCommandStartedAt = new Date();
+                });
+
                 $messages.append($('<div class="console-command text-info">$ ' + command + '</div>'));
                 this.messageCount++;
             };
+            } catch (e) {
+                Java.log(e);
+            }
         }
     };
 });
@@ -128,12 +145,54 @@ app.directive("consoleMessages", function ($compile) {
 
 // @host.name
 // @host.address
-// @currentRootTask
 // @currentTask
+// @currentTaskResult
 // @currentCommand
+// @currentCommandStartedAt
 var Terminal = function(host){
     this.host = host;
     this.messageCount = 0;
+};
+
+Terminal.prototype.getCssStatus = function(){
+    var result;
+
+    if(this.isPending()){
+        result = "";
+    }else{
+        result = (this.currentTaskResult.result === 'OK') ? "success" : "danger";
+    }
+
+    Java.log('css status', 'result');
+
+    return  result;
+};
+
+Terminal.prototype.isPending = function ()
+{
+    return this.currentTaskResult == null;
+};
+
+Terminal.prototype.getStringStatus = function(){
+    return (this.isPending() ? 'Pending...' : this.currentTaskResult.result + ", " ) + ' ' + this.currentTaskTime() + ""
+};
+
+Terminal.prototype.currentTaskTime = function(){
+    if(!this.currentCommandStartedAt){
+        return "0.0";
+    }
+
+    var duration = this.lastTaskDuration ? this.lastTaskDuration : new Date() - this.currentCommandStartedAt;
+
+    return durationToString(duration, false);
+};
+
+Terminal.prototype.onScriptStart = function(){
+    Java.log('reseting', this.host);
+    this.currentCommandStartedAt = null;
+    this.currentCommand = null;
+    this.currentTaskResult = null;
+    this.lastTaskDuration = null;
 };
 
 // @stats: see Stats class in Java
@@ -216,7 +275,7 @@ function BearCtrl($scope){
     $scope.dispatchMessage = function(e){
         switch(e.type){
             case 'console':
-                Java.log('broadcasting', e);
+//                Java.log('broadcasting', e);
                 $scope.$broadcast('message', e);
 
                 break;
@@ -244,7 +303,7 @@ function DropdownCtrl($scope) {
     }
 }
 
-function FileTabsCtrl($scope) {
+app.controller('FileTabsCtrl', ['$scope', function($scope) {
     Java.log("FileTabsCtrl init");
 
     $scope.selectedTab = 'script';
@@ -265,6 +324,14 @@ function FileTabsCtrl($scope) {
             Java.log('running script', $scope.scripts.selectedFile);
 
             var hosts = JSON.parse(window.bear.jsonCall('conf', 'run', $scope.scripts.selectedFile, $scope.settings.selectedFile));
+
+            Java.log('my scope ', $scope, 'parent scope: ', $scope.$parent);
+
+            for (var i = 0; i < $scope.terminals.terminals.length; i++) {
+                var term = $scope.terminals.terminals[i];
+
+                term.onScriptStart();
+            }
 
             $scope.$parent.updateHosts(hosts.hosts);
 //            Java.log("terminals: ", hosts);
@@ -365,7 +432,7 @@ function FileTabsCtrl($scope) {
         var cursor = editor.selection.getCursor();
         editor.setValue(content, cursor);
     });
-}
+}]);
 
 var ConsoleTabsCtrl = function ($scope) {
 

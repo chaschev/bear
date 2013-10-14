@@ -23,7 +23,7 @@ import bear.task.TaskResult;
  * @author Andrey Chaschev chaschev@gmail.com
  */
 public class CommandLineResult extends TaskResult{
-    public String text;
+    public transient String text;
     public int exitCode;
 
     public CommandLineResult(String text) {

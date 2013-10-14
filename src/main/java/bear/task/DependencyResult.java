@@ -25,8 +25,8 @@ import java.util.List;
 * @author Andrey Chaschev chaschev@gmail.com
 */
 public class DependencyResult extends TaskResult {
-    String name;
-    List<String> messages;
+    public String name;
+    public List<String> messages;
 
     public DependencyResult(String name) {
         super(Result.OK);

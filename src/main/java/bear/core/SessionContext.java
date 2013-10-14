@@ -43,6 +43,7 @@ public class SessionContext {
     public final TaskRunner runner;
 
     public class ExecutionContext{
+        public final DateTime startedAt = new DateTime();
         public final DynamicVariable<StringBuilder> text = dynamic(StringBuilder.class).setDesc("text appended in session").defaultTo(new StringBuilder(8192));
         public final DynamicVariable<String> textAppended = dynamic(String.class).setDesc("text appended in session").defaultTo("");
         public final DynamicVariable<TaskExecutionContext> rootExecutionContext = dynamic(TaskExecutionContext.class);

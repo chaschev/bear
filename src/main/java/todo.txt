@@ -4,7 +4,7 @@ top priority:
 - ui: add status counters notices
 - ui: add current task notices
 - (ok) ui: test multi servers
-- ui: scrollable
+- (ok) ui: scrollable
 - ui: order messages by timestamp
 - ui: transfer logback messages (add appender)
 - (ok) rollback command

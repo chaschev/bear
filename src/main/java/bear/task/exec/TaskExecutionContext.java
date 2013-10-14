@@ -39,7 +39,6 @@ public class TaskExecutionContext extends HavingContext<TaskExecutionContext> {
     ExecutionEntry pendingEntry;
     public TaskResult taskResult;
 
-
     public TaskExecutionContext(SessionContext $) {
         super($);
     }
@@ -77,6 +76,16 @@ public class TaskExecutionContext extends HavingContext<TaskExecutionContext> {
         return elvis(pendingEntry, executionEntries.get(0));
     }
 
+    public ExecutionEntry getLastEntry(){
+        if(pendingEntry != null){
+            return pendingEntry;
+        }
+
+        if(executionEntries.isEmpty()) return null;
+
+        return executionEntries.get(executionEntries.size() - 1);
+    }
+
     public boolean isEmpty(){
         return getFirstEntry() == null;
     }
@@ -89,5 +98,15 @@ public class TaskExecutionContext extends HavingContext<TaskExecutionContext> {
         ExecutionEntry e = getFirstEntry();
 
         return e == null ? null : e.getStartedAt();
+    }
+
+    public long getDuration(){
+        ExecutionEntry firstEntry = getFirstEntry();
+
+        if(firstEntry == null){
+            return 0;
+        }
+
+        return getLastEntry().getFinishedAt().getMillis() - firstEntry.getFinishedAt().getMillis();
     }
 }

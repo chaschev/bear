@@ -24,6 +24,7 @@ import bear.session.Result;
 import bear.session.SystemEnvironment;
 import bear.session.Variables;
 import bear.task.*;
+import bear.task.exec.TaskExecutionContext;
 import bear.vcs.CommandLineResult;
 import chaschev.util.Exceptions;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -54,7 +55,9 @@ public class CompositeTaskRunContext {
     public void addArrival(int i, SessionContext $) {
         consoleArrival.addArrival(i, $);
 
-        boolean isOk = $.getExecutionContext().rootExecutionContext.getDefaultValue().taskResult.ok();
+        DynamicVariable<TaskExecutionContext> execCtx = $.getExecutionContext().rootExecutionContext;
+
+        boolean isOk = execCtx.getDefaultValue().taskResult.ok();
 
         stats.getDefaultValue().addArrival(isOk);
         stats.fireExternalModification();
@@ -101,6 +104,8 @@ public class CompositeTaskRunContext {
                         if (!run.ok()) {
                             System.out.println(run);
                         }
+
+                        $.executionContext.rootExecutionContext.getDefaultValue().taskResult = run;
                     } catch (Throwable e) {
                         $.executionContext.rootExecutionContext.getDefaultValue().taskResult = new CommandLineResult(Result.ERROR, e.toString());
                         BearCommandLineConfigurator.logger.warn("", e);
@@ -111,6 +116,7 @@ public class CompositeTaskRunContext {
 
                         throw Exceptions.runtime(e);
                     }finally {
+                        $.executionContext.rootExecutionContext.fireExternalModification();
                         addArrival(finalI, $);
                     }
 

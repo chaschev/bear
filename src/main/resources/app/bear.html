@@ -16,6 +16,7 @@
     <script src="js/bear.js"></script>
     <script src="js/stacktrace.js"></script>
     <script src="js/java-bindings.js"></script>
+    <script src="js/pretty-time.js"></script>
 
     <!--<script src="js/perfect-scrollbar.js"></script>
     <script src="js/angular-perfect-scrollbar.js"></script>
@@ -65,6 +66,16 @@
             overflow-y: auto;
             position: relative;
             display: block;
+        }
+
+        table.status-table td{
+            vertical-align: middle !important;
+        }
+
+        table.status-table .status-column{
+            text-align: center;
+            height: 100%;
+            vertical-align: middle !important;
         }
     </style>
     <script type="text/javascript">
@@ -355,19 +366,18 @@
                 <h3 class="panel-title">Live Hosts Status</h3>
             </div>
             <div class="panel-body">
-                <table class="table">
-                    <th>
-                        <td>Host</td>
-                        <td>Task</td>
-                        <td>Command</td>
-                        <td>Status</td>
-                    </th>
+                <table class="status-table table table-condensed">
                     <tr>
-                        <td>vm01</td>
-                        <td>deploy</td>
-                        <td>Grails build</td>
-                        <td><pre>grails war ROOT.war</pre></td>
-                        <td><div class="alert alert-info">Pending</div></td>
+                        <th style="width: 8%"></th>
+                        <th style="width: 15%">Task</th>
+                        <th style="width: 60%">Command</th>
+                        <th>Status</th>
+                    </tr>
+                    <tr class="{{terminal.getCssStatus()}}" ng-repeat="terminal in terminals.terminals">
+                        <td>{{terminal.host.name}}</td>
+                        <td>{{terminal.currentTask}}</td>
+                        <td><pre>{{terminal.currentCommand}}</pre></td>
+                        <td><div class="status-column alert-{{terminal.getCssStatus()}}">{{terminal.getStringStatus()}}</div></td>
                     </tr>
                 </table>
             </div>

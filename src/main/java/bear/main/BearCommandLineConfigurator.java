@@ -6,6 +6,7 @@ import bear.session.DynamicVariable;
 import bear.session.Question;
 import bear.task.Task;
 import bear.task.exec.CommandExecutionEntry;
+import bear.task.exec.TaskExecutionContext;
 import chaschev.lang.Lists2;
 import chaschev.util.Exceptions;
 import com.google.common.base.Function;
@@ -506,6 +507,15 @@ public class BearCommandLineConfigurator {
                     bearFX.bearFXApp.sendMessageToUI(new CommandConsoleEventToUI($.getName(), newValue.toString()));
                 }
             });
+
+            execContext.rootExecutionContext.addListener(new DynamicVariable.ChangeListener<TaskExecutionContext>() {
+                @Override
+                public void changedValue(DynamicVariable<TaskExecutionContext> var, TaskExecutionContext oldValue, TaskExecutionContext newValue) {
+                    if(newValue.taskResult != null){
+                        bearFX.bearFXApp.sendMessageToUI(new RootTaskFinishedEventToUI(newValue.taskResult, newValue.getDuration(), $.getName()));
+                    }
+                }
+            });
         }
 
         context.stats.addListener(new DynamicVariable.ChangeListener<CompositeTaskRunContext.Stats>() {
@@ -514,6 +524,8 @@ public class BearCommandLineConfigurator {
                 bearFX.bearFXApp.sendMessageToUI(new GlobalStatusEventToUI(newValue));
             }
         });
+
+
 
         context.submitTasks();
 
