@@ -1,21 +1,17 @@
 import atocha.Atocha;
 import bear.cli.Script;
 import bear.core.*;
-import bear.plugins.Plugin;
 import bear.plugins.grails.GrailsBuilderTask;
 import bear.plugins.grails.GrailsPlugin;
 import bear.plugins.java.JavaPlugin;
 import bear.plugins.tomcat.TomcatPlugin;
 import bear.strategy.DeployStrategyTask;
-import bear.vcs.VcsCLIPlugin;
 import bear.strategy.SymlinkEntry;
 import bear.task.TaskResult;
-import com.google.common.collect.Lists;
+import bear.vcs.VcsCLIPlugin;
 import org.apache.commons.lang3.time.StopWatch;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.List;
 
 import static bear.session.GenericUnixRemoteEnvironment.newUnixRemote;
 
@@ -39,15 +35,10 @@ public class BearSettings extends IBearSettings {
         final GlobalContext global = factory.getGlobal();
 
         factory.globalVarsInitPhase = newAtochaSettings(global.bear);
-        factory.registerPluginsPhase = new GlobalContextFactory.RegisterPluginsPhase() {
-            @Override
-            public List<Class<? extends Plugin>> registerPlugins(VariablesLayer vars) {
-                return Lists.<Class<? extends Plugin>>newArrayList(
+        factory.requirePlugins(
                     TomcatPlugin.class,
                     GrailsPlugin.class,
                     JavaPlugin.class);
-            }
-        };
 
         factory.init();
 

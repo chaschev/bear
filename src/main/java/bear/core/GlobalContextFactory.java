@@ -18,11 +18,12 @@ package bear.core;
 
 import bear.plugins.Plugin;
 import bear.session.SystemEnvironments;
-import chaschev.util.Exceptions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -48,16 +49,12 @@ public class GlobalContextFactory {
             globalVarsInitPhase.setVars(global.variablesLayer);
         }
 
-        if (registerPluginsPhase != null) {
-            final List<Class<? extends Plugin>> list = registerPluginsPhase.registerPlugins(global.variablesLayer);
-
-            for (Class<? extends Plugin> aClass : list) {
-                try {
-                    global.addPlugin(aClass);
-                } catch (Exception e) {
-                    throw Exceptions.runtime(e);
-                }
+        if (userRegisteredPlugins != null) {
+            for (Class<? extends Plugin> aClass : userRegisteredPlugins) {
+                global.addPlugin(aClass);
             }
+
+            global.initPlugins();
         }
     }
 
@@ -65,12 +62,15 @@ public class GlobalContextFactory {
         void setVars(VariablesLayer vars);
     }
 
-    public static interface RegisterPluginsPhase {
-        List<Class<? extends Plugin>> registerPlugins(VariablesLayer vars);
-    }
-
     public GlobalVarsInitPhase globalVarsInitPhase;
-    public RegisterPluginsPhase registerPluginsPhase;
+
+    private List<Class<? extends Plugin>> userRegisteredPlugins = new ArrayList<Class<? extends Plugin>>();
+
+    public GlobalContextFactory requirePlugins(Class<? extends Plugin>... plugins){
+        Collections.addAll(userRegisteredPlugins, plugins);
+
+        return this;
+    }
 
     public GlobalContext configure(SystemEnvironments system) {
         configure(global, system);

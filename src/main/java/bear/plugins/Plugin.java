@@ -26,6 +26,7 @@ import chaschev.lang.OpenBean;
 import com.google.common.base.Preconditions;
 
 import java.lang.reflect.Field;
+import java.util.Set;
 
 /**
  * @author Andrey Chaschev chaschev@gmail.com
@@ -35,6 +36,10 @@ public abstract class Plugin {
     public final Bear bear;
     protected GlobalContext global;
     protected Dependencies dependencies = new Dependencies();
+
+    protected boolean transitiveDependency;
+
+    Set<Plugin> pluginDependencies;
 
     public Plugin(GlobalContext global) {
         this.global = global;
@@ -118,5 +123,26 @@ public abstract class Plugin {
 
     protected final Dependencies addDependency(Dependency... dependencies) {
         return this.dependencies.addDependencies(dependencies);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        Plugin plugin = (Plugin) o;
+
+        if (!name.equals(plugin.name)) return false;
+
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        return name.hashCode();
+    }
+
+    public Set<Plugin> getPluginDependencies() {
+        return pluginDependencies;
     }
 }

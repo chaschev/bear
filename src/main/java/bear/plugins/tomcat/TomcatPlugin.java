@@ -99,7 +99,8 @@ public class TomcatPlugin extends ZippedToolPlugin {
 //                        );
 
                         return TaskResult.OK;
-                    }                };
+                    }
+                };
             }
         });
     }

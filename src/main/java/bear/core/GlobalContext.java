@@ -17,24 +17,30 @@
 package bear.core;
 
 import bear.plugins.Plugin;
+import bear.plugins.Plugins;
 import bear.session.DynamicVariable;
 import bear.session.GenericUnixLocalEnvironment;
 import bear.session.SystemEnvironment;
 import bear.session.Variables;
-import bear.task.*;
+import bear.task.Task;
+import bear.task.TaskRunner;
+import bear.task.Tasks;
 import chaschev.util.Exceptions;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicates;
 import com.google.common.collect.Iterables;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import org.apache.commons.lang3.SystemUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.lang.reflect.InvocationTargetException;
-import java.util.*;
+import java.util.Enumeration;
+import java.util.Properties;
+import java.util.Set;
 import java.util.concurrent.*;
 
 import static com.google.common.util.concurrent.MoreExecutors.listeningDecorator;
@@ -43,6 +49,8 @@ import static com.google.common.util.concurrent.MoreExecutors.listeningDecorator
  * @author Andrey Chaschev chaschev@gmail.com
  */
 public class GlobalContext {
+    private static final Logger logger = LoggerFactory.getLogger(GlobalContext.class);
+
     //    public static final GlobalContext INSTANCE = new GlobalContext();
     private static final GlobalContext INSTANCE = new GlobalContext();
 
@@ -50,69 +58,7 @@ public class GlobalContext {
     public final Console console = new Console(this);
     public final Tasks tasks;
 
-    public final Plugins plugins = new Plugins();
-
-    public class Plugins{
-        //todo simplify: all plugins are "global"
-        public final Map<Class<? extends Plugin>, Plugin> pluginMap = new LinkedHashMap<Class<? extends Plugin>, Plugin>();
-
-        public boolean isSession(Class<? extends Plugin> aClass){
-            return pluginMap.get(aClass) == null && pluginMap.containsKey(aClass);
-        }
-
-        public void add(Class<? extends Plugin> aClass){
-            try {
-                final Plugin plugin = newPluginInstance(aClass);
-
-                pluginMap.put(aClass, plugin);
-            } catch (Exception e) {
-                throw Exceptions.runtime(e);
-            }
-        }
-
-        public Plugin get(Class<? extends Plugin> aClass){
-            final Plugin plugin = pluginMap.get(aClass);
-
-            if(plugin == null){
-                if(isSession(aClass)){
-                    throw new RuntimeException("plugin " + aClass.getSimpleName() + " is a session plugin, use get(class, $)");
-                }
-
-                throw new RuntimeException("plugin " + aClass.getSimpleName() + " has not been loaded yet");
-            }
-
-            return plugin;
-        }
-
-        public <T extends Plugin> Task getSessionContext(Class<T> aClass, SessionContext $, Task parent){
-            try {
-                final T plugin = getPlugin(aClass);
-
-                Task task = plugin.newSession($, parent);
-
-                if($.var(bear.checkDependencies)){
-                    DependencyResult deps = task.getDependencies().check();
-                    if(!deps.ok()){
-                        throw new DependencyException(deps);
-                    }
-                }
-
-                return task;
-            } catch (Exception e) {
-                throw Exceptions.runtime(e);
-            }
-        }
-
-        private <T extends Plugin> T newPluginInstance(Class<T> aClass) throws InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException {
-            final T plugin = aClass.getConstructor(GlobalContext.class).newInstance(GlobalContext.this);
-
-            Plugin.nameVars(plugin);
-
-            plugin.initPlugin();
-
-            return plugin;
-        }
-    }
+    public final Plugins plugins = new Plugins(this);
 
     public final ListeningExecutorService taskExecutor = listeningDecorator(new ThreadPoolExecutor(2, 32,
         5L, TimeUnit.SECONDS,
@@ -261,7 +207,12 @@ public class GlobalContext {
         }
     }
 
-    public void addPlugin(Class<? extends Plugin> aClass) throws NoSuchMethodException {
+    public void addPlugin(Class<? extends Plugin> aClass) {
         plugins.add(aClass);
+    }
+
+    public void initPlugins() {
+        logger.info("initializing plugins...");
+        plugins.build();
     }
 }
