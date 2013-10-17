@@ -36,7 +36,7 @@ import java.util.Map;
 /**
  * @author Andrey Chaschev chaschev@gmail.com
  */
-public class SvnCLIPlugin extends VcsCLIPlugin<SvnCLIPlugin> {
+public class SvnCLIPlugin extends VcsCLIPlugin {
     public SvnCLIPlugin(GlobalContext global) {
         super(global);
     }

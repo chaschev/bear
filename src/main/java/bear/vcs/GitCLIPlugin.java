@@ -43,7 +43,7 @@ import static java.util.Collections.addAll;
 /**
  * @author Andrey Chaschev chaschev@gmail.com
  */
-public class GitCLIPlugin extends VcsCLIPlugin<GitCLIPlugin> {
+public class GitCLIPlugin extends VcsCLIPlugin {
     public final DynamicVariable<Integer> cloneDepth = Variables.newVar(-1);
     public final DynamicVariable<Boolean>
         enableSubmodules = Variables.newVar(false),

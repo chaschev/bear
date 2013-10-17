@@ -163,8 +163,6 @@ Terminal.prototype.getCssStatus = function(){
         result = (this.currentTaskResult.result === 'OK') ? "success" : "danger";
     }
 
-    Java.log('css status', 'result');
-
     return  result;
 };
 

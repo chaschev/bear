@@ -49,10 +49,6 @@ public class MavenPlugin extends ZippedToolPlugin {
         });
     }
 
-    public void initPlugin() {
-
-    }
-
     public final InstallationTaskDef<ZippedTool> install = new ZippedToolTaskDef<ZippedTool>() {
         @Override
         public ZippedTool newSession(SessionContext $, final Task parent) {

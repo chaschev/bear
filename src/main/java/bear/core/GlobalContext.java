@@ -53,6 +53,7 @@ public class GlobalContext {
     public final Plugins plugins = new Plugins();
 
     public class Plugins{
+        //todo simplify: all plugins are "global"
         public final Map<Class<? extends Plugin>, Plugin> pluginMap = new LinkedHashMap<Class<? extends Plugin>, Plugin>();
 
         public boolean isSession(Class<? extends Plugin> aClass){

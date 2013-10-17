@@ -60,6 +60,16 @@
             font-size: 12px;
         }
 
+        .current-console-command{
+            font-family: 'source-code-pro', 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', monospace;
+            font-size: 11px;
+        }
+
+        .status-table-row{
+            height: 48px;
+            max-height: 48px;
+        }
+
         .scroller {
             height: 300px;
             max-height: 300px;
@@ -368,15 +378,16 @@
             <div class="panel-body">
                 <table class="status-table table table-condensed">
                     <tr>
-                        <th style="width: 8%"></th>
-                        <th style="width: 15%">Task</th>
-                        <th style="width: 60%">Command</th>
-                        <th>Status</th>
+                        <th style="width: 10%"></th>
+                        <th style="width: 70%">Task</th>
+                        <th style="text-align: center">Status</th>
                     </tr>
-                    <tr class="{{terminal.getCssStatus()}}" ng-repeat="terminal in terminals.terminals">
+                    <tr class="status-table-row {{terminal.getCssStatus()}}" ng-repeat="terminal in terminals.terminals">
                         <td>{{terminal.host.name}}</td>
-                        <td>{{terminal.currentTask}}</td>
-                        <td><pre>{{terminal.currentCommand}}</pre></td>
+                        <td>
+                            <div>{{terminal.currentTask}}</div>
+                            <div class="current-console-command">cmd: {{terminal.currentCommand}}</div>
+                        </td>
                         <td><div class="status-column alert-{{terminal.getCssStatus()}}">{{terminal.getStringStatus()}}</div></td>
                     </tr>
                 </table>

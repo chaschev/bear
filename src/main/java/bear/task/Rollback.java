@@ -30,11 +30,6 @@ public class Rollback extends Plugin {
     }
 
     @Override
-    public void initPlugin() {
-
-    }
-
-    @Override
     public InstallationTaskDef<InstallationTask> getInstall() {
         return InstallationTaskDef.EMPTY;
     }

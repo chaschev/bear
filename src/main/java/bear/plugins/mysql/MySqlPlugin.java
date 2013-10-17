@@ -132,10 +132,6 @@ public class MySqlPlugin extends Plugin {
         }
     };
 
-    public void initPlugin() {
-
-    }
-
     private Version computeRealServerVersion(TaskRunner runner) {
         final CommandLineResult r = runScript(runner, "select version();");
 

@@ -36,7 +36,7 @@ import java.util.Map;
 /**
  * @author Andrey Chaschev chaschev@gmail.com
  */
-public abstract class VcsCLIPlugin<T extends VcsCLIPlugin> extends Plugin {
+public abstract class VcsCLIPlugin extends Plugin {
 
     protected VcsCLIPlugin(GlobalContext global) {
         super(global);
