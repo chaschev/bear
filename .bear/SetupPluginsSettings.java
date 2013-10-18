@@ -21,6 +21,8 @@ public class SetupPluginsSettings extends IBearSettings {
     MavenPlugin maven;
     Bear bear;
     TomcatPlugin tomcat;
+    GlobalContext global;
+    GitCLIPlugin git;
 
     public SetupPluginsSettings(GlobalContextFactory factory) {
         super(factory);
@@ -32,20 +34,6 @@ public class SetupPluginsSettings extends IBearSettings {
 
     @Override
     protected GlobalContext configureMe(GlobalContextFactory factory) throws Exception {
-        final GlobalContext global = factory.getGlobal();
-
-        //todo plugins:
-        // global.getPlugin(...) -> plugin(...)  OR $(JavaPlugin.class)
-        // defaultTo -> set
-        factory.requirePlugins(
-            JavaPlugin.class,
-            MavenPlugin.class,
-            TomcatPlugin.class,
-            GrailsPlugin.class,
-            GitCLIPlugin.class,
-            Atocha.class
-        );
-
         factory.init(this);
 
         tomcat.warName.setEqualTo(grails.warName);

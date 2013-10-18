@@ -35,10 +35,6 @@ public class BearSettings extends IBearSettings {
         final GlobalContext global = factory.getGlobal();
 
         factory.globalVarsInitPhase = newAtochaSettings(global.bear);
-        factory.requirePlugins(
-                    TomcatPlugin.class,
-                    GrailsPlugin.class,
-                    JavaPlugin.class);
 
         factory.init(this);
 

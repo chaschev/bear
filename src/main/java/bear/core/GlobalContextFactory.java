@@ -24,7 +24,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -70,7 +69,11 @@ public class GlobalContextFactory {
     private List<Class<? extends Plugin>> userRegisteredPlugins = new ArrayList<Class<? extends Plugin>>();
 
     public GlobalContextFactory requirePlugins(Class<? extends Plugin>... plugins){
-        Collections.addAll(userRegisteredPlugins, plugins);
+        for (Class<? extends Plugin> plugin : plugins) {
+            if(!userRegisteredPlugins.contains(plugin)){
+                userRegisteredPlugins.add(plugin);
+            }
+        }
 
         return this;
     }
