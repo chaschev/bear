@@ -17,8 +17,8 @@
 package bear.strategy;
 
 import bear.core.*;
+import bear.session.BearVariables;
 import bear.session.Result;
-import bear.session.Variables;
 import bear.task.Task;
 import bear.task.TaskDef;
 import bear.task.TaskResult;
@@ -36,8 +36,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 
+import static bear.plugins.DependencyInjection.inject;
 import static org.apache.commons.io.FileUtils.byteCountToDisplaySize;
 
 /**
@@ -54,7 +54,7 @@ public abstract class DeployStrategyTask extends TaskDef<Task> {
 
     @Nullable
     private String deployZipPath;
-    private final Bear bear;
+    private Bear bear;
 
     protected GlobalContext global;
 
@@ -63,7 +63,6 @@ public abstract class DeployStrategyTask extends TaskDef<Task> {
 
     private List<File> preparedLocalFiles;
 
-    static AtomicInteger instanceCount = new AtomicInteger(0);
 
 
     /**
@@ -74,12 +73,10 @@ public abstract class DeployStrategyTask extends TaskDef<Task> {
     protected DeployStrategyTask(SessionContext $) {
         super("DeployStrategy", $);
 
-        instanceCount.getAndIncrement();
-
-        Preconditions.checkArgument(instanceCount.get() < 2, "deploy instance must be one!");
-
-        this.global = $.getGlobal();
-        this.bear = global.bear;
+        inject(this, $);
+//        $.wire(this);
+//        this.global = $.getGlobal();
+//        this.bear = global.bear;
 
         final SessionContext localCtx = global.localCtx;
 
@@ -132,7 +129,7 @@ public abstract class DeployStrategyTask extends TaskDef<Task> {
     }
 
     @Override
-    public Task newSession(SessionContext $, final Task parent) {
+    public Task<TaskDef> newSession(SessionContext $, final Task parent) {
         return new DeployTask(parent, $);
     }
 
@@ -176,8 +173,8 @@ public abstract class DeployStrategyTask extends TaskDef<Task> {
         return symlinkRules;
     }
 
-    public class DeployTask extends Task {
-        public DeployTask(Task parent, SessionContext $) {
+    public class DeployTask extends Task<TaskDef> {
+        public DeployTask(Task<TaskDef> parent, SessionContext $) {
             super(parent, DeployStrategyTask.this, $);
         }
 
@@ -252,7 +249,7 @@ public abstract class DeployStrategyTask extends TaskDef<Task> {
             for (SymlinkEntry entry : symlinkRules.entries) {
                 String srcPath;
 
-                srcPath = $(Variables.joinPath("symlinkSrc", bear.currentPath, entry.sourcePath));
+                srcPath = $(BearVariables.joinPath("symlinkSrc", bear.currentPath, entry.sourcePath));
 
                 $.sys.link(srcPath, $(entry.destPath), entry.owner);
             }

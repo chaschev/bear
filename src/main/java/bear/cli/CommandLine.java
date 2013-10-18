@@ -17,10 +17,10 @@
 package bear.cli;
 
 import bear.console.AbstractConsoleCommand;
+import bear.session.Result;
+import bear.session.SystemSession;
 import bear.task.BearException;
 import bear.vcs.CommandLineResult;
-import bear.session.Result;
-import bear.session.SystemEnvironment;
 import bear.vcs.VcsCLIPlugin;
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
@@ -48,9 +48,9 @@ public abstract class CommandLine<T extends CommandLineResult> extends AbstractC
     @Nullable
     protected Script script;
 
-    protected SystemEnvironment sys;
+    protected SystemSession sys;
 
-    protected CommandLine(SystemEnvironment sys) {
+    protected CommandLine(SystemSession sys) {
         this.sys = sys;
     }
 

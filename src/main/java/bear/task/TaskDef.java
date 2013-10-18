@@ -16,9 +16,9 @@
 
 package bear.task;
 
+import bear.core.SessionContext;
 import bear.core.Console;
 import bear.core.Role;
-import bear.core.SessionContext;
 import com.google.common.collect.Sets;
 
 import java.util.*;
@@ -29,15 +29,11 @@ import java.util.*;
 public abstract class TaskDef<TASK extends Task> {
 
     String name;
-    String description;
+    public String description;
 
     private boolean setupTask;
 
     Set<Role> roles = new HashSet<Role>();
-
-//    protected transient SessionContext $;
-
-//    protected SystemEnvironment sys;
 
     List<TaskDef> beforeTasks = new ArrayList<TaskDef>();
     List<TaskDef> afterTasks = new ArrayList<TaskDef>();
@@ -76,7 +72,7 @@ public abstract class TaskDef<TASK extends Task> {
         return !Sets.intersection(this.roles, roles).isEmpty();
     }
 
-    public TaskDef depends(Task... tasks) {
+    public TaskDef depends(Task<TaskDef>... tasks) {
         Collections.addAll((List) dependsOnTasks, tasks);
 
         return this;
@@ -129,7 +125,7 @@ public abstract class TaskDef<TASK extends Task> {
 
     public static final TaskDef EMPTY = new TaskDef() {
         @Override
-        public Task newSession(SessionContext $, final Task parent) {
+        public Task<TaskDef> newSession(SessionContext $, final Task parent) {
             throw new UnsupportedOperationException();
         }
     };

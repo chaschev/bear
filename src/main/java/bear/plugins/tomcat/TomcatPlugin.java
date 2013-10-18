@@ -19,7 +19,9 @@ package bear.plugins.tomcat;
 import bear.core.GlobalContext;
 import bear.core.SessionContext;
 import bear.core.VarFun;
+import bear.plugins.AbstractContext;
 import bear.plugins.ZippedToolPlugin;
+import bear.session.BearVariables;
 import bear.session.DynamicVariable;
 import bear.session.Variables;
 import bear.task.*;
@@ -28,14 +30,12 @@ import org.apache.commons.lang3.StringUtils;
 
 import java.text.MessageFormat;
 
-import static bear.session.Variables.joinPath;
-
 /**
  * @author Andrey Chaschev chaschev@gmail.com
  */
 public class TomcatPlugin extends ZippedToolPlugin {
     public final DynamicVariable<String>
-    webappsUnix = joinPath(homePath, "webapps"),
+    webappsUnix = BearVariables.joinPath(homePath, "webapps"),
         webappsWin = Variables.dynamic(""),
         webapps,
         warName = Variables.strVar("i.e. ROOT.war"),
@@ -59,9 +59,9 @@ public class TomcatPlugin extends ZippedToolPlugin {
 
 //        webapps = condition(cap.isUnix, webappsUnix, webappsWin);
         webapps = Variables.condition(bear.isUnix, webappsUnix, webappsWin);
-        warPath = joinPath(webapps, warName);
+        warPath = BearVariables.joinPath(webapps, warName);
 
-        distrWwwAddress.setDynamic(new VarFun<String>() {
+        distrWwwAddress.setDynamic(new VarFun<String, AbstractContext>() {
             public String apply() {
                 String version = $(TomcatPlugin.this.version);
 
@@ -80,8 +80,8 @@ public class TomcatPlugin extends ZippedToolPlugin {
         //screen recipe is taken from here http://stackoverflow.com/a/1628217/1851024
         global.tasks.restartApp.addBeforeTask(new TaskDef() {
             @Override
-            public Task newSession(SessionContext $, final Task parent) {
-                return new Task(parent, this, $) {
+            public Task<TaskDef> newSession(SessionContext $, final Task parent) {
+                return new Task<TaskDef>(parent, this, $) {
                     @Override
                     protected TaskResult exec(TaskRunner runner) {
                         $.sys.sudo().rm($(warCacheDirs));
@@ -144,7 +144,7 @@ public class TomcatPlugin extends ZippedToolPlugin {
         }
     };
 
-    public final DynamicVariable<String[]> warCacheDirs = Variables.dynamic(new VarFun<String[]>() {
+    public final DynamicVariable<String[]> warCacheDirs = Variables.dynamic(new VarFun<String[], SessionContext>() {
         public String[] apply() {
             final String name = FilenameUtils.getBaseName($(warName));
             return new String[]{

@@ -79,7 +79,7 @@ public class Console {
             text = _default;
         }
 
-        global.gvars().set(var, text);
+        global.getLayer().set(var, text);
 
         if (recordingMode) {
             recordedVars.add(new AbstractMap.SimpleEntry<Nameable, String>(var, text));

@@ -17,8 +17,8 @@
 package bear.core;
 
 import bear.cli.CommandLine;
-import bear.session.DynamicVariable;
-import bear.session.SystemEnvironment;
+import bear.plugins.AbstractContext;
+import bear.session.*;
 import bear.task.Task;
 import bear.task.TaskDef;
 import bear.task.TaskResult;
@@ -34,13 +34,15 @@ import static bear.session.Variables.dynamic;
 /**
  * @author Andrey Chaschev chaschev@gmail.com
  */
-public class SessionContext {
+public class SessionContext extends AbstractContext{
     public static final DateTimeFormatter TIME_FORMATTER = DateTimeFormat.forPattern("HH:mm:ss:SSS");
     //    public final GlobalContext globalContext;
-    public final VariablesLayer sessionVariablesLayer;
-    private final GlobalContext global;
-    public final SystemEnvironment sys;
+    private GlobalContext global;
+    public final SystemEnvironmentPlugin.SystemSessionDef sysDef;
+    public SystemEnvironmentPlugin sysEnv;
+    public final SystemSession sys;
     public final TaskRunner runner;
+    public Bear bear;
 
     public class ExecutionContext{
         public final DateTime startedAt = new DateTime();
@@ -58,32 +60,33 @@ public class SessionContext {
         }
     }
 
-    protected Task currentTask;
+    protected Task<TaskDef> currentTask;
 
     protected ExecutionContext executionContext = new ExecutionContext();
 
-    public SessionContext(GlobalContext global, SystemEnvironment sys, TaskRunner runner) {
-        this.global = global;
-        this.sys = sys;
+    public SessionContext(GlobalContext global, Address address, TaskRunner runner) {
+        super(global);
+
+        ///this can be extracted into newContext(aClass, parent, Object... fields)
         this.runner = runner;
-        sys.set$(this);
-        this.sessionVariablesLayer = SystemEnvironment.newSessionVars(global, sys);
-        sessionVariablesLayer.putS(global.bear.sessionHostname, sys.getName());
-    }
 
-    public GlobalContext getGlobal() {
-        return global;
-    }
+        global.wire(this);       //sets bear, global and the SystemEnvironment plugin =)
 
-    public SessionContext(VariablesLayer sessionVariablesLayer) {
-        this.sessionVariablesLayer = sessionVariablesLayer;
-        sys = null;
-        global = null;
-        runner = null;
-    }
+        ////////
+        // this can be extracted into init
+        sysDef = sysEnv.getTaskDef();
+        sys = sysDef.newSession(this, null);
 
-    public <T> T var(DynamicVariable<T> varName) {
-        return sessionVariablesLayer.get(this, varName);
+        layer.putConst(bear.sessionHostname, sys.getName());
+
+        if (address instanceof SshAddress) {
+            SshAddress a = (SshAddress) address;
+
+            layer.putConst(bear.sshUsername, a.username);
+            layer.putConst(bear.sshPassword, a.password);
+        }
+
+        runner.set$(this);
     }
 
     public String joinPath(DynamicVariable<String> var, String path) {
@@ -94,18 +97,8 @@ public class SessionContext {
         return sys.joinPath(paths);
     }
 
-    public <T> boolean isSet(Nameable<T> variable){
-        final DynamicVariable<T> x = sessionVariablesLayer.getClosure(variable);
-
-        return x != null && x.isSet();
-    }
-
     public String threadName() {
         return sys.getName();
-    }
-
-    public boolean varB(DynamicVariable<Boolean> var) {
-        return sessionVariablesLayer.get(this, var);
     }
 
     public CommandLine newCommandLine() {
@@ -143,11 +136,11 @@ public class SessionContext {
         return runner.run(task);
     }
 
-    public Task getCurrentTask() {
+    public Task<TaskDef> getCurrentTask() {
         return currentTask;
     }
 
-    public void setCurrentTask(Task currentTask) {
+    public void setCurrentTask(Task<TaskDef> currentTask) {
         if(currentTask.isRootTask()){
             executionContext.rootExecutionContext.defaultTo(currentTask.getExecutionContext());
         }
@@ -166,12 +159,17 @@ public class SessionContext {
         return executionContext;
     }
 
-    public SystemEnvironment getSys() {
+    public SystemSession getSys() {
         return sys;
     }
 
     public TaskRunner getRunner() {
         return runner;
+    }
+
+    @Override
+    public GlobalContext getGlobal() {
+        return global;
     }
 
     public String getName() {

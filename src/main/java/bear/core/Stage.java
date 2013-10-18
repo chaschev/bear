@@ -16,10 +16,10 @@
 
 package bear.core;
 
-import bear.console.AbstractConsole;
 import bear.console.CompositeConsoleArrival;
-import bear.session.GenericUnixRemoteEnvironment;
-import bear.session.SystemEnvironment;
+import bear.session.Address;
+import bear.session.SshAddress;
+import bear.session.SystemSession;
 import bear.task.TaskDef;
 import bear.task.TaskRunner;
 import com.google.common.base.Function;
@@ -32,6 +32,8 @@ import org.slf4j.LoggerFactory;
 import java.util.ArrayList;
 import java.util.List;
 
+import static bear.session.GenericUnixRemoteEnvironmentPlugin.newUnixRemote;
+
 /**
  * @author Andrey Chaschev chaschev@gmail.com
  */
@@ -41,7 +43,7 @@ public class Stage {
     public String name;
     String description;
 
-    List<SystemEnvironment> systemEnvironments = new ArrayList<SystemEnvironment>();
+    List<Address> systemEnvironments = new ArrayList<Address>();
 
     GlobalContext global;
 
@@ -58,21 +60,27 @@ public class Stage {
     }
 
     public CompositeTaskRunContext prepareToRunTask(final TaskDef task) {
-        List<? extends AbstractConsole> consoles = systemEnvironments;
+        List<Address> addresses = systemEnvironments;
 
-        final List<ListenableFuture<SessionContext>> futures = new ArrayList<ListenableFuture<SessionContext>>(consoles.size());
+        final List<ListenableFuture<SessionContext>> futures = new ArrayList<ListenableFuture<SessionContext>>(addresses.size());
+        final List<SystemSession> consoles = new ArrayList<SystemSession>(addresses.size());
 
         List<SessionContext> $s = new ArrayList<SessionContext>();
 
-        for (AbstractConsole console : consoles) {
-            final SystemEnvironment environment = (SystemEnvironment) console;
+//        public SessionContext newCtx(TaskRunner runner){
+//            $ = new SessionContext(global, this, runner);
+//            runner.set$($);
+//            return $;
+//        }
 
+        for (Address address : addresses) {
             final TaskRunner runner = new TaskRunner(null, global);
 
-            $s.add(environment.newCtx(runner));
+            $s.add(new SessionContext(global, address, runner));
         }
 
-        final CompositeConsoleArrival<SessionContext> consoleArrival = new CompositeConsoleArrival<SessionContext>($s, futures, consoles, new Function<SessionContext, String>() {
+        final CompositeConsoleArrival<SessionContext> consoleArrival = new CompositeConsoleArrival<SessionContext>($s, futures, consoles,
+            new Function<SessionContext, String>() {
             @Override
             public String apply(SessionContext $) {
                 return $.executionContext.text.apply($).toString();
@@ -82,14 +90,21 @@ public class Stage {
         return new CompositeTaskRunContext(global, task, consoleArrival);
     }
 
-    public Stage add(SystemEnvironment environment) {
+    public Stage add(String address) {
+        return add(address, address);
+    }
+
+    public Stage add(String name, String address) {
+        return add(newUnixRemote(name, address));
+    }
+
+    public Stage add(Address environment) {
         systemEnvironments.add(environment);
-        environment.bear = global.bear;
 
         return this;
     }
 
-    public List<SystemEnvironment> getEnvironments() {
+    public List<Address> getEnvironments() {
         return systemEnvironments;
     }
 
@@ -104,8 +119,16 @@ public class Stage {
         return sb.toString();
     }
 
-    public SystemEnvironment findRemoteEnvironment() {
-        return Iterables.find(systemEnvironments, Predicates.instanceOf(GenericUnixRemoteEnvironment.class));
+    public Address findRemoteEnvironment() {
+        return Iterables.find(systemEnvironments, Predicates.instanceOf(SshAddress.class));
 
+    }
+
+    public Stage addHosts(String... hosts) {
+        for (String host : hosts) {
+            add(host);
+        }
+
+        return this;
     }
 }

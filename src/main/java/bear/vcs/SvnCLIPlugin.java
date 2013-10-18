@@ -18,8 +18,8 @@ package bear.vcs;
 
 import bear.cli.CommandLine;
 import bear.cli.Script;
-import bear.core.GlobalContext;
 import bear.core.SessionContext;
+import bear.core.GlobalContext;
 import bear.task.InstallationTaskDef;
 import bear.task.Task;
 import bear.task.TaskDef;
@@ -36,29 +36,23 @@ import java.util.Map;
 /**
  * @author Andrey Chaschev chaschev@gmail.com
  */
-public class SvnCLIPlugin extends VcsCLIPlugin {
-    public SvnCLIPlugin(GlobalContext global) {
-        super(global);
+public class SvnCLIPlugin extends VcsCLIPlugin<Task, TaskDef<?>> {
+    protected SvnCLIPlugin(GlobalContext global, SvnTaskDef taskDef) {
+        super(global, taskDef);
+
+        ((SvnTaskDef) taskDefMixin).svn = this;
     }
 
-    public final TaskDef<SvnCLISession> SVN_STUB_TASK = new TaskDef<SvnCLISession>() {
-        @Override
-        public SvnCLISession newSession(SessionContext $, final Task parent) {
-            return SvnCLIPlugin.this.newSession($, parent);
-        }
-    };
-
-
     @Override
-    public SvnCLISession newSession(SessionContext $, Task parent) {
-        return new SvnCLISession(parent, SVN_STUB_TASK, $);
+    public SvnCLISession newSession(SessionContext $, Task<TaskDef> parent) {
+        return new SvnCLISession(parent, taskDefMixin, $);
     }
 
     public class SvnCLISession extends Session {
-        protected SvnCLISession(Task parent, TaskDef def, SessionContext $) {
+        protected SvnCLISession(Task<TaskDef> parent, TaskDef def, SessionContext $) {
             super(parent, def, $);
 
-            addDependency(new Dependency(SVN_STUB_TASK, "SVN", $, parent).addCommands("svn --version"));
+            addDependency(new Dependency(taskDefMixin, "SVN", $, parent).addCommands("svn --version"));
         }
 
         @Override
@@ -73,6 +67,7 @@ public class SvnCLIPlugin extends VcsCLIPlugin {
 
         @Override
         public Script checkout(String revision, String destination, Map<String, String> params) {
+
             return $.sys.script().line(commandPrefix("checkout", params)
                 .a("-r" + revision,
                     vcsRepository(),
@@ -200,6 +195,16 @@ public class SvnCLIPlugin extends VcsCLIPlugin {
             sb.append("files=").append(files);
             sb.append('}');
             return sb.toString();
+        }
+    }
+
+    static class SvnTaskDef extends TaskDef<SvnCLISession> {
+        private SvnCLIPlugin svn;
+
+
+        @Override
+        public SvnCLISession newSession(SessionContext $, final Task parent) {
+            return svn.newSession($, parent);
         }
     }
 }

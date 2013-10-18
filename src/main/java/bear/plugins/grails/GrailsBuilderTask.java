@@ -16,12 +16,12 @@
 
 package bear.plugins.grails;
 
+import bear.core.SessionContext;
 import bear.vcs.CommandLineResult;
 import bear.cli.CommandLine;
 import bear.cli.Script;
 import bear.core.Bear;
 import bear.core.GlobalContext;
-import bear.core.SessionContext;
 import bear.plugins.java.JavaPlugin;
 import bear.session.Result;
 import bear.task.Task;
@@ -47,8 +47,8 @@ public class GrailsBuilderTask extends TaskDef {
     }
 
     @Override
-    public Task newSession(SessionContext $, final Task parent) {
-        return new Task(parent, this, $) {
+    public Task<TaskDef> newSession(SessionContext $, final Task parent) {
+        return new Task<TaskDef>(parent, this, $) {
             @Override
             public GrailsBuildResult exec(TaskRunner runner) {
                 $.log("building Grails WAR, rev: %s...", $(bear.realRevision));

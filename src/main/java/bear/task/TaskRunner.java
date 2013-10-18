@@ -17,8 +17,8 @@
 package bear.task;
 
 import bear.core.Bear;
-import bear.core.GlobalContext;
 import bear.core.SessionContext;
+import bear.core.GlobalContext;
 import bear.session.Result;
 import bear.vcs.CommandLineResult;
 import bear.plugins.HavingContext;
@@ -33,7 +33,7 @@ import java.util.List;
 /**
  * @author Andrey Chaschev chaschev@gmail.com
  */
-public class TaskRunner extends HavingContext<TaskRunner>{
+public class TaskRunner extends HavingContext<TaskRunner, SessionContext>{
     private static final Logger logger = LoggerFactory.getLogger(TaskRunner.class);
     LinkedHashSet<TaskDef> tasksExecuted = new LinkedHashSet<TaskDef>();
 
@@ -117,7 +117,7 @@ public class TaskRunner extends HavingContext<TaskRunner>{
             if (!thisIsMe) {
                 result = runWithDependencies(taskDef);
             } else {
-                Task taskSession = taskDef.newSession($, $.getCurrentTask());
+                Task<TaskDef> taskSession = taskDef.newSession($, $.getCurrentTask());
 
                 if($(bear.checkDependencies)){
                     DependencyResult depsResult = taskSession.getDependencies().check();

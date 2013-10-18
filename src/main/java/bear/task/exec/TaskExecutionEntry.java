@@ -18,14 +18,15 @@ package bear.task.exec;
 
 import bear.session.Result;
 import bear.task.Task;
+import bear.task.TaskDef;
 
 /**
 * @author Andrey Chaschev chaschev@gmail.com
 */
 public class TaskExecutionEntry extends ExecutionEntry {
-    protected Task task;
+    protected Task<? extends TaskDef> task;
 
-    public TaskExecutionEntry(Task task) {
+    public TaskExecutionEntry(Task<? extends TaskDef> task) {
         this.task = task;
     }
 

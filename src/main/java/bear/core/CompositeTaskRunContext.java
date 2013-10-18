@@ -19,10 +19,7 @@ package bear.core;
 import bear.console.CompositeConsoleArrival;
 import bear.main.BearCommandLineConfigurator;
 import bear.plugins.Plugin;
-import bear.session.DynamicVariable;
-import bear.session.Result;
-import bear.session.SystemEnvironment;
-import bear.session.Variables;
+import bear.session.*;
 import bear.task.*;
 import bear.task.exec.TaskExecutionContext;
 import bear.vcs.CommandLineResult;
@@ -69,7 +66,7 @@ public class CompositeTaskRunContext {
 
         for (int i = 0; i < $s.size(); i++) {
             final SessionContext $ = $s.get(i);
-            final SystemEnvironment sys = $.getSys();
+            final SystemSession sys = $.getSys();
             final TaskRunner runner = $.getRunner();
 
             final int finalI = i;
@@ -80,12 +77,13 @@ public class CompositeTaskRunContext {
                     try {
                         Thread.currentThread().setName($.threadName());
 
-                        $.sys.connect();
 
-                        if ($.var(sys.bear.verifyPlugins)) {
+//                        $.sys.connect();
+
+                        if ($.var($.bear.verifyPlugins)) {
                             DependencyResult r = new DependencyResult(Result.OK);
 
-                            for (Plugin plugin : global.getGlobalPlugins()) {
+                            for (Plugin<Task, TaskDef<?>> plugin : global.getGlobalPlugins()) {
                                 r.join(plugin.checkPluginDependencies());
 
                                 if (!task.isSetupTask()) {

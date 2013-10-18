@@ -17,6 +17,8 @@
 package bear.core;
 
 import bear.plugins.Plugin;
+import bear.task.Task;
+import bear.task.TaskDef;
 import chaschev.lang.OpenBean;
 import chaschev.util.Exceptions;
 
@@ -62,7 +64,7 @@ public abstract class IBearSettings {
 
     public final GlobalContext configure(GlobalContextFactory factory) throws Exception {
         for (Field field : OpenBean.fieldsOfType(this.getClass(), Plugin.class)) {
-            factory.requirePlugins((Class<? extends Plugin>)field.getType());
+            factory.requirePlugins((Class<? extends Plugin<Task, TaskDef<?>>>)field.getType());
         }
 
         configureMe(factory);

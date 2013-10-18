@@ -1,17 +1,18 @@
+import bear.cli.CommandLine;
 import bear.core.Bear;
 import bear.core.SessionContext;
 import bear.core.Stage;
-import bear.cli.CommandLine;
 import bear.main.Script;
+import bear.session.Address;
+import bear.session.Question;
+import bear.session.SystemSession;
 import bear.vcs.SvnCLIPlugin;
 import bear.vcs.VcsCLIPlugin;
-import bear.session.Question;
-import bear.session.SystemEnvironment;
 import com.google.common.base.Function;
 import com.google.common.collect.Lists;
 import org.apache.commons.io.FileUtils;
 
-import java.io.*;
+import java.io.File;
 import java.util.List;
 
 import static com.google.common.collect.Lists.transform;
@@ -34,14 +35,15 @@ public class CreateNewScript extends Script {
         ).ask();
 
         final Stage stage = global.localCtx.var(bear.getStage);
-        final SystemEnvironment remoteEnv = stage.findRemoteEnvironment();
+        final Address remoteEnv = stage.findRemoteEnvironment();
 
-        final SessionContext $ = remoteEnv.$();
+        final SessionContext $ = null;//todo fix
+//        final SessionContext $ = remoteEnv.$();
 
         List<String> branches = Lists.newArrayList("trunk/");
 
-        branches.addAll(remoteVcsLs(bear, remoteEnv, $, "branches"));
-        branches.addAll(remoteVcsLs(bear, remoteEnv, $, "tags"));
+//        branches.addAll(remoteVcsLs(bear, remoteEnv, $, "branches"));
+//        branches.addAll(remoteVcsLs(bear, remoteEnv, $, "tags"));
 
         new Question("step 2, choose a branch: ",
             branches,
@@ -91,7 +93,7 @@ public class CreateNewScript extends Script {
         System.out.printf("you may now restart bear to run it%n");
     }
 
-    private static List<String> remoteVcsLs(Bear bear, SystemEnvironment remoteEnv, SessionContext $, final String dir) {
+    private static List<String> remoteVcsLs(Bear bear, SystemSession remoteEnv, SessionContext $, final String dir) {
         final VcsCLIPlugin.Session vcsCLI = $.var(bear.vcs);
 
         final CommandLine<SvnCLIPlugin.LsResult> line = vcsCLI.ls($.joinPath(bear.repositoryURI, dir));

@@ -16,11 +16,9 @@
 
 package bear.session;
 
-import bear.core.SessionContext;
 import bear.core.VarFun;
-import com.google.common.base.Function;
+import bear.plugins.AbstractContext;
 import com.google.common.base.Preconditions;
-import com.google.common.collect.Iterables;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 
@@ -30,37 +28,10 @@ import java.util.Arrays;
  * @author Andrey Chaschev chaschev@gmail.com
  */
 public class Variables {
-    public static DynamicVariable<String> joinPath(final DynamicVariable<String> root, final String... folders) {
-        return joinPath(null, root, folders);
-    }
 
-
-    public static DynamicVariable<String> joinPath(String name, final DynamicVariable<String> root, final String... folders) {
-        return strVar("").setDynamic(new VarFun<String>() {
-            public String apply() {
-                return $.sys.joinPath($(root), $.joinPath(folders));
-            }
-        });
-    }
-
-    public static DynamicVariable<String> joinPath(final DynamicVariable... folders) {
-        return joinPath(null, folders);
-    }
-
-    public static DynamicVariable<String> joinPath(String name, final DynamicVariable... folders) {
-        return strVar("").setDynamic(new VarFun<String>() {
-            public String apply() {
-                return $.sys.joinPath(Iterables.transform(Arrays.asList(folders), new Function<DynamicVariable, String>() {
-                    public String apply(DynamicVariable var) {
-                        return $((DynamicVariable<String>) var);
-                    }
-                }));
-            }
-        });
-    }
 
     public static DynamicVariable<Boolean> not(String name, final DynamicVariable<Boolean> b) {
-        return bool("").setDynamic(new VarFun<Boolean>() {
+        return bool("").setDynamic(new VarFun<Boolean, AbstractContext>() {
             public Boolean apply() {
                 return !$.varB(b);
             }
@@ -68,7 +39,7 @@ public class Variables {
     }
 
     public static <T> DynamicVariable<Boolean> isEql(String name, final DynamicVariable<T> variable, final String to) {
-        return dynamic(name, "", new VarFun<Boolean>() {
+        return dynamic(name, "", new VarFun<Boolean, AbstractContext>() {
             public Boolean apply() {
                 final T v = $(variable);
                 return v == null ? to == null : String.valueOf(v).equals(to);
@@ -81,7 +52,7 @@ public class Variables {
     }
 
     public static <T> DynamicVariable<Boolean> isSet(String name, final DynamicVariable<T> variable) {
-        return dynamic(name, "", new VarFun<Boolean>() {
+        return dynamic(name, "", new VarFun<Boolean, AbstractContext>() {
             public Boolean apply() {
                 return $.isSet(variable);
             }
@@ -93,7 +64,7 @@ public class Variables {
     }
 
     public static <T> DynamicVariable<T> condition(String name, final DynamicVariable<Boolean> condition, final DynamicVariable<T> trueVar, final DynamicVariable<T> falseVar) {
-        return dynamic(name, "", new VarFun<T>() {
+        return dynamic(name, "", new VarFun<T, AbstractContext>() {
             public T apply() {
                 return $.varB(condition) ? $.var(trueVar) : $.var(falseVar);
             }
@@ -105,7 +76,7 @@ public class Variables {
     }
 
     public static <T> DynamicVariable<T> equalTo(String name, final DynamicVariable<T> variable) {
-        return dynamic(name, "", new VarFun<T>() {
+        return dynamic(name, "", new VarFun<T, AbstractContext>() {
             public T apply() {
                 return $(variable);
             }
@@ -113,7 +84,7 @@ public class Variables {
     }
 
     public static DynamicVariable<Boolean> and(final DynamicVariable... bools) {
-        return bool("").setDynamic(new VarFun<Boolean>() {
+        return bool("").setDynamic(new VarFun<Boolean, AbstractContext>() {
             public Boolean apply() {
                 for (DynamicVariable b : bools) {
                     if (!$.varB(b)) return false;
@@ -125,7 +96,7 @@ public class Variables {
     }
 
     public static DynamicVariable<Boolean> or(String name, final DynamicVariable... bools) {
-        return bool("").setDynamic(new VarFun<Boolean>() {
+        return bool("").setDynamic(new VarFun<Boolean, AbstractContext>() {
             public Boolean apply() {
                 for (DynamicVariable b : bools) {
                     if ($.varB(b)) return true;
@@ -137,14 +108,14 @@ public class Variables {
     }
 
     public static DynamicVariable<String> concat(final Object... varsAndStrings) {
-        return dynamic(new VarFun<String>() {
+        return dynamic(new VarFun<String, AbstractContext>() {
             public String apply() {
                 return Variables.concat($, varsAndStrings);
             }
         });
     }
 
-    public static String concat(SessionContext $, Object... varsAndStrings) {
+    public static String concat(AbstractContext $, Object... varsAndStrings) {
         StringBuilder sb = new StringBuilder(128);
 
         for (Object obj : varsAndStrings) {
@@ -173,7 +144,7 @@ public class Variables {
 
     @Deprecated
     public static <T> DynamicVariable<T> dynamicNotSet(final String name, String desc) {
-        return dynamic(name, desc, new VarFun<T>() {
+        return dynamic(name, desc, new VarFun<T, AbstractContext>() {
             public T apply() {
                 throw new VarNotSetException(var);
             }
@@ -184,7 +155,7 @@ public class Variables {
         return new DynamicVariable<T>("").defaultTo(_default);
     }
 
-    public static <T> DynamicVariable<T> dynamic(VarFun<T> function) {
+    public static <T> DynamicVariable<T> dynamic(VarFun<T, ? extends AbstractContext> function) {
         return dynamic(null, "", function);
     }
 
@@ -200,11 +171,11 @@ public class Variables {
         return new DynamicVariable<T>(name, desc);
     }
 
-    public static <T> DynamicVariable<T> dynamic(String desc, VarFun<T> function) {
+    public static <T> DynamicVariable<T> dynamic(String desc, VarFun<T, ? extends AbstractContext> function) {
         return new DynamicVariable<T>((String) null, desc).setDynamic(function);
     }
 
-    public static <T> DynamicVariable<T> dynamic(String name, String desc, VarFun<T> function) {
+    public static <T> DynamicVariable<T> dynamic(String name, String desc, VarFun<T, ? extends AbstractContext> function) {
         return new DynamicVariable<T>(name, desc).setDynamic(function);
     }
 
@@ -236,7 +207,7 @@ public class Variables {
         return new DynamicVariable<Boolean>(desc);
     }
 
-    public static String checkSet(SessionContext $, final String actor, DynamicVariable... vars){
+    public static String checkSet(AbstractContext $, final String actor, DynamicVariable... vars){
         StringBuilder sb = new StringBuilder(256);
 
         for (DynamicVariable var : vars) {

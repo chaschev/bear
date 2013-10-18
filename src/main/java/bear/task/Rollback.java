@@ -16,15 +16,15 @@
 
 package bear.task;
 
+import bear.core.SessionContext;
 import bear.core.GlobalContext;
 import bear.plugins.Plugin;
 import bear.cli.Script;
-import bear.core.SessionContext;
 
 /**
  * @author Andrey Chaschev chaschev@gmail.com
  */
-public class Rollback extends Plugin {
+public class Rollback extends Plugin<Task, TaskDef<?>> {
     public Rollback(GlobalContext global) {
         super(global);
     }
@@ -37,8 +37,8 @@ public class Rollback extends Plugin {
     public final TaskDef pointToPreviousRelease = new TaskDef() {
 
         @Override
-        public Task newSession(SessionContext $, final Task parent) {
-            return new Task(parent, this, $) {
+        public Task<TaskDef> newSession(SessionContext $, final Task parent) {
+            return new Task<TaskDef>(parent, this, $) {
                 @Override
                 protected TaskResult exec(TaskRunner runner) {
                     requirePreviousRelease($);
@@ -58,8 +58,8 @@ public class Rollback extends Plugin {
 
     public final TaskDef cleanup = new TaskDef() {
         @Override
-        public Task newSession(SessionContext $, final Task parent) {
-            return new Task(parent, this, $) {
+        public Task<TaskDef> newSession(SessionContext $, final Task parent) {
+            return new Task<TaskDef>(parent, this, $) {
                 @Override
                 protected TaskResult exec(TaskRunner runner) {
                         return $.sys.sendCommand(
@@ -73,8 +73,8 @@ public class Rollback extends Plugin {
 
     public final TaskDef code = new TaskDef() {
         @Override
-        public Task newSession(SessionContext $, final Task parent) {
-            return new Task(parent, this, $) {
+        public Task<TaskDef> newSession(SessionContext $, final Task parent) {
+            return new Task<TaskDef>(parent, this, $) {
                 @Override
                 protected TaskResult exec(TaskRunner runner) {
                     return TaskResult.and(
@@ -88,8 +88,8 @@ public class Rollback extends Plugin {
 
     public final TaskDef $default = new TaskDef() {
         @Override
-        public Task newSession(SessionContext $, final Task parent) {
-            return new Task(parent, this, $) {
+        public Task<TaskDef> newSession(SessionContext $, final Task parent) {
+            return new Task<TaskDef>(parent, this, $) {
                 @Override
                 protected TaskResult exec(TaskRunner runner) {
                     return TaskResult.and(

@@ -1,11 +1,12 @@
 package bear.plugins;
 
-import bear.core.GlobalContext;
 import bear.core.SessionContext;
+import bear.core.GlobalContext;
 import bear.plugins.graph.DirectedGraph;
 import bear.task.DependencyException;
 import bear.task.DependencyResult;
 import bear.task.Task;
+import bear.task.TaskDef;
 import chaschev.lang.OpenBean;
 import chaschev.util.Exceptions;
 import com.google.common.base.Predicates;
@@ -41,6 +42,7 @@ public class Plugins {
 
         for (Plugin plugin : plugins) {
             pluginMap.put(plugin.getClass(), plugin);
+            globalContext.put(plugin.getClass(), plugin);
         }
 
         for (Plugin plugin : plugins) {
@@ -177,7 +179,7 @@ public class Plugins {
         return plugin;
     }
 
-    public <T extends Plugin> Task getSessionContext(Class<T> aClass, SessionContext $, Task parent){
+    public <T extends Plugin> Task<TaskDef> getSessionContext(Class<T> aClass, SessionContext $, Task<TaskDef> parent){
         try {
             final T plugin = globalContext.getPlugin(aClass);
 

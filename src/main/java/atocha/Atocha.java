@@ -22,11 +22,13 @@ import bear.session.DynamicVariable;
 import bear.session.Variables;
 import bear.task.InstallationTask;
 import bear.task.InstallationTaskDef;
+import bear.task.Task;
+import bear.task.TaskDef;
 
 /**
  * @author Andrey Chaschev chaschev@gmail.com
  */
-public class Atocha extends Plugin {
+public class Atocha extends Plugin<Task, TaskDef<?>> {
 
     public final DynamicVariable<Boolean>
         reuseWar = Variables.bool("will skip building WAR").defaultTo(false);

@@ -1,28 +1,39 @@
 package bear.plugins;
 
-import bear.core.SessionContext;
 import bear.session.DynamicVariable;
 
 /**
  * @author Andrey Chaschev chaschev@gmail.com
  */
-public class HavingContext<CHILD> {
-    protected SessionContext $;
 
-    public HavingContext(SessionContext $) {
+
+public class HavingContext<CHILD, CONTEXT extends AbstractContext> {
+    protected CONTEXT $;
+
+    public HavingContext(CONTEXT $) {
         this.$ = $;
     }
 
-    public <T> T $(DynamicVariable<T> varName) {
-        return $.var(varName);
+    public HavingContext(Object $) {
+        this.$ = (CONTEXT) $;
     }
 
-    public CHILD set$(SessionContext $) {
+    public <T> T $(DynamicVariable<T> varName) {
+        Object var = $.var(varName);
+        return (T) var;
+    }
+
+    public CHILD set$(CONTEXT $) {
         this.$ = $;
         return (CHILD) this;
     }
 
-    public SessionContext $() {
+    public CHILD set$(Object $) {
+        this.$ = (CONTEXT) $;
+        return (CHILD) this;
+    }
+
+    public CONTEXT $() {
         return $;
     }
 }

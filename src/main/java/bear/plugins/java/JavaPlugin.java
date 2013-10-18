@@ -19,14 +19,13 @@ package bear.plugins.java;
 import bear.core.GlobalContext;
 import bear.core.SessionContext;
 import bear.plugins.ZippedToolPlugin;
+import bear.session.BearVariables;
 import bear.session.DynamicVariable;
 import bear.session.Variables;
 import bear.task.*;
 import org.apache.commons.lang3.StringUtils;
 
 import java.io.File;
-
-import static bear.session.Variables.concat;
 
 /**
  * @author Andrey Chaschev chaschev@gmail.com
@@ -88,7 +87,7 @@ public class JavaPlugin extends ZippedToolPlugin {
         toolDistrName.setEqualTo(versionName);
         distrFilename.setEqualTo(Variables.concat(versionName, ".gz"));
 
-        localDistrPath = Variables.joinPath(myDirPath, distrFilename);
+        localDistrPath = BearVariables.joinPath(myDirPath, distrFilename);
 
     }
 

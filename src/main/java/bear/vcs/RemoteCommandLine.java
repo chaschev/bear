@@ -18,14 +18,14 @@ package bear.vcs;
 
 import bear.cli.CommandLine;
 import bear.cli.Script;
-import bear.session.SystemEnvironment;
+import bear.session.SystemSession;
 
 /**
  * @author Andrey Chaschev chaschev@gmail.com
  */
 public class RemoteCommandLine<T extends CommandLineResult> extends CommandLine<T> {
 
-    public RemoteCommandLine(SystemEnvironment sys) {
+    public RemoteCommandLine(SystemSession sys) {
         super(sys);
     }
 

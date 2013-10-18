@@ -16,9 +16,11 @@
 
 package bear.plugins.grails;
 
-import bear.core.GlobalContext;
 import bear.core.SessionContext;
+import bear.core.GlobalContext;
 import bear.core.VarFun;
+import bear.plugins.AbstractContext;
+import bear.session.BearVariables;
 import bear.session.Variables;
 import bear.task.*;
 import bear.plugins.ZippedToolPlugin;
@@ -33,28 +35,28 @@ import static bear.session.Variables.*;
  */
 public class GrailsPlugin extends ZippedToolPlugin {
     public final DynamicVariable<String>
-        homeParentPath = dynamic(new VarFun<String>() {
+        homeParentPath = dynamic(new VarFun<String, AbstractContext>() {
         public String apply() {
             return StringUtils.substringBeforeLast($(homePath), "/");
         }
     }),
-        currentVersionPath = dynamic(new VarFun<String>() {
+        currentVersionPath = dynamic(new VarFun<String, SessionContext>() {
             public String apply() {
                 return $.sys.joinPath($(homeParentPath), "grails-" + $(version));
             }
         }),
-        grailsBin = joinPath(homePath, "bin"),
+        grailsBin = BearVariables.joinPath(homePath, "bin"),
         projectPath = dynamic("Project root dir"),
-        grailsExecName = dynamic("'grails' or 'grails.bat'", new VarFun<String>() {
+        grailsExecName = dynamic("'grails' or 'grails.bat'", new VarFun<String, SessionContext>() {
             public String apply() {
                 return "grails" + ($.sys.isNativeUnix() ? "" : ".bat");
             }
         }),
         grailsExecPath = Variables.condition(Variables.isSet(null, homePath),
-            joinPath(grailsBin, grailsExecName), grailsExecName),
+            BearVariables.joinPath(grailsBin, grailsExecName), grailsExecName),
         warName = Variables.newVar("ROOT.war").setDesc("i.e. ROOT.war"),
-        projectWarPath = joinPath(projectPath, warName),
-        releaseWarPath = Variables.condition(bear.isRemoteEnv, joinPath(bear.releasePath, warName), projectWarPath)
+        projectWarPath = BearVariables.joinPath(projectPath, warName),
+        releaseWarPath = Variables.condition(bear.isRemoteEnv, BearVariables.joinPath(bear.releasePath, warName), projectWarPath)
     ;
 
     public final DynamicVariable<Boolean>
@@ -65,13 +67,13 @@ public class GrailsPlugin extends ZippedToolPlugin {
         super(global);
 
         toolname.defaultTo("grails", true);
-        distrFilename.setDynamic(new VarFun<String>() {
+        distrFilename.setDynamic(new VarFun<String, AbstractContext>() {
             @Override
             public String apply() {
                 return concat(versionName, ".zip");
             }
         });
-        distrWwwAddress.setDynamic(new VarFun<String>() {
+        distrWwwAddress.setDynamic(new VarFun<String, AbstractContext>() {
             public String apply() {
                 return String.format("http://dist.springframework.org.s3.amazonaws.com/release/GRAILS/%s", $(distrFilename));
             }

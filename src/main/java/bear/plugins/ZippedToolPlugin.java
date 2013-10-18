@@ -16,15 +16,15 @@
 
 package bear.plugins;
 
+import bear.core.SessionContext;
+import bear.session.SystemEnvironmentPlugin;
 import bear.session.Variables;
 import bear.task.*;
 import bear.cli.Script;
 import bear.console.ConsoleCallback;
 import bear.core.GlobalContext;
-import bear.core.SessionContext;
 import bear.plugins.java.JavaPlugin;
 import bear.session.DynamicVariable;
-import bear.session.SystemEnvironment;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
 import org.apache.commons.lang3.StringUtils;
@@ -39,7 +39,7 @@ import static bear.session.Variables.*;
 /**
  * A class that simplifies operations (i.e. installation) of tools like Maven, Grails, Play, Tomcat, etc
  */
-public abstract class ZippedToolPlugin extends Plugin{
+public abstract class ZippedToolPlugin extends Plugin<Task, TaskDef<?>> {
     public final DynamicVariable<String>
         version = dynamic("version of the tool, a string which is return by a tool identifying it's version"),
         toolname = dynamic("this will be the name of home folder, i.e. maven, jdk"),
@@ -66,8 +66,8 @@ public abstract class ZippedToolPlugin extends Plugin{
 
     }
 
-    protected abstract class ZippedTool extends InstallationTask {
-        protected ZippedTool(Task parent, TaskDef def, SessionContext $) {
+    protected abstract class ZippedTool extends InstallationTask<TaskDef> {
+        protected ZippedTool(Task<TaskDef> parent, TaskDef def, SessionContext $) {
             super(def, $, parent);
 
             addDependency(new Dependency(toString(), $).addCommands(
@@ -173,7 +173,7 @@ public abstract class ZippedToolPlugin extends Plugin{
         }
 
         private ConsoleCallback sshCallback() {
-            return SystemEnvironment.passwordCallback($.var(bear.sshPassword));
+            return SystemEnvironmentPlugin.passwordCallback($.var(bear.sshPassword));
         }
 
         protected void shortCut(String newCommandName, String sourceExecutableName){

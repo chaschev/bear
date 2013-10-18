@@ -16,7 +16,6 @@
 
 package bear.vcs;
 
-import bear.session.Variables;
 import bear.cli.CommandLine;
 import bear.cli.Script;
 import bear.console.AbstractConsole;
@@ -24,6 +23,7 @@ import bear.console.ConsoleCallback;
 import bear.core.GlobalContext;
 import bear.core.SessionContext;
 import bear.session.DynamicVariable;
+import bear.session.Variables;
 import bear.task.Dependency;
 import bear.task.InstallationTaskDef;
 import bear.task.Task;
@@ -43,7 +43,7 @@ import static java.util.Collections.addAll;
 /**
  * @author Andrey Chaschev chaschev@gmail.com
  */
-public class GitCLIPlugin extends VcsCLIPlugin {
+public class GitCLIPlugin extends VcsCLIPlugin<Task, TaskDef<?>> {
     public final DynamicVariable<Integer> cloneDepth = Variables.newVar(-1);
     public final DynamicVariable<Boolean>
         enableSubmodules = Variables.newVar(false),
@@ -51,28 +51,24 @@ public class GitCLIPlugin extends VcsCLIPlugin {
 
     public final DynamicVariable<String> remote;
 
-    public final TaskDef<GitCLISession> GIT_STUB_TASK = new TaskDef<GitCLISession>() {
-        @Override
-        public GitCLISession newSession(SessionContext $, final Task parent) {
-            return GitCLIPlugin.this.newSession($, parent);
-        }
-    };
-
     public GitCLIPlugin(GlobalContext global) {
-        super(global);
+        super(global, new GitTaskDef());
+
+        ((GitTaskDef)taskDefMixin).git = this;
+
         remote = Variables.<String>dynamic("remote user").setEqualTo(bear.vcsUsername);
     }
 
     @Override
-    public GitCLISession newSession(SessionContext $, Task parent) {
-        return new GitCLISession(parent, GIT_STUB_TASK, $);
+    public GitCLISession newSession(SessionContext $, Task<TaskDef> parent) {
+        return new GitCLISession(parent, taskDefMixin, $);
     }
 
     public class GitCLISession extends Session {
-        public GitCLISession(Task parent, TaskDef def, SessionContext $) {
+        public GitCLISession(Task<TaskDef> parent, TaskDef def, SessionContext $) {
             super(parent, def, $);
 
-            addDependency(new Dependency(GIT_STUB_TASK, "GIT", $, parent).addCommands("git --version"));
+            addDependency(new Dependency(taskDefMixin, "GIT", $, parent).addCommands("git --version"));
         }
 
         @Override
@@ -260,7 +256,6 @@ public class GitCLIPlugin extends VcsCLIPlugin {
             return new Script.StubScript<BranchInfoResult>($.sys, new BranchInfoResult(null, revision, null));
         }
 
-
         @Override
         public Script export(String revision, String destination, Map<String, String> params) {
             return checkout(revision, destination, emptyParams())
@@ -319,5 +314,15 @@ public class GitCLIPlugin extends VcsCLIPlugin {
 
     private static boolean remoteIsNotOrigin(String remote) {
         return !remote.equals("origin");
+    }
+
+    static class GitTaskDef extends TaskDef<GitCLISession> {
+        private GitCLIPlugin git;
+
+
+        @Override
+        public GitCLISession newSession(SessionContext $, final Task parent) {
+            return git.newSession($, parent);
+        }
     }
 }

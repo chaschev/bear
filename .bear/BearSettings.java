@@ -13,8 +13,6 @@ import org.apache.commons.lang3.time.StopWatch;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static bear.session.GenericUnixRemoteEnvironment.newUnixRemote;
-
 /**
  * @author Andrey Chaschev chaschev@gmail.com
  */
@@ -38,11 +36,10 @@ public class BearSettings extends IBearSettings {
 
         factory.init(this);
 
-        final VariablesLayer vars = global.variablesLayer;
+        final VariablesLayer vars = global.getLayer();
 
         vars
             .putS(grails.homePath, "/opt/grails")
-            .putS(java.homePath, "/usr/java/jdk1.6.0_43")
             .putS(bear.sshUsername, "ihseus")
             .putS(bear.vcsPassword, global.getProperty("svn.password"))
         ;
@@ -52,12 +49,12 @@ public class BearSettings extends IBearSettings {
         bear.stages.defaultTo(
             new Stages()
                 .add(new Stage("pac-dev", global)
-                    .add(newUnixRemote("pac-dev", "10.22.13.4", global)))
+                    .add("pac-dev", "10.22.13.4"))
                 .add(new Stage("pac-test", global)
-                    .add(newUnixRemote("pac-test", "10.22.13.6", global)))
+                    .add("pac-test", "10.22.13.6"))
         );
 
-        bear.getStrategy.setDynamic(new VarFun<DeployStrategyTask>() {
+        bear.getStrategy.setDynamic(new VarFun<DeployStrategyTask, SessionContext>() {
             public DeployStrategyTask apply() {
                 grails.projectPath.setEqualTo(
                     bear.vcsBranchLocalPath

@@ -16,9 +16,9 @@
 
 package bear.task;
 
-import bear.session.GenericUnixRemoteEnvironment;
-import bear.vcs.CommandLineResult;
 import bear.core.SessionContext;
+import bear.session.GenericUnixRemoteEnvironmentPlugin;
+import bear.vcs.CommandLineResult;
 import bear.session.Result;
 import com.google.common.collect.Lists;
 import org.slf4j.Logger;
@@ -31,7 +31,7 @@ import java.util.List;
  * @author Andrey Chaschev chaschev@gmail.com
  */
 public class TransactionTaskDef extends TaskDef {
-    private static final Logger logger = LoggerFactory.getLogger(GenericUnixRemoteEnvironment.class);
+    private static final Logger logger = LoggerFactory.getLogger(GenericUnixRemoteEnvironmentPlugin.class);
 
     List<TaskDef> tasks;
 
@@ -45,8 +45,8 @@ public class TransactionTaskDef extends TaskDef {
     }
 
     @Override
-    public Task newSession(SessionContext $, final Task parent) {
-        return new Task(parent, this, $) {
+    public Task<TaskDef> newSession(SessionContext $, final Task parent) {
+        return new Task<TaskDef>(parent, this, $) {
             @Override
             protected TaskResult exec(TaskRunner runner) {
                 TaskResult result = null;

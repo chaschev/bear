@@ -18,8 +18,8 @@ package bear.task;
 
 import bear.cli.Script;
 import bear.core.Bear;
-import bear.core.GlobalContext;
 import bear.core.SessionContext;
+import bear.core.GlobalContext;
 import bear.plugins.Plugin;
 import bear.vcs.VcsCLIPlugin;
 import com.google.common.base.Preconditions;
@@ -41,15 +41,15 @@ public class Tasks {
 
     public final TaskDef restartApp = new TaskDef("Restart App") {
         @Override
-        public Task newSession(SessionContext $, final Task parent) {
+        public Task<TaskDef> newSession(SessionContext $, final Task parent) {
             return Task.nop();
         }
     };
 
     public final TaskDef deploy = new TaskDef("Deploy") {
         @Override
-        public Task newSession(SessionContext $, final Task parent) {
-            return new Task(parent, this, $) {
+        public Task<TaskDef> newSession(SessionContext $, final Task parent) {
+            return new Task<TaskDef>(parent, this, $) {
                 @Override
                 protected TaskResult exec(TaskRunner runner) {
                     return runner.run(
@@ -62,8 +62,8 @@ public class Tasks {
 
     public final TaskDef setup = new TaskDef("Generic Setup") {
         @Override
-        public Task newSession(SessionContext $, final Task parent) {
-            return new Task(parent, setup, $) {
+        public Task<TaskDef> newSession(SessionContext $, final Task parent) {
+            return new Task<TaskDef>(parent, setup, $) {
                 @Override
                 protected TaskResult exec(TaskRunner runner) {
                     final String[] dirs = {
@@ -86,7 +86,7 @@ public class Tasks {
                     }
 
                     if ($(bear.verifyPlugins)) {
-                        for (Plugin plugin : global.getGlobalPlugins()) {
+                        for (Plugin<Task, ? extends TaskDef> plugin : global.getGlobalPlugins()) {
                             if (plugin.getInstall().newSession($, parent).asInstalledDependency().checkDeps().nok()) {
                                 if ($(bear.autoInstallPlugins)) {
                                     $.log("plugin %s was not installed. installing it...", plugin);
@@ -110,8 +110,8 @@ public class Tasks {
 
     public final TaskDef update = new TaskDef("Update") {
         @Override
-        public Task newSession(SessionContext $, final Task parent) {
-            return new Task(parent, update, $) {
+        public Task<TaskDef> newSession(SessionContext $, final Task parent) {
+            return new Task<TaskDef>(parent, update, $) {
                 @Override
                 protected TaskResult exec(TaskRunner runner) {
                     return runner.run(new TransactionTaskDef(
@@ -125,8 +125,8 @@ public class Tasks {
 
     public final TaskDef updateCode = new TaskDef() {
         @Override
-        public Task newSession(SessionContext $, final Task parent) {
-            return new Task(parent, updateCode, $) {
+        public Task<TaskDef> newSession(SessionContext $, final Task parent) {
+            return new Task<TaskDef>(parent, updateCode, $) {
                 @Override
                 protected TaskResult exec(TaskRunner runner) {
                     return TaskResult.and(
@@ -145,8 +145,8 @@ public class Tasks {
 
     public final TaskDef finalizeTouchCode = new TaskDef() {
         @Override
-        public Task newSession(SessionContext $, final Task parent) {
-            return new Task(parent, finalizeTouchCode, $) {
+        public Task<TaskDef> newSession(SessionContext $, final Task parent) {
+            return new Task<TaskDef>(parent, finalizeTouchCode, $) {
                 @Override
                 protected TaskResult exec(TaskRunner runner) {
                     $.sys.chmod("g+w", true, $(bear.getLatestReleasePath));
@@ -159,8 +159,8 @@ public class Tasks {
 
     public final TaskDef createSymlink = new TaskDef() {
         @Override
-        public Task newSession(SessionContext $, final Task parent) {
-            return new Task(parent, createSymlink, $) {
+        public Task<TaskDef> newSession(SessionContext $, final Task parent) {
+            return new Task<TaskDef>(parent, createSymlink, $) {
                 @Override
                 protected TaskResult exec(TaskRunner runner) {
                     return new TaskResult($.sys.link($(bear.getLatestReleasePath), $(bear.currentPath)));
@@ -180,8 +180,8 @@ public class Tasks {
 
     public final TaskDef vcsUpdate = new TaskDef() {
         @Override
-        public Task newSession(SessionContext $, final Task parent) {
-            return new Task(parent, vcsUpdate, $) {
+        public Task<TaskDef> newSession(SessionContext $, final Task parent) {
+            return new Task<TaskDef>(parent, vcsUpdate, $) {
                 @Override
                 protected TaskResult exec(TaskRunner runner) {
                     $.log("updating the project, please wait...");

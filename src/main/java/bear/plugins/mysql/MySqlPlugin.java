@@ -19,9 +19,10 @@ package bear.plugins.mysql;
 import bear.console.AbstractConsole;
 import bear.console.ConsoleCallback;
 import bear.core.Bear;
-import bear.core.GlobalContext;
 import bear.core.SessionContext;
+import bear.core.GlobalContext;
 import bear.core.VarFun;
+import bear.plugins.AbstractContext;
 import bear.session.*;
 import bear.task.*;
 import bear.plugins.Plugin;
@@ -40,7 +41,7 @@ import static bear.task.TaskResult.and;
 /**
  * @author Andrey Chaschev chaschev@gmail.com
  */
-public class MySqlPlugin extends Plugin {
+public class MySqlPlugin extends Plugin<Task, TaskDef<?>> {
     private static final Logger logger = LoggerFactory.getLogger(MySqlPlugin.class);
 
     public final DynamicVariable<String>
@@ -53,27 +54,27 @@ public class MySqlPlugin extends Plugin {
         serverPackage = Variables.newVar("mysql55-server"),
         clientPackage = Variables.newVar("mysql55"),
         mysqlTempScriptName = Variables.strVar().defaultTo("temp.sql"),
-        mysqlTempScriptPath = Variables.dynamic(new VarFun<String>() {
+        mysqlTempScriptPath = Variables.dynamic(new VarFun<String, SessionContext>() {
             @Override
             public String apply() {
                 return $.sys.joinPath($(bear.projectSharedPath), $(mysqlTempScriptName));
             }
         }),
-        dumpName = Variables.dynamic(new VarFun<String>() {
+        dumpName = Variables.dynamic(new VarFun<String, AbstractContext>() {
             @Override
             public String apply() {
                 return String.format("dump_%s_%s.GMT_%s.sql",
                     $(bear.applicationName), Bear.RELEASE_FORMATTER.print(new DateTime()), $(bear.sessionHostname));
             }
         }),
-        dumpsDirPath = Variables.joinPath(bear.projectSharedPath, "dumps"),
-        dumpPath = Variables.dynamic(new VarFun<String>() {
+        dumpsDirPath = BearVariables.joinPath(bear.projectSharedPath, "dumps"),
+        dumpPath = Variables.dynamic(new VarFun<String, SessionContext>() {
             public String apply() {
                 return $.sys.joinPath($(dumpsDirPath), $(dumpName) + ".bz2");
             }
         });
 
-    public final DynamicVariable<Version> getVersion = Variables.dynamic(new VarFun<Version>() {
+    public final DynamicVariable<Version> getVersion = Variables.dynamic(new VarFun<Version, AbstractContext>() {
         @Override
         public Version apply() {
             return Version.fromString($(version));
@@ -86,8 +87,8 @@ public class MySqlPlugin extends Plugin {
 
     public final InstallationTaskDef setup = new InstallationTaskDef() {
         @Override
-        public Task newSession(SessionContext $, final Task parent) {
-            return new Task(parent, this, $) {
+        public Task<TaskDef> newSession(SessionContext $, final Task parent) {
+            return new Task<TaskDef>(parent, this, $) {
                 @Override
                 protected TaskResult exec(TaskRunner runner) {
                     final Version version = computeRealClientVersion($.sys);
@@ -98,13 +99,13 @@ public class MySqlPlugin extends Plugin {
 
                     if (!installedVersionOk) {
                         $.sys.sudo().sendCommand($.sys.newCommandLine().sudo().addSplit("rpm -Uvh http://mirror.webtatic.com/yum/el6/latest.rpm"));
-                        r = and(r, $.sys.getPackageManager().installPackage(new SystemEnvironment.PackageInfo($(clientPackage))));
+                        r = and(r, $.sys.getPackageManager().installPackage(new SystemEnvironmentPlugin.PackageInfo($(clientPackage))));
                     }
 
                     Version serverVersion = computeRealServerVersion(runner);
 
                     if (serverVersion == null) {
-                        r = and(r, $.sys.getPackageManager().installPackage(new SystemEnvironment.PackageInfo($(serverPackage))));
+                        r = and(r, $.sys.getPackageManager().installPackage(new SystemEnvironmentPlugin.PackageInfo($(serverPackage))));
                     }
 
                     $.sys.sudo().sendCommand($.sys.newCommandLine().timeoutSec(30).sudo().addSplit("service mysqld start"));
@@ -142,7 +143,7 @@ public class MySqlPlugin extends Plugin {
         return Version.newVersion(r.text.trim().split("\\s+")[1]);
     }
 
-    public Version computeRealClientVersion(SystemEnvironment system) {
+    public Version computeRealClientVersion(SystemSession system) {
         final CommandLineResult result = system.sendCommand(system.newCommandLine().a("mysql", "--version"));
 
         final String version;
@@ -163,8 +164,8 @@ public class MySqlPlugin extends Plugin {
 
     public final TaskDef getUsers = new TaskDef() {
         @Override
-        public Task newSession(SessionContext $, final Task parent) {
-            return new Task(parent, this, $) {
+        public Task<TaskDef> newSession(SessionContext $, final Task parent) {
+            return new Task<TaskDef>(parent, this, $) {
                 @Override
                 protected TaskResult exec(TaskRunner runner) {
                     return runScript(runner, "SELECT User FROM mysql.user;");
@@ -176,8 +177,8 @@ public class MySqlPlugin extends Plugin {
     public final TaskDef runScript = new TaskDef() {
 
         @Override
-        public Task newSession(SessionContext $, final Task parent) {
-            return new Task(parent, this, $) {
+        public Task<TaskDef> newSession(SessionContext $, final Task parent) {
+            return new Task<TaskDef>(parent, this, $) {
                 @Override
                 protected TaskResult exec(TaskRunner runner) {
                     final String s = Question.freeQuestion("Enter sql to execute: ");
@@ -192,8 +193,8 @@ public class MySqlPlugin extends Plugin {
 
 
         @Override
-        public Task newSession(SessionContext $, final Task parent) {
-            return new Task(parent, this, $) {
+        public Task<TaskDef> newSession(SessionContext $, final Task parent) {
+            return new Task<TaskDef>(parent, this, $) {
                 @Override
                 protected TaskResult exec(TaskRunner runner) {
                     Question.freeQuestionWithOption("Enter a filename", $(dumpName), dumpName);
@@ -216,8 +217,8 @@ public class MySqlPlugin extends Plugin {
 
     public final TaskDef createAndFetchDump = new TaskDef() {
         @Override
-        public Task newSession(SessionContext $, final Task parent) {
-            return new Task(parent, this, $) {
+        public Task<TaskDef> newSession(SessionContext $, final Task parent) {
+            return new Task<TaskDef>(parent, this, $) {
                 @Override
                 protected TaskResult exec(TaskRunner runner) {
                     runner.run(createDump);
@@ -232,8 +233,8 @@ public class MySqlPlugin extends Plugin {
 
     public final TaskDef restoreDump = new TaskDef() {
         @Override
-        public Task newSession(SessionContext $, final Task parent) {
-            return new Task(parent, this, $) {
+        public Task<TaskDef> newSession(SessionContext $, final Task parent) {
+            return new Task<TaskDef>(parent, this, $) {
                 @Override
                 protected TaskResult exec(TaskRunner runner) {
                     Question.freeQuestionWithOption("Enter a filepath", $(dumpName), dumpName);
@@ -256,7 +257,7 @@ public class MySqlPlugin extends Plugin {
     public CommandLineResult runScript(TaskRunner runner, String sql, String user, final String pw) {
         final String filePath = runner.$(mysqlTempScriptPath);
 
-        final SystemEnvironment sys = runner.$().sys;
+        final SystemSession sys = runner.$().sys;
         sys.writeString(filePath, sql);
 
         return sys.sendCommand(sys.newCommandLine().stty().a("mysql", "-u", user, "-p").redirectFrom(filePath), mysqlPasswordCallback(pw));

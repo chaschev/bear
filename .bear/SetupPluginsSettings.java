@@ -10,8 +10,6 @@ import bear.strategy.SymlinkEntry;
 import bear.task.TaskResult;
 import bear.vcs.GitCLIPlugin;
 
-import static bear.session.GenericUnixRemoteEnvironment.newUnixRemote;
-
 /**
  * @author Andrey Chaschev chaschev@gmail.com
  */
@@ -49,29 +47,22 @@ public class SetupPluginsSettings extends IBearSettings {
         bear.stages.defaultTo(
             new Stages()
                 .add(
-                    new Stage("vm01", global)
-                        .add(newUnixRemote("vm01", "vm01", global))
-                )
+                    new Stage("one", global)
+                        .add("vm01"))
                 .add(
                     new Stage("two", global)
-                        .add(newUnixRemote("vm01", "vm01", global))
-                        .add(newUnixRemote("vm02", "vm02", global))
-                )
+                        .addHosts("vm01", "vm02"))
                 .add(new Stage("three", global)
-                    .add(newUnixRemote("vm01", "vm01", global))
-                    .add(newUnixRemote("vm02", "vm02", global))
-                    .add(newUnixRemote("vm03", "vm03", global))
+                    .addHosts("vm01", "vm02", "vm03")
                 )
         );
 
-        bear.getStrategy.setDynamic(new VarFun<DeployStrategyTask>() {
+        bear.getStrategy.setDynamic(new VarFun<DeployStrategyTask, SessionContext>() {
 
             public DeployStrategyTask apply() {
-
                 grails.projectPath.setEqualTo(
                     bear.vcsBranchLocalPath
                 );
-
 
                 //todo create a builder for it
                 //todo return task result for each of the steps

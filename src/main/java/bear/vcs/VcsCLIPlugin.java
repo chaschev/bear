@@ -18,11 +18,11 @@ package bear.vcs;
 
 import bear.cli.CommandLine;
 import bear.console.ConsoleCallback;
-import bear.core.GlobalContext;
 import bear.core.SessionContext;
+import bear.core.GlobalContext;
 import bear.plugins.Plugin;
 import bear.session.DynamicVariable;
-import bear.session.SystemEnvironment;
+import bear.session.SystemEnvironmentPlugin;
 import bear.session.Variables;
 import bear.task.Task;
 import bear.task.TaskDef;
@@ -36,10 +36,10 @@ import java.util.Map;
 /**
  * @author Andrey Chaschev chaschev@gmail.com
  */
-public abstract class VcsCLIPlugin extends Plugin {
+public abstract class VcsCLIPlugin<TASK extends Task, VCS_TASK_DEF extends TaskDef<? extends Task>> extends Plugin<TASK, VCS_TASK_DEF> {
 
-    protected VcsCLIPlugin(GlobalContext global) {
-        super(global);
+    protected VcsCLIPlugin(GlobalContext global, VCS_TASK_DEF taskDef) {
+        super(global, taskDef);
     }
 
     @Override
@@ -59,10 +59,10 @@ public abstract class VcsCLIPlugin extends Plugin {
         return Collections.emptyMap();
     }
 
-    public abstract Session newSession(SessionContext $, Task parent);
+    public abstract Session newSession(SessionContext $, Task<TaskDef> parent);
 
-    public abstract class Session extends Task {
-        protected Session(Task parent, TaskDef def, SessionContext $) {
+    public abstract class Session extends Task<TaskDef> {
+        protected Session(Task<TaskDef> parent, TaskDef def, SessionContext $) {
             super(parent, def, $);
         }
 
@@ -123,7 +123,7 @@ public abstract class VcsCLIPlugin extends Plugin {
         public abstract String head();
 
         public ConsoleCallback passwordCallback() {
-            return SystemEnvironment.passwordCallback($.var(bear.vcsPassword));
+            return SystemEnvironmentPlugin.passwordCallback($.var(bear.vcsPassword));
         }
 
         public CommandLine<SvnCLIPlugin.LsResult> ls(String path) {

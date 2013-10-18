@@ -17,8 +17,8 @@
 package bear.session;
 
 import bear.core.Nameable;
-import bear.core.SessionContext;
 import bear.core.VarFun;
+import bear.plugins.AbstractContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -33,7 +33,7 @@ public class DynamicVariable<T> implements Nameable<T> {
 
     public static abstract class ChangeListener<T>{
         public abstract void changedValue(DynamicVariable<T> var, T oldValue, T newValue);
-        public void changedDynamic(DynamicVariable<T> var, VarFun<T> oldFun, VarFun<T> newFun){}
+        public void changedDynamic(DynamicVariable<T> var, VarFun<T, ? extends AbstractContext> oldFun, VarFun<T, ? extends AbstractContext> newFun){}
     }
 
     protected List<ChangeListener<T>> listeners;
@@ -46,7 +46,7 @@ public class DynamicVariable<T> implements Nameable<T> {
     public String name;
     public String desc;
 
-    protected VarFun<T> dynamicImplementation;
+    protected VarFun<T, ? extends AbstractContext> dynamicImplementation;
 
     T defaultValue;
 
@@ -89,7 +89,7 @@ public class DynamicVariable<T> implements Nameable<T> {
         return name;
     }
 
-    public final T apply(SessionContext $) {
+    public final T apply(Object $) {
         if (defaultValue == null && dynamicImplementation == null) {
             throw new UnsupportedOperationException("you should implement dynamic variable :" + name + " or set its default value");
         }
@@ -99,8 +99,8 @@ public class DynamicVariable<T> implements Nameable<T> {
                 return defaultValue;
             }
 
-            if (dynamicImplementation instanceof VarFun<?>) {
-                ((VarFun<?>) dynamicImplementation).set$($);
+            if (dynamicImplementation instanceof VarFun<?, ?>) {
+                ((VarFun<?, AbstractContext>) dynamicImplementation).set$($);
             }
 
             final T r = dynamicImplementation.apply();
@@ -148,8 +148,8 @@ public class DynamicVariable<T> implements Nameable<T> {
         return this;
     }
 
-    public DynamicVariable<T> setDynamic(VarFun<T> impl) {
-        VarFun<T> oldFun = this.dynamicImplementation;
+    public DynamicVariable<T> setDynamic(VarFun<T, ? extends AbstractContext> impl) {
+        VarFun<T, ? extends AbstractContext> oldFun = this.dynamicImplementation;
         this.dynamicImplementation = impl;
 
         impl.setVar(this);
@@ -227,7 +227,7 @@ public class DynamicVariable<T> implements Nameable<T> {
     }
 
     public DynamicVariable<T> setEqualTo(final DynamicVariable<T> variable) {
-        setDynamic(new VarFun<T>() {
+        setDynamic(new VarFun<T, AbstractContext>() {
             public T apply() {
                 return variable.apply($);
             }

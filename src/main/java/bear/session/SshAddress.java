@@ -16,15 +16,37 @@
 
 package bear.session;
 
+import bear.core.Bear;
+import bear.core.Var;
+import bear.core.WireFields;
+
 /**
  * @author Andrey Chaschev chaschev@gmail.com
  */
-public class SshAddress {
-    String username;
-    String password;
-    String address;
+
+@WireFields(Bear.class)
+public class SshAddress extends Address {
+    @Var("sshUsername")
+    public String username;
+
+    @Var("sshPassword")
+    public String password;
+
+    @Var("sshAddress")
+    public String address;
+
+    public SshAddress() {
+    }
+
+    public SshAddress(String name, String username, String password, String address) {
+        super(name);
+        this.username = username;
+        this.password = password;
+        this.address = address;
+    }
 
     public SshAddress(String username, String password, String address) {
+        super(address);
         this.username = username;
         this.password = password;
         this.address = address;
@@ -37,5 +59,10 @@ public class SshAddress {
         sb.append(", address='").append(address).append('\'');
         sb.append('}');
         return sb.toString();
+    }
+
+    @Override
+    public String getName() {
+        return address;
     }
 }

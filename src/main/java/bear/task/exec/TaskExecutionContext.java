@@ -20,6 +20,7 @@ import bear.console.AbstractConsoleCommand;
 import bear.core.SessionContext;
 import bear.plugins.HavingContext;
 import bear.task.Task;
+import bear.task.TaskDef;
 import bear.task.TaskResult;
 import bear.vcs.CommandLineResult;
 import org.joda.time.DateTime;
@@ -33,7 +34,7 @@ import static chaschev.lang.LangUtils.elvis;
 /**
 * @author Andrey Chaschev chaschev@gmail.com
 */
-public class TaskExecutionContext extends HavingContext<TaskExecutionContext> {
+public class TaskExecutionContext extends HavingContext<TaskExecutionContext, SessionContext> {
 
     List<ExecutionEntry> executionEntries = new ArrayList<ExecutionEntry>();
     ExecutionEntry pendingEntry;
@@ -43,11 +44,11 @@ public class TaskExecutionContext extends HavingContext<TaskExecutionContext> {
         super($);
     }
 
-    public void onNewSubTask(Task task){
+    public void onNewSubTask(Task<? extends TaskDef> task){
         pendingEntry = new TaskExecutionEntry(task);
     }
 
-    public void onEndSubTask(Task task, TaskResult result) {
+    public void onEndSubTask(Task<? extends TaskDef> task, TaskResult result) {
         pendingEntry.onEnd(result);
         executionEntries.add(pendingEntry);
         pendingEntry = null;

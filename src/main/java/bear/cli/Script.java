@@ -18,7 +18,7 @@ package bear.cli;
 
 import bear.console.ConsoleCallback;
 import bear.session.Result;
-import bear.session.SystemEnvironment;
+import bear.session.SystemSession;
 import bear.vcs.CommandLineResult;
 import com.google.common.base.Function;
 
@@ -36,7 +36,7 @@ public class Script <T extends CommandLineResult>{
     public static class StubScript<T extends CommandLineResult> extends Script<T>{
         private final T result;
 
-        public StubScript(SystemEnvironment system, T result) {
+        public StubScript(SystemSession system, T result) {
             super(system);
 
             this.result = result;
@@ -55,13 +55,13 @@ public class Script <T extends CommandLineResult>{
 
     public String cd = ".";
 
-    protected SystemEnvironment sys;
+    protected SystemSession sys;
 
     public List<CommandLine> lines = new ArrayList<CommandLine>();
 
     protected Function<String, T> parser;
 
-    public Script(SystemEnvironment sys) {
+    public Script(SystemSession sys) {
         this.sys = sys;
     }
 

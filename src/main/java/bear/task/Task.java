@@ -11,8 +11,8 @@ import javax.annotation.Nullable;
 /**
  * @author Andrey Chaschev chaschev@gmail.com
  */
-public abstract class Task extends HavingContext<Task> {
-    protected TaskDef definition;
+public abstract class Task<TASK_DEF extends TaskDef> extends HavingContext<Task<TaskDef>, SessionContext> {
+    protected TASK_DEF definition;
 
     @Nullable
     protected final Task parent;
@@ -21,7 +21,7 @@ public abstract class Task extends HavingContext<Task> {
 
     protected TaskExecutionContext executionContext;
 
-    public Task(Task parent, TaskDef definition, SessionContext $) {
+    public Task(Task parent, TASK_DEF definition, SessionContext $) {
         super($);
 
         this.parent = parent;
@@ -48,14 +48,14 @@ public abstract class Task extends HavingContext<Task> {
 
     protected abstract TaskResult exec(TaskRunner runner) ;
 
-    private static final Task NOP_TASK = new Task(null, null, null) {
+    private static final Task<TaskDef> NOP_TASK = new Task<TaskDef>(null, null, null) {
         @Override
         protected TaskResult exec(TaskRunner runner) {
             return TaskResult.OK;
         }
     };
 
-    public static Task nop() {
+    public static Task<TaskDef> nop() {
         return NOP_TASK;
     }
 
@@ -74,7 +74,7 @@ public abstract class Task extends HavingContext<Task> {
             definition.getDisplayName();
     }
 
-    public Task addDependency(Dependency... dependencies) {
+    public Task<TASK_DEF> addDependency(Dependency... dependencies) {
         this.dependencies.addDependencies(dependencies);
         return this;
     }
@@ -88,7 +88,7 @@ public abstract class Task extends HavingContext<Task> {
     }
 
     @Nullable
-    public Task getParent() {
+    public Task<TaskDef> getParent() {
         return parent;
     }
 

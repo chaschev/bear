@@ -16,30 +16,22 @@
 
 package bear.core;
 
+import bear.plugins.AbstractContext;
 import bear.plugins.Plugin;
 import bear.plugins.Plugins;
-import bear.session.DynamicVariable;
-import bear.session.GenericUnixLocalEnvironment;
-import bear.session.SystemEnvironment;
-import bear.session.Variables;
+import bear.session.GenericUnixLocalEnvironmentPlugin;
+import bear.session.LocalAddress;
+import bear.session.SystemSession;
 import bear.task.Task;
+import bear.task.TaskDef;
 import bear.task.TaskRunner;
 import bear.task.Tasks;
-import chaschev.util.Exceptions;
-import com.google.common.base.Preconditions;
 import com.google.common.base.Predicates;
 import com.google.common.collect.Iterables;
 import com.google.common.util.concurrent.ListeningExecutorService;
-import org.apache.commons.lang3.SystemUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.Enumeration;
-import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.*;
 
@@ -48,13 +40,12 @@ import static com.google.common.util.concurrent.MoreExecutors.listeningDecorator
 /**
  * @author Andrey Chaschev chaschev@gmail.com
  */
-public class GlobalContext {
+public class GlobalContext extends AbstractContext{
     private static final Logger logger = LoggerFactory.getLogger(GlobalContext.class);
 
     //    public static final GlobalContext INSTANCE = new GlobalContext();
     private static final GlobalContext INSTANCE = new GlobalContext();
 
-    public final VariablesLayer variablesLayer = new VariablesLayer("global vars", null);
     public final Console console = new Console(this);
     public final Tasks tasks;
 
@@ -76,46 +67,32 @@ public class GlobalContext {
             }
         }));
 
-    public final SystemEnvironment local;
-
-    public final VariablesLayer localVars;
+    public final SystemSession local;
 
     public final SessionContext localCtx;
 
     public final Bear bear;
 
-    protected Properties properties = new Properties();
-
     private GlobalContext() {
+        super();
+
         bear = new Bear(this);
-        local = SystemUtils.IS_OS_WINDOWS ?
-            new GenericUnixLocalEnvironment("local", this) : new GenericUnixLocalEnvironment("local", this);
-        localVars = SystemEnvironment.newSessionVars(this, local);
+
+        layer = new VariablesLayer(this, "global layer", null);
 
         final TaskRunner localRunner = new TaskRunner(null, this);
 
-        localCtx = local.newCtx(localRunner);
+        localCtx = new SessionContext(this, new LocalAddress(), localRunner);
+        local = new GenericUnixLocalEnvironmentPlugin(this, "temp").newSession(localCtx, null);
 
         tasks = new Tasks(this);
-    }
-
-    public VariablesLayer gvars() {
-        return variablesLayer;
-    }
-
-    public <T> T var(DynamicVariable<T> varName) {
-        return variablesLayer.get(this.localCtx, varName);
-    }
-
-    public <T> T var(DynamicVariable<T> varName, T _default) {
-        return variablesLayer.get(varName, _default);
     }
 
     public Console console() {
         return console;
     }
 
-    public SystemEnvironment local() {
+    public SystemSession local() {
         return local;
     }
 
@@ -132,7 +109,7 @@ public class GlobalContext {
         return (T) plugins.get(pluginClass);
     }
 
-    public <T extends Plugin> Task newPluginSession(Class<T> pluginClass, SessionContext $, Task parentTask) {
+    public <T extends Plugin> Task<TaskDef> newPluginSession(Class<T> pluginClass, SessionContext $, Task<TaskDef> parentTask) {
         return plugins.getSessionContext(pluginClass, $, parentTask);
     }
 
@@ -159,52 +136,6 @@ public class GlobalContext {
     public CompositeTaskRunContext prepareToRun() {
         System.out.println("running on stage...");
         return localCtx.var(bear.getStage).prepareToRun();
-    }
-
-    public String getProperty(String s) {
-        return properties.getProperty(s);
-    }
-
-    public void loadProperties(File file) {
-        try {
-            final FileInputStream fis = new FileInputStream(file);
-            loadProperties(fis);
-        } catch (IOException e) {
-            throw Exceptions.runtime(e);
-        }
-
-    }
-
-    public void loadProperties(InputStream is) throws IOException {
-        Preconditions.checkNotNull(is);
-
-        properties.load(is);
-
-        loadProperties(properties);
-    }
-
-    public void loadProperties(Properties prop) {
-        this.properties = prop;
-
-        final Enumeration<?> enumeration = prop.propertyNames();
-
-        while (enumeration.hasMoreElements()) {
-            final String name = (String) enumeration.nextElement();
-
-            final Object v = prop.get(name);
-
-            if (v instanceof Boolean) {
-                final DynamicVariable<Boolean> value = Variables.newVar((Boolean) v).setName(name);
-
-                variablesLayer.put(value, value);
-            } else if (v instanceof String) {
-                final DynamicVariable<String> value = Variables.newVar((String) v).setName(name);
-
-                variablesLayer.put(value, value);
-            } else {
-                throw new UnsupportedOperationException("todo: implement for " + v.getClass());
-            }
-        }
     }
 
     public void addPlugin(Class<? extends Plugin> aClass) {

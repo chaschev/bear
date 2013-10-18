@@ -19,6 +19,7 @@ package bear.plugins;
 import bear.console.AbstractConsole;
 import bear.core.Bear;
 import bear.core.GlobalContext;
+import bear.core.Role;
 import bear.core.SessionContext;
 import bear.task.*;
 
@@ -27,23 +28,33 @@ import java.util.Set;
 /**
  * @author Andrey Chaschev chaschev@gmail.com
  */
-public abstract class Plugin {
+public abstract class Plugin<TASK extends Task, TASK_DEF extends TaskDef<? extends Task>> {
     public String name;
+    protected String desc;
+
     public final Bear bear;
     protected GlobalContext global;
     protected Dependencies dependencies = new Dependencies();
 
     protected boolean transitiveDependency;
 
-    Set<Plugin> pluginDependencies;
+    Set<Plugin<Task, TaskDef<? extends Task>>> pluginDependencies;
+
+    protected final TASK_DEF taskDefMixin;
+
 
     public Plugin(GlobalContext global) {
+        this(global, null);
+    }
+
+    public Plugin(GlobalContext global, TASK_DEF parent_stub_task) {
         this.global = global;
         this.bear = global.bear;
         name = getClass().getSimpleName();
+        taskDefMixin = parent_stub_task;
     }
 
-    public Task newSession(SessionContext $, Task parent){
+    public Task<? extends TaskDef> newSession(SessionContext $, Task<TaskDef> parent){
         throw new UnsupportedOperationException("todo");
     }
 
@@ -85,8 +96,8 @@ public abstract class Plugin {
         }
     }
 
-    protected void require(DependencyResult r, Class<? extends Plugin> pluginClass) {
-        final Plugin plugin = global.getPlugin(pluginClass);
+    protected void require(DependencyResult r, Class<? extends Plugin<Task, ? extends TaskDef>> pluginClass) {
+        final Plugin<Task, ? extends TaskDef> plugin = global.getPlugin(pluginClass);
 
         if(plugin == null){
             r.add(plugin.getClass().getSimpleName() + " plugin is required");
@@ -106,7 +117,7 @@ public abstract class Plugin {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
 
-        Plugin plugin = (Plugin) o;
+        Plugin<Task, ? extends TaskDef> plugin = (Plugin<Task, ? extends TaskDef>) o;
 
         if (!name.equals(plugin.name)) return false;
 
@@ -118,7 +129,15 @@ public abstract class Plugin {
         return name.hashCode();
     }
 
-    public Set<Plugin> getPluginDependencies() {
+    public Set<Plugin<Task, TaskDef<? extends Task>>> getPluginDependencies() {
         return pluginDependencies;
+    }
+
+    public Set<Role> getRoles(){
+        return taskDefMixin.getRoles();
+    }
+
+    public TASK_DEF getTaskDef() {
+        return taskDefMixin;
     }
 }

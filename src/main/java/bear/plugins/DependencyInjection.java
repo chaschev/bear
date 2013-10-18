@@ -4,7 +4,7 @@ import bear.core.Bear;
 import bear.core.GlobalContext;
 import bear.core.SessionContext;
 import bear.session.DynamicVariable;
-import bear.session.SystemEnvironment;
+import bear.session.SystemEnvironmentPlugin;
 import bear.task.Tasks;
 import chaschev.lang.OpenBean;
 import com.google.common.base.Preconditions;
@@ -36,11 +36,15 @@ public class DependencyInjection {
         }
     }
 
-    public static void injectDependencies(Object obj, GlobalContext global){
-        injectDependencies(obj, global, null);
+    public static void inject(Object obj, SessionContext $){
+        inject(obj, $.getGlobal(), $);
     }
 
-    public static void injectDependencies(Object obj, GlobalContext global, @Nullable SessionContext $){
+    public static void inject(Object obj, GlobalContext global){
+        inject(obj, global, null);
+    }
+
+    public static void inject(Object obj, GlobalContext global, @Nullable SessionContext $){
         Field[] fields = OpenBean.getClassDesc(obj.getClass()).fields;
         try {
             for (Field field : fields) {
@@ -66,7 +70,7 @@ public class DependencyInjection {
                 } else {
                     String fieldName = field.getName();
 
-                    if(SystemEnvironment.class.isAssignableFrom(fieldClass)){
+                    if(SystemEnvironmentPlugin.class.isAssignableFrom(fieldClass)){
                         if("local".equals(fieldName)){
                             field.set(obj, global.local);
                         }else{

@@ -13,7 +13,7 @@ import java.util.List;
 /**
  * @author Andrey Chaschev chaschev@gmail.com
  */
-public class Dependency extends Task {
+public class Dependency extends Task<TaskDef> {
 
     String name;
     String actual;
@@ -91,7 +91,7 @@ public class Dependency extends Task {
         this.name = name;
     }
 
-    public Dependency(TaskDef def, String name, SessionContext $, Task parent) {
+    public Dependency(TaskDef def, String name, SessionContext $, Task<TaskDef> parent) {
         super(parent,def, $);
 
         this.name = name;
