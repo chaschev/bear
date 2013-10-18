@@ -17,6 +17,7 @@
 package bear.core;
 
 import bear.cli.Script;
+import bear.plugins.DependencyInjection;
 import bear.plugins.Plugin;
 import bear.session.DynamicVariable;
 import bear.strategy.DeployStrategyTask;
@@ -48,7 +49,7 @@ public class Bear {
 
     public Bear(GlobalContext global) {
         this.global = global;
-        Plugin.nameVars(this);
+        DependencyInjection.nameVars(this);
     }
 
     public final DynamicVariable<String>

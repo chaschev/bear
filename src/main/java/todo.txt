@@ -14,8 +14,8 @@ top priority:
 - ui: transfer logback messages (add appender)
 - ui: add global root task somewhere, add global timer
 - ui: nicer button placement for scripts, use the space
-- ui:
 
+- DI for scripts and plugins
 - (ok) rollback command
 - test error messages by setting incorrect rights at each step
 -- (ok) reuse setup task validation

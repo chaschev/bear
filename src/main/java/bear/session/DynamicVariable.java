@@ -126,6 +126,10 @@ public class DynamicVariable<T> implements Nameable<T> {
         return defaultTo(defaultValue, true);
     }
 
+    public DynamicVariable<T> set(T defaultValue) {
+        return defaultTo(defaultValue);
+    }
+
     public DynamicVariable<T> defaultTo(T defaultValue, boolean force) {
         if (dynamicImplementation != null) {
             if (force) {

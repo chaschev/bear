@@ -16,6 +16,7 @@
 
 package bear.core;
 
+import bear.plugins.DependencyInjection;
 import bear.plugins.Plugin;
 import bear.session.SystemEnvironments;
 import org.slf4j.Logger;
@@ -44,7 +45,7 @@ public class GlobalContextFactory {
         }
     }
 
-    public void init() {
+    public void init(IBearSettings bearSettings) {
         if (globalVarsInitPhase != null) {
             globalVarsInitPhase.setVars(global.variablesLayer);
         }
@@ -56,6 +57,8 @@ public class GlobalContextFactory {
 
             global.initPlugins();
         }
+
+        DependencyInjection.injectDependencies(bearSettings, global);
     }
 
     public static interface GlobalVarsInitPhase {

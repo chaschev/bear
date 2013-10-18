@@ -46,23 +46,17 @@ public class SetupPluginsSettings extends IBearSettings {
             Atocha.class
         );
 
-        factory.init();
-
-        tomcat = global.getPlugin(TomcatPlugin.class);
-        maven = global.getPlugin(MavenPlugin.class);
-        grails = global.getPlugin(GrailsPlugin.class);
-        java = global.getPlugin(JavaPlugin.class);
-        bear = global.bear;
+        factory.init(this);
 
         tomcat.warName.setEqualTo(grails.warName);
-        tomcat.version.defaultTo("6.0.37");
+        tomcat.version.set("6.0.37");
 
-        maven.version.defaultTo("3.0.5");
+        maven.version.set("3.0.5");
 
-        java.versionName.defaultTo("jdk-7u40-linux-x64");
-        java.version.defaultTo("1.7.0_40");
+        java.versionName.set("jdk-7u40-linux-x64");
+        java.version.set("1.7.0_40");
 
-        grails.version.defaultTo("2.0.4");
+        grails.version.set("2.0.4");
 
         bear.stages.defaultTo(
             new Stages()

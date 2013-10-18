@@ -40,12 +40,7 @@ public class BearSettings extends IBearSettings {
                     GrailsPlugin.class,
                     JavaPlugin.class);
 
-        factory.init();
-
-        tomcat = global.getPlugin(TomcatPlugin.class);
-        grails = global.getPlugin(GrailsPlugin.class);
-        java = global.getPlugin(JavaPlugin.class);
-        bear = global.bear;
+        factory.init(this);
 
         final VariablesLayer vars = global.variablesLayer;
 

@@ -95,7 +95,7 @@ public class Plugins {
         private <T extends Plugin> T newPluginInstance(Class<T> aClass) throws InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException {
             final T plugin = aClass.getConstructor(GlobalContext.class).newInstance(globalContext);
 
-            Plugin.nameVars(plugin);
+            DependencyInjection.nameVars(plugin);
 
             return plugin;
         }

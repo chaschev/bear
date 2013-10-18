@@ -16,16 +16,12 @@
 
 package bear.plugins;
 
+import bear.console.AbstractConsole;
 import bear.core.Bear;
 import bear.core.GlobalContext;
-import bear.task.*;
-import bear.console.AbstractConsole;
 import bear.core.SessionContext;
-import bear.session.DynamicVariable;
-import chaschev.lang.OpenBean;
-import com.google.common.base.Preconditions;
+import bear.task.*;
 
-import java.lang.reflect.Field;
 import java.util.Set;
 
 /**
@@ -49,26 +45,6 @@ public abstract class Plugin {
 
     public Task newSession(SessionContext $, Task parent){
         throw new UnsupportedOperationException("todo");
-    }
-
-    public static void nameVars(Object obj) {
-        final Class<?> aClass = obj.getClass();
-        final String className = aClass.getSimpleName();
-        final Field[] fields = OpenBean.getClassDesc(aClass).fields;
-
-        try {
-            for (Field field : fields) {
-                if (!DynamicVariable.class.isAssignableFrom(field.getType())) {
-                    continue;
-                }
-
-                final DynamicVariable var = (DynamicVariable) field.get(obj);
-                Preconditions.checkNotNull(var, field.getName() + " is null!");
-                var.setName(className + "." + field.getName());
-            }
-        } catch (IllegalAccessException e) {
-            throw new RuntimeException(e);
-        }
     }
 
     public void initPlugin() {
