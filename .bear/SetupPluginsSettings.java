@@ -5,7 +5,7 @@ import bear.plugins.grails.GrailsPlugin;
 import bear.plugins.java.JavaPlugin;
 import bear.plugins.tomcat.MavenPlugin;
 import bear.plugins.tomcat.TomcatPlugin;
-import bear.strategy.DeployStrategyTask;
+import bear.strategy.DeployStrategyTaskDef;
 import bear.strategy.SymlinkEntry;
 import bear.task.TaskResult;
 import bear.vcs.GitCLIPlugin;
@@ -57,9 +57,9 @@ public class SetupPluginsSettings extends IBearSettings {
                 )
         );
 
-        bear.getStrategy.setDynamic(new VarFun<DeployStrategyTask, SessionContext>() {
+        bear.getStrategy.setDynamic(new VarFun<DeployStrategyTaskDef, SessionContext>() {
 
-            public DeployStrategyTask apply() {
+            public DeployStrategyTaskDef apply(final SessionContext $) {
                 grails.projectPath.setEqualTo(
                     bear.vcsBranchLocalPath
                 );
@@ -67,7 +67,7 @@ public class SetupPluginsSettings extends IBearSettings {
                 //todo create a builder for it
                 //todo return task result for each of the steps
                 //todo convert each step to a task? - yes! this will make steps reusable
-                final DeployStrategyTask strategy = new DeployStrategyTask($) {
+                final DeployStrategyTaskDef strategy = new DeployStrategyTaskDef($) {
                     //todo return TaskResult
                     @Override
                     protected void step_40_updateRemoteFiles() {
@@ -75,9 +75,9 @@ public class SetupPluginsSettings extends IBearSettings {
 
                         $.log("building the project...");
 
-                        String warPath = $(grails.releaseWarPath);
+                        String warPath = $.var(grails.releaseWarPath);
 
-                        if (!$.sys.exists(warPath) || !$(global.getPlugin(Atocha.class).reuseWar)) {
+                        if (!$.sys.exists(warPath) || !$.var(global.getPlugin(Atocha.class).reuseWar)) {
                             final TaskResult r = $.runner.run(new GrailsBuilderTask(global));
 
                             if (r.nok()) {

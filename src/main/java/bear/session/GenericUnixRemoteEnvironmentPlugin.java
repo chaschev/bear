@@ -56,8 +56,8 @@ import java.util.concurrent.TimeUnit;
 public class GenericUnixRemoteEnvironmentPlugin extends SystemEnvironmentPlugin {
     private static final Logger logger = LoggerFactory.getLogger(GenericUnixRemoteEnvironmentPlugin.class);
 
-    protected GenericUnixRemoteEnvironmentPlugin(GlobalContext global, String name) {
-        super(global, name);
+    public GenericUnixRemoteEnvironmentPlugin(GlobalContext global) {
+        super(global, "remote unix plugin");
     }
 
     public static class RemoteConsole extends AbstractConsole {
@@ -79,12 +79,18 @@ public class GenericUnixRemoteEnvironmentPlugin extends SystemEnvironmentPlugin 
         connect();
 
         return new SystemSession(parent, taskDefMixin, $) {
-            private SshAddress sshAddress = $.wire(new SshAddress());
 
+            {
+                Preconditions.checkNotNull($.address);
+                Preconditions.checkNotNull($.address.getName());
+                Preconditions.checkNotNull($.address.getAddress());
+
+                address = $.address;
+            }
 
             public void connect() {
                 if (sshSession == null) {
-                    sshSession = new SshSession(sshAddress, global);
+                    sshSession = new SshSession((SshAddress) address, global);
                 }
             }
 
@@ -378,7 +384,7 @@ public class GenericUnixRemoteEnvironmentPlugin extends SystemEnvironmentPlugin 
 
             @Override
             public String getAddress() {
-                return sshAddress.address;
+                return address.getName();
             }
 
             @Override
@@ -471,6 +477,7 @@ public class GenericUnixRemoteEnvironmentPlugin extends SystemEnvironmentPlugin 
                 final Session s = getSession();
 //                final Session.Shell shell = s.startShell();
                 withSession.act(s, null);
+
                 if (!reuseSession) {
                     s.close();
                 }

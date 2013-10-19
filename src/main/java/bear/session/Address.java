@@ -5,7 +5,7 @@ import bear.core.Var;
 /**
 * @author Andrey Chaschev chaschev@gmail.com
 */
-public class Address {
+public abstract class Address {
     @Var("sessionHostname")
     String name;
 
@@ -19,4 +19,6 @@ public class Address {
     public String getName(){
         return name;
     }
+
+    public abstract String getAddress();
 }

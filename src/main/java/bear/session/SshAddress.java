@@ -32,7 +32,7 @@ public class SshAddress extends Address {
     @Var("sshPassword")
     public String password;
 
-    @Var("sshAddress")
+    @Var("sessionAddress")
     public String address;
 
     public SshAddress() {
@@ -63,6 +63,10 @@ public class SshAddress extends Address {
 
     @Override
     public String getName() {
+        return address;
+    }
+
+    public String getAddress() {
         return address;
     }
 }

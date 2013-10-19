@@ -173,7 +173,7 @@ public abstract class AbstractConsole extends bear.console.AbstractConsole.Termi
     }
 
     public StringBuilder concatOutputs() {
-        StringBuilder sb = new StringBuilder(buffers.get(0).length() + 10);
+        StringBuilder sb = new StringBuilder(buffers.get(0).length() + 20);
 
         for (int i = 0; i < buffers.size(); i++) {
             MarkedBuffer buffer = buffers.get(i);

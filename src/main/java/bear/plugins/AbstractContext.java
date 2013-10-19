@@ -4,6 +4,8 @@ import bear.core.Nameable;
 import bear.core.VariablesLayer;
 import bear.session.DynamicVariable;
 import bear.session.Variables;
+import chaschev.lang.OpenBean;
+import chaschev.lang.reflect.ClassDesc;
 import chaschev.util.Exceptions;
 import com.google.common.base.Preconditions;
 
@@ -11,6 +13,8 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.reflect.Field;
+import java.util.Arrays;
 import java.util.Enumeration;
 import java.util.Properties;
 
@@ -77,7 +81,7 @@ public abstract class AbstractContext {
     }
 
     public VariablesLayer put(Nameable key, String value) {
-        return layer.putS(key, value);
+        return layer.put(key, value);
     }
 
     public VariablesLayer put(Nameable key, boolean b) {
@@ -85,11 +89,30 @@ public abstract class AbstractContext {
     }
 
     public VariablesLayer put(Object key, Object value) {
-        return layer.putConst(key, value);
+        return layer.putConstObj(key, value);
     }
 
     public <T> T wire(T object) {
-        return layer.wire(object);
+        try {
+            Field[] contextFields = OpenBean.getClassDesc(this.getClass()).fields;
+
+            for (Field field : OpenBean.getClassDesc(object.getClass()).fields) {
+                int i = Arrays.binarySearch(contextFields, field, ClassDesc.FIELD_COMPARATOR);
+
+                if(i>=0){
+                    Field contextField = contextFields[i];
+
+                    //don't copy field like layer
+                    if(contextField.getDeclaringClass() != AbstractContext.class){
+                        field.set(object, contextField.get(this));
+                    }
+                }
+            }
+
+            return layer.wire(object);
+        } catch (IllegalAccessException e) {
+            throw Exceptions.runtime(e);
+        }
     }
 
     public void setName(String name) {
@@ -105,7 +128,11 @@ public abstract class AbstractContext {
     }
 
     public String getProperty(String s) {
-        return properties.getProperty(s);
+        if(global == null){
+            return properties.getProperty(s);
+        }
+
+        return global.getProperty(s);
     }
 
     public void loadProperties(File file) {

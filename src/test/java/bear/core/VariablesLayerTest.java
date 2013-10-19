@@ -1,6 +1,7 @@
 package bear.core;
 
 import bear.plugins.AbstractContext;
+import bear.plugins.DependencyInjection;
 import bear.session.DynamicVariable;
 import bear.session.Variables;
 import org.junit.Test;
@@ -49,18 +50,23 @@ public class VariablesLayerTest {
 
     MyVars myVars = new MyVars();
 
+    {
+        DependencyInjection.nameVars(myVars);
+        layer.addVariables(myVars);
+    }
+
     @Test
-    public void testAutowires1(){
-        assertThat(layer.wire(new AutoWiring1()).list).isNull();
-        assertThat(layer.wire(new AutoWiring1()).arrayList).isNull();
-        assertThat(layer.wire(new AutoWiring1()).linkedList).isNull();
-        assertThat(layer.wire(new AutoWiring1()).s1).isEqualTo("s1");
-        assertThat(layer.wire(new AutoWiring1()).s3).isNull();
+    public void testAutowires1_ScopedBinding(){
+//        assertThat(layer.wire(new AutoWiring1()).list).isNull();
+//        assertThat(layer.wire(new AutoWiring1()).arrayList).isNull();
+//        assertThat(layer.wire(new AutoWiring1()).linkedList).isNull();
+//        assertThat(layer.wire(new AutoWiring1()).s1).isEqualTo("s1");
+//        assertThat(layer.wire(new AutoWiring1()).s3).isNull();
 
         layer.putConst("MyVars.s3", "s3");
-        layer.putConst("MyVars.list", new ArrayList());
-        layer.putConst("MyVars.linkedList", new LinkedList());
-        layer.putConst("MyVars.arrayList", new ArrayList());
+        layer.putConstObj("MyVars.list", new ArrayList());
+        layer.putConstObj("MyVars.linkedList", new LinkedList());
+        layer.putConstObj("MyVars.arrayList", new ArrayList());
 
         assertThat(layer.wire(new AutoWiring1()).s3).isEqualTo("s3");
         assertThat(layer.wire(new AutoWiring1()).list).isNotNull();
@@ -69,37 +75,40 @@ public class VariablesLayerTest {
     }
 
     @Test
-    public void testAutowires2(){
-        assertThat(layer.wire(new AutoWiring1()).s1).isEqualTo("s1");
-        assertThat(layer.wire(new AutoWiring1()).s3).isNull();
+    public void testAutowires2_NoScope(){
+        assertThat(layer.wire(new AutoWiring2()).s1).isNull();
+        assertThat(layer.wire(new AutoWiring2()).s3).isNull();
+        assertThat(layer.wire(new AutoWiring2()).list).isNull();
 
         layer.putConst("s3", "s3");
-        layer.putConst("list", new ArrayList());
-        layer.putConst("linkedList", new LinkedList());
-        layer.putConst("arrayList", new ArrayList());
+        layer.putConstObj("list", new ArrayList());
+        layer.putConstObj("linkedList", new LinkedList());
+        layer.putConstObj("arrayList", new ArrayList());
 
-        assertThat(layer.wire(new AutoWiring1()).s3).isEqualTo("s3");
-        assertThat(layer.wire(new AutoWiring1()).list).isNotNull();
-        assertThat(layer.wire(new AutoWiring1()).arrayList).isNotNull();
-        assertThat(layer.wire(new AutoWiring1()).linkedList).isNotNull();
+        assertThat(layer.wire(new AutoWiring2()).s3).isEqualTo("s3");
+        assertThat(layer.wire(new AutoWiring2()).list).isNotNull();
+        assertThat(layer.wire(new AutoWiring2()).arrayList).isNotNull();
+        assertThat(layer.wire(new AutoWiring2()).linkedList).isNotNull();
     }
 
     @Test
-    public void testAutowires3(){
-        layer.putConst(List.class, new ArrayList());
-        layer.putConst(LinkedList.class, new LinkedList());
-        layer.putConst(ArrayList.class, new ArrayList());
+    public void testAutowires3_InjectImplementation(){
 
-        assertThat(layer.wire(new AutoWiring1()).list).isInstanceOf(ArrayList.class);
-        assertThat(layer.wire(new AutoWiring1()).arrayList).isInstanceOf(ArrayList.class);
-        assertThat(layer.wire(new AutoWiring1()).linkedList).isInstanceOf(LinkedList.class);
+        layer.putConstObj(List.class, new ArrayList());
+        layer.putConstObj(LinkedList.class, new LinkedList());
+        layer.putConstObj(ArrayList.class, new ArrayList());
+
+        assertThat(layer.wire(new AutoWiring2()).list).isInstanceOf(ArrayList.class);
+        assertThat(layer.wire(new AutoWiring2()).arrayList).isInstanceOf(ArrayList.class);
+        assertThat(layer.wire(new AutoWiring2()).linkedList).isInstanceOf(LinkedList.class);
     }
 
     @Test
-    public void testAutowires4(){
-        layer.putConst(LinkedList.class, new LinkedList());
-        layer.putConst(ArrayList.class, new ArrayList());
+    public void testAutowires4_InjectImplementation_MultipleChoice(){
+        layer.putConstObj(LinkedList.class, new LinkedList());
+        layer.putConstObj(ArrayList.class, new ArrayList());
 
-        assertThat(layer.wire(new AutoWiring1())).isNull();
+        assertThat(layer.wire(new AutoWiring2()).list).isNull();
+        assertThat(layer.wire(new AutoWiring2()).arrayList).isNotNull();
     }
 }

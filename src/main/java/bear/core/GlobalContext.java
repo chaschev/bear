@@ -20,6 +20,7 @@ import bear.plugins.AbstractContext;
 import bear.plugins.Plugin;
 import bear.plugins.Plugins;
 import bear.session.GenericUnixLocalEnvironmentPlugin;
+import bear.session.GenericUnixRemoteEnvironmentPlugin;
 import bear.session.LocalAddress;
 import bear.session.SystemSession;
 import bear.task.Task;
@@ -76,14 +77,19 @@ public class GlobalContext extends AbstractContext{
     private GlobalContext() {
         super();
 
-        bear = new Bear(this);
-
         layer = new VariablesLayer(this, "global layer", null);
+
+        logger.info("adding bootstrap plugins...");
+        plugins.add(GenericUnixRemoteEnvironmentPlugin.class);
+        plugins.add(GenericUnixLocalEnvironmentPlugin.class);
+        plugins.build();
+
+        bear = new Bear(this);
 
         final TaskRunner localRunner = new TaskRunner(null, this);
 
         localCtx = new SessionContext(this, new LocalAddress(), localRunner);
-        local = new GenericUnixLocalEnvironmentPlugin(this, "temp").newSession(localCtx, null);
+        local = new GenericUnixLocalEnvironmentPlugin(this).newSession(localCtx, null);
 
         tasks = new Tasks(this);
     }

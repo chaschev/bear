@@ -31,7 +31,7 @@ import java.util.LinkedHashMap;
 
 import static chaschev.lang.LangUtils.elvis;
 
-public class VariablesLayer extends HavingContext<Variables, AbstractContext>{
+public class VariablesLayer extends HavingContext<Variables, AbstractContext> {
     private static final Logger logger = LoggerFactory.getLogger(VariablesLayer.class);
 
     String name;
@@ -51,17 +51,25 @@ public class VariablesLayer extends HavingContext<Variables, AbstractContext>{
         putUnlessFrozen(name, new DynamicVariable<String>(name, "").defaultTo(value));
     }
 
-    private void putUnlessFrozen(String key, DynamicVariable val) {
-        final DynamicVariable variable = variables.get(key);
-
-        if(variable == null){
-            variables.put(key, val);
-        }else
-        if(!variable.isFrozen()){
-            variables.put(key, val);
-        }else{
-            throw new IllegalStateException("can't assign to " + name + ": it is frozen");
+    private void putUnlessFrozen(String varName, DynamicVariable val) {
+        if (isFrozen(varName)) {
+            throwFrozen(varName);
+        } else {
+            variables.put(varName, val);
         }
+    }
+
+    private static void throwFrozen(String varName) {
+        throw new IllegalStateException("can't assign to " + varName + ": it is frozen");
+    }
+
+    public boolean isFrozen(String varName) {
+        final DynamicVariable variable = variables.get(varName);
+        return isFrozen(variable);
+    }
+
+    public static boolean isFrozen(DynamicVariable variable) {
+        return variable != null && variable.isFrozen();
     }
 
     private VariablesLayer putUnlessFrozen(Nameable name, DynamicVariable val) {
@@ -76,7 +84,8 @@ public class VariablesLayer extends HavingContext<Variables, AbstractContext>{
         return putUnlessFrozen(key, value);
     }
 
-    public VariablesLayer putConst(Object key, Object value) {
+    public VariablesLayer putConstObj(Object key, Object value) {
+        Preconditions.checkArgument(!(key instanceof DynamicVariable || value instanceof DynamicVariable), "dynamic variables are not constants!");
         constants.put(key, value);
         return this;
     }
@@ -85,13 +94,36 @@ public class VariablesLayer extends HavingContext<Variables, AbstractContext>{
         return put(value, value);
     }
 
-    public VariablesLayer putS(Nameable key, String value) {
-        put(key, Variables.strVar("external var").defaultTo(value));
+    public VariablesLayer put(Nameable key, String value) {
+        return putConst(key.name(), value);
+    }
+
+    public VariablesLayer putConst(Nameable key, Object value) {
+        return putConst(key.name(), value);
+    }
+
+//    public VariablesLayer putConst(String value, Object obj) {
+//        System.out.println();
+//        return this;
+//    }
+
+    public VariablesLayer putConst(String name, Object value) {
+        DynamicVariable variable = variables.get(name);
+
+        if(isFrozen(variable)){
+            throwFrozen(name);
+        }
+
+        if(variable != null){
+            variables.remove(name);
+        }
+
+        putConstObj(name, value);
         return this;
     }
 
     public VariablesLayer putB(Nameable key, boolean b) {
-        put(key, Variables.bool("external var").defaultTo(b));
+        putConst(key, b);
         return this;
     }
 
@@ -104,28 +136,31 @@ public class VariablesLayer extends HavingContext<Variables, AbstractContext>{
     }
 
     public <T> T get(Nameable<T> name, T _default) {
+        return get(name.name(), _default);
+    }
+
+    public <T> T get(String varName, T _default) {
+        final DynamicVariable r = getVariable(varName);
         final Object result;
 
-        final DynamicVariable r = variables.get(name.name());
-
         if (r == null) {
-            Object o = constants.get(name.name());
+            Object o = constants.get(varName);
 
             result = elvis(o, _default);
         } else {
             result = r.apply($);
         }
 
-        logger.debug(":{} -> {} (by name)", name.name(), result);
+        logger.debug(":{} -> {} (by name)", varName, result);
 
         return (T) result;
     }
 
     public <T> T get(DynamicVariable<T> var) {
-        return get(var, (T)null);
+        return get(var, (T) null);
     }
 
-    public Object get(Object obj) {
+    public Object getConstant(Object obj) {
         return constants.get(obj);
     }
 
@@ -138,21 +173,21 @@ public class VariablesLayer extends HavingContext<Variables, AbstractContext>{
             r = fallbackVariablesLayer.getVariable(var);
         }
 
-        if(r == null){
+        if (r == null) {
             T temp;
 
-            try{
+            try {
                 temp = var.apply($);
-            }catch (Exception e){
+            } catch (Exception e) {
                 throw Exceptions.runtime(e);
             }
 
-            if(temp == null){
+            if (temp == null) {
                 result = _default;
-            }else {
+            } else {
                 result = temp;
             }
-        }else{
+        } else {
             result = r.apply($);
         }
 
@@ -165,10 +200,10 @@ public class VariablesLayer extends HavingContext<Variables, AbstractContext>{
         return getVariable(name.name());
     }
 
-    public  <T> DynamicVariable<T> getVariable(String key) {
+    public <T> DynamicVariable<T> getVariable(String key) {
         DynamicVariable var = variables.get(key);
 
-        if(var  == null && fallbackVariablesLayer != null){
+        if (var == null && fallbackVariablesLayer != null) {
             var = fallbackVariablesLayer.getVariable(key);
         }
 
@@ -191,7 +226,7 @@ public class VariablesLayer extends HavingContext<Variables, AbstractContext>{
 //        };
 //    }
 
-    public VariablesLayer dup(){
+    public VariablesLayer dup() {
         final VariablesLayer v = new VariablesLayer($, "dup of " + name, fallbackVariablesLayer);
 
         v.variables = new LinkedHashMap<String, DynamicVariable>(variables);
@@ -199,13 +234,13 @@ public class VariablesLayer extends HavingContext<Variables, AbstractContext>{
         return v;
     }
 
-    public <T> T wire(T object){
+    public <T> T wire(T object) {
         wire(this, object);
 
         return object;
     }
 
-    public static void wire(VariablesLayer layer, Object object){
+    public static void wire(VariablesLayer layer, Object object) {
         Class<?> aClass = object.getClass();
 
         boolean autowire = true;
@@ -229,39 +264,49 @@ public class VariablesLayer extends HavingContext<Variables, AbstractContext>{
 
             Class<?> fieldClass = field.getType();
 
-            if(varAnnotation != null){
-                Preconditions.checkArgument(varAnnotation.autoWireImpl() && "".equals(varAnnotation.value()), "value & auto-impl");
+            if (varAnnotation != null) {
 
-                if(varAnnotation.autoWireImpl() || "".equals(varAnnotation.value())){
-                    Object o = layer.get(fieldClass);
+                boolean autoImplThis = varAnnotation.autoWireImpl();
+//                    && !(CharSequence.class.isAssignableFrom(fieldClass)) &&
+//                    !ClassUtils.isPrimitiveOrWrapper(fieldClass);
 
-                    if(o == null){
-                        Object closestClass = findClosestClass(fieldClass, layer.constants.keySet(), field);
+                if (autoImplThis) {
+                    Preconditions.checkArgument("".equals(varAnnotation.value()), "value & auto-impl for field " + field);
+                }
 
-                        if(closestClass == null){
-                            throw new RuntimeException("could not wire impl for " + field);
-                        }
+                if (autoImplThis || "".equals(varAnnotation.value())) {
+                    Object closestClass = findClosestClass(fieldClass, layer.constants.keySet(), field, layer);
 
-                        o = layer.get(closestClass);
+                    if (closestClass == null) {
+                        throw new RuntimeException("could not wire impl for " + field);
                     }
 
+                    Object o = layer.getConstant(closestClass);
 
                     setField(field, object, o);
 
                     continue;
                 }
 
-
-                setField(field, object, layer.get(concatBlank(scope, varAnnotation.value())));
+                setField(field, object, layer, concatBlank(scope, varAnnotation.value()));
 
                 continue;
             }
 
-            if(autowire){
-                DynamicVariable<Object> variable = layer.getVariable(scope + field.getName());
+            if (autowire) {
+                String varName = concatBlank(scope, field.getName());
+                DynamicVariable<Object> variable = layer.getVariable(varName);
 
-                if(variable != null){
-                    setField(field, object, layer.get(variable));
+                if (variable != null) {
+                    setField(field, object, layer, variable.name);
+
+                    continue;
+                }
+
+                Object o = layer.get(varName, Void.class);
+
+                if (o != Void.class) {
+                    setField(field, object, layer, varName);
 
                     continue;
                 }
@@ -269,25 +314,35 @@ public class VariablesLayer extends HavingContext<Variables, AbstractContext>{
                 Object closestClass = null;
 
                 try {
-                    closestClass = findClosestClass(fieldClass, layer.constants.keySet(), field);
+                    closestClass = findClosestClass(fieldClass, layer.constants.keySet(), field, layer);
                 } catch (MultipleDICandidates ignore) {
 
                 }
 
-                if(closestClass != null){
-                    setField(field, object, layer.get(closestClass));
+                if (closestClass != null) {
+                    setField(field, object, layer.getConstant(closestClass));
                 }
             }
         }
     }
 
-    private static void setField(Field field, Object object, Object value) {
-        if(logger.isDebugEnabled()){
-            logger.debug("wiring {}.{} to {}", field.getDeclaringClass().getSimpleName(), field.getName(), value);
-        }
+    private static void setField(Field field, Object object, VariablesLayer layer, String varName) {
+        Object value = layer.get(varName, Void.class);
 
+        if (value != Void.class) {
+            setField(field, object, value);
+        }
+    }
+
+    private static void setField(Field field, Object object, Object value) {
         try {
+            if (logger.isDebugEnabled()) {
+                logger.debug("wiring {}.{} to {}", field.getDeclaringClass().getSimpleName(), field.getName(), value);
+            }
+
             field.set(object, value);
+        } catch (IllegalArgumentException e) {
+            throw Exceptions.runtime(e);
         } catch (IllegalAccessException e) {
             throw Exceptions.runtime(e);
         }
@@ -297,13 +352,33 @@ public class VariablesLayer extends HavingContext<Variables, AbstractContext>{
         return "".equals(s1) ? s2 : s1 + s2;
     }
 
-    private static class MultipleDICandidates extends RuntimeException{
+    //todo: respect the annotations, rename to reverse wire
+    public VariablesLayer addVariables(Object varsObject) {
+        try {
+            for (Field field : OpenBean.fieldsOfType(varsObject.getClass(), DynamicVariable.class, true)) {
+                this.put((DynamicVariable) field.get(varsObject));
+            }
+
+            return this;
+        } catch (IllegalAccessException e) {
+            throw Exceptions.runtime(e);
+        }
+    }
+
+    private static class MultipleDICandidates extends RuntimeException {
 
         private MultipleDICandidates(String message) {
             super(message);
         }
     }
-    private static Class<?> findClosestClass(Class<?> fieldClass, Iterable<Object> objects, Field field) {
+
+    private static Class<?> findClosestClass(Class<?> fieldClass, Iterable<Object> objects, Field field, VariablesLayer layer) {
+        Object o = layer.getConstant(fieldClass);
+
+        if (o != null) {
+            return fieldClass;
+        }
+
         Class<?> closestClass = null;
 
         for (Object key : objects) {
@@ -314,13 +389,11 @@ public class VariablesLayer extends HavingContext<Variables, AbstractContext>{
 
             if (!fieldClass.isAssignableFrom(key1)) continue;
 
-            if(closestClass == null){
+            if (closestClass == null) {
                 closestClass = key1;
-            }else
-            if(closestClass.isAssignableFrom(key1)){
+            } else if (closestClass.isAssignableFrom(key1)) {
                 closestClass = key1;
-            }else
-            if(!key1.isAssignableFrom(closestClass)){
+            } else if (!key1.isAssignableFrom(closestClass)) {
                 throw new MultipleDICandidates("two types possible to inject to field " + field + ": " + key1.getSimpleName() + " and " + closestClass);
             }
         }

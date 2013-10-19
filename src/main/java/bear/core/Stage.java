@@ -43,7 +43,7 @@ public class Stage {
     public String name;
     String description;
 
-    List<Address> systemEnvironments = new ArrayList<Address>();
+    List<Address> addresses = new ArrayList<Address>();
 
     GlobalContext global;
 
@@ -60,7 +60,7 @@ public class Stage {
     }
 
     public CompositeTaskRunContext prepareToRunTask(final TaskDef task) {
-        List<Address> addresses = systemEnvironments;
+        List<Address> addresses = this.addresses;
 
         final List<ListenableFuture<SessionContext>> futures = new ArrayList<ListenableFuture<SessionContext>>(addresses.size());
         final List<SystemSession> consoles = new ArrayList<SystemSession>(addresses.size());
@@ -76,7 +76,9 @@ public class Stage {
         for (Address address : addresses) {
             final TaskRunner runner = new TaskRunner(null, global);
 
-            $s.add(new SessionContext(global, address, runner));
+            SessionContext $ = new SessionContext(global, address, runner);
+
+            $s.add($);
         }
 
         final CompositeConsoleArrival<SessionContext> consoleArrival = new CompositeConsoleArrival<SessionContext>($s, futures, consoles,
@@ -99,13 +101,13 @@ public class Stage {
     }
 
     public Stage add(Address environment) {
-        systemEnvironments.add(environment);
+        addresses.add(environment);
 
         return this;
     }
 
     public List<Address> getEnvironments() {
-        return systemEnvironments;
+        return addresses;
     }
 
     @Override
@@ -114,13 +116,13 @@ public class Stage {
         sb.append("name='").append(name).append('\'');
         if (description != null)
             sb.append(", description='").append(description).append('\'');
-        sb.append(", environments=").append(systemEnvironments);
+        sb.append(", environments=").append(addresses);
         sb.append('}');
         return sb.toString();
     }
 
     public Address findRemoteEnvironment() {
-        return Iterables.find(systemEnvironments, Predicates.instanceOf(SshAddress.class));
+        return Iterables.find(addresses, Predicates.instanceOf(SshAddress.class));
 
     }
 

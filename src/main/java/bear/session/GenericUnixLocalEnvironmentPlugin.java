@@ -47,13 +47,17 @@ import java.util.List;
 public class GenericUnixLocalEnvironmentPlugin extends SystemEnvironmentPlugin {
     private static final Logger logger = LoggerFactory.getLogger(GenericUnixLocalEnvironmentPlugin.class);
 
-    public GenericUnixLocalEnvironmentPlugin(GlobalContext global, String name) {
-        super(global, name);
+    public GenericUnixLocalEnvironmentPlugin(GlobalContext global) {
+        super(global, "local unix plugin");
     }
 
     @Override
     public SystemSession newSession(SessionContext $, Task<TaskDef> parent) {
         return new SystemSession(parent, taskDefMixin, $) {
+            {
+                this.address = $.address;
+            }
+
             @Override
             public List<String> ls(String path) {
                 throw new UnsupportedOperationException("todo GenericUnixLocalEnvironment.ls");
@@ -142,8 +146,6 @@ public class GenericUnixLocalEnvironmentPlugin extends SystemEnvironmentPlugin {
             public <T extends CommandLineResult> CommandLine<T> newCommandLine(Class<T> aClass) {
                 return new LocalCommandLine<T>(this);
             }
-
-
 
             @Override
             public Result download(List<String> paths, DownloadMethod method, File destParentDir) {

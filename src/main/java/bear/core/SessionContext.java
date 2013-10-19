@@ -39,10 +39,12 @@ public class SessionContext extends AbstractContext{
     //    public final GlobalContext globalContext;
     private GlobalContext global;
     public final SystemEnvironmentPlugin.SystemSessionDef sysDef;
-    public SystemEnvironmentPlugin sysEnv;
+    public GenericUnixLocalEnvironmentPlugin localSysEnv;
+    public GenericUnixRemoteEnvironmentPlugin remoteSysEnv;
     public final SystemSession sys;
     public final TaskRunner runner;
     public Bear bear;
+    public Address address;
 
     public class ExecutionContext{
         public final DateTime startedAt = new DateTime();
@@ -72,12 +74,17 @@ public class SessionContext extends AbstractContext{
 
         global.wire(this);       //sets bear, global and the SystemEnvironment plugin =)
 
+        layer.put(bear.sessionHostname, address.getName());
+        layer.put(bear.sessionAddress, address.getAddress());
+
+        this.address = wire(address);
+
         ////////
         // this can be extracted into init
-        sysDef = sysEnv.getTaskDef();
+
+        sysDef = ((address instanceof SshAddress) ? remoteSysEnv : localSysEnv).getTaskDef();
         sys = sysDef.newSession(this, null);
 
-        layer.putConst(bear.sessionHostname, sys.getName());
 
         if (address instanceof SshAddress) {
             SshAddress a = (SshAddress) address;
@@ -174,5 +181,9 @@ public class SessionContext extends AbstractContext{
 
     public String getName() {
         return sys.getName();
+    }
+
+    public String concat(Object... varsAndStrings) {
+        return Variables.concat(this, varsAndStrings);
     }
 }

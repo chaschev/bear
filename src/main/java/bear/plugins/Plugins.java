@@ -160,9 +160,7 @@ public class Plugins {
 
     public void add(Class<? extends Plugin> aClass){
         try {
-
             pluginBuilder.add(aClass);
-
             // todo pluginMap.put(aClass, plugin);
         } catch (Exception e) {
             throw Exceptions.runtime(e);

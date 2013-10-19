@@ -525,8 +525,6 @@ public class BearCommandLineConfigurator {
             }
         });
 
-
-
         context.submitTasks();
 
         return new RunResponse(Lists.transform(context.getConsoleArrival().getEntries(), new Function<SessionContext, RunResponse.Host>() {

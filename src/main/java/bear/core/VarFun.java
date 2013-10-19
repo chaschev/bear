@@ -17,30 +17,19 @@
 package bear.core;
 
 import bear.plugins.AbstractContext;
-import bear.plugins.HavingContext;
 import bear.session.DynamicVariable;
-import bear.session.Variables;
 
 /**
  * @author Andrey Chaschev chaschev@gmail.com
  */
-public abstract class VarFun<T, CONTEXT extends AbstractContext> extends HavingContext<VarFun<T, CONTEXT>, CONTEXT> {
+public abstract class VarFun<T, CONTEXT extends AbstractContext> {
     protected DynamicVariable<T> var;
 
     public VarFun() {
-        super(null);
-    }
-
-    public VarFun(CONTEXT $) {
-        super($);
     }
 
 
-    public abstract T apply();
-
-    protected String concat(Object... varsAndStrings) {
-        return Variables.concat($, varsAndStrings);
-    }
+    public abstract T apply(CONTEXT $);
 
     public void setVar(DynamicVariable<T> var) {
         this.var = var;

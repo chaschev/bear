@@ -17,8 +17,8 @@ public class BearVariables {
 
     public static DynamicVariable<String> joinPath(String name, final DynamicVariable<String> root, final String... folders) {
         return Variables.strVar("").setDynamic(new VarFun<String, SessionContext>() {
-            public String apply() {
-                return $.sys.joinPath($(root), $.joinPath(folders));
+            public String apply(SessionContext $) {
+                return $.sys.joinPath($.var(root), $.joinPath(folders));
             }
         });
     }
@@ -29,10 +29,10 @@ public class BearVariables {
 
     public static DynamicVariable<String> joinPath(String name, final DynamicVariable... folders) {
         return Variables.strVar("").setDynamic(new VarFun<String, SessionContext>() {
-            public String apply() {
+            public String apply(final SessionContext $) {
                 return $.sys.joinPath(Iterables.transform(Arrays.asList(folders), new Function<DynamicVariable, String>() {
                     public String apply(DynamicVariable var) {
-                        return $((DynamicVariable<String>) var);
+                        return $.var((DynamicVariable<String>) var);
                     }
                 }));
             }

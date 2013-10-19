@@ -32,7 +32,7 @@ public class Variables {
 
     public static DynamicVariable<Boolean> not(String name, final DynamicVariable<Boolean> b) {
         return bool("").setDynamic(new VarFun<Boolean, AbstractContext>() {
-            public Boolean apply() {
+            public Boolean apply(AbstractContext $) {
                 return !$.varB(b);
             }
         });
@@ -40,8 +40,8 @@ public class Variables {
 
     public static <T> DynamicVariable<Boolean> isEql(String name, final DynamicVariable<T> variable, final String to) {
         return dynamic(name, "", new VarFun<Boolean, AbstractContext>() {
-            public Boolean apply() {
-                final T v = $(variable);
+            public Boolean apply(AbstractContext $) {
+                final T v = $.var(variable);
                 return v == null ? to == null : String.valueOf(v).equals(to);
             }
         });
@@ -53,7 +53,7 @@ public class Variables {
 
     public static <T> DynamicVariable<Boolean> isSet(String name, final DynamicVariable<T> variable) {
         return dynamic(name, "", new VarFun<Boolean, AbstractContext>() {
-            public Boolean apply() {
+            public Boolean apply(AbstractContext $) {
                 return $.isSet(variable);
             }
         });
@@ -65,7 +65,7 @@ public class Variables {
 
     public static <T> DynamicVariable<T> condition(String name, final DynamicVariable<Boolean> condition, final DynamicVariable<T> trueVar, final DynamicVariable<T> falseVar) {
         return dynamic(name, "", new VarFun<T, AbstractContext>() {
-            public T apply() {
+            public T apply(AbstractContext $) {
                 return $.varB(condition) ? $.var(trueVar) : $.var(falseVar);
             }
         });
@@ -77,15 +77,15 @@ public class Variables {
 
     public static <T> DynamicVariable<T> equalTo(String name, final DynamicVariable<T> variable) {
         return dynamic(name, "", new VarFun<T, AbstractContext>() {
-            public T apply() {
-                return $(variable);
+            public T apply(AbstractContext $) {
+                return $.var(variable);
             }
         });
     }
 
     public static DynamicVariable<Boolean> and(final DynamicVariable... bools) {
         return bool("").setDynamic(new VarFun<Boolean, AbstractContext>() {
-            public Boolean apply() {
+            public Boolean apply(AbstractContext $) {
                 for (DynamicVariable b : bools) {
                     if (!$.varB(b)) return false;
                 }
@@ -97,7 +97,7 @@ public class Variables {
 
     public static DynamicVariable<Boolean> or(String name, final DynamicVariable... bools) {
         return bool("").setDynamic(new VarFun<Boolean, AbstractContext>() {
-            public Boolean apply() {
+            public Boolean apply(AbstractContext $) {
                 for (DynamicVariable b : bools) {
                     if ($.varB(b)) return true;
                 }
@@ -109,7 +109,7 @@ public class Variables {
 
     public static DynamicVariable<String> concat(final Object... varsAndStrings) {
         return dynamic(new VarFun<String, AbstractContext>() {
-            public String apply() {
+            public String apply(AbstractContext $) {
                 return Variables.concat($, varsAndStrings);
             }
         });
@@ -145,7 +145,7 @@ public class Variables {
     @Deprecated
     public static <T> DynamicVariable<T> dynamicNotSet(final String name, String desc) {
         return dynamic(name, desc, new VarFun<T, AbstractContext>() {
-            public T apply() {
+            public T apply(AbstractContext $) {
                 throw new VarNotSetException(var);
             }
         });

@@ -105,8 +105,9 @@ public class CompositeTaskRunContext {
 
                         $.executionContext.rootExecutionContext.getDefaultValue().taskResult = run;
                     } catch (Throwable e) {
-                        $.executionContext.rootExecutionContext.getDefaultValue().taskResult = new CommandLineResult(Result.ERROR, e.toString());
                         BearCommandLineConfigurator.logger.warn("", e);
+
+                        $.executionContext.rootExecutionContext.getDefaultValue().taskResult = new CommandLineResult(Result.ERROR, e.toString());
 
                         if (e instanceof Error) {
                             throw (Error) e;

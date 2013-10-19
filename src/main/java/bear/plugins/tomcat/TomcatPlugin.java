@@ -62,8 +62,8 @@ public class TomcatPlugin extends ZippedToolPlugin {
         warPath = BearVariables.joinPath(webapps, warName);
 
         distrWwwAddress.setDynamic(new VarFun<String, AbstractContext>() {
-            public String apply() {
-                String version = $(TomcatPlugin.this.version);
+            public String apply(AbstractContext $) {
+                String version = $.var(TomcatPlugin.this.version);
 
                 switch (version.charAt(0)){
                     case '6':
@@ -145,10 +145,10 @@ public class TomcatPlugin extends ZippedToolPlugin {
     };
 
     public final DynamicVariable<String[]> warCacheDirs = Variables.dynamic(new VarFun<String[], SessionContext>() {
-        public String[] apply() {
-            final String name = FilenameUtils.getBaseName($(warName));
+        public String[] apply(SessionContext $) {
+            final String name = FilenameUtils.getBaseName($.var(warName));
             return new String[]{
-                $.sys.joinPath($(webapps), name)
+                $.sys.joinPath($.var(webapps), name)
             };
         }
     });

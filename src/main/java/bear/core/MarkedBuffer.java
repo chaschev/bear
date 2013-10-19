@@ -51,10 +51,12 @@ public class MarkedBuffer {
     }
 
     public String interimText() {
+        if(bytes == null) return "";
         return new String(bytes, interimPosition, bytes.length - interimPosition);
     }
 
     public String wholeText() {
+        if(bytes == null) return "";
         return new String(bytes, startPosition, bytes.length - startPosition);
     }
 
@@ -76,6 +78,7 @@ public class MarkedBuffer {
         } else {
             pos = marks.get(mark);
         }
+
         return pos;
 
     }

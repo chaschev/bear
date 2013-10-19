@@ -56,28 +56,28 @@ public class MySqlPlugin extends Plugin<Task, TaskDef<?>> {
         mysqlTempScriptName = Variables.strVar().defaultTo("temp.sql"),
         mysqlTempScriptPath = Variables.dynamic(new VarFun<String, SessionContext>() {
             @Override
-            public String apply() {
-                return $.sys.joinPath($(bear.projectSharedPath), $(mysqlTempScriptName));
+            public String apply(SessionContext $) {
+                return $.sys.joinPath($.var(bear.projectSharedPath), $.var(mysqlTempScriptName));
             }
         }),
         dumpName = Variables.dynamic(new VarFun<String, AbstractContext>() {
             @Override
-            public String apply() {
+            public String apply(AbstractContext $) {
                 return String.format("dump_%s_%s.GMT_%s.sql",
-                    $(bear.applicationName), Bear.RELEASE_FORMATTER.print(new DateTime()), $(bear.sessionHostname));
+                    $.var(bear.applicationName), Bear.RELEASE_FORMATTER.print(new DateTime()), $.var(bear.sessionHostname));
             }
         }),
         dumpsDirPath = BearVariables.joinPath(bear.projectSharedPath, "dumps"),
         dumpPath = Variables.dynamic(new VarFun<String, SessionContext>() {
-            public String apply() {
-                return $.sys.joinPath($(dumpsDirPath), $(dumpName) + ".bz2");
+            public String apply(SessionContext $) {
+                return $.sys.joinPath($.var(dumpsDirPath), $.var(dumpName) + ".bz2");
             }
         });
 
     public final DynamicVariable<Version> getVersion = Variables.dynamic(new VarFun<Version, AbstractContext>() {
         @Override
-        public Version apply() {
-            return Version.fromString($(version));
+        public Version apply(AbstractContext $) {
+            return Version.fromString($.var(version));
         }
     });
 

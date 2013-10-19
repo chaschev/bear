@@ -5,7 +5,7 @@ import bear.plugins.grails.GrailsBuilderTask;
 import bear.plugins.grails.GrailsPlugin;
 import bear.plugins.java.JavaPlugin;
 import bear.plugins.tomcat.TomcatPlugin;
-import bear.strategy.DeployStrategyTask;
+import bear.strategy.DeployStrategyTaskDef;
 import bear.strategy.SymlinkEntry;
 import bear.task.TaskResult;
 import bear.vcs.VcsCLIPlugin;
@@ -17,7 +17,7 @@ import org.slf4j.LoggerFactory;
  * @author Andrey Chaschev chaschev@gmail.com
  */
 public class BearSettings extends IBearSettings {
-    private static final Logger logger = LoggerFactory.getLogger(DeployStrategyTask.class);
+    private static final Logger logger = LoggerFactory.getLogger(DeployStrategyTaskDef.class);
 
     GrailsPlugin grails;
     JavaPlugin java;
@@ -39,9 +39,9 @@ public class BearSettings extends IBearSettings {
         final VariablesLayer vars = global.getLayer();
 
         vars
-            .putS(grails.homePath, "/opt/grails")
-            .putS(bear.sshUsername, "ihseus")
-            .putS(bear.vcsPassword, global.getProperty("svn.password"))
+            .put(grails.homePath, "/opt/grails")
+            .put(bear.sshUsername, "ihseus")
+            .put(bear.vcsPassword, global.getProperty("svn.password"))
         ;
 
         tomcat.warName.setEqualTo(grails.warName);
@@ -54,13 +54,13 @@ public class BearSettings extends IBearSettings {
                     .add("pac-test", "10.22.13.6"))
         );
 
-        bear.getStrategy.setDynamic(new VarFun<DeployStrategyTask, SessionContext>() {
-            public DeployStrategyTask apply() {
+        bear.getStrategy.setDynamic(new VarFun<DeployStrategyTaskDef, SessionContext>() {
+            public DeployStrategyTaskDef apply(final SessionContext $) {
                 grails.projectPath.setEqualTo(
                     bear.vcsBranchLocalPath
                 );
 
-                final DeployStrategyTask strategy = new DeployStrategyTask($) {
+                final DeployStrategyTaskDef strategy = new DeployStrategyTaskDef($) {
                     @Override
                     protected void step_40_updateRemoteFiles() {
                         logger.info("updating the project, please wait...");
@@ -68,16 +68,16 @@ public class BearSettings extends IBearSettings {
                         StopWatch sw = new StopWatch();
                         sw.start();
 
-                        final VcsCLIPlugin.Session vcsCLI = $(bear.vcs);
+                        final VcsCLIPlugin.Session vcsCLI = $.var(bear.vcs);
 
-                        final String destPath = $(bear.vcsBranchLocalPath);
+                        final String destPath = $.var(bear.vcsBranchLocalPath);
 
                         final Script line;
 
                         if (!$.sys.exists(destPath)) {
-                            line = vcsCLI.checkout($(bear.revision), destPath, VcsCLIPlugin.emptyParams());
+                            line = vcsCLI.checkout($.var(bear.revision), destPath, VcsCLIPlugin.emptyParams());
                         } else {
-                            line = vcsCLI.sync($(bear.revision), destPath, VcsCLIPlugin.emptyParams());
+                            line = vcsCLI.sync($.var(bear.revision), destPath, VcsCLIPlugin.emptyParams());
                         }
 
                         line.timeoutMs(600 * 1000);
@@ -88,9 +88,9 @@ public class BearSettings extends IBearSettings {
 
                         logger.info("building the project...");
 
-                        String warPath = $(grails.releaseWarPath);
+                        String warPath = $.var(grails.releaseWarPath);
 
-                        if (!$.sys.exists(warPath) || !$(global.getPlugin(Atocha.class).reuseWar)) {
+                        if (!$.sys.exists(warPath) || !$.var(global.getPlugin(Atocha.class).reuseWar)) {
                             final TaskResult r = $.run(new GrailsBuilderTask(global));
 
                             if (r.nok()) {
@@ -125,11 +125,11 @@ public class BearSettings extends IBearSettings {
             @Override
             public void setVars(VariablesLayer vars) {
                 vars
-                    .putS(bear.applicationName, "atocha")
+                    .put(bear.applicationName, "atocha")
                     .putB(bear.productionDeployment, false)
                     .putB(bear.speedUpBuild, true)
-                    .putS(bear.repositoryURI, "svn://vm02/svnrepos/atocha")
-                    .putS(bear.appUsername, "tomcat")
+                    .put(bear.repositoryURI, "svn://vm02/svnrepos/atocha")
+                    .put(bear.appUsername, "tomcat")
                 ;
             }
         };

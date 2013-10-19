@@ -99,11 +99,11 @@ public class DynamicVariable<T> implements Nameable<T> {
                 return defaultValue;
             }
 
-            if (dynamicImplementation instanceof VarFun<?, ?>) {
-                ((VarFun<?, AbstractContext>) dynamicImplementation).set$($);
-            }
+//            if (dynamicImplementation instanceof VarFun<?, ?>) {
+//                ((VarFun<?, AbstractContext>) dynamicImplementation).set$($);
+//            }
 
-            final T r = dynamicImplementation.apply();
+            final T r = ((VarFun<T, AbstractContext>)dynamicImplementation).apply((AbstractContext) $);
 
             if (memoize) {
                 defaultValue = r;
@@ -228,7 +228,7 @@ public class DynamicVariable<T> implements Nameable<T> {
 
     public DynamicVariable<T> setEqualTo(final DynamicVariable<T> variable) {
         setDynamic(new VarFun<T, AbstractContext>() {
-            public T apply() {
+            public T apply(AbstractContext $) {
                 return variable.apply($);
             }
         });
