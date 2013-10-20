@@ -42,6 +42,8 @@ public abstract class Plugin<TASK extends Task, TASK_DEF extends TaskDef<? exten
 
     protected final TASK_DEF taskDefMixin;
 
+    protected PluginShellMode shell;
+
 
     public Plugin(GlobalContext global) {
         this(global, null);
@@ -139,5 +141,9 @@ public abstract class Plugin<TASK extends Task, TASK_DEF extends TaskDef<? exten
 
     public TASK_DEF getTaskDef() {
         return taskDefMixin;
+    }
+
+    public PluginShellMode getShell() {
+        return shell;
     }
 }

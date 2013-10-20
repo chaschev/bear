@@ -2,11 +2,17 @@ package bear.main;
 
 import bear.console.CompositeConsoleArrival;
 import bear.core.*;
+import bear.plugins.CommandInterpreter;
+import bear.plugins.Plugin;
 import bear.session.DynamicVariable;
+import bear.session.GenericUnixRemoteEnvironmentPlugin;
 import bear.session.Question;
 import bear.task.Task;
+import bear.task.TaskDef;
 import bear.task.exec.CommandExecutionEntry;
 import bear.task.exec.TaskExecutionContext;
+import chaschev.json.JacksonMapper;
+import chaschev.json.Mapper;
 import chaschev.lang.Lists2;
 import chaschev.util.Exceptions;
 import com.google.common.base.Function;
@@ -21,6 +27,7 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.filefilter.SuffixFileFilter;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.reflections.Reflections;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -45,6 +52,8 @@ import static chaschev.lang.LangUtils.elvis;
 import static com.google.common.collect.Lists.newArrayListWithExpectedSize;
 import static com.google.common.collect.Lists.transform;
 import static org.apache.commons.io.FilenameUtils.getBaseName;
+import static org.apache.commons.lang3.StringUtils.substringAfter;
+import static org.apache.commons.lang3.StringUtils.substringBefore;
 
 /**
  * @author Andrey Chaschev chaschev@gmail.com
@@ -65,6 +74,8 @@ public class BearCommandLineConfigurator {
     private Properties properties;
     private String scriptName;
     private String propertiesName;
+
+    private BearCommandInterpreter commandInterpreter;
 
     private CompileManager compileManager;
 
@@ -180,6 +191,8 @@ public class BearCommandLineConfigurator {
 
 //        scriptToRun = compileAndLoadScript();
 
+        commandInterpreter = global.wire(new BearCommandInterpreter());
+        commandInterpreter.switchToPlugin(GenericUnixRemoteEnvironmentPlugin.class);
         return this;
     }
 
@@ -447,7 +460,13 @@ public class BearCommandLineConfigurator {
         return (String[]) Lists2.projectMethod(classes, "getName").toArray(new String[classes.size()]);
     }
 
-    public static class RunResponse {
+    public static abstract class Response{
+        public String getClazz(){
+            return getClass().getSimpleName();
+        }
+    }
+
+    public static class RunResponse extends Response{
         public static class Host{
             public String name;
             public String address;
@@ -464,6 +483,14 @@ public class BearCommandLineConfigurator {
         }
     }
 
+    public static class MessageResponse extends Response{
+        public String message;
+
+        public MessageResponse(String message) {
+            this.message = message;
+        }
+    }
+
     public RunResponse run(String scriptName, String settingsName) throws Exception {
         logger.info("running script {}, settings: {}", scriptName, settingsName);
 
@@ -473,6 +500,10 @@ public class BearCommandLineConfigurator {
 
         Script script = (Script) scriptEntry.aClass.newInstance();
 
+        return runWithScript(script, settingsName);
+    }
+
+    public RunResponse runWithScript(Script script, String settingsName) throws Exception {
         IBearSettings settings = newSettings(settingsName);
 
         CompositeTaskRunContext context = new BearRunner(settings, script, factory)
@@ -534,5 +565,121 @@ public class BearCommandLineConfigurator {
         }));
     }
 
+    public static class UIContext {
+        public String settingsName;
+        public String scriptName;
+    }
 
+    public class BearCommandInterpreter{
+        GlobalContext global;
+        Bear bear;
+        String currentPrompt;
+
+        Plugin currentShellPlugin;
+
+        public BearCommandInterpreter() {
+
+        }
+
+        public CommandInterpreter currentInterpreter(){
+            return currentShellPlugin.getShell();
+        }
+
+        final Mapper mapper = new JacksonMapper();
+
+
+
+        /**
+         * : -> system command
+         * :help
+         * :use shell <plugin>
+         *
+         * @param command
+         */
+        public RunResponse interpret(String command, String uiContextS) throws Exception {
+            logger.info("interpreting command: {}, params: {}", command, uiContextS);
+
+            UIContext uiContext = mapper.fromJSON(uiContextS, UIContext.class);
+
+            if(command.startsWith(":")){
+                String firstWord = StringUtils.substringBetween(command, ":", " ");
+
+                if("use".equals(firstWord)){
+                    command = substringAfter(command, " ").trim();
+                    String secondWord = substringBefore(command, " ");
+
+                    if("shell".equals(secondWord)){
+                        command = substringAfter(command, " ").trim();
+
+                        final String pluginName = command;
+
+                        ArrayList<Class<? extends Plugin>> matchingClasses = Lists.newArrayList(Iterables.filter(new Reflections("bear.plugin")
+                            .getSubTypesOf(Plugin.class), new Predicate<Class<? extends Plugin>>() {
+                            @Override
+                            public boolean apply(Class<? extends Plugin> input) {
+                                return input.getSimpleName().toLowerCase().contains(pluginName);
+                            }
+                        }));
+
+                        if(matchingClasses.isEmpty()){
+                            throw new RuntimeException("no plugins found for '" + pluginName + "'");
+                        }
+
+                        if(matchingClasses.size() > 1){
+                            throw new RuntimeException("1+ plugins found for '" + pluginName + "': " + pluginName);
+                        }
+
+                        switchToPlugin(matchingClasses.get(0));
+                    }
+                }
+
+                return null;
+            }
+
+            return runWithInterpreter(command, uiContext);
+        }
+
+        private RunResponse runWithInterpreter(final String command, UIContext uiContext) throws Exception {
+            logger.info("running with '{}'", currentInterpreter().toString());
+
+            RunResponse runResponse = runWithScript(new SingleTaskScript(new TaskDef() {
+                @Override
+                public Task newSession(SessionContext $, Task parent) {
+                    return currentInterpreter().interpret(command, $, parent, this);
+                }
+            }), uiContext.settingsName);
+
+            bearFX.sendMessageToUI(new RMIEventToUI("terminals", "onScriptStart", runResponse.hosts));
+
+            return runResponse;
+        }
+
+
+        private SwitchResponse switchToPlugin(Class<? extends Plugin> aClass) {
+            logger.info("switching to plugin: {}", aClass.getSimpleName());
+
+            this.currentShellPlugin = global.getPlugin(aClass);
+
+            SwitchResponse response = new SwitchResponse(currentShellPlugin.name, currentShellPlugin.getShell().getCommandName() + "$");
+
+            bearFX.sendMessageToUI(new CommandConsoleEventToUI("local", response.message));
+
+            return response;
+        }
+    }
+
+    public static class SwitchResponse extends MessageResponse{
+        public final String pluginName;
+        public final String prompt;
+
+        public SwitchResponse(String pluginName, String prompt) {
+            super("switched to shell '" + pluginName + "'");
+            this.pluginName = pluginName;
+            this.prompt = prompt;
+        }
+    }
+
+    public RunResponse interpret(String command, String uiContextS) throws Exception {
+        return commandInterpreter.interpret(command, uiContextS);
+    }
 }

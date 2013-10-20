@@ -26,6 +26,7 @@ import bear.task.TaskDef;
 import bear.vcs.BranchInfoResult;
 import bear.vcs.VcsCLIPlugin;
 import chaschev.lang.OpenBean;
+import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
 import com.google.common.collect.Iterables;
@@ -246,12 +247,17 @@ public class Bear {
     public final DynamicVariable<Stage> getStage = dynamic(new VarFun<Stage, SessionContext>() {
         public Stage apply(SessionContext $) {
             final String stageName = $.var(Bear.this.stage);
-            final Stage stage = Iterables.find($.var(stages).stages, new Predicate<Stage>() {
+            final Optional<Stage> optional = Iterables.tryFind($.var(stages).stages, new Predicate<Stage>() {
                 public boolean apply(Stage s) {
                     return s.name.equals(stageName);
                 }
             });
 
+            if(!optional.isPresent()){
+                throw new RuntimeException("stage not found: '" + stageName + "'");
+            }
+
+            Stage stage = optional.get();
             stage.global = global;
 
             return stage;
@@ -283,5 +289,6 @@ public class Bear {
         });
 
     public final DynamicVariable<DeployStrategyTaskDef> getStrategy = dynamic(DeployStrategyTaskDef.class).setDesc("Deployment strategy: how app files copied and built").memoize(true);
+
 
 }

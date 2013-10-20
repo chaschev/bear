@@ -6,7 +6,7 @@ top priority:
 - (ok) ui: test multi servers
 - (ok) ui: scrollable
 - ui: console commands (split this task into sub-tasks, implement via doc)
-- ui: local shell tab
+- ui: ... local shell tab
 - ui: command history in the chosen combo (500 last commands)
 - ui: preload stages, hosts and roles
 - ui: stage selection
@@ -15,7 +15,7 @@ top priority:
 - ui: add global root task somewhere, add global timer
 - ui: nicer button placement for scripts, use the space
 
-- DI for scripts and plugins
+- (ok) DI for scripts and plugins
 - (ok) rollback command
 - test error messages by setting incorrect rights at each step
 -- (ok) reuse setup task validation

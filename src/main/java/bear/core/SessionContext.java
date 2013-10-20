@@ -62,7 +62,7 @@ public class SessionContext extends AbstractContext{
         }
     }
 
-    protected Task<TaskDef> currentTask;
+    protected Task<?> currentTask;
 
     protected ExecutionContext executionContext = new ExecutionContext();
 
@@ -143,11 +143,11 @@ public class SessionContext extends AbstractContext{
         return runner.run(task);
     }
 
-    public Task<TaskDef> getCurrentTask() {
+    public Task<?> getCurrentTask() {
         return currentTask;
     }
 
-    public void setCurrentTask(Task<TaskDef> currentTask) {
+    public void setCurrentTask(Task<?> currentTask) {
         if(currentTask.isRootTask()){
             executionContext.rootExecutionContext.defaultTo(currentTask.getExecutionContext());
         }

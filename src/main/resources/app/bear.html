@@ -416,6 +416,13 @@
                                 <console-messages>
                                     <div>{{terminal.host.name}}</div>
                                 </console-messages>
+                                <table style="width: 100%">
+                                    <tr>
+                                        <td><textarea class="form-control current-console-command" id="{{terminal.host.name}}-input" ng-model="terminal.sendCommandText" rows="2"></textarea></td>
+                                        <td style="width: 5%">
+                                            <button class="btn btn-success btn-sm" ng-click="sendCommand()">Send</button></td>
+                                    </tr>
+                                </table>
                             </div>
                         </tab>
                     </tabset>
@@ -461,7 +468,6 @@
                             <div style="display: inline-block">
                                 <select id="fileSelect" chosen="selectedFile"  class="chzn-select"
                                         ng-model="selectedFile" ng-options="file for file in files()">
-
                                 </select>
                             </div>
                             <div class="btn-toolbar" style="display: inline-block">
@@ -484,8 +490,8 @@
                     <div id="scriptTab" class="fade in tab-pane active" mytab>
                         <div id="scriptText" class="aceEditor">
                             function foo(items) {
-                            var x = "All this is syntax highlighted";
-                            return x;
+                                var x = "All this is syntax highlighted";
+                                return x;
                             }
                         </div>
                     </div>

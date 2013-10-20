@@ -94,9 +94,15 @@ public abstract class AbstractContext {
 
     public <T> T wire(T object) {
         try {
-            Field[] contextFields = OpenBean.getClassDesc(this.getClass()).fields;
+            Class<? extends AbstractContext> myClass = this.getClass();
+            Field[] contextFields = OpenBean.getClassDesc(myClass).fields;
 
             for (Field field : OpenBean.getClassDesc(object.getClass()).fields) {
+                if(myClass == field.getType()){
+                    field.set(object, this);
+                    continue;
+                }
+
                 int i = Arrays.binarySearch(contextFields, field, ClassDesc.FIELD_COMPARATOR);
 
                 if(i>=0){
@@ -175,5 +181,21 @@ public abstract class AbstractContext {
                 throw new UnsupportedOperationException("todo: implement for " + v.getClass());
             }
         }
+    }
+
+    public Object getConstant(Object obj) {
+        return layer.getConstant(obj);
+    }
+
+    public <T> T get(DynamicVariable<T> var, T _default) {
+        return layer.get(var, _default);
+    }
+
+    public <T> DynamicVariable<T> getVariable(Nameable<T> name) {
+        return layer.getVariable(name);
+    }
+
+    public <T> DynamicVariable<T> getVariable(String key) {
+        return layer.getVariable(key);
     }
 }

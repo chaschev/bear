@@ -87,8 +87,12 @@ public class CompositeTaskRunContext {
                                 r.join(plugin.checkPluginDependencies());
 
                                 if (!task.isSetupTask()) {
-                                    r.join(plugin.getInstall().newSession($, $.currentTask)
-                                        .asInstalledDependency().checkDeps());
+                                    Dependency dependency = plugin.getInstall().newSession($, $.currentTask)
+                                        .asInstalledDependency();
+
+                                    TaskResult result = runner.runSession(dependency);
+
+                                    r.join((DependencyResult) result);
                                 }
                             }
 

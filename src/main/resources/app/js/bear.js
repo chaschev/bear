@@ -186,7 +186,7 @@ Terminal.prototype.currentTaskTime = function(){
 };
 
 Terminal.prototype.onScriptStart = function(){
-    Java.log('reseting', this.host);
+    Java.log('resetting', this.host);
     this.currentCommandStartedAt = null;
     this.currentCommand = null;
     this.currentTaskResult = null;
@@ -205,6 +205,16 @@ var Terminals = function(){
         partiesCount: 0,
         rootTask: "not run"
     };
+};
+
+Terminals.prototype.onScriptStart = function(hosts){
+    this.updateHosts(hosts);
+
+    for (var i = 0; i < this.terminals.length; i++) {
+        var term = this.terminals[i];
+
+        term.onScriptStart();
+    }
 };
 
 Terminals.prototype.updateHosts = function(hosts){
@@ -245,6 +255,11 @@ function BearCtrl($scope){
 
     $scope.terminals = new Terminals();
 
+    $scope.terminals.updateHosts([{
+        name: 'local',
+        address: 'local'
+    }]);
+
     $scope.$watch('lastBuildTime', function(){
 //        Java.log("updating fields on new build");
 
@@ -272,6 +287,36 @@ function BearCtrl($scope){
 
     $scope.dispatchMessage = function(e){
         switch(e.type){
+            case 'rmi':
+                if(e.subType === 'rootCtrl'){
+                    var field = e.bean;
+                    var bean ;
+                    var method = e.method;
+                    var params = JSON.parse(e.jsonArrayOfParams);
+
+                    if(field == null){
+                        bean = $scope;
+                    }else{
+                        bean = $scope[field];
+
+                        if(bean == null){
+                            Java.log("field does not exist in scope: ", field, ", scope: ", $scope);
+                            throw "field does not exist in scope: " + field;
+                        }
+                    }
+
+                    var m = bean[method];
+                    if(!m){
+                        Java.log("field does not exist in scope: ", method, ", scope: ", $scope);
+                        throw "field does not exist in scope: " + method;
+                    }
+
+                    Java.log("invoking " + bean + "." + method + "(" + params + ")");
+                    $scope.$apply(function(){
+                        m.apply(bean, params);
+                    });
+                }
+                break;
             case 'console':
 //                Java.log('broadcasting', e);
                 $scope.$broadcast('message', e);
@@ -304,6 +349,9 @@ function DropdownCtrl($scope) {
 app.controller('FileTabsCtrl', ['$scope', function($scope) {
     Java.log("FileTabsCtrl init");
 
+    // a small cheat
+    $scope = $scope.$parent;
+
     $scope.selectedTab = 'script';
 
     $scope.scripts = {
@@ -321,18 +369,11 @@ app.controller('FileTabsCtrl', ['$scope', function($scope) {
 //            Java.log('scope', scope);
             Java.log('running script', $scope.scripts.selectedFile);
 
-            var hosts = JSON.parse(window.bear.jsonCall('conf', 'run', $scope.scripts.selectedFile, $scope.settings.selectedFile));
-
             Java.log('my scope ', $scope, 'parent scope: ', $scope.$parent);
 
-            for (var i = 0; i < $scope.terminals.terminals.length; i++) {
-                var term = $scope.terminals.terminals[i];
+            var hosts = JSON.parse(window.bear.jsonCall('conf', 'run', $scope.scripts.selectedFile, $scope.settings.selectedFile));
 
-                term.onScriptStart();
-            }
-
-            $scope.$parent.updateHosts(hosts.hosts);
-//            Java.log("terminals: ", hosts);
+            $scope.terminals.onScriptStart(hosts.hosts);
         } catch (e) {
             Java.log(e);
         }
@@ -420,6 +461,7 @@ app.controller('FileTabsCtrl', ['$scope', function($scope) {
         $scope.currentTab().selectedFile = newVal;
 
         var content;
+
         if(Java.isFX &&  window.bear.isReady()){
             content = window.bear.call('conf', 'getFileText', newVal);
         }else{
@@ -428,6 +470,7 @@ app.controller('FileTabsCtrl', ['$scope', function($scope) {
 
         var editor = ace.edit($scope.selectedTab + "Text");
         var cursor = editor.selection.getCursor();
+
         editor.setValue(content, cursor);
     });
 }]);
@@ -437,5 +480,16 @@ var ConsoleTabsCtrl = function ($scope) {
 };
 
 var ConsoleTabsChildCtrl = function ($scope) {
+    $scope.sendCommand = function(){
+        Java.log('sendCommand, terminal: ', $scope.terminal, 'scope:', $scope);
 
+        var response = JSON.parse(window.bear.jsonCall('conf', 'interpret',
+                $scope.terminal.sendCommandText,
+                JSON.stringify({
+            scriptName:$scope.scripts.selectedFile,
+            settingsName:$scope.settings.selectedFile})))
+            ;
+
+        Java.log('interpret response:', response);
+    };
 };

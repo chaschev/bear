@@ -15,7 +15,7 @@ public abstract class Task<TASK_DEF extends TaskDef> extends HavingContext<Task<
     protected TASK_DEF definition;
 
     @Nullable
-    protected final Task parent;
+    protected Task parent;
 
     private Dependencies dependencies = new Dependencies();
 
@@ -90,6 +90,11 @@ public abstract class Task<TASK_DEF extends TaskDef> extends HavingContext<Task<
     @Nullable
     public Task<TaskDef> getParent() {
         return parent;
+    }
+
+    public Task<TASK_DEF> setParent(Task parent) {
+        this.parent = parent;
+        return this;
     }
 
     public boolean isRootTask(){

@@ -112,24 +112,14 @@ public class TaskRunner extends HavingContext<TaskRunner, SessionContext>{
     }
 
     private TaskResult _runSingleTask(TaskDef taskDef, boolean thisIsMe) {
-        TaskResult result = null;
+        TaskResult result = TaskResult.OK;
         try {
             if (!thisIsMe) {
                 result = runWithDependencies(taskDef);
             } else {
                 Task<TaskDef> taskSession = taskDef.newSession($, $.getCurrentTask());
 
-                if($(bear.checkDependencies)){
-                    DependencyResult depsResult = taskSession.getDependencies().check();
-
-                    if(depsResult.nok()){
-                        return depsResult;
-                    }
-                }
-
-                $.setCurrentTask(taskSession);
-
-                result = taskSession.run(this);
+                result = runSession(taskSession);
             }
         }
         catch (BearException e){
@@ -143,6 +133,21 @@ public class TaskRunner extends HavingContext<TaskRunner, SessionContext>{
             result = new CommandLineResult(e.toString(), Result.ERROR);
         }
 
+        return result;
+    }
+
+    public TaskResult runSession(Task<?> taskSession) {
+        TaskResult result = TaskResult.OK;
+
+        if($(bear.checkDependencies)){
+            result = taskSession.getDependencies().check();
+        }
+
+        $.setCurrentTask(taskSession);
+
+        if(result.ok()){
+            result = taskSession.run(this);
+        }
         return result;
     }
 

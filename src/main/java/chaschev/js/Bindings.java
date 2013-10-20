@@ -5,6 +5,7 @@ import chaschev.json.Mapper;
 import chaschev.lang.OpenBean;
 import chaschev.lang.reflect.ClassDesc;
 import chaschev.lang.reflect.MethodDesc;
+import chaschev.util.Exceptions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -69,7 +70,8 @@ public class Bindings {
 
             return r;
         } catch (Exception e) {
-            return new ExceptionWrapper(e, "className: " + className);
+            return new ExceptionWrapper(e, "className: " + className +
+                ", exception: " + e.toString() );
         }
     }
 
@@ -100,7 +102,8 @@ public class Bindings {
 
             return r;
         } catch (Exception e) {
-            return new ExceptionWrapper(e, "className: " + className);
+            return new ExceptionWrapper(e, "className: " + className +
+                ", exception: " + e.toString() );
         }
     }
 
@@ -134,7 +137,8 @@ public class Bindings {
         } catch (Exception e) {
             return new ExceptionWrapper(e, "className: " + className +
                 ", method: " + method +
-                ", params: " + Arrays.asList(params)
+                ", params: " + Arrays.asList(params) +
+                ", exception: " + e.toString()
             );
         }
     }
@@ -205,9 +209,11 @@ public class Bindings {
             return returnJson ? 
                     mapper.toJSON(invoke) : invoke;
         } catch (Exception e) {
-            return new ExceptionWrapper(e, "className: " + bean.getClass().getSimpleName() +
+            return new ExceptionWrapper(e,
+                "className: " + bean.getClass().getSimpleName() +
                 ", method: " + method +
-                ", params: " + Arrays.asList(params)
+                ", params: " + Arrays.asList(params) +
+                ", exception: " + Exceptions.rootCause(e).toString()
             );
         }
     }

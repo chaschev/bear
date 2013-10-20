@@ -177,7 +177,7 @@ public class Plugins {
         return plugin;
     }
 
-    public <T extends Plugin> Task<TaskDef> getSessionContext(Class<T> aClass, SessionContext $, Task<TaskDef> parent){
+    public <T extends Plugin> Task<TaskDef> getSessionContext(Class<T> aClass, SessionContext $, Task<?> parent){
         try {
             final T plugin = globalContext.getPlugin(aClass);
 

@@ -112,10 +112,11 @@ public class GlobalContext extends AbstractContext{
     }
 
     public <T extends Plugin> T getPlugin(Class<T> pluginClass) {
-        return (T) plugins.get(pluginClass);
+//        return (T) plugins.get(pluginClass);
+        return (T) getConstant(pluginClass);
     }
 
-    public <T extends Plugin> Task<TaskDef> newPluginSession(Class<T> pluginClass, SessionContext $, Task<TaskDef> parentTask) {
+    public <T extends Plugin> Task<TaskDef> newPluginSession(Class<T> pluginClass, SessionContext $, Task<?> parentTask) {
         return plugins.getSessionContext(pluginClass, $, parentTask);
     }
 
@@ -151,5 +152,10 @@ public class GlobalContext extends AbstractContext{
     public void initPlugins() {
         logger.info("initializing plugins...");
         plugins.build();
+    }
+
+    @Override
+    public GlobalContext getGlobal() {
+        return this;
     }
 }

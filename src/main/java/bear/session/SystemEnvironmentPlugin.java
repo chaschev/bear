@@ -21,6 +21,7 @@ import bear.console.ConsoleCallback;
 import bear.core.GlobalContext;
 import bear.core.SessionContext;
 import bear.plugins.Plugin;
+import bear.plugins.PluginShellMode;
 import bear.task.InstallationTask;
 import bear.task.InstallationTaskDef;
 import bear.task.Task;
@@ -39,8 +40,6 @@ public abstract class SystemEnvironmentPlugin extends Plugin<SystemSession, Syst
     private int defaultTimeout = 5000;
     private int singleTimeout = -1;
 
-    private UnixFlavour unixFlavour;
-
     public static enum UnixFlavour {
         CENTOS, UBUNTU
     }
@@ -48,10 +47,12 @@ public abstract class SystemEnvironmentPlugin extends Plugin<SystemSession, Syst
     public enum CopyCommandType {
         COPY, LINK, MOVE
     }
+
     protected SystemEnvironmentPlugin(GlobalContext global, String name) {
         super(global, new SystemSessionDef());
         taskDefMixin.setPlugin(this);
         this.name = name;
+        this.shell = new PluginShellMode.SshShellMode();
     }
 
     public static ConsoleCallback passwordCallback(final String password) {
@@ -64,8 +65,6 @@ public abstract class SystemEnvironmentPlugin extends Plugin<SystemSession, Syst
             }
         };
     }
-
-
 
     protected int getTimeout() {
         int r = singleTimeout == -1 ? defaultTimeout : singleTimeout;

@@ -114,9 +114,11 @@ public class BearFX {
                     "--script=" + properties.get("bear-fx.script"),
                     "--settings=" + properties.get("bear-fx.settings"),
                     "--props=" + properties.get("bear-fx.properties")
-                ).configure();
+                );
 
                 bearFX = new BearFX(this, configurator);
+
+                configurator.configure();
 
                 //////////
                 //////////
@@ -165,9 +167,17 @@ public class BearFX {
             }
         }
 
+        @Override
+        public void stop() throws Exception {
+            bearFX.conf.getGlobal().shutdown();
+        }
+
         public static void main(String[] args) throws Exception {
             launch(args);
         }
     }
 
+    public void sendMessageToUI(EventToUI eventToUI) {
+        bearFXApp.sendMessageToUI(eventToUI);
+    }
 }
