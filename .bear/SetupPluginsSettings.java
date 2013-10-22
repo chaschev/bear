@@ -3,7 +3,7 @@ import bear.core.*;
 import bear.plugins.grails.GrailsBuilderTask;
 import bear.plugins.grails.GrailsPlugin;
 import bear.plugins.java.JavaPlugin;
-import bear.plugins.tomcat.MavenPlugin;
+import bear.plugins.maven.MavenPlugin;
 import bear.plugins.tomcat.TomcatPlugin;
 import bear.strategy.DeployStrategyTaskDef;
 import bear.strategy.SymlinkEntry;

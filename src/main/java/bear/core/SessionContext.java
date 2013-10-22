@@ -18,6 +18,10 @@ package bear.core;
 
 import bear.cli.CommandLine;
 import bear.plugins.AbstractContext;
+import bear.plugins.sh.GenericUnixLocalEnvironmentPlugin;
+import bear.plugins.sh.GenericUnixRemoteEnvironmentPlugin;
+import bear.plugins.sh.SystemEnvironmentPlugin;
+import bear.plugins.sh.SystemSession;
 import bear.session.*;
 import bear.task.Task;
 import bear.task.TaskDef;
@@ -45,6 +49,7 @@ public class SessionContext extends AbstractContext{
     public final TaskRunner runner;
     public Bear bear;
     public Address address;
+    protected CompositeTaskRunContext taskRunContext;
 
     public class ExecutionContext{
         public final DateTime startedAt = new DateTime();
@@ -185,5 +190,13 @@ public class SessionContext extends AbstractContext{
 
     public String concat(Object... varsAndStrings) {
         return Variables.concat(this, varsAndStrings);
+    }
+
+    void setTaskRunContext(CompositeTaskRunContext taskRunContext) {
+        this.taskRunContext = taskRunContext;
+    }
+
+    public CompositeTaskRunContext getTaskRunContext() {
+        return taskRunContext;
     }
 }

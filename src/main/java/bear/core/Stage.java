@@ -19,7 +19,7 @@ package bear.core;
 import bear.console.CompositeConsoleArrival;
 import bear.session.Address;
 import bear.session.SshAddress;
-import bear.session.SystemSession;
+import bear.plugins.sh.SystemSession;
 import bear.task.TaskDef;
 import bear.task.TaskRunner;
 import com.google.common.base.Function;
@@ -32,7 +32,7 @@ import org.slf4j.LoggerFactory;
 import java.util.ArrayList;
 import java.util.List;
 
-import static bear.session.GenericUnixRemoteEnvironmentPlugin.newUnixRemote;
+import static bear.plugins.sh.GenericUnixRemoteEnvironmentPlugin.newUnixRemote;
 
 /**
  * @author Andrey Chaschev chaschev@gmail.com
@@ -89,7 +89,13 @@ public class Stage {
             }
         });
 
-        return new CompositeTaskRunContext(global, task, consoleArrival);
+        CompositeTaskRunContext taskRunContext = new CompositeTaskRunContext(global, task, consoleArrival);
+
+        for (SessionContext $ : $s) {
+            $.setTaskRunContext(taskRunContext);
+        }
+
+        return taskRunContext;
     }
 
     public Stage add(String address) {

@@ -14,12 +14,15 @@
  * limitations under the License.
  */
 
-package bear.session;
+package bear.plugins.sh;
 
 import bear.cli.CommandLine;
 import bear.console.AbstractConsoleCommand;
 import bear.console.ConsoleCallback;
 import bear.core.*;
+import bear.session.Address;
+import bear.session.Result;
+import bear.session.SshAddress;
 import bear.task.Task;
 import bear.vcs.CommandLineResult;
 import bear.vcs.RemoteCommandLine;

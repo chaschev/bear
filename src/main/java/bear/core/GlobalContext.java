@@ -19,10 +19,10 @@ package bear.core;
 import bear.plugins.AbstractContext;
 import bear.plugins.Plugin;
 import bear.plugins.Plugins;
-import bear.session.GenericUnixLocalEnvironmentPlugin;
-import bear.session.GenericUnixRemoteEnvironmentPlugin;
+import bear.plugins.sh.GenericUnixLocalEnvironmentPlugin;
+import bear.plugins.sh.GenericUnixRemoteEnvironmentPlugin;
 import bear.session.LocalAddress;
-import bear.session.SystemSession;
+import bear.plugins.sh.SystemSession;
 import bear.task.Task;
 import bear.task.TaskDef;
 import bear.task.TaskRunner;
@@ -126,10 +126,6 @@ public class GlobalContext extends AbstractContext{
 
     public Iterable<Plugin> getGlobalPlugins() {
         return Iterables.filter(plugins.pluginMap.values(), Predicates.notNull());
-    }
-
-    public Bear cap() {
-        return bear;
     }
 
     public static GlobalContext getInstance() {

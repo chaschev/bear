@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package bear.plugins.tomcat;
+package bear.plugins.maven;
 
 import bear.core.GlobalContext;
 import bear.core.SessionContext;

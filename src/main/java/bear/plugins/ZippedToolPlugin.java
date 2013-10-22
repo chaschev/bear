@@ -17,7 +17,7 @@
 package bear.plugins;
 
 import bear.core.SessionContext;
-import bear.session.SystemEnvironmentPlugin;
+import bear.plugins.sh.SystemEnvironmentPlugin;
 import bear.session.Variables;
 import bear.task.*;
 import bear.cli.Script;

@@ -18,7 +18,7 @@ package bear.cli;
 
 import bear.console.ConsoleCallback;
 import bear.session.Result;
-import bear.session.SystemSession;
+import bear.plugins.sh.SystemSession;
 import bear.vcs.CommandLineResult;
 import com.google.common.base.Function;
 

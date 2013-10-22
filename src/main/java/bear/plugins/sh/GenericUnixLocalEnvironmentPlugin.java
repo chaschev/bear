@@ -14,13 +14,15 @@
  * limitations under the License.
  */
 
-package bear.session;
+package bear.plugins.sh;
 
 import bear.cli.CommandLine;
 import bear.console.AbstractConsoleCommand;
 import bear.console.ConsoleCallback;
 import bear.core.GlobalContext;
 import bear.core.SessionContext;
+import bear.session.ProcessRunner;
+import bear.session.Result;
 import bear.task.Task;
 import bear.task.TaskDef;
 import bear.vcs.CommandLineResult;

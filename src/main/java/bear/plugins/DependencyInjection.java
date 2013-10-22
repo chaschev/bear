@@ -4,7 +4,7 @@ import bear.core.Bear;
 import bear.core.GlobalContext;
 import bear.core.SessionContext;
 import bear.session.DynamicVariable;
-import bear.session.SystemEnvironmentPlugin;
+import bear.plugins.sh.SystemEnvironmentPlugin;
 import bear.task.Tasks;
 import chaschev.lang.OpenBean;
 import com.google.common.base.Preconditions;

@@ -17,7 +17,7 @@
 package bear.task;
 
 import bear.core.SessionContext;
-import bear.session.GenericUnixRemoteEnvironmentPlugin;
+import bear.plugins.sh.GenericUnixRemoteEnvironmentPlugin;
 import bear.vcs.CommandLineResult;
 import bear.session.Result;
 import com.google.common.collect.Lists;

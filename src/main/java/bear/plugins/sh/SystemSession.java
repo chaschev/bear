@@ -1,4 +1,4 @@
-package bear.session;
+package bear.plugins.sh;
 
 import bear.cli.CommandLine;
 import bear.cli.Script;
@@ -7,6 +7,9 @@ import bear.console.AbstractConsoleCommand;
 import bear.console.ConsoleCallback;
 import bear.core.Role;
 import bear.core.SessionContext;
+import bear.session.Address;
+import bear.session.DynamicVariable;
+import bear.session.Result;
 import bear.task.BearException;
 import bear.task.Task;
 import bear.task.TaskResult;

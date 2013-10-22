@@ -49,11 +49,11 @@ public abstract class Plugin<TASK extends Task, TASK_DEF extends TaskDef<? exten
         this(global, null);
     }
 
-    public Plugin(GlobalContext global, TASK_DEF parent_stub_task) {
+    public Plugin(GlobalContext global, TASK_DEF taskDef) {
         this.global = global;
         this.bear = global.bear;
         name = getClass().getSimpleName();
-        taskDefMixin = parent_stub_task;
+        taskDefMixin = taskDef;
     }
 
     public Task<? extends TaskDef> newSession(SessionContext $, Task<TaskDef> parent){
@@ -61,7 +61,9 @@ public abstract class Plugin<TASK extends Task, TASK_DEF extends TaskDef<? exten
     }
 
     public void initPlugin() {
-
+        if(shell != null){
+            shell.init();
+        }
     }
 
     public abstract InstallationTaskDef<? extends InstallationTask> getInstall();
@@ -145,5 +147,9 @@ public abstract class Plugin<TASK extends Task, TASK_DEF extends TaskDef<? exten
 
     public PluginShellMode getShell() {
         return shell;
+    }
+
+    public GlobalContext getGlobal() {
+        return global;
     }
 }

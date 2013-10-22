@@ -18,7 +18,7 @@ package bear.cli;
 
 import bear.console.AbstractConsoleCommand;
 import bear.session.Result;
-import bear.session.SystemSession;
+import bear.plugins.sh.SystemSession;
 import bear.task.BearException;
 import bear.vcs.CommandLineResult;
 import bear.vcs.VcsCLIPlugin;

@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-package bear.session;
+package bear.plugins.sh;
 
 import bear.console.AbstractConsole;
 import bear.console.ConsoleCallback;
 import bear.core.GlobalContext;
 import bear.core.SessionContext;
 import bear.plugins.Plugin;
-import bear.plugins.PluginShellMode;
+import bear.session.Version;
 import bear.task.InstallationTask;
 import bear.task.InstallationTaskDef;
 import bear.task.Task;
@@ -52,7 +52,7 @@ public abstract class SystemEnvironmentPlugin extends Plugin<SystemSession, Syst
         super(global, new SystemSessionDef());
         taskDefMixin.setPlugin(this);
         this.name = name;
-        this.shell = new PluginShellMode.SshShellMode();
+        this.shell = new ShShellMode(this);
     }
 
     public static ConsoleCallback passwordCallback(final String password) {

@@ -23,6 +23,11 @@ import bear.core.GlobalContext;
 import java.io.File;
 
 /**
+ * A dynamic script to run.
+ *
+ * Stage/roles/hosts selection: a script is allowed to set these, however they can overridden from outside.
+ * Todo: freeze stage from the script.
+ *
  * @author Andrey Chaschev chaschev@gmail.com
  */
 public abstract class Script {

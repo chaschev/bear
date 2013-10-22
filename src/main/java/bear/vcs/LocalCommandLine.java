@@ -18,7 +18,7 @@ package bear.vcs;
 
 import bear.cli.CommandLine;
 import bear.cli.Script;
-import bear.session.SystemSession;
+import bear.plugins.sh.SystemSession;
 
 /**
  * @author Andrey Chaschev chaschev@gmail.com

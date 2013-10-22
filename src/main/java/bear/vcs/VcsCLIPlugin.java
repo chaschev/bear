@@ -22,7 +22,7 @@ import bear.core.SessionContext;
 import bear.core.GlobalContext;
 import bear.plugins.Plugin;
 import bear.session.DynamicVariable;
-import bear.session.SystemEnvironmentPlugin;
+import bear.plugins.sh.SystemEnvironmentPlugin;
 import bear.session.Variables;
 import bear.task.Task;
 import bear.task.TaskDef;

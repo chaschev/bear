@@ -23,6 +23,8 @@ import bear.core.SessionContext;
 import bear.core.GlobalContext;
 import bear.core.VarFun;
 import bear.plugins.AbstractContext;
+import bear.plugins.sh.SystemEnvironmentPlugin;
+import bear.plugins.sh.SystemSession;
 import bear.session.*;
 import bear.task.*;
 import bear.plugins.Plugin;

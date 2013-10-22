@@ -19,6 +19,7 @@ package bear.core;
 import bear.console.CompositeConsoleArrival;
 import bear.main.BearCommandLineConfigurator;
 import bear.plugins.Plugin;
+import bear.plugins.sh.SystemSession;
 import bear.session.*;
 import bear.task.*;
 import bear.task.exec.TaskExecutionContext;
@@ -131,6 +132,12 @@ public class CompositeTaskRunContext {
         }
 
         stats.fireExternalModification();
+    }
+
+    public boolean isLocalSession() {
+        List<SessionContext> $s = consoleArrival.getEntries();
+
+        return $s.size() == 1 && (!$s.get(0).getSys().isRemote());
     }
 
     public static class Stats{

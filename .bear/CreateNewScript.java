@@ -5,7 +5,7 @@ import bear.core.Stage;
 import bear.main.Script;
 import bear.session.Address;
 import bear.session.Question;
-import bear.session.SystemSession;
+import bear.plugins.sh.SystemSession;
 import bear.vcs.SvnCLIPlugin;
 import bear.vcs.VcsCLIPlugin;
 import com.google.common.base.Function;

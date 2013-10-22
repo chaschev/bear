@@ -4,8 +4,10 @@ import bear.console.CompositeConsoleArrival;
 import bear.core.*;
 import bear.plugins.CommandInterpreter;
 import bear.plugins.Plugin;
+import bear.plugins.groovy.GroovyShellMode;
+import bear.plugins.groovy.GroovyShellPlugin;
+import bear.plugins.sh.GenericUnixRemoteEnvironmentPlugin;
 import bear.session.DynamicVariable;
-import bear.session.GenericUnixRemoteEnvironmentPlugin;
 import bear.session.Question;
 import bear.task.Task;
 import bear.task.TaskDef;
@@ -193,6 +195,9 @@ public class BearCommandLineConfigurator {
 
         commandInterpreter = global.wire(new BearCommandInterpreter());
         commandInterpreter.switchToPlugin(GenericUnixRemoteEnvironmentPlugin.class);
+
+        ((GroovyShellMode)global.getPlugin(GroovyShellPlugin.class).getShell()).set$(this);
+
         return this;
     }
 
@@ -642,7 +647,7 @@ public class BearCommandLineConfigurator {
         private RunResponse runWithInterpreter(final String command, UIContext uiContext) throws Exception {
             logger.info("running with '{}'", currentInterpreter().toString());
 
-            RunResponse runResponse = runWithScript(new SingleTaskScript(new TaskDef() {
+            RunResponse runResponse = runWithScript(new SingleTaskScript(new TaskDef(command) {
                 @Override
                 public Task newSession(SessionContext $, Task parent) {
                     return currentInterpreter().interpret(command, $, parent, this);
