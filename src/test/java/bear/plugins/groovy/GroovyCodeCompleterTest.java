@@ -28,9 +28,14 @@ public class GroovyCodeCompleterTest {
         }
 
         private String stringField = "s";
-        private List arrayListField = new ArrayList();
+        private ArrayList arrayListField = new ArrayList();
 
         private Foo recursiveFoo = this;
+        private Foo foo = this;
+
+        public Foo foo(){
+            return recursiveFoo;
+        }
 
         public Foo recursiveFoo(){
             return recursiveFoo;
@@ -40,13 +45,17 @@ public class GroovyCodeCompleterTest {
             return stringField;
         }
 
-        public List getArrayList() {
+        public ArrayList getArrayList() {
             return arrayListField;
         }
     }
 
     @Test
     public void testCompleteCode() throws Exception {
+        expectMembers("foo.arrayListField.|", ArrayList.class);
+
+        expectNames("foo2.arrayListField.is|", "isEmpty", "listIterator", "listIterator", "subList");
+
         expectNames("fo|", "foo", "foo1", "foo2");
         expectNames("fo|o", "foo", "foo1", "foo2");
         expectNames("foo|", "foo", "foo1", "foo2");
@@ -54,6 +63,7 @@ public class GroovyCodeCompleterTest {
         expectNames("foo1|", "foo1");
         expectNames("foo2|", "foo2");
 
+        expectNames("foo.foo().arrayList|", "getArrayList");
         expectNames("foo2.arrayListField.is|", "isEmpty", "listIterator", "listIterator", "subList");
 
         expectMembers("foo2.|", Foo.class);
@@ -62,17 +72,27 @@ public class GroovyCodeCompleterTest {
         expectMembers("foo.recursiveFoo().recursiveFoo().|", Foo.class);
         expectMembers("foo.stringField().|", String.class);
         expectMembers("foo.arrayListField.|", ArrayList.class);
+        expectMembers("foo.foo().arrayListField.|", ArrayList.class);
+        expectMembers("foo.foo().arrayListField.|", ArrayList.class);
+        expectMembers("foo.foo().getArrayList().|", ArrayList.class);
     }
 
     @Test
     public void testTokenize() throws Exception {
-        checkTokenizing("foo2 ", newArrayList(f("foo2")));
+        checkTokenizing("foo2. ", newArrayList(f("foo2")));
 
         checkTokenizing("foo2", newArrayList(f("foo2")));
         checkTokenizing("foo2 ", newArrayList(f("foo2")));
         checkTokenizing(" foo2", newArrayList(f("foo2")));
         checkTokenizing(" foo2 ", newArrayList(f("foo2")));
         checkTokenizing("foo()", newArrayList(m("foo")));
+        checkTokenizing("foo2.", newArrayList(f("foo2")));
+        checkTokenizing(" foo2.", newArrayList(f("foo2")));
+        checkTokenizing("foo2. ", newArrayList(f("foo2")));
+        checkTokenizing(" foo2. ", newArrayList(f("foo2")));
+        checkTokenizing("foo2().", newArrayList(m("foo2")));
+        checkTokenizing(" foo2().", newArrayList(m("foo2")));
+        checkTokenizing("foo2(). ", newArrayList(m("foo2")));
         checkTokenizing("foo2.foo", newArrayList(f("foo2"), f("foo")));
         checkTokenizing("foo2. foo", newArrayList(f("foo2"), f("foo")));
         checkTokenizing("foo2 .foo", newArrayList(f("foo2"), f("foo")));
@@ -96,24 +116,30 @@ public class GroovyCodeCompleterTest {
     }
 
     private void expectMembers(String script, Class<?> aClass) {
-        assertThat(getNames(script)).containsAll(fieldNames(aClass));
-        assertThat(getNames(script)).containsAll(methodNames(aClass));
-    }
-
-    private List<String> getNames(String s) {
-        throw new UnsupportedOperationException("todo GroovyCodeCompleterTest.getNames");
+        List<String> names = getNames(script);
+        assertThat(names).containsAll(fieldNames(aClass));
+        assertThat(names).containsAll(methodNames(aClass));
     }
 
     private void expectNames(String script, String... names) {
+        List<String> nameList = getNames(script);
+        assertThat(nameList).contains(names);
+    }
+
+    private List<String> getNames(String script) {
+        Replacements replacements = getReplacements(script);
+
+        return projectField(replacements.replacements, Replacement.class, String.class, "name");
+    }
+
+    private static Replacements getReplacements(String script) {
         int caretAt = script.indexOf("|");
 
         script = script.replace("|", "");
 
         GroovyShell shell = sampleShell1();
 
-        Replacements replacements = new GroovyCodeCompleter(shell).completeCode(script, caretAt);
-
-        assertThat(projectField(replacements.replacements, Replacement.class, String.class, "name")).contains(names);
+        return new GroovyCodeCompleter(shell).completeCode(script, caretAt);
     }
 
     private static GroovyShell sampleShell1() {
@@ -128,7 +154,7 @@ public class GroovyCodeCompleterTest {
 
     @Test
     public void testScanForStart() throws Exception {
-        checkStart("^foo2.| x");
+        checkStart("^foo2.foo|('s1', 's2').");
 
         checkStart("^foo2()|.");
         checkStart("^foo2()|.");
@@ -139,6 +165,7 @@ public class GroovyCodeCompleterTest {
         checkStart("^foo2.|");
         checkStart("^foo2(xx()).|");
         checkStart("^foo2(xx(' ! ')).|");
+        checkStart("^foo2.foo|");
         checkStart("^foo2.recursiveFoo()|");
         checkStart("^foo2.recursiveFoo(xx())|");
         checkStart("^foo2.foo|('s1', 's2').");
@@ -152,10 +179,6 @@ public class GroovyCodeCompleterTest {
         int expectedStart = s.indexOf("^");
         int caretPos = s.indexOf("|");
 
-        if(caretPos == s.length() - 1){
-            caretPos--;
-        }
-
         if(expectedStart == s.length() - 1){
             expectedStart--;
         }
@@ -167,9 +190,6 @@ public class GroovyCodeCompleterTest {
         }
 
         String input = s.replace("^","").replace("|", "");
-
-//        if(caretPos == input.length()) caretPos--;
-//        if(expectedStart == input.length()) expectedStart--;
 
         Assertions.assertThat(GroovyCodeCompleter.scanForStart(input, caretPos, -1)[0]).isEqualTo(expectedStart);
 

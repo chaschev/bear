@@ -5,8 +5,8 @@ package bear.plugins.groovy;
 
 import chaschev.lang.OpenBean;
 import chaschev.lang.reflect.MethodDesc;
-import com.google.common.base.Function;
 import com.google.common.collect.Lists;
+import groovy.lang.Binding;
 import groovy.lang.GroovyShell;
 import org.apache.commons.lang3.StringUtils;
 import org.codehaus.groovy.antlr.SourceBuffer;
@@ -18,13 +18,30 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.*;
 
+import static chaschev.lang.OpenBean.getFieldValue;
 import static java.lang.Character.isWhitespace;
 
 /**
  * @author Andrey Chaschev chaschev@gmail.com
  */
 public class GroovyCodeCompleter {
+    Binding binding;
     GroovyShell shell;
+
+    static class Candidate implements Comparable<Candidate> {
+        Replacement r;
+        int score;
+
+        Candidate(Replacement r, int score) {
+            this.r = r;
+            this.score = score;
+        }
+
+        @Override
+        public int compareTo(Candidate o) {
+            return -Integer.compare(score, o.score);
+        }
+    }
 
     static class Token {
         String name;
@@ -88,21 +105,59 @@ public class GroovyCodeCompleter {
 
     public GroovyCodeCompleter(GroovyShell shell) {
         this.shell = shell;
+        this.binding = (Binding) getFieldValue(shell, "context");
+    }
+
+    public GroovyCodeCompleter(Binding binding, GroovyShell shell) {
+        this.binding = binding;
+        this.shell = shell;
     }
 
     public Replacements completeCode(String script, int position) {
         int[] range = scanForStart(script, position, -1);
 
         int start = range[0];
-        int end = range[1];
+        int end = range[1] + 1;
 
-        boolean endsWithDot = firstNonSpace(script, end, -1) == '.';
+        boolean endsWithDot = script.charAt(firstNonSpace(script, Math.min(end, script.length() - 1), -1)) == '.';
 
         List<Token> tokens = tokenize(script, start, end);
 
-        Class<?> firstTokenClass = shell.getVariable(tokens.get(0).name).getClass();
+        //fo| => size 1
+        //foo. => size 1
+        Class<?> firstTokenClass;
+        if (tokens.size() == 1 && !endsWithDot) {
+            firstTokenClass = null;
+            //match vars from binding, there should be a few
 
-        List<Class<?>> currentClasses = Lists.<Class<?>>newArrayList(firstTokenClass);
+
+            Set<Map.Entry<String, ?>> entries = binding.getVariables().entrySet();
+            List<Candidate> candidates = new ArrayList<Candidate>();
+
+            for (Map.Entry<String, ?> entry : entries) {
+                String varName = entry.getKey();
+
+                char[] chars = tokens.get(0).name.toCharArray();
+
+                int score = 0;
+
+                for (int i = 0; i < chars.length; i++) {
+                    score += frequency(varName, chars[i]) * i == 0 ? 3 : (i == 1 ? 2 : 1);
+                }
+
+                if (score > 0) {
+                    candidates.add(new Candidate(new Replacement(varName, entry.getValue().getClass().getSimpleName()), score));
+                }
+            }
+
+            Collections.sort(candidates);
+
+            return new Replacements(start, end).addAll(candidates);
+        } else {
+            firstTokenClass = shell.getVariable(tokens.get(0).name).getClass();
+        }
+
+        List<Class<?>> currentClasses = firstTokenClass == null ? new ArrayList<Class<?>>() : Lists.<Class<?>>newArrayList(firstTokenClass);
 
         for (int i = 1; i < tokens.size(); i++) {
             Token token = tokens.get(i);
@@ -134,8 +189,10 @@ public class GroovyCodeCompleter {
             }
 
 
-            if (currentClasses.size() > 1) {
+            if (returnTypes.size() > 1) {
                 currentClasses = Lists.newArrayList(new LinkedHashSet<Class<?>>(returnTypes));
+            }else{
+                currentClasses = returnTypes;
             }
         }
 
@@ -145,52 +202,42 @@ public class GroovyCodeCompleter {
             pattern = tokens.get(tokens.size() - 1).name.toLowerCase();
         }
 
-        Replacements replacements = new Replacements();
+        Replacements replacements = endsWithDot
+            ? new Replacements(position, position) :
+            new Replacements(tokens.get(tokens.size() - 1).start, position);
 
         if (endsWithDot) {
             for (Class<?> currentClass : currentClasses) {
                 for (Field field : OpenBean.fields(currentClass)) {
                     replacements.add(new Replacement(field));
                 }
+
                 for (MethodDesc method : OpenBean.methods(currentClass)) {
-                    replacements.add(new Replacement(method.getMethod()));
+                    replacements.add(new Replacement(method));
                 }
             }
         } else {
-            class Candidate implements Comparable<Candidate> {
-                Replacement r;
-                int score;
-
-                Candidate(Replacement r, int score) {
-                    this.r = r;
-                    this.score = score;
-                }
-
-                @Override
-                public int compareTo(Candidate o) {
-                    return -Integer.compare(score, o.score);
-                }
-            }
-
             final String patternLC = pattern.toLowerCase();
             Set<Field> usedFields = new HashSet<Field>();
             Set<Method> usedMethods = new HashSet<Method>();
 
             List<Candidate> candidates = new ArrayList<Candidate>();
 
-            int score = 10000;
-            for (Class<?> currentClass : currentClasses) {
-                for (Field field : OpenBean.fields(currentClass)) {
-                    if (field.getName().toLowerCase().startsWith(patternLC)) {
-                        usedFields.add(field);
-                        candidates.add(new Candidate(new Replacement(field), score--));
+            {
+                int score = 10000;
+                for (Class<?> currentClass : currentClasses) {
+                    for (Field field : OpenBean.fields(currentClass)) {
+                        if (field.getName().toLowerCase().startsWith(patternLC)) {
+                            usedFields.add(field);
+                            candidates.add(new Candidate(new Replacement(field), score--));
+                        }
                     }
-                }
 
-                for (MethodDesc method : OpenBean.methods(currentClass)) {
-                    if (method.getName().toLowerCase().startsWith(patternLC)) {
-                        usedMethods.add(method.getMethod());
-                        candidates.add(new Candidate(new Replacement(method.getMethod()), score--));
+                    for (MethodDesc method : OpenBean.methods(currentClass)) {
+                        if (method.getName().toLowerCase().startsWith(patternLC)) {
+                            usedMethods.add(method.getMethod());
+                            candidates.add(new Candidate(new Replacement(method), score--));
+                        }
                     }
                 }
             }
@@ -216,11 +263,12 @@ public class GroovyCodeCompleter {
 
                     int r = 0;
 
-                    for (int i = 0; i < chars.length; i++) {
-                        r += frequency(field.getName(), chars[i]);
+                    for (char aChar : chars) {
+                        r += frequency(field.getName(), aChar);
                     }
 
-                    candidates.add(new Candidate(new Replacement(field), r));
+                    if (r > 0)
+                        candidates.add(new Candidate(new Replacement(field), r));
 
                 }
 
@@ -229,22 +277,18 @@ public class GroovyCodeCompleter {
 
                     int r = 0;
 
-                    for (int i = 0; i < chars.length; i++) {
-                        r += frequency(method.getName(), chars[i]);
+                    for (char aChar : chars) {
+                        r += frequency(method.getName(), aChar);
                     }
 
-                    candidates.add(new Candidate(new Replacement(method.getMethod()), r));
+                    if (r > 0)
+                        candidates.add(new Candidate(new Replacement(method), r));
                 }
             }
 
             Collections.sort(candidates);
 
-            replacements.replacements.addAll(Lists.transform(candidates,
-                new Function<Candidate, Replacement>() {
-                public Replacement apply( Candidate input) {
-                    return input.r;
-                }
-            }));
+            replacements.addAll(candidates);
         }
 
 
@@ -326,17 +370,30 @@ public class GroovyCodeCompleter {
                 continue;
             }
 
-            boolean atEnd = pos == end - 1;
+            boolean atEnd = pos >= end - 1;
+            boolean isDot = ch == '.';
 
-            if (ch == '.' || atEnd) {
+            if (isDot || atEnd) {
                 if (currentToken.end == -1) {  //end is not -1 for a method
-                    currentToken.end = atEnd ? end : firstNonSpace(script, pos - 1, -1) + 1;
+                    if (atEnd) {
+                        if(isDot){
+                            currentToken.end = pos;
+                        }else{
+                            currentToken.end = end;
+                        }
+                    }
+                    else {
+                        currentToken.end = firstNonSpace(script, pos - 1, -1) + 1;
+                    }
+
                     currentToken.name = currentToken.text(script);
                 }
 
                 int nonSpace = firstNonSpace(script, pos + 1, 1);
 
                 pos = nonSpace;
+
+                atEnd = pos >= end - 1;
 
                 if (!atEnd) {
                     tokens.add(currentToken = new Token(nonSpace));
@@ -364,6 +421,8 @@ public class GroovyCodeCompleter {
      * Returning a range because rightBorder(+startPos+) can move left 1 char when placed at the space.
      * todo check if it replaces ok
      * See unit test to check how it works.
+     *
+     * @param startPos == script.length if at the end of the script.
      */
     static int[] scanForStart(String script, int startPos, final int inc) {
         int l = script.length();
@@ -375,7 +434,7 @@ public class GroovyCodeCompleter {
 
         int pos;
 
-        if (script.charAt(startPos) == ' ') startPos--;
+        startPos--; // ' ' or '(' are not our characters
 
         for (pos = startPos; pos >= 0 && pos < l; pos += inc) {
 
