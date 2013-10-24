@@ -7,20 +7,25 @@ top priority:
 - (ok) ui: scrollable
 - (ok) ui: console commands (split this task into sub-tasks, implement via doc)
 - (ok) ui: local shell tab
-- ui: groovy shell mode
-- ui: code completion for groovy plugin
+- (ok) ui: groovy shell mode
+- (ok) ui: code completion for groovy plugin
+- ui: think of localhost vs local
+- ui: embed code completion
 - ui: command summary to the local shell tab (divide into groups)
 - ui: save scripts, refresh scripts from disk, save-and-build-on-run
 - ui: stage/roles/hosts selection
 - ui: preload stages, hosts and roles
 - ui: download & install idea (core)
 - ui: generate pom (core) & open in idea (core)
+- ui: fix copy-paste
+
 - mongo plugin
 - ui: (1) order messages by timestamp (need to properly merge them on the client)
 - ui: (2) transform \n to <br>'s
 - ui: (3) color highlighting for unix terminals
-- ui: mysql shell mode
-- ui: mongo shell mode (core)
+- ui: (4) mysql shell mode
+- ui: (5) mongo shell mode (core)
+- ui: (6) style console messages
 - ui: command history in the chosen combo (500 last commands)
 - ui: logback messages (output to file, a window to view, monitor errors and display red exclamation mark when there are)
 - ui: scroll to the bottom of the scrollable area on the new text
@@ -28,6 +33,7 @@ top priority:
 - ui: auto-size shell panel
 
 - ui: add global root task somewhere, add global timer
+- ui: code completion for :set
 - ui: nicer button placement for scripts, use the space
 - reproduce and fix useless installations (timeout? stream is closed before it's fully read?)
 - (ok) DI for scripts and plugins

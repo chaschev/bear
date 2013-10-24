@@ -18,7 +18,7 @@
  * @author Andrey Chaschev chaschev@gmail.com
  */
 
-var app = angular.module('bear', ['ui.bootstrap']);
+var app = angular.module('bear', ['ui.bootstrap', 'ui.ace']);
 
 app.directive('chosen',function() {
     return {
@@ -484,12 +484,30 @@ var ConsoleTabsChildCtrl = function ($scope) {
         Java.log('sendCommand, terminal: ', $scope.terminal, 'scope:', $scope);
 
         var response = JSON.parse(window.bear.jsonCall('conf', 'interpret',
-                $scope.terminal.sendCommandText,
+                $scope.editor.getValue(),
                 JSON.stringify({
             scriptName:$scope.scripts.selectedFile,
             settingsName:$scope.settings.selectedFile})))
             ;
 
         Java.log('interpret response:', response);
+    };
+
+    $scope.aceLoaded = function(editor){
+        Java.log("loaded ace editor");
+
+        $scope.editor = editor;
+
+        var session = editor.getSession();
+
+        session.setMode("ace/mode/java");
+        session.setTabSize(2);
+
+        editor.setOptions({
+            enableBasicAutocompletion: true,
+            enableSnippets: true
+        });
+
+        editor.renderer.setShowGutter(false);
     };
 };

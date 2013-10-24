@@ -107,6 +107,15 @@ public class VariablesLayer extends HavingContext<Variables, AbstractContext> {
 //        return this;
 //    }
 
+    public VariablesLayer removeConst(Nameable key) {
+        return removeConst(key.name());
+    }
+
+    public VariablesLayer removeConst(String name) {
+        constants.remove(name);
+        return this;
+    }
+
     public VariablesLayer putConst(String name, Object value) {
         DynamicVariable variable = variables.get(name);
 
@@ -167,6 +176,15 @@ public class VariablesLayer extends HavingContext<Variables, AbstractContext> {
     public <T> T get(DynamicVariable<T> var, T _default) {
         final T result;
 
+        Object o = constants.get(var.name());
+
+        final Object tempResult = elvis(o, Void.class);
+
+        if(tempResult != Void.class){
+            return (T) tempResult;
+        }
+
+        //todo merge with get(String varName, T _default)
         DynamicVariable<T> r = variables.get(var.name());
 
         if (r == null && fallbackVariablesLayer != null) {

@@ -19,6 +19,7 @@ package bear.core;
 import bear.plugins.AbstractContext;
 import bear.plugins.Plugin;
 import bear.plugins.Plugins;
+import bear.plugins.groovy.GroovyShellPlugin;
 import bear.plugins.sh.GenericUnixLocalEnvironmentPlugin;
 import bear.plugins.sh.GenericUnixRemoteEnvironmentPlugin;
 import bear.session.LocalAddress;
@@ -71,6 +72,7 @@ public class GlobalContext extends AbstractContext{
     public final SystemSession local;
 
     public final SessionContext localCtx;
+    public final Stage localStage;
 
     public final Bear bear;
 
@@ -82,6 +84,7 @@ public class GlobalContext extends AbstractContext{
         logger.info("adding bootstrap plugins...");
         plugins.add(GenericUnixRemoteEnvironmentPlugin.class);
         plugins.add(GenericUnixLocalEnvironmentPlugin.class);
+        plugins.add(GroovyShellPlugin.class);
         plugins.build();
 
         bear = new Bear(this);
@@ -90,6 +93,7 @@ public class GlobalContext extends AbstractContext{
 
         localCtx = new SessionContext(this, new LocalAddress(), localRunner);
         local = new GenericUnixLocalEnvironmentPlugin(this).newSession(localCtx, null);
+        localStage = new Stage("localStage", this).add(new LocalAddress());
 
         tasks = new Tasks(this);
     }
@@ -137,8 +141,9 @@ public class GlobalContext extends AbstractContext{
     }
 
     public CompositeTaskRunContext prepareToRun() {
-        System.out.println("running on stage...");
-        return localCtx.var(bear.getStage).prepareToRun();
+        Stage stage = var(bear.getStage);
+        logger.info("running on stage {}...", stage.name);
+        return stage.prepareToRun();
     }
 
     public void addPlugin(Class<? extends Plugin> aClass) {

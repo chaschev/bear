@@ -1,14 +1,21 @@
 package bear.plugins;
 
+import bear.core.Bear;
+import bear.core.GlobalContext;
+import bear.core.Stage;
+
 /**
  * @author Andrey Chaschev chaschev@gmail.com
  */
-public abstract class PluginShellMode implements CommandInterpreter {
-    protected final Plugin plugin;
+public abstract class PluginShellMode<T extends Plugin> implements CommandInterpreter {
+    protected final T plugin;
     protected String commandName;
     protected String description;
 
-    protected PluginShellMode(Plugin plugin, String commandName) {
+    protected GlobalContext global;
+    protected Bear bear;
+
+    protected PluginShellMode(T plugin, String commandName) {
         this.plugin = plugin;
         this.commandName = commandName;
     }
@@ -22,10 +29,19 @@ public abstract class PluginShellMode implements CommandInterpreter {
         return commandName;
     }
 
+    @Override
+    public Stage getStage() {
+        return global.var(bear.getStage);
+    }
+
     /**
      * Called during the init phase of a plugin.
      */
     public void init(){
 
+    }
+
+    public T getPlugin() {
+        return plugin;
     }
 }

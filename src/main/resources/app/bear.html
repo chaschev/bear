@@ -13,6 +13,14 @@
     <script src="js/ui-bootstrap-tpls-0.6.0.js"></script>
     <script src="js/bootstrap.js"></script>
     <script src="js/chosen.jquery.js"></script>
+
+    <script src="js/ace/src-noconflict/ace.js" type="text/javascript" charset="utf-8"></script>
+    <script src="js/ace/src-noconflict/ext-language_tools.js"></script>
+    <script type="text/javascript">
+        ace.require("ace/ext/language_tools");
+    </script>
+    <script src="js/ace/ui-ace.js"></script>
+
     <script src="js/bear.js"></script>
     <script src="js/stacktrace.js"></script>
     <script src="js/java-bindings.js"></script>
@@ -26,12 +34,19 @@
 
     <script src='js/firebug-lite-compressed.js'></script>
 
+
+
     <link rel="stylesheet" href="css/bootstrap.min.css"/>
     <link rel="stylesheet" href="css/chosen.css"/>
     <link rel="stylesheet" href="css/chosen-bootstrap.css"/>
 
     <link href="http://netdna.bootstrapcdn.com/font-awesome/3.2.1/css/font-awesome.css" rel="stylesheet">
     <style>
+        .ace_editor {
+
+            height: 200px;
+        }
+
         .aceEditor {
             position: relative;
             height: 300px;
@@ -256,20 +271,30 @@
 
             function initAceEditor(editor)
             {
+
                 var session = editor.getSession();
 
                 session.setMode("ace/mode/java");
-                session.setUseWorker(false);
                 session.setTabSize(2);
+                session.setUseWorker(false);
+
+                editor.setOptions({
+                    enableBasicAutocompletion: true,
+                    enableSnippets: true
+                });
 
                 editor.renderer.setShowGutter(false);
             }
 
+
+
             var settingsTextEditor = ace.edit("settingsText");
             var scriptsEditor = ace.edit("scriptText");
+//            var localEditor = ace.edit("localEditor");
 
             initAceEditor(settingsTextEditor);
             initAceEditor(scriptsEditor);
+//            initAceEditor(localEditor);
 
             if(Java.isFX){
 //                settingsTextEditor.setValue(checkExc(window.bearFX.call('conf', 'getSettingsText')));
@@ -418,20 +443,23 @@
                                 </console-messages>
                                 <table style="width: 100%">
                                     <tr>
-                                        <td><textarea class="form-control current-console-command" id="{{terminal.host.name}}-input" ng-model="terminal.sendCommandText" rows="2"></textarea></td>
+                                        <td>
+                                            <!--<textarea class="form-control current-console-command" id="{{terminal.host.name}}-input" ng-model="terminal.sendCommandText" rows="2"></textarea>-->
+                                            <!--<div id="localEditor" class="aceEditor"></div>-->
+                                            <div ui-ace="{onLoad: aceLoaded}"></div>
+
+                                        </td>
                                         <td style="width: 5%">
                                             <button class="btn btn-success btn-sm" ng-click="sendCommand()">Send</button></td>
                                     </tr>
                                 </table>
                             </div>
+
                         </tab>
                     </tabset>
                 </div>
 
-                <script src="js/ace/ace.js" type="text/javascript" charset="utf-8"></script>
-                <script>
 
-                </script>
             </div>
             <div class="input-group input-group-sm">
                 <input type="text" class="form-control">

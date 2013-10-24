@@ -37,6 +37,7 @@ public class CompositeTaskRunContext {
     private final CompositeConsoleArrival<SessionContext> consoleArrival;
 
     public final DynamicVariable<Stats> stats;
+    public final DynamicVariable<AtomicInteger> arrivedCount = Variables.newVar(new AtomicInteger(0));
 
     public CompositeTaskRunContext(GlobalContext global, TaskDef task, CompositeConsoleArrival<SessionContext> consoleArrival) {
         this.global = global;
@@ -59,6 +60,9 @@ public class CompositeTaskRunContext {
 
         stats.getDefaultValue().addArrival(isOk);
         stats.fireExternalModification();
+
+        arrivedCount.getDefaultValue().incrementAndGet();
+        arrivedCount.fireExternalModification();
     }
 
     public void submitTasks() {
@@ -176,5 +180,9 @@ public class CompositeTaskRunContext {
 
     public TaskDef getTask() {
         return task;
+    }
+
+    public int size(){
+        return consoleArrival.getEntries().size();
     }
 }

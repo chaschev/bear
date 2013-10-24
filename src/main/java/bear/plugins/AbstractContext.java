@@ -198,4 +198,29 @@ public abstract class AbstractContext {
     public <T> DynamicVariable<T> getVariable(String key) {
         return layer.getVariable(key);
     }
+
+    public AbstractContext putConst(Nameable key, Object value) {
+        layer.putConst(key, value);
+        return this;
+    }
+
+    public AbstractContext putConst(String name, Object value) {
+        layer.putConst(name, value);
+        return this;
+    }
+
+    public AbstractContext putConstObj(Object key, Object value) {
+        layer.putConstObj(key, value);
+        return this;
+    }
+
+    public AbstractContext removeConst(Nameable key) {
+        layer.removeConst(key);
+        return this;
+    }
+
+    public AbstractContext removeConst(String name) {
+        layer.removeConst(name);
+        return this;
+    }
 }

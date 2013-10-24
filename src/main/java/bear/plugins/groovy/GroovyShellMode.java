@@ -2,9 +2,9 @@ package bear.plugins.groovy;
 
 import bear.core.GlobalContext;
 import bear.core.SessionContext;
+import bear.core.Stage;
 import bear.main.BearCommandLineConfigurator;
 import bear.plugins.CommandInterpreter;
-import bear.plugins.Plugin;
 import bear.plugins.PluginShellMode;
 import bear.session.Result;
 import bear.task.Task;
@@ -23,11 +23,11 @@ import groovy.lang.GroovyShell;
  *
  * @author Andrey Chaschev chaschev@gmail.com
  */
-public class GroovyShellMode extends PluginShellMode implements CommandInterpreter {
+public class GroovyShellMode extends PluginShellMode<GroovyShellPlugin> implements CommandInterpreter {
     private final Binding binding;
     private final GroovyShell shell;
 
-    public GroovyShellMode(Plugin plugin) {
+    public GroovyShellMode(GroovyShellPlugin plugin) {
         super(plugin, "groovy");
 
         binding = new Binding();
@@ -35,7 +35,6 @@ public class GroovyShellMode extends PluginShellMode implements CommandInterpret
     }
 
     public static class GroovyResult extends TaskResult{
-
         private final Exception e;
         private final Object object;
 
@@ -57,15 +56,12 @@ public class GroovyShellMode extends PluginShellMode implements CommandInterpret
             @Override
             protected TaskResult exec(TaskRunner runner) {
                 //local command
-                boolean isLocal = $.getTaskRunContext().isLocalSession();
-
-                //distributed command
+                boolean isLocal = !$(plugin.sendToHosts);
 
                 Binding $binding;
 
                 if (isLocal) {
                     $binding = binding;
-
                 } else {
                     $binding = new Binding();
                     $binding.setVariable("$", $);
@@ -76,13 +72,6 @@ public class GroovyShellMode extends PluginShellMode implements CommandInterpret
                     $binding.setVariable("task", this);
                     $binding.setVariable("_command", command);
                 }
-
-
-
-                if(isLocal){
-
-                }
-
 
                 GroovyShell $shell = isLocal ? shell : new GroovyShell($binding);
 
@@ -98,10 +87,16 @@ public class GroovyShellMode extends PluginShellMode implements CommandInterpret
     }
 
     @Override
+    public Stage getStage() {
+        return global.var(plugin.sendToHosts) ? super.getStage() : global.localStage;
+    }
+
+    @Override
     public void init() {
         GlobalContext global = plugin.getGlobal();
-
+        //"$" if for conf, injected inside BearCommandLineConfigurator
         binding.setVariable("bear", plugin.bear);
+        binding.setVariable("global", global);
         binding.setVariable("global", global);
         binding.setVariable("local", global.local);
         binding.setVariable("tasks", global.tasks);
@@ -109,16 +104,19 @@ public class GroovyShellMode extends PluginShellMode implements CommandInterpret
 //        binding.setVariable();
     }
 
-    public Binding getBinding() {
+    public Binding getLocalBinding() {
         return binding;
     }
 
     public void set$(BearCommandLineConfigurator configurator) {
-        binding.setVariable("$", configurator);
+        binding.setVariable("_", configurator);
     }
 
 
     public void completeCode(String script, int position){
 
     }
+
+
+
 }

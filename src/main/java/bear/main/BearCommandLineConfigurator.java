@@ -4,7 +4,6 @@ import bear.console.CompositeConsoleArrival;
 import bear.core.*;
 import bear.plugins.CommandInterpreter;
 import bear.plugins.Plugin;
-import bear.plugins.groovy.GroovyShellMode;
 import bear.plugins.groovy.GroovyShellPlugin;
 import bear.plugins.sh.GenericUnixRemoteEnvironmentPlugin;
 import bear.session.DynamicVariable;
@@ -23,6 +22,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
+import groovy.lang.GroovyShell;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
@@ -48,6 +48,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static bear.main.BearMain.Options.*;
 import static chaschev.lang.LangUtils.elvis;
@@ -196,7 +197,7 @@ public class BearCommandLineConfigurator {
         commandInterpreter = global.wire(new BearCommandInterpreter());
         commandInterpreter.switchToPlugin(GenericUnixRemoteEnvironmentPlugin.class);
 
-        ((GroovyShellMode)global.getPlugin(GroovyShellPlugin.class).getShell()).set$(this);
+        global.getPlugin(GroovyShellPlugin.class).getShell().set$(this);
 
         return this;
     }
@@ -472,6 +473,8 @@ public class BearCommandLineConfigurator {
     }
 
     public static class RunResponse extends Response{
+        CompositeTaskRunContext runContext;
+
         public static class Host{
             public String name;
             public String address;
@@ -483,7 +486,8 @@ public class BearCommandLineConfigurator {
         }
         public List<Host> hosts;
 
-        public RunResponse(List<Host> hosts) {
+        public RunResponse(CompositeTaskRunContext runContext, List<Host> hosts) {
+            this.runContext = runContext;
             this.hosts = hosts;
         }
     }
@@ -563,7 +567,7 @@ public class BearCommandLineConfigurator {
 
         context.submitTasks();
 
-        return new RunResponse(Lists.transform(context.getConsoleArrival().getEntries(), new Function<SessionContext, RunResponse.Host>() {
+        return new RunResponse(context, Lists.transform(context.getConsoleArrival().getEntries(), new Function<SessionContext, RunResponse.Host>() {
             public RunResponse.Host apply(SessionContext $) {
                 return new RunResponse.Host($.sys.getName(), $.sys.getAddress());
             }
@@ -601,7 +605,7 @@ public class BearCommandLineConfigurator {
          *
          * @param command
          */
-        public RunResponse interpret(String command, String uiContextS) throws Exception {
+        public Response interpret(String command, String uiContextS) throws Exception {
             logger.info("interpreting command: {}, params: {}", command, uiContextS);
 
             UIContext uiContext = mapper.fromJSON(uiContextS, UIContext.class);
@@ -635,7 +639,26 @@ public class BearCommandLineConfigurator {
                         }
 
                         switchToPlugin(matchingClasses.get(0));
+                    }else{
+                        bearFX.sendMessageToUI(new TextConsoleEventToUI("local", "command not supported: <i> " + secondWord + "</i><br>"));
+                        return new MessageResponse("command not supported: " + secondWord);
                     }
+                } else
+                if("set".equals(firstWord)){
+                    command = substringAfter(command, " ").trim();
+
+                    String varName = substringBefore(command, "=");
+                    String expression = substringAfter(command, "=");
+
+                    GroovyShell shell = new GroovyShell(global.getPlugin(GroovyShellPlugin.class).getShell().getLocalBinding());
+
+                    logger.info("evaluating: '{}'...", expression);
+
+                    Object o = shell.evaluate(expression);
+
+                    global.putConst(varName, o);
+
+                    return new MessageResponse(String.format("assigned '%s' to '%s'", varName, o));
                 }
 
                 return null;
@@ -645,14 +668,26 @@ public class BearCommandLineConfigurator {
         }
 
         private RunResponse runWithInterpreter(final String command, UIContext uiContext) throws Exception {
-            logger.info("running with '{}'", currentInterpreter().toString());
+            logger.info("running with interpreter: '{}'", currentInterpreter().toString());
 
-            RunResponse runResponse = runWithScript(new SingleTaskScript(new TaskDef(command) {
+            global.putConst(bear.getStage, currentInterpreter().getStage());
+
+            final RunResponse runResponse = runWithScript(new SingleTaskScript(new TaskDef(command) {
                 @Override
                 public Task newSession(SessionContext $, Task parent) {
                     return currentInterpreter().interpret(command, $, parent, this);
                 }
             }), uiContext.settingsName);
+
+            runResponse.runContext.arrivedCount.addListener(new DynamicVariable.ChangeListener<AtomicInteger>() {
+                @Override
+                public void changedValue(DynamicVariable<AtomicInteger> var, AtomicInteger oldValue, AtomicInteger newValue) {
+                    logger.debug("removing stage from global scope");
+                    if(newValue.get() == runResponse.runContext.size()){
+                        global.removeConst(bear.getStage);
+                    }
+                }
+            });
 
             bearFX.sendMessageToUI(new RMIEventToUI("terminals", "onScriptStart", runResponse.hosts));
 
@@ -684,7 +719,7 @@ public class BearCommandLineConfigurator {
         }
     }
 
-    public RunResponse interpret(String command, String uiContextS) throws Exception {
+    public Response interpret(String command, String uiContextS) throws Exception {
         return commandInterpreter.interpret(command, uiContextS);
     }
 }

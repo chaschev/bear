@@ -244,8 +244,8 @@ public class Bear {
     });
 
     public final DynamicVariable<Stages> stages = new DynamicVariable<Stages>("List of stages. Stage is collection of servers with roles and auth defined for each of the server.");
-    public final DynamicVariable<Stage> getStage = dynamic(new VarFun<Stage, SessionContext>() {
-        public Stage apply(SessionContext $) {
+    public final DynamicVariable<Stage> getStage = dynamic(new VarFun<Stage, GlobalContext>() {
+        public Stage apply(GlobalContext $) {
             final String stageName = $.var(Bear.this.stage);
             final Optional<Stage> optional = Iterables.tryFind($.var(stages).stages, new Predicate<Stage>() {
                 public boolean apply(Stage s) {
