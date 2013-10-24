@@ -31,6 +31,7 @@ top priority:
 - ui: scroll to the bottom of the scrollable area on the new text
 - ui: adapt this theme: https://github.com/onokumus/Bootstrap-Admin-Template
 - ui: auto-size shell panel
+- ui: help like with (search for 'ace/ext/keybinding_menu' in project)
 
 - ui: add global root task somewhere, add global timer
 - ui: code completion for :set

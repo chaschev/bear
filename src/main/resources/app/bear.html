@@ -304,11 +304,28 @@
             }
         };
 
-        $(document).ready(function(){
+        /*$(document).ready(function(){
             if(!Java.isFX){
                 Java.initApp();
             }
-        });
+
+            var ctrlDown = false;
+            var ctrlKey = 17, vKey = 86, cKey = 67;
+
+            $(document).keydown(function(e)
+            {
+                if (e.keyCode == ctrlKey) ctrlDown = true;
+
+            }).keyup(function(e)
+                    {
+                        if (e.keyCode == ctrlKey) ctrlDown = false;
+                    });
+
+            $(".no-copy-paste").keydown(function(e)
+            {
+                if (ctrlDown && (e.keyCode == vKey || e.keyCode == cKey)) return false;
+            });
+        });*/
     </script>
 </head>
 <body class="design" ng-app="bear" ng-controller="BearCtrl" id="BearCtrl">

@@ -23,6 +23,8 @@ import com.google.common.base.Predicate;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import groovy.lang.GroovyShell;
+import javafx.scene.input.Clipboard;
+import javafx.scene.input.DataFormat;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
@@ -44,10 +46,7 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Properties;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static bear.main.BearMain.Options.*;
@@ -721,5 +720,15 @@ public class BearCommandLineConfigurator {
 
     public Response interpret(String command, String uiContextS) throws Exception {
         return commandInterpreter.interpret(command, uiContextS);
+    }
+
+    public String pasteFromClipboard(){
+        return Clipboard.getSystemClipboard().getString();
+    }
+
+    public void copyToClipboard(String text){
+        HashMap<DataFormat, Object> map = new HashMap<DataFormat, Object>();
+        map.put(DataFormat.PLAIN_TEXT, text);
+        Clipboard.getSystemClipboard().setContent(map);
     }
 }

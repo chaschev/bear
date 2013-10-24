@@ -27,10 +27,12 @@ import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.concurrent.Worker;
 import javafx.event.EventHandler;
+import javafx.geometry.Rectangle2D;
 import javafx.scene.Scene;
 import javafx.scene.web.WebEngine;
 import javafx.scene.web.WebEvent;
 import javafx.scene.web.WebView;
+import javafx.stage.Screen;
 import javafx.stage.Stage;
 import netscape.javascript.JSObject;
 import org.slf4j.Logger;
@@ -130,8 +132,17 @@ public class BearFX {
                 Scene scene = new Scene(webView);
 
                 stage.setScene(scene);
-                stage.setWidth(1200);
-                stage.setHeight(600);
+//                stage.setFullScreen(true);
+
+                Screen screen = Screen.getPrimary();
+                Rectangle2D bounds = screen.getVisualBounds();
+
+                stage.setX(bounds.getMinX());
+                stage.setY(bounds.getMinY());
+                stage.setWidth(bounds.getWidth());
+                stage.setHeight(bounds.getHeight());
+//                stage.setWidth(1200);
+//                stage.setHeight(600);
                 stage.show();
 
                 webEngine.load(BearFX.class.getResource("/app/bear.html").toString());

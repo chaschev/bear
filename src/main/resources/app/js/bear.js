@@ -509,5 +509,41 @@ var ConsoleTabsChildCtrl = function ($scope) {
         });
 
         editor.renderer.setShowGutter(false);
+
+        editor.commands.addCommand({
+            name: "showKeyboardShortcuts",
+            bindKey: {win: "Ctrl-Alt-h", mac: "Command-Alt-h"},
+            exec: function(editor) {
+                ace.config.loadModule("ace/ext/keybinding_menu", function(module) {
+                    module.init(editor);
+                    editor.showKeyboardShortcuts()
+                })
+            }
+        });
+
+        editor.commands.addCommand({
+            name: "showKeyboardShortcuts",
+            bindKey: {win: "Ctrl-Enter", mac: "Command-Enter"},
+            exec: function(editor) {
+                $scope.sendCommand();
+            }
+        });
+
+        editor.commands.addCommand({
+            name: "copyShortcut",
+            bindKey: {win: "Ctrl-C", mac: "Command-C"},
+            exec: function(editor) {
+                window.bear.call('conf', 'copyToClipboard', editor.getCopyText());
+            }
+        });
+
+        editor.commands.addCommand({
+            name: "pasteShortcut",
+            bindKey: {win: "Ctrl-V", mac: "Command-V"},
+            exec: function(editor) {
+                var r = window.bear.call('conf', 'pasteFromClipboard');
+                editor.insert(r);
+            }
+        });
     };
 };
