@@ -3,6 +3,7 @@ package bear.plugins;
 import bear.core.Bear;
 import bear.core.GlobalContext;
 import bear.core.Stage;
+import bear.plugins.groovy.Replacements;
 
 /**
  * @author Andrey Chaschev chaschev@gmail.com
@@ -43,5 +44,10 @@ public abstract class PluginShellMode<T extends Plugin> implements CommandInterp
 
     public T getPlugin() {
         return plugin;
+    }
+
+    @Override
+    public Replacements completeCode(String script, int position) {
+        return Replacements.EMPTY;
     }
 }

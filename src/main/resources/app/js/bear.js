@@ -57,7 +57,8 @@ app.directive("consoleMessages", function ($compile) {
             try {
             Java.log("my el:" , $el, "my terminal is: ", $scope.terminal, " and scope is: ", $scope);
 
-            $scope.terminal = $scope.$parent.terminal;
+            $scope = $scope.$parent;
+//            $scope.terminal = $scope.$parent.terminal;
 
             Java.log('terminal: ', $scope.terminal.host.name,'messages element: ', $el);
             var $messages = $el;
@@ -256,8 +257,8 @@ function BearCtrl($scope){
     $scope.terminals = new Terminals();
 
     $scope.terminals.updateHosts([{
-        name: 'local',
-        address: 'local'
+        name: 'shell',
+        address: 'shell'
     }]);
 
     $scope.$watch('lastBuildTime', function(){
@@ -526,6 +527,8 @@ var ConsoleTabsChildCtrl = function ($scope) {
             bindKey: {win: "Ctrl-Enter", mac: "Command-Enter"},
             exec: function(editor) {
                 $scope.sendCommand();
+                $scope.addCommand(editor.getValue(''));
+                editor.setValue('');
             }
         });
 
@@ -543,6 +546,66 @@ var ConsoleTabsChildCtrl = function ($scope) {
             exec: function(editor) {
                 var r = window.bear.call('conf', 'pasteFromClipboard');
                 editor.insert(r);
+            }
+        });
+
+        function posToOffset(pos){
+            var prevRow = pos.row - 1;
+            var r = 0;
+
+            for(var i = 0;i < prevRow;i++){
+                r += session.getLine(i).length;
+            }
+
+            r += pos.column;
+
+            return r;
+        }
+
+        function offsetToPos(offset){
+            var prevRow = pos.row - 1;
+            var linesCount = session.getLength();
+            var r = 0;
+            var row = 0;
+
+            for(;row < linesCount;row++){
+                var lineLength = session.getLine(row).length;
+
+                if(r + lineLength >= offset){
+                    break;
+                }
+
+                r += lineLength;
+            }
+
+            return {row: row, column: offset - r};
+        }
+
+        editor.completers.unshift({
+            getCompletions: function(editor, session, pos, prefix, callback) {
+                var state = editor.session.getState(pos.row);
+
+                Java.log(
+                    "state: ", state,
+                    "pos: ", pos,
+                    "prefix: ", prefix
+                );
+
+//                var completions = [
+//                    {
+//                        caption: "test",
+//                        meta:"ArrayList",
+//                        snippet:"substitution"
+//                    }
+//                ];
+
+                var caretPos = posToOffset(pos);
+
+                var completions = JSON.parse(window.bear.call('conf', 'completeCode', editor.getValue(), caretPos));
+
+                Java.log("got completions: ", completions);
+
+                callback(null, completions);
             }
         });
     };

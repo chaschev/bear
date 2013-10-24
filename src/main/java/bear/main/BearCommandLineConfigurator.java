@@ -5,6 +5,8 @@ import bear.core.*;
 import bear.plugins.CommandInterpreter;
 import bear.plugins.Plugin;
 import bear.plugins.groovy.GroovyShellPlugin;
+import bear.plugins.groovy.Replacement;
+import bear.plugins.groovy.Replacements;
 import bear.plugins.sh.GenericUnixRemoteEnvironmentPlugin;
 import bear.session.DynamicVariable;
 import bear.session.Question;
@@ -13,13 +15,14 @@ import bear.task.TaskDef;
 import bear.task.exec.CommandExecutionEntry;
 import bear.task.exec.TaskExecutionContext;
 import chaschev.json.JacksonMapper;
-import chaschev.json.Mapper;
 import chaschev.lang.Lists2;
 import chaschev.util.Exceptions;
+import com.fasterxml.jackson.core.JsonGenerator;
 import com.google.common.base.Function;
 import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
+import com.google.common.collect.Collections2;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import groovy.lang.GroovyShell;
@@ -39,10 +42,7 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.tools.JavaCompiler;
 import javax.tools.ToolProvider;
-import java.io.File;
-import java.io.FileFilter;
-import java.io.FileOutputStream;
-import java.io.IOException;
+import java.io.*;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
@@ -51,8 +51,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import static bear.main.BearMain.Options.*;
 import static chaschev.lang.LangUtils.elvis;
-import static com.google.common.collect.Lists.newArrayListWithExpectedSize;
-import static com.google.common.collect.Lists.transform;
+import static com.google.common.collect.Lists.*;
 import static org.apache.commons.io.FilenameUtils.getBaseName;
 import static org.apache.commons.lang3.StringUtils.substringAfter;
 import static org.apache.commons.lang3.StringUtils.substringBefore;
@@ -335,7 +334,7 @@ public class BearCommandLineConfigurator {
             }
 
             Collections.addAll(params, "-d", buildDir.getAbsolutePath());
-            final List<File> filesList = Lists.newArrayList(files);
+            final List<File> filesList = newArrayList(files);
 
             final List<String> filePaths = Lists.transform(filesList, new Function<File, String>() {
                 public String apply(File input) {
@@ -465,16 +464,16 @@ public class BearCommandLineConfigurator {
         return (String[]) Lists2.projectMethod(classes, "getName").toArray(new String[classes.size()]);
     }
 
-    public static abstract class Response{
-        public String getClazz(){
+    public static abstract class Response {
+        public String getClazz() {
             return getClass().getSimpleName();
         }
     }
 
-    public static class RunResponse extends Response{
+    public static class RunResponse extends Response {
         CompositeTaskRunContext runContext;
 
-        public static class Host{
+        public static class Host {
             public String name;
             public String address;
 
@@ -483,6 +482,7 @@ public class BearCommandLineConfigurator {
                 this.address = address;
             }
         }
+
         public List<Host> hosts;
 
         public RunResponse(CompositeTaskRunContext runContext, List<Host> hosts) {
@@ -491,7 +491,7 @@ public class BearCommandLineConfigurator {
         }
     }
 
-    public static class MessageResponse extends Response{
+    public static class MessageResponse extends Response {
         public String message;
 
         public MessageResponse(String message) {
@@ -550,7 +550,7 @@ public class BearCommandLineConfigurator {
             execContext.rootExecutionContext.addListener(new DynamicVariable.ChangeListener<TaskExecutionContext>() {
                 @Override
                 public void changedValue(DynamicVariable<TaskExecutionContext> var, TaskExecutionContext oldValue, TaskExecutionContext newValue) {
-                    if(newValue.taskResult != null){
+                    if (newValue.taskResult != null) {
                         bearFX.bearFXApp.sendMessageToUI(new RootTaskFinishedEventToUI(newValue.taskResult, newValue.getDuration(), $.getName()));
                     }
                 }
@@ -578,23 +578,22 @@ public class BearCommandLineConfigurator {
         public String scriptName;
     }
 
-    public class BearCommandInterpreter{
+    public class BearCommandInterpreter {
         GlobalContext global;
         Bear bear;
-        String currentPrompt;
 
         Plugin currentShellPlugin;
+        private List<Class<? extends Plugin>> pluginList;
 
         public BearCommandInterpreter() {
 
         }
 
-        public CommandInterpreter currentInterpreter(){
+        public CommandInterpreter currentInterpreter() {
             return currentShellPlugin.getShell();
         }
 
-        final Mapper mapper = new JacksonMapper();
-
+        final JacksonMapper mapper = new JacksonMapper();
 
 
         /**
@@ -609,41 +608,40 @@ public class BearCommandLineConfigurator {
 
             UIContext uiContext = mapper.fromJSON(uiContextS, UIContext.class);
 
-            if(command.startsWith(":")){
+            if (command.startsWith(":")) {
                 String firstWord = StringUtils.substringBetween(command, ":", " ");
 
-                if("use".equals(firstWord)){
+                if ("use".equals(firstWord)) {
                     command = substringAfter(command, " ").trim();
                     String secondWord = substringBefore(command, " ");
 
-                    if("shell".equals(secondWord)){
+                    if ("shell".equals(secondWord)) {
                         command = substringAfter(command, " ").trim();
 
                         final String pluginName = command;
 
-                        ArrayList<Class<? extends Plugin>> matchingClasses = Lists.newArrayList(Iterables.filter(new Reflections("bear.plugin")
-                            .getSubTypesOf(Plugin.class), new Predicate<Class<? extends Plugin>>() {
-                            @Override
-                            public boolean apply(Class<? extends Plugin> input) {
-                                return input.getSimpleName().toLowerCase().contains(pluginName);
-                            }
-                        }));
+                        List<Class<? extends Plugin>> matchingClasses = newArrayList(Collections2.filter(getPlugins(pluginName),
+                            new Predicate<Class<? extends Plugin>>() {
+                                @Override
+                                public boolean apply(Class<? extends Plugin> input) {
+                                    return input.getSimpleName().toLowerCase().contains(pluginName);
+                                }
+                            }));
 
-                        if(matchingClasses.isEmpty()){
+                        if (matchingClasses.isEmpty()) {
                             throw new RuntimeException("no plugins found for '" + pluginName + "'");
                         }
 
-                        if(matchingClasses.size() > 1){
+                        if (matchingClasses.size() > 1) {
                             throw new RuntimeException("1+ plugins found for '" + pluginName + "': " + pluginName);
                         }
 
                         switchToPlugin(matchingClasses.get(0));
-                    }else{
-                        bearFX.sendMessageToUI(new TextConsoleEventToUI("local", "command not supported: <i> " + secondWord + "</i><br>"));
+                    } else {
+                        bearFX.sendMessageToUI(new TextConsoleEventToUI("shell", "command not supported: <i> " + secondWord + "</i><br>"));
                         return new MessageResponse("command not supported: " + secondWord);
                     }
-                } else
-                if("set".equals(firstWord)){
+                } else if ("set".equals(firstWord)) {
                     command = substringAfter(command, " ").trim();
 
                     String varName = substringBefore(command, "=");
@@ -666,6 +664,15 @@ public class BearCommandLineConfigurator {
             return runWithInterpreter(command, uiContext);
         }
 
+        private List<Class<? extends Plugin>> getPlugins(final String pluginName) {
+            if(pluginList == null){
+                pluginList = new ArrayList<Class<? extends Plugin>>(new Reflections("bear.plugin")
+                    .getSubTypesOf(Plugin.class));
+            }
+
+            return pluginList;
+        }
+
         private RunResponse runWithInterpreter(final String command, UIContext uiContext) throws Exception {
             logger.info("running with interpreter: '{}'", currentInterpreter().toString());
 
@@ -682,7 +689,7 @@ public class BearCommandLineConfigurator {
                 @Override
                 public void changedValue(DynamicVariable<AtomicInteger> var, AtomicInteger oldValue, AtomicInteger newValue) {
                     logger.debug("removing stage from global scope");
-                    if(newValue.get() == runResponse.runContext.size()){
+                    if (newValue.get() == runResponse.runContext.size()) {
                         global.removeConst(bear.getStage);
                     }
                 }
@@ -701,13 +708,40 @@ public class BearCommandLineConfigurator {
 
             SwitchResponse response = new SwitchResponse(currentShellPlugin.name, currentShellPlugin.getShell().getCommandName() + "$");
 
-            bearFX.sendMessageToUI(new CommandConsoleEventToUI("local", response.message));
+            bearFX.sendMessageToUI(new TextConsoleEventToUI("shell", response.message));
 
             return response;
         }
+
+        public String completeCode(String script, int caretPos) {
+            try {
+                Replacements replacements = currentInterpreter().completeCode(script, caretPos);
+
+                StringWriter writer = new StringWriter(1024);
+                JsonGenerator g = mapper.getMapper().getFactory().createGenerator(writer);
+
+                g.writeStartArray();
+
+                for (Replacement replacement : replacements.getReplacements()) {
+                    g.writeStartObject();
+                    g.writeStringField("caption", replacement.name);
+                    g.writeStringField("meta", replacement.type);
+                    g.writeStringField("snippet", replacement.snippet);
+                    g.writeEndObject();
+                }
+
+                g.writeEndArray();
+
+                g.close();
+
+                return writer.toString();
+            } catch (IOException e) {
+                throw Exceptions.runtime(e);
+            }
+        }
     }
 
-    public static class SwitchResponse extends MessageResponse{
+    public static class SwitchResponse extends MessageResponse {
         public final String pluginName;
         public final String prompt;
 
@@ -722,13 +756,21 @@ public class BearCommandLineConfigurator {
         return commandInterpreter.interpret(command, uiContextS);
     }
 
-    public String pasteFromClipboard(){
+    public String pasteFromClipboard() {
         return Clipboard.getSystemClipboard().getString();
     }
 
-    public void copyToClipboard(String text){
+    public void copyToClipboard(String text) {
         HashMap<DataFormat, Object> map = new HashMap<DataFormat, Object>();
         map.put(DataFormat.PLAIN_TEXT, text);
         Clipboard.getSystemClipboard().setContent(map);
+    }
+
+    public String completeCode(String script, int caretPos){
+        return commandInterpreter.completeCode(script, caretPos);
+    }
+
+    public void evaluateInFX(Runnable runnable){
+        bearFX.bearFXApp.runLater(runnable);
     }
 }

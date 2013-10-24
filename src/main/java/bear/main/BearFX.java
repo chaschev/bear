@@ -106,6 +106,10 @@ public class BearFX {
             });
         }
 
+        public void runLater(Runnable runnable){
+            Platform.runLater(runnable);
+        }
+
         @Override
         public void start(Stage stage) throws Exception {
             try {

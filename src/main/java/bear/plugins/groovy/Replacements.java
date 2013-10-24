@@ -9,7 +9,9 @@ import java.util.List;
 /**
 * @author Andrey Chaschev chaschev@gmail.com
 */
-class Replacements {
+public class Replacements {
+    public static final Replacements EMPTY = new Replacements(0, 0);
+
     int start;
     int end;
 
@@ -20,11 +22,11 @@ class Replacements {
 
     List<Replacement> replacements = new ArrayList<Replacement>();
 
-    public boolean add(Replacement replacement) {
+    boolean add(Replacement replacement) {
         return replacements.add(replacement);
     }
 
-    public Replacements addAll(List<GroovyCodeCompleter.Candidate> candidates) {
+    Replacements addAll(List<GroovyCodeCompleter.Candidate> candidates) {
         replacements.addAll(Lists.transform(candidates,
             new Function<GroovyCodeCompleter.Candidate, Replacement>() {
                 public Replacement apply(GroovyCodeCompleter.Candidate input) {
@@ -33,5 +35,17 @@ class Replacements {
             }));
 
         return this;
+    }
+
+    public List<Replacement> getReplacements() {
+        return replacements;
+    }
+
+    public int getStart() {
+        return start;
+    }
+
+    public int getEnd() {
+        return end;
     }
 }

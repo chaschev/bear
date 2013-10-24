@@ -11,8 +11,11 @@ import bear.task.Task;
 import bear.task.TaskDef;
 import bear.task.TaskResult;
 import bear.task.TaskRunner;
+import chaschev.lang.OpenBean;
 import groovy.lang.Binding;
 import groovy.lang.GroovyShell;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * There are two forms of application for this plugin. The first is to 'execute some bear code'. You would typically want to do this to inspect Bear's internals or to run some activity not covered by the console API.
@@ -24,6 +27,8 @@ import groovy.lang.GroovyShell;
  * @author Andrey Chaschev chaschev@gmail.com
  */
 public class GroovyShellMode extends PluginShellMode<GroovyShellPlugin> implements CommandInterpreter {
+    private static final Logger logger = LoggerFactory.getLogger(GroovyShellMode.class);
+
     private final Binding binding;
     private final GroovyShell shell;
 
@@ -55,7 +60,46 @@ public class GroovyShellMode extends PluginShellMode<GroovyShellPlugin> implemen
         return new Task<TaskDef>(parent, taskDef, $) {
             @Override
             protected TaskResult exec(TaskRunner runner) {
-                //local command
+                try {
+                    GroovyShell shell = getShell(runner);
+                    Object result = shell.evaluate(command);
+
+                    return new GroovyResult(result);
+                }
+                catch (IllegalStateException e){
+                    if(e.getMessage().contains("FX")){
+                        return fxWorkaround();
+                    }else{
+                        logger.warn("", e);
+                        return new GroovyResult(e);
+                    }
+                }
+                catch (Exception e) {
+                    logger.warn("", e);
+
+                    return new GroovyResult(e);
+                }
+            }
+
+            private GroovyResult fxWorkaround() {
+                GroovyResult result;
+
+                try {
+                    OpenBean.invoke(binding.getVariable("_"), "evaluateInFX", new Runnable() {
+                        @Override
+                        public void run() {
+                            shell.evaluate(command);
+                        }
+                    });
+                    result = new GroovyResult("sent to FX evaluation");
+                } catch (Exception e1) {
+                    logger.warn("", e1);
+                    result = new GroovyResult(e1);
+                }
+                return result;
+            }
+
+            private GroovyShell getShell(TaskRunner runner) {
                 boolean isLocal = !$(plugin.sendToHosts);
 
                 Binding $binding;
@@ -73,15 +117,7 @@ public class GroovyShellMode extends PluginShellMode<GroovyShellPlugin> implemen
                     $binding.setVariable("_command", command);
                 }
 
-                GroovyShell $shell = isLocal ? shell : new GroovyShell($binding);
-
-                try {
-                    Object result = $shell.evaluate(command);
-
-                    return new GroovyResult(result);
-                } catch (Exception e) {
-                    return new GroovyResult(e);
-                }
+                return isLocal ? shell : new GroovyShell($binding);
             }
         };
     }
@@ -113,10 +149,7 @@ public class GroovyShellMode extends PluginShellMode<GroovyShellPlugin> implemen
     }
 
 
-    public void completeCode(String script, int position){
-
+    public Replacements completeCode(String script, int position){
+        return new GroovyCodeCompleter(binding, shell).completeCode(script, position);
     }
-
-
-
 }

@@ -137,6 +137,8 @@ http://terminal.jcubic.pl/examples.php, https://duckduckgo.com/tty/, https://www
 - April 1 - bear is naughty!
 - April 1 - MUAHHAHAHAHAHA
 - Just bear in mind.
+- As Nietzsche said: "Why am I so wise?"
+- As Nietzsche said: "Why am I so smart?"
 
 
 
