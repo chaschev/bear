@@ -54,13 +54,13 @@ public class GrailsPlugin extends ZippedToolPlugin {
         }),
         grailsExecPath = Variables.condition(Variables.isSet(null, homePath),
             BearVariables.joinPath(grailsBin, grailsExecName), grailsExecName),
-        warName = Variables.newVar("ROOT.war").setDesc("i.e. ROOT.war"),
+        warName = Variables.newVar("ROOT.war").desc("i.e. ROOT.war"),
         projectWarPath = BearVariables.joinPath(projectPath, warName),
         releaseWarPath = Variables.condition(bear.isRemoteEnv, BearVariables.joinPath(bear.releasePath, warName), projectWarPath)
     ;
 
     public final DynamicVariable<Boolean>
-        clean = Variables.equalTo(bear.clean).setDesc("clean project before build")
+        clean = Variables.equalTo(bear.clean).desc("clean project before build")
     ;
 
     public GrailsPlugin(GlobalContext global) {

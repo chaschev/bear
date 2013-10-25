@@ -583,27 +583,11 @@ var ConsoleTabsChildCtrl = function ($scope) {
 
         editor.completers.unshift({
             getCompletions: function(editor, session, pos, prefix, callback) {
-                var state = editor.session.getState(pos.row);
-
-                Java.log(
-                    "state: ", state,
-                    "pos: ", pos,
-                    "prefix: ", prefix
-                );
-
-//                var completions = [
-//                    {
-//                        caption: "test",
-//                        meta:"ArrayList",
-//                        snippet:"substitution"
-//                    }
-//                ];
-
                 var caretPos = posToOffset(pos);
 
                 var completions = JSON.parse(window.bear.call('conf', 'completeCode', editor.getValue(), caretPos));
 
-                Java.log("got completions: ", completions);
+                Java.log("got " + completions.length + " completions");
 
                 callback(null, completions);
             }

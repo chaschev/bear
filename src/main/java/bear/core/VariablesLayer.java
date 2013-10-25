@@ -17,6 +17,7 @@
 package bear.core;
 
 import bear.plugins.AbstractContext;
+import bear.plugins.DependencyInjection;
 import bear.plugins.HavingContext;
 import bear.session.DynamicVariable;
 import bear.session.Variables;
@@ -26,10 +27,11 @@ import com.google.common.base.Preconditions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nullable;
 import java.lang.reflect.Field;
 import java.util.LinkedHashMap;
 
-import static chaschev.lang.LangUtils.elvis;
+import static bear.core.VarFun.UNDEFINED;
 
 public class VariablesLayer extends HavingContext<Variables, AbstractContext> {
     private static final Logger logger = LoggerFactory.getLogger(VariablesLayer.class);
@@ -85,6 +87,7 @@ public class VariablesLayer extends HavingContext<Variables, AbstractContext> {
     }
 
     public VariablesLayer putConstObj(Object key, Object value) {
+        logger.debug("{}: {} <- {}", name, key, value);
         Preconditions.checkArgument(!(key instanceof DynamicVariable || value instanceof DynamicVariable), "dynamic variables are not constants!");
         constants.put(key, value);
         return this;
@@ -112,7 +115,10 @@ public class VariablesLayer extends HavingContext<Variables, AbstractContext> {
     }
 
     public VariablesLayer removeConst(String name) {
-        constants.remove(name);
+        Object remove = constants.remove(name);
+        if(remove != null){
+            logger.debug("{}: removed :{} ({})",this.name, name, remove);
+        }
         return this;
     }
 
@@ -128,6 +134,7 @@ public class VariablesLayer extends HavingContext<Variables, AbstractContext> {
         }
 
         putConstObj(name, value);
+
         return this;
     }
 
@@ -149,24 +156,11 @@ public class VariablesLayer extends HavingContext<Variables, AbstractContext> {
     }
 
     public <T> T get(String varName, T _default) {
-        final DynamicVariable r = getVariable(varName);
-        final Object result;
-
-        if (r == null) {
-            Object o = constants.get(varName);
-
-            result = elvis(o, _default);
-        } else {
-            result = r.apply($);
-        }
-
-        logger.debug(":{} -> {} (by name)", varName, result);
-
-        return (T) result;
+        return (T) getByVarName(null, varName, _default, this);
     }
 
     public <T> T get(DynamicVariable<T> var) {
-        return get(var, (T) null);
+        return (T) getNoTemplates(var, UNDEFINED);
     }
 
     public Object getConstant(Object obj) {
@@ -174,44 +168,78 @@ public class VariablesLayer extends HavingContext<Variables, AbstractContext> {
     }
 
     public <T> T get(DynamicVariable<T> var, T _default) {
-        final T result;
+        return (T) getNoTemplates(var, _default);
+    }
 
-        Object o = constants.get(var.name());
+    protected Object getNoTemplates(DynamicVariable<?> var, Object _default) {
+        String varName = var.name();
 
-        final Object tempResult = elvis(o, Void.class);
+        return getByVarName(var, varName, _default, this);
+    }
 
-        if(tempResult != Void.class){
-            return (T) tempResult;
+    protected Object getByVarName(
+        @Nullable DynamicVariable<?> var, String varName, Object _default,
+         VariablesLayer initialLayer) {
+        final Object thisLayerResult;
+
+        //first check if var was overridden in this layer
+
+        Object o = constants.get(varName);
+
+        if(o != null){
+            logger.debug("{}: :{} -> {} (const)", name, varName, o);
+            return o;
         }
 
-        //todo merge with get(String varName, T _default)
-        DynamicVariable<T> r = variables.get(var.name());
-
-        if (r == null && fallbackVariablesLayer != null) {
-            r = fallbackVariablesLayer.getVariable(var);
-        }
+        DynamicVariable<?> r = variables.get(varName);
 
         if (r == null) {
-            T temp;
+            //not overridden, fall back
+            if (fallbackVariablesLayer != null) {
+                logger.debug("{}: :{}, falling back to {}", name, varName, fallbackVariablesLayer.name);
 
-            try {
-                temp = var.apply($);
-            } catch (Exception e) {
-                throw Exceptions.runtime(e);
+                return fallbackVariablesLayer.getByVarName(var, varName, UNDEFINED, initialLayer);
+            }else{
+                // there is no fallback, we are in a global scope,
+                // apply variable in the initial context
+
+                if (var != null) {
+                    Object temp;
+
+                    try {
+                        temp = var.apply(initialLayer.$);
+                    } catch (Exception e) {
+                        throw Exceptions.runtime(e);
+                    }
+
+                    thisLayerResult = chooseDefined(temp, _default);
+                    logger.debug("{}: :{} -> {} (var.apply)", name, varName, thisLayerResult);
+                } else {
+                    thisLayerResult = UNDEFINED;
+                    logger.debug("{}: :{} -> {} (global undef)", name, varName, thisLayerResult);
+                }
             }
 
-            if (temp == null) {
-                result = _default;
-            } else {
-                result = temp;
-            }
         } else {
-            result = r.apply($);
+            //overridden in the variables layer
+
+            thisLayerResult = chooseDefined(r.apply($), _default);
+            logger.debug("{}: :{} <- {} (overridden var)", name, varName, thisLayerResult);
         }
 
-        logger.debug(":{} -> {}", var.name(), result);
 
-        return result;
+
+
+        return thisLayerResult;
+    }
+
+    private static Object chooseDefined(Object x, Object _default) {
+        Object temp  = x;
+
+        if(temp == UNDEFINED) {
+            temp = _default;
+        }
+        return temp;
     }
 
     public <T> DynamicVariable<T> getVariable(Nameable<T> name) {
@@ -275,7 +303,7 @@ public class VariablesLayer extends HavingContext<Variables, AbstractContext> {
 
         Field[] fields = OpenBean.getClassDesc(aClass).fields;
 
-        String scope = scopeClass == null ? "" : scopeClass.getSimpleName() + ".";
+        String scope = scopeClass == null ? "" : DependencyInjection.shorten(scopeClass.getSimpleName()) + ".";
 
         for (Field field : fields) {
             Var varAnnotation = field.getAnnotation(Var.class);
@@ -321,9 +349,9 @@ public class VariablesLayer extends HavingContext<Variables, AbstractContext> {
                     continue;
                 }
 
-                Object o = layer.get(varName, Void.class);
+                Object o = layer.get(varName, UNDEFINED);
 
-                if (o != Void.class) {
+                if (o != UNDEFINED) {
                     setField(field, object, layer, varName);
 
                     continue;
@@ -345,9 +373,9 @@ public class VariablesLayer extends HavingContext<Variables, AbstractContext> {
     }
 
     private static void setField(Field field, Object object, VariablesLayer layer, String varName) {
-        Object value = layer.get(varName, Void.class);
+        Object value = layer.get(varName, UNDEFINED);
 
-        if (value != Void.class) {
+        if (value != UNDEFINED) {
             setField(field, object, value);
         }
     }

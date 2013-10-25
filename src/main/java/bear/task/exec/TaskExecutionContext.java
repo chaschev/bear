@@ -108,6 +108,12 @@ public class TaskExecutionContext extends HavingContext<TaskExecutionContext, Se
             return 0;
         }
 
-        return getLastEntry().getFinishedAt().getMillis() - firstEntry.getFinishedAt().getMillis();
+        ExecutionEntry lastEntry = getLastEntry();
+
+        DateTime finishedAt = lastEntry == null ? null : lastEntry.getFinishedAt();
+
+        finishedAt = finishedAt == null ? new DateTime() : finishedAt;
+
+        return finishedAt.getMillis() - firstEntry.getFinishedAt().getMillis();
     }
 }

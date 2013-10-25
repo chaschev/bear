@@ -124,8 +124,12 @@ public class CompositeTaskRunContext {
 
                         throw Exceptions.runtime(e);
                     }finally {
-                        $.executionContext.rootExecutionContext.fireExternalModification();
-                        addArrival(finalI, $);
+                        try {
+                            $.executionContext.rootExecutionContext.fireExternalModification();
+                            addArrival(finalI, $);
+                        } catch (Exception e) {
+                            BearCommandLineConfigurator.logger.warn("", e);
+                        }
                     }
 
                     return $;

@@ -22,19 +22,20 @@ import bear.plugins.Plugins;
 import bear.plugins.groovy.GroovyShellPlugin;
 import bear.plugins.sh.GenericUnixLocalEnvironmentPlugin;
 import bear.plugins.sh.GenericUnixRemoteEnvironmentPlugin;
-import bear.session.LocalAddress;
 import bear.plugins.sh.SystemSession;
+import bear.session.LocalAddress;
 import bear.task.Task;
 import bear.task.TaskDef;
 import bear.task.TaskRunner;
 import bear.task.Tasks;
 import com.google.common.base.Predicates;
+import com.google.common.collect.Collections2;
 import com.google.common.collect.Iterables;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Set;
+import java.util.Collection;
 import java.util.concurrent.*;
 
 import static com.google.common.util.concurrent.MoreExecutors.listeningDecorator;
@@ -81,13 +82,13 @@ public class GlobalContext extends AbstractContext{
 
         layer = new VariablesLayer(this, "global layer", null);
 
+        bear = new Bear(this);
+
         logger.info("adding bootstrap plugins...");
         plugins.add(GenericUnixRemoteEnvironmentPlugin.class);
         plugins.add(GenericUnixLocalEnvironmentPlugin.class);
         plugins.add(GroovyShellPlugin.class);
         plugins.build();
-
-        bear = new Bear(this);
 
         final TaskRunner localRunner = new TaskRunner(null, this);
 
@@ -124,8 +125,8 @@ public class GlobalContext extends AbstractContext{
         return plugins.getSessionContext(pluginClass, $, parentTask);
     }
 
-    public Set<Class<? extends Plugin>> getPluginClasses() {
-        return plugins.pluginMap.keySet();
+    public Collection<Class<? extends Plugin>> getPluginClasses() {
+        return (Collection) Collections2.filter(plugins.pluginMap.keySet(), Predicates.instanceOf(Class.class));
     }
 
     public Iterable<Plugin> getGlobalPlugins() {

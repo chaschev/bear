@@ -50,9 +50,39 @@ Will this `pom.xml` contain a single dependency to Bear?
 
 IDE will be used for code completion and syntax highlighting. And Bear will be used for running.
 
+### Bear script
+
+Bear script is a sequence of plugin shell executions. 
+```ruby
+# switch to groovy/task mode
+:set stage='three'
+:use shell groovy
+
+# this enables the session-scope, task is distributed between hosts
+:set groovy.sendToHosts=true
+runner.runTask(tasks.deploy)
+runner.runTask(tasks.restartApp)
+
+# switch to remote sh mode (distributed)
+:use shell remote
+ls -ltr /var/lib/myApp
+
+# switch to sql mode (distributed)
+:use shell mysql
+show tables;
+
+# switch to groovy (not distributed, command is run locally)
+:use shell groovy
+:set groovy.sendToHosts=true
+
+# (TODO implement) this will distribute the task
+_.run(tasks.deploy)
+_.run(tasks.restartApp)
+```
+
 ### Run commands from console
 
-    bear$ $.useShell(Remote)
+    bear$ use shell remote
 
     bearsh$ use hosts ...
     bearsh@hosts$ pwd && ls
@@ -107,38 +137,6 @@ http://terminal.jcubic.pl/examples.php, https://duckduckgo.com/tty/, https://www
 - The project started in Russia and Russia is famous for two things - vodka and bears drinking vodka
 - Name Vodka is nice, but does not remind me of super-powers
 - Saying "install it with a bear" or "bear is my weapon of choice" sounds at least less awkward then with vodka
-
-## Bear chat
-
-- When errors: In Trouble? Ask SO!
-- When errors: In Trouble? Ask Jon Skeet!
-- "Deployments have never been so easy!"
-- "What's your cluster size?"
-- "Empowering your cluster, please wait..."
-- "Bringing you the best."
-- "Bear is the beast."
-- "Please wait, putting deployments to a new level..."
-- "Yes we can!"
-- "Do it with bear!"
-- "Bear: never ask why!"
-- "Better bear bear bearer roaaargh!"
-- "I am a champion and you gonna hear me roar!"
-- "I've got the eye of the tiger!"
-- "Don't know how to do it? Do it with bear!"
-- "Install it with bear!"
-- "Bear is my weapon of choice!"
-- "Good time-of-day."
-- "Your bear is my bear, and my bear is your bear..."
-- "As strong as an ox, as a sly as a fox, as noisy as a bear"
-- "Bear - I wanna be everything at once!"
-- "There is a way to shut me app..."
-- :shut up - sure? I beg you! (don't put it into help, should be asked in SO)
-- Top SO feeds for today/tagged bear
-- April 1 - bear is naughty!
-- April 1 - MUAHHAHAHAHAHA
-- Just bear in mind.
-- As Nietzsche said: "Why am I so wise?"
-- As Nietzsche said: "Why am I so smart?"
 
 
 

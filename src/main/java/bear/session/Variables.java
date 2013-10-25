@@ -30,7 +30,7 @@ import java.util.Arrays;
 public class Variables {
 
 
-    public static DynamicVariable<Boolean> not(String name, final DynamicVariable<Boolean> b) {
+    public static DynamicVariable<Boolean> not(final DynamicVariable<Boolean> b) {
         return bool("").setDynamic(new VarFun<Boolean, AbstractContext>() {
             public Boolean apply(AbstractContext $) {
                 return !$.varB(b);
@@ -71,12 +71,8 @@ public class Variables {
         });
     }
 
-    public static <T> DynamicVariable<T> equalTo(final DynamicVariable<T> var) {
-        return equalTo(null, var);
-    }
-
-    public static <T> DynamicVariable<T> equalTo(String name, final DynamicVariable<T> variable) {
-        return dynamic(name, "", new VarFun<T, AbstractContext>() {
+    public static <T> DynamicVariable<T> equalTo(final DynamicVariable<T> variable) {
+        return dynamic("", new VarFun<T, AbstractContext>() {
             public T apply(AbstractContext $) {
                 return $.var(variable);
             }

@@ -27,7 +27,7 @@ import java.util.Map;
 public class Plugins {
     private static final Logger logger = LoggerFactory.getLogger(Plugins.class);
 
-    public final Map<Class<? extends Plugin>, Plugin> pluginMap = new LinkedHashMap<Class<? extends Plugin>, Plugin>();
+    public final Map<Object, Plugin> pluginMap = new LinkedHashMap<Object, Plugin>();
 
     private GlobalContext globalContext;
     private PluginBuilder pluginBuilder;
@@ -42,6 +42,11 @@ public class Plugins {
 
         for (Plugin plugin : plugins) {
             pluginMap.put(plugin.getClass(), plugin);
+
+            if(plugin.getShell()!=null){
+                pluginMap.put(plugin.getShell().getCommandName(), plugin);
+            }
+
             globalContext.put(plugin.getClass(), plugin);
         }
 
@@ -165,6 +170,10 @@ public class Plugins {
         } catch (Exception e) {
             throw Exceptions.runtime(e);
         }
+    }
+
+    public Plugin get(String s){
+        return pluginMap.get(s);
     }
 
     public Plugin get(Class<? extends Plugin> aClass){

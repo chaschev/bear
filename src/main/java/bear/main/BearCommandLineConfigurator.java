@@ -1,19 +1,16 @@
 package bear.main;
 
-import bear.console.CompositeConsoleArrival;
-import bear.core.*;
+import bear.core.Bear;
+import bear.core.GlobalContext;
+import bear.core.GlobalContextFactory;
+import bear.core.IBearSettings;
 import bear.plugins.CommandInterpreter;
 import bear.plugins.Plugin;
 import bear.plugins.groovy.GroovyShellPlugin;
 import bear.plugins.groovy.Replacement;
 import bear.plugins.groovy.Replacements;
 import bear.plugins.sh.GenericUnixRemoteEnvironmentPlugin;
-import bear.session.DynamicVariable;
 import bear.session.Question;
-import bear.task.Task;
-import bear.task.TaskDef;
-import bear.task.exec.CommandExecutionEntry;
-import bear.task.exec.TaskExecutionContext;
 import chaschev.json.JacksonMapper;
 import chaschev.lang.Lists2;
 import chaschev.util.Exceptions;
@@ -22,39 +19,31 @@ import com.google.common.base.Function;
 import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
-import com.google.common.collect.Collections2;
 import com.google.common.collect.Iterables;
-import com.google.common.collect.Lists;
-import groovy.lang.GroovyShell;
 import javafx.scene.input.Clipboard;
 import javafx.scene.input.DataFormat;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
-import org.apache.commons.io.filefilter.SuffixFileFilter;
-import org.apache.commons.lang3.ArrayUtils;
-import org.apache.commons.lang3.StringUtils;
-import org.reflections.Reflections;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import javax.tools.JavaCompiler;
-import javax.tools.ToolProvider;
-import java.io.*;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.StringWriter;
 import java.net.MalformedURLException;
-import java.net.URL;
-import java.net.URLClassLoader;
-import java.util.*;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Properties;
 
 import static bear.main.BearMain.Options.*;
 import static chaschev.lang.LangUtils.elvis;
-import static com.google.common.collect.Lists.*;
+import static com.google.common.collect.Lists.transform;
 import static org.apache.commons.io.FilenameUtils.getBaseName;
-import static org.apache.commons.lang3.StringUtils.substringAfter;
-import static org.apache.commons.lang3.StringUtils.substringBefore;
 
 /**
  * @author Andrey Chaschev chaschev@gmail.com
@@ -71,6 +60,7 @@ public class BearCommandLineConfigurator {
     private GlobalContextFactory factory = GlobalContextFactory.INSTANCE;
     private BearMain.Options options;
     private File settingsFile;
+
     @Nullable
     private Properties properties;
     private String scriptName;
@@ -81,6 +71,7 @@ public class BearCommandLineConfigurator {
     private CompileManager compileManager;
 
     protected BearFX bearFX;
+    private File file;
 
     public BearCommandLineConfigurator(String... args) {
         this.args = args;
@@ -215,151 +206,6 @@ public class BearCommandLineConfigurator {
         return findScriptToRun((List) result.scriptClasses);
     }
 
-    public static abstract class Compiler {
-        protected final String[] extensions = extensions();
-
-        protected File sourcesDir;
-        protected File buildDir;
-
-        public abstract String[] extensions();
-
-        protected Compiler(File sourcesDir, File buildDir) {
-            this.sourcesDir = sourcesDir;
-            this.buildDir = buildDir;
-        }
-
-        public boolean accepts(String extension) {
-            return ArrayUtils.contains(extensions, extension);
-        }
-
-        public abstract CompilationResult compile();
-    }
-
-    public static class CompileManager {
-        protected final File sourcesDir;
-        protected final File buildDir;
-        protected final JavaCompiler2 javaCompiler;
-        private CompilationResult lastCompilationResult;
-
-        public CompileManager(File sourcesDir, File buildDir) {
-            this.sourcesDir = sourcesDir;
-            this.buildDir = buildDir;
-            this.javaCompiler = new JavaCompiler2(sourcesDir, buildDir);
-        }
-
-        public CompilationResult compileWithAll() {
-            logger.info("compiling...");
-            return lastCompilationResult = javaCompiler.compile();
-        }
-
-        public CompiledEntry findClass(final String className) {
-            CompiledEntry aClass = findClass(className, true);
-
-            if (aClass == null) {
-                aClass = findClass(className, false);
-
-                if (aClass == null) {
-                    throw new RuntimeException("class not found: " + className);
-                }
-
-                return aClass;
-            } else {
-                return aClass;
-            }
-        }
-
-        public CompiledEntry findClass(final String className, boolean script) {
-            Preconditions.checkNotNull(lastCompilationResult, "you need to compile first to load classes");
-
-            return Iterables.find(script ?
-                lastCompilationResult.scriptClasses : lastCompilationResult.settingsClasses, new Predicate<CompiledEntry>() {
-                @Override
-                public boolean apply(CompiledEntry input) {
-                    return input.aClass.getSimpleName().equals(className);
-                }
-            }, null);
-        }
-    }
-
-    public static class JavaCompiler2 extends Compiler {
-        private URLClassLoader classLoader;
-
-        protected JavaCompiler2(File sourcesDir, File buildDir) {
-            super(sourcesDir, buildDir);
-        }
-
-        @Override
-        public String[] extensions() {
-            return new String[]{"java"};
-        }
-
-        public CompilationResult compile() {
-            final List<File> filesList = compileScripts(sourcesDir);
-
-            try {
-                classLoader = new URLClassLoader(new URL[]{buildDir.toURI().toURL()});
-            } catch (MalformedURLException e) {
-                throw Exceptions.runtime(e);
-            }
-
-            CompilationResult result = new CompilationResult();
-
-            for (File file : filesList) {
-                try {
-                    Class aClass = (Class) classLoader.loadClass(getBaseName(file.getName()));
-
-                    if (Script.class.isAssignableFrom(aClass)) {
-                        result.scriptClasses.add(new CompiledEntry(aClass, file, "java"));
-                    } else if (IBearSettings.class.isAssignableFrom(aClass)) {
-                        result.settingsClasses.add(new CompiledEntry(aClass, file, "java"));
-                    }
-
-                } catch (ClassNotFoundException e) {
-                    throw Exceptions.runtime(e);
-                }
-            }
-
-            return result;
-        }
-
-        public List<File> compileScripts(File sourcesDir) {
-            FileFilter filter = new SuffixFileFilter(extensions);
-
-            final File[] files = sourcesDir.listFiles(filter);
-
-            final ArrayList<String> params = newArrayListWithExpectedSize(files.length);
-
-            if (!buildDir.exists()) {
-                buildDir.mkdir();
-            }
-
-            Collections.addAll(params, "-d", buildDir.getAbsolutePath());
-            final List<File> filesList = newArrayList(files);
-
-            final List<String> filePaths = Lists.transform(filesList, new Function<File, String>() {
-                public String apply(File input) {
-                    return input.getAbsolutePath();
-                }
-            });
-
-            params.addAll(filePaths);
-
-            logger.info("compiling {}", params);
-
-            final JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
-
-            final int r = compiler.run(null, null, null, params.toArray(new String[params.size()]));
-
-            if (r == 0) {
-                logger.info("compilation OK.");
-            } else {
-                logger.info("compilation failed.");
-            }
-
-            return filesList;
-        }
-    }
-
 
     private Optional<CompiledEntry> findScriptToRun(List<CompiledEntry> compiledEntries) {
         if (isScriptNameSet()) {
@@ -464,130 +310,30 @@ public class BearCommandLineConfigurator {
         return (String[]) Lists2.projectMethod(classes, "getName").toArray(new String[classes.size()]);
     }
 
-    public static abstract class Response {
-        public String getClazz() {
-            return getClass().getSimpleName();
-        }
+    public Response run(String uiContextS) throws Exception {
+        logger.info("running a script with params: {}", uiContextS);
+
+        BearScript.UIContext uiContext = commandInterpreter.mapper.fromJSON(uiContextS, BearScript.UIContext.class);
+
+        file = compileManager.findScript(uiContext.scriptName);
+
+        Preconditions.checkNotNull(file.exists(), "%s not found", uiContext.scriptName);
+
+        String s = FileUtils.readFileToString(file);
+
+        return runWithScript(s, uiContext.settingsName);
     }
 
-    public static class RunResponse extends Response {
-        CompositeTaskRunContext runContext;
-
-        public static class Host {
-            public String name;
-            public String address;
-
-            public Host(String name, String address) {
-                this.name = name;
-                this.address = address;
-            }
-        }
-
-        public List<Host> hosts;
-
-        public RunResponse(CompositeTaskRunContext runContext, List<Host> hosts) {
-            this.runContext = runContext;
-            this.hosts = hosts;
-        }
-    }
-
-    public static class MessageResponse extends Response {
-        public String message;
-
-        public MessageResponse(String message) {
-            this.message = message;
-        }
-    }
-
-    public RunResponse run(String scriptName, String settingsName) throws Exception {
-        logger.info("running script {}, settings: {}", scriptName, settingsName);
-
-        CompiledEntry scriptEntry = compileManager.findClass(scriptName, true);
-
-        Preconditions.checkNotNull(scriptEntry, "%s not found", scriptName);
-
-        Script script = (Script) scriptEntry.aClass.newInstance();
-
-        return runWithScript(script, settingsName);
-    }
-
-    public RunResponse runWithScript(Script script, String settingsName) throws Exception {
+    public Response runWithScript(String bearScript, String settingsName) throws Exception {
         IBearSettings settings = newSettings(settingsName);
 
-        CompositeTaskRunContext context = new BearRunner(settings, script, factory)
-            .init()
-            .prepareToRun();
-
-        CompositeConsoleArrival<SessionContext> consoleArrival = context.getConsoleArrival();
-
-        List<SessionContext> $s = consoleArrival.getEntries();
-
-        for (final SessionContext $ : $s) {
-            SessionContext.ExecutionContext execContext = $.getExecutionContext();
-
-            execContext.textAppended.addListener(new DynamicVariable.ChangeListener<String>() {
-                public void changedValue(DynamicVariable<String> var, String oldValue, String newValue) {
-                    if (StringUtils.isNotEmpty(newValue)) {
-                        bearFX.bearFXApp.sendMessageToUI(new TextConsoleEventToUI($.getName(), newValue));
-                    }
-                }
-            });
-
-            execContext.currentTask.addListener(new DynamicVariable.ChangeListener<Task>() {
-                @Override
-                public void changedValue(DynamicVariable<Task> var, Task oldValue, Task newValue) {
-                    bearFX.bearFXApp.sendMessageToUI(new TaskConsoleEventToUI($.getName(), newValue.toString()));
-                }
-            });
-
-            execContext.currentCommand.addListener(new DynamicVariable.ChangeListener<CommandExecutionEntry>() {
-                @Override
-                public void changedValue(DynamicVariable<CommandExecutionEntry> var, CommandExecutionEntry oldValue, CommandExecutionEntry newValue) {
-                    bearFX.bearFXApp.sendMessageToUI(new CommandConsoleEventToUI($.getName(), newValue.toString()));
-                }
-            });
-
-            execContext.rootExecutionContext.addListener(new DynamicVariable.ChangeListener<TaskExecutionContext>() {
-                @Override
-                public void changedValue(DynamicVariable<TaskExecutionContext> var, TaskExecutionContext oldValue, TaskExecutionContext newValue) {
-                    if (newValue.taskResult != null) {
-                        bearFX.bearFXApp.sendMessageToUI(new RootTaskFinishedEventToUI(newValue.taskResult, newValue.getDuration(), $.getName()));
-                    }
-                }
-            });
-        }
-
-        context.stats.addListener(new DynamicVariable.ChangeListener<CompositeTaskRunContext.Stats>() {
-            @Override
-            public void changedValue(DynamicVariable<CompositeTaskRunContext.Stats> var, CompositeTaskRunContext.Stats oldValue, CompositeTaskRunContext.Stats newValue) {
-                bearFX.bearFXApp.sendMessageToUI(new GlobalStatusEventToUI(newValue));
-            }
-        });
-
-        context.submitTasks();
-
-        return new RunResponse(context, Lists.transform(context.getConsoleArrival().getEntries(), new Function<SessionContext, RunResponse.Host>() {
-            public RunResponse.Host apply(SessionContext $) {
-                return new RunResponse.Host($.sys.getName(), $.sys.getAddress());
-            }
-        }));
-    }
-
-    public static class UIContext {
-        public String settingsName;
-        public String scriptName;
+        return new BearScript(global, bearFX, null, settings).exec(bearScript);
     }
 
     public class BearCommandInterpreter {
         GlobalContext global;
-        Bear bear;
 
         Plugin currentShellPlugin;
-        private List<Class<? extends Plugin>> pluginList;
-
-        public BearCommandInterpreter() {
-
-        }
 
         public CommandInterpreter currentInterpreter() {
             return currentShellPlugin.getShell();
@@ -603,114 +349,32 @@ public class BearCommandLineConfigurator {
          *
          * @param command
          */
-        public Response interpret(String command, String uiContextS) throws Exception {
+        public Response interpret(final String command, String uiContextS) throws Exception {
             logger.info("interpreting command: {}, params: {}", command, uiContextS);
 
-            UIContext uiContext = mapper.fromJSON(uiContextS, UIContext.class);
+            BearScript.UIContext uiContext = mapper.fromJSON(uiContextS, BearScript.UIContext.class);
 
-            if (command.startsWith(":")) {
-                String firstWord = StringUtils.substringBetween(command, ":", " ");
+            IBearSettings settings = newSettings(uiContext.settingsName);
+            settings.configure(factory);
 
-                if ("use".equals(firstWord)) {
-                    command = substringAfter(command, " ").trim();
-                    String secondWord = substringBefore(command, " ");
+            final BearScript script = new BearScript(global, bearFX, currentShellPlugin, settings);
 
-                    if ("shell".equals(secondWord)) {
-                        command = substringAfter(command, " ").trim();
+            global.putConst(bear.internalInteractiveRun, true);
 
-                        final String pluginName = command;
-
-                        List<Class<? extends Plugin>> matchingClasses = newArrayList(Collections2.filter(getPlugins(pluginName),
-                            new Predicate<Class<? extends Plugin>>() {
-                                @Override
-                                public boolean apply(Class<? extends Plugin> input) {
-                                    return input.getSimpleName().toLowerCase().contains(pluginName);
-                                }
-                            }));
-
-                        if (matchingClasses.isEmpty()) {
-                            throw new RuntimeException("no plugins found for '" + pluginName + "'");
-                        }
-
-                        if (matchingClasses.size() > 1) {
-                            throw new RuntimeException("1+ plugins found for '" + pluginName + "': " + pluginName);
-                        }
-
-                        switchToPlugin(matchingClasses.get(0));
-                    } else {
-                        bearFX.sendMessageToUI(new TextConsoleEventToUI("shell", "command not supported: <i> " + secondWord + "</i><br>"));
-                        return new MessageResponse("command not supported: " + secondWord);
-                    }
-                } else if ("set".equals(firstWord)) {
-                    command = substringAfter(command, " ").trim();
-
-                    String varName = substringBefore(command, "=");
-                    String expression = substringAfter(command, "=");
-
-                    GroovyShell shell = new GroovyShell(global.getPlugin(GroovyShellPlugin.class).getShell().getLocalBinding());
-
-                    logger.info("evaluating: '{}'...", expression);
-
-                    Object o = shell.evaluate(expression);
-
-                    global.putConst(varName, o);
-
-                    return new MessageResponse(String.format("assigned '%s' to '%s'", varName, o));
-                }
-
-                return null;
-            }
-
-            return runWithInterpreter(command, uiContext);
-        }
-
-        private List<Class<? extends Plugin>> getPlugins(final String pluginName) {
-            if(pluginList == null){
-                pluginList = new ArrayList<Class<? extends Plugin>>(new Reflections("bear.plugin")
-                    .getSubTypesOf(Plugin.class));
-            }
-
-            return pluginList;
-        }
-
-        private RunResponse runWithInterpreter(final String command, UIContext uiContext) throws Exception {
-            logger.info("running with interpreter: '{}'", currentInterpreter().toString());
-
-            global.putConst(bear.getStage, currentInterpreter().getStage());
-
-            final RunResponse runResponse = runWithScript(new SingleTaskScript(new TaskDef(command) {
+            global.taskExecutor.submit(new Runnable() {
                 @Override
-                public Task newSession(SessionContext $, Task parent) {
-                    return currentInterpreter().interpret(command, $, parent, this);
-                }
-            }), uiContext.settingsName);
-
-            runResponse.runContext.arrivedCount.addListener(new DynamicVariable.ChangeListener<AtomicInteger>() {
-                @Override
-                public void changedValue(DynamicVariable<AtomicInteger> var, AtomicInteger oldValue, AtomicInteger newValue) {
-                    logger.debug("removing stage from global scope");
-                    if (newValue.get() == runResponse.runContext.size()) {
-                        global.removeConst(bear.getStage);
-                    }
+                public void run() {
+                    Response exec = script.exec(command);
+                    currentShellPlugin = script.currentPlugin;
+                    global.removeConst(bear.internalInteractiveRun);
                 }
             });
 
-            bearFX.sendMessageToUI(new RMIEventToUI("terminals", "onScriptStart", runResponse.hosts));
-
-            return runResponse;
+            return new BearScript.MessageResponse("started script execution");
         }
 
-
-        private SwitchResponse switchToPlugin(Class<? extends Plugin> aClass) {
-            logger.info("switching to plugin: {}", aClass.getSimpleName());
-
+        private void switchToPlugin(Class<? extends Plugin> aClass) {
             this.currentShellPlugin = global.getPlugin(aClass);
-
-            SwitchResponse response = new SwitchResponse(currentShellPlugin.name, currentShellPlugin.getShell().getCommandName() + "$");
-
-            bearFX.sendMessageToUI(new TextConsoleEventToUI("shell", response.message));
-
-            return response;
         }
 
         public String completeCode(String script, int caretPos) {
@@ -738,17 +402,6 @@ public class BearCommandLineConfigurator {
             } catch (IOException e) {
                 throw Exceptions.runtime(e);
             }
-        }
-    }
-
-    public static class SwitchResponse extends MessageResponse {
-        public final String pluginName;
-        public final String prompt;
-
-        public SwitchResponse(String pluginName, String prompt) {
-            super("switched to shell '" + pluginName + "'");
-            this.pluginName = pluginName;
-            this.prompt = prompt;
         }
     }
 

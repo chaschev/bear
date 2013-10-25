@@ -8,6 +8,8 @@ import bear.plugins.sh.SystemEnvironmentPlugin;
 import bear.task.Tasks;
 import chaschev.lang.OpenBean;
 import com.google.common.base.Preconditions;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.text.WordUtils;
 
 import javax.annotation.Nullable;
 import java.lang.reflect.Field;
@@ -18,7 +20,7 @@ import java.lang.reflect.Field;
 public class DependencyInjection {
     public static void nameVars(Object obj) {
         final Class<?> aClass = obj.getClass();
-        final String className = aClass.getSimpleName();
+        final String className = shorten(aClass.getSimpleName());
         final Field[] fields = OpenBean.getClassDesc(aClass).fields;
 
         try {
@@ -34,6 +36,29 @@ public class DependencyInjection {
         } catch (IllegalAccessException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    public static String shorten(String className) {
+//        StringBuilder sb = new StringBuilder(className.length() + 5);
+
+        className = StringUtils.substringBefore(className, "Plugin");
+        className = WordUtils.uncapitalize(className);
+
+//        for (int i = 0; i < className.length(); i++) {
+//            char ch = className.charAt(i);
+//            if(Character.isUpperCase(ch)){
+//                if(i>0){
+//                    sb.append('-');
+//                }
+//
+//                sb.append(Character.toLowerCase(ch));
+//            }else{
+//                sb.append(ch);
+//            }
+//        }
+//
+//        className = sb.toString();
+        return className;
     }
 
     public static void inject(Object obj, SessionContext $){

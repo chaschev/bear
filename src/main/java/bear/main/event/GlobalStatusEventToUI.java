@@ -1,4 +1,4 @@
-package bear.main;
+package bear.main.event;
 
 import bear.core.CompositeTaskRunContext;
 
@@ -8,7 +8,7 @@ import bear.core.CompositeTaskRunContext;
 public class GlobalStatusEventToUI extends EventToUI {
     public CompositeTaskRunContext.Stats stats;
 
-    protected GlobalStatusEventToUI(CompositeTaskRunContext.Stats stats) {
+    public GlobalStatusEventToUI(CompositeTaskRunContext.Stats stats) {
         super("status", "global");
 
         this.stats = stats;

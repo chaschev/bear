@@ -32,8 +32,8 @@ public class GroovyShellMode extends PluginShellMode<GroovyShellPlugin> implemen
     private final Binding binding;
     private final GroovyShell shell;
 
-    public GroovyShellMode(GroovyShellPlugin plugin) {
-        super(plugin, "groovy");
+    public GroovyShellMode(GroovyShellPlugin plugin, String cmd) {
+        super(plugin, cmd);
 
         binding = new Binding();
         shell = new GroovyShell(binding);
@@ -108,8 +108,11 @@ public class GroovyShellMode extends PluginShellMode<GroovyShellPlugin> implemen
                     $binding = binding;
                 } else {
                     $binding = new Binding();
-                    $binding.setVariable("$", $);
+                    $binding.setVariable("_", $);
                     $binding.setVariable("parent", parent);
+                    $binding.setVariable("bear", bear);
+                    $binding.setVariable("global", global);
+                    $binding.setVariable("tasks", global.tasks);
                     $binding.setVariable("taskDef", taskDef);
                     $binding.setVariable("runner", runner);
                     $binding.setVariable("executionContext", executionContext);
@@ -131,9 +134,8 @@ public class GroovyShellMode extends PluginShellMode<GroovyShellPlugin> implemen
     public void init() {
         GlobalContext global = plugin.getGlobal();
         //"$" if for conf, injected inside BearCommandLineConfigurator
-        binding.setVariable("bear", plugin.bear);
         binding.setVariable("global", global);
-        binding.setVariable("global", global);
+        binding.setVariable("bear", global.bear);
         binding.setVariable("local", global.local);
         binding.setVariable("tasks", global.tasks);
         binding.setVariable("$$", global.localCtx);

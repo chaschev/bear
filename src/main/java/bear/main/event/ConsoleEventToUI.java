@@ -1,4 +1,4 @@
-package bear.main;
+package bear.main.event;
 
 /**
 * @author Andrey Chaschev chaschev@gmail.com

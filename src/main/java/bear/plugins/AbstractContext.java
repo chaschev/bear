@@ -223,4 +223,8 @@ public abstract class AbstractContext {
         layer.removeConst(name);
         return this;
     }
+
+    public boolean isGlobal(){
+        return global == null;
+    }
 }

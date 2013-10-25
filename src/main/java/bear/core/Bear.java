@@ -82,7 +82,7 @@ public class Bear {
 
     public final DynamicVariable<String>
 
-    applicationName = strVar().setDesc("Your app name"),
+    applicationName = strVar().desc("Your app name"),
         appLogsPath = BearVariables.joinPath("appLogsPath", logsPath, applicationName),
         sshUsername = dynamic(new VarFun<String, SessionContext>() {
             @Override
@@ -108,12 +108,12 @@ public class Bear {
                 return username;
             }
         }),
-        appUsername = equalTo("appUsername", sshUsername),
+        appUsername = equalTo(sshUsername),
         stage = strVar("Stage to deploy to"),
         repositoryURI = strVar("Project VCS URI"),
 //        vcsType = enumConstant("vcsType", "Your VCS type", "svn", "git"),
-        vcsUsername = equalTo("vcsUserName", sshUsername),
-        vcsPassword = equalTo("vcsPassword", sshPassword),
+        vcsUsername = equalTo(sshUsername),
+        vcsPassword = equalTo(sshPassword),
         sessionHostname = strVar("internal variable containing the name of the current host"),
         sessionAddress = strVar("internal"),
 
@@ -121,7 +121,7 @@ public class Bear {
 
     deployScript = strVar("Script to use").defaultTo("CreateNewScript"),
 
-    deployTo = BearVariables.joinPath("deployTo", applicationsPath, applicationName).setDesc("Current release dir"),
+    deployTo = BearVariables.joinPath("deployTo", applicationsPath, applicationName).desc("Current release dir"),
 
     currentDirName = strVar("Current release dir").defaultTo("current"),
         sharedDirName = strVar("").defaultTo("shared"),
@@ -208,7 +208,7 @@ public class Bear {
         useSudo = bool("").defaultTo(true),
         productionDeployment = bool("").defaultTo(true),
         clean = equalTo(productionDeployment),
-        speedUpBuild = and(not("", productionDeployment), not("", clean)),
+        speedUpBuild = and(not(productionDeployment), not(clean)),
         vcsAuthCache = dynamic(""),
         vcsPreferPrompt = dynamic(""),
         isRemoteEnv = dynamic(new VarFun<Boolean, SessionContext>() {
@@ -226,7 +226,9 @@ public class Bear {
                 return $.sys.isUnix();
             }
         }),
-        checkDependencies = newVar(true),
+        internalInteractiveRun = newVar(false),
+        interactiveRun = equalTo(internalInteractiveRun).desc("use it to override interactiveRun"),
+        checkDependencies = not(interactiveRun),
         verifyPlugins = equalTo(checkDependencies),
         autoInstallPlugins = newVar(false),
         verbose = newVar(false)
@@ -246,23 +248,27 @@ public class Bear {
     public final DynamicVariable<Stages> stages = new DynamicVariable<Stages>("List of stages. Stage is collection of servers with roles and auth defined for each of the server.");
     public final DynamicVariable<Stage> getStage = dynamic(new VarFun<Stage, GlobalContext>() {
         public Stage apply(GlobalContext $) {
-            final String stageName = $.var(Bear.this.stage);
-            final Optional<Stage> optional = Iterables.tryFind($.var(stages).stages, new Predicate<Stage>() {
-                public boolean apply(Stage s) {
-                    return s.name.equals(stageName);
-                }
-            });
-
-            if(!optional.isPresent()){
-                throw new RuntimeException("stage not found: '" + stageName + "'");
-            }
-
-            Stage stage = optional.get();
-            stage.global = global;
-
-            return stage;
+            return findStage($);
         }
     });
+
+    public Stage findStage(GlobalContext $) {
+        final String stageName = $.var(this.stage);
+        final Optional<Stage> optional = Iterables.tryFind($.var(stages).stages, new Predicate<Stage>() {
+            public boolean apply(Stage s) {
+                return s.name.equals(stageName);
+            }
+        });
+
+        if(!optional.isPresent()){
+            throw new RuntimeException("stage not found: '" + stageName + "'");
+        }
+
+        Stage stage = optional.get();
+        stage.global = global;
+
+        return stage;
+    }
 
     public final DynamicVariable<VcsCLIPlugin.Session> vcs = new DynamicVariable<VcsCLIPlugin.Session>("vcs", "VCS adapter").setDynamic(new VarFun<VcsCLIPlugin.Session, SessionContext>() {
         public VcsCLIPlugin.Session apply(SessionContext $) {
@@ -288,7 +294,7 @@ public class Bear {
             }
         });
 
-    public final DynamicVariable<DeployStrategyTaskDef> getStrategy = dynamic(DeployStrategyTaskDef.class).setDesc("Deployment strategy: how app files copied and built").memoize(true);
+    public final DynamicVariable<DeployStrategyTaskDef> getStrategy = dynamic(DeployStrategyTaskDef.class).desc("Deployment strategy: how app files copied and built").memoize(true);
 
 
 }

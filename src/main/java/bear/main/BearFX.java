@@ -16,6 +16,7 @@
 
 package bear.main;
 
+import bear.main.event.EventToUI;
 import chaschev.js.Bindings;
 import chaschev.js.ExceptionWrapper;
 import chaschev.json.JacksonMapper;

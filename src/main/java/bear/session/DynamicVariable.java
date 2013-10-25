@@ -89,9 +89,15 @@ public class DynamicVariable<T> implements Nameable<T> {
         return name;
     }
 
-    public final T apply(Object $) {
-        if (defaultValue == null && dynamicImplementation == null) {
-            throw new UnsupportedOperationException("you should implement dynamic variable :" + name + " or set its default value");
+    public final T apply(AbstractContext $) {
+        return (T) apply($, defaultValue);
+    }
+
+    public final Object apply(AbstractContext $, Object _default) {
+        if(_default != VarFun.UNDEFINED){
+            if (defaultValue == null && dynamicImplementation == null) {
+                throw new UnsupportedOperationException("you should implement dynamic variable :" + name + " or set its default value");
+            }
         }
 
         if (dynamicImplementation != null) {
@@ -99,23 +105,32 @@ public class DynamicVariable<T> implements Nameable<T> {
                 return defaultValue;
             }
 
-//            if (dynamicImplementation instanceof VarFun<?, ?>) {
-//                ((VarFun<?, AbstractContext>) dynamicImplementation).set$($);
-//            }
-
-            final T r = ((VarFun<T, AbstractContext>)dynamicImplementation).apply((AbstractContext) $);
+            final T r = ((VarFun<T, AbstractContext>)dynamicImplementation).apply($);
 
             if (memoize) {
                 defaultValue = r;
             }
 
-            logger.trace(":{} (dynamic): {}", name, r);
+            if(logger.isTraceEnabled()){
+                logger.trace(":{} (dynamic): {}", $.getName(), name, r);
+            }
+
             return r;
         }
 
-        logger.trace(":{} (default): {}", name, defaultValue);
+        if($.isGlobal()){
+            if(logger.isTraceEnabled()){
+                logger.trace("{}: :{} (default): {}", $.getName(), name, defaultValue);
+            }
 
-        return defaultValue;
+            return defaultValue;
+        }else{
+            if(logger.isTraceEnabled()){
+                logger.trace("{}: :{} = UNDEFINED", $.getName(), name);
+            }
+
+            return _default;
+        }
     }
 
     public T getDefaultValue() {
@@ -190,7 +205,7 @@ public class DynamicVariable<T> implements Nameable<T> {
         return this;
     }
 
-    public DynamicVariable<T> setDesc(String desc) {
+    public DynamicVariable<T> desc(String desc) {
         this.desc = desc;
         return this;
     }

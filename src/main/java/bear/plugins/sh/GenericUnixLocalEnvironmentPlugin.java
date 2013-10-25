@@ -21,6 +21,7 @@ import bear.console.AbstractConsoleCommand;
 import bear.console.ConsoleCallback;
 import bear.core.GlobalContext;
 import bear.core.SessionContext;
+import bear.core.Shell;
 import bear.session.ProcessRunner;
 import bear.session.Result;
 import bear.task.Task;
@@ -46,11 +47,14 @@ import java.util.List;
 /**
  * @author Andrey Chaschev chaschev@gmail.com
  */
+
+@Shell("sh")
 public class GenericUnixLocalEnvironmentPlugin extends SystemEnvironmentPlugin {
     private static final Logger logger = LoggerFactory.getLogger(GenericUnixLocalEnvironmentPlugin.class);
 
     public GenericUnixLocalEnvironmentPlugin(GlobalContext global) {
         super(global, "local unix plugin");
+        this.shell = new ShShellMode(this, cmdAnnotation());
     }
 
     @Override

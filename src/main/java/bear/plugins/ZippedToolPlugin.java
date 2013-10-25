@@ -44,11 +44,11 @@ public abstract class ZippedToolPlugin extends Plugin<Task, TaskDef<?>> {
         version = dynamic("version of the tool, a string which is return by a tool identifying it's version"),
         toolname = dynamic("this will be the name of home folder, i.e. maven, jdk"),
         toolDistrName = Variables.strVar("i.e. apache-tomcat").setEqualTo(toolname),
-        versionName = concat(toolDistrName, "-", version).setDesc("i.e. apache-maven-3.0.5"),
+        versionName = concat(toolDistrName, "-", version).desc("i.e. apache-maven-3.0.5"),
         distrFilename = concat(versionName, ".tar.gz"),
         homeParentPath = Variables.newVar("/var/lib"),
-        homePath = concat(homeParentPath,"/", toolname).setDesc("Tool root dir"),
-        homeVersionPath = concat(homeParentPath, "/", versionName).setDesc("i.e. /var/lib/apache-maven-7.0.42"),
+        homePath = concat(homeParentPath,"/", toolname).desc("Tool root dir"),
+        homeVersionPath = concat(homeParentPath, "/", versionName).desc("i.e. /var/lib/apache-maven-7.0.42"),
         currentVersionPath = concat(homeParentPath, "/", versionName),
 
         myDirPath,
@@ -58,7 +58,7 @@ public abstract class ZippedToolPlugin extends Plugin<Task, TaskDef<?>> {
 
     public ZippedToolPlugin(GlobalContext global) {
         super(global);
-        myDirPath = concat(bear.sharedPath, "/", toolname).setDesc("a path in a shared dir, i.e. /var/lib/<app-name>/shared/maven");
+        myDirPath = concat(bear.sharedPath, "/", toolname).desc("a path in a shared dir, i.e. /var/lib/<app-name>/shared/maven");
         buildPath = concat(myDirPath, "/build");
     }
 

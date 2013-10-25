@@ -16,6 +16,6 @@ public class SingleTaskScript extends Script {
     protected void configure() throws Exception {
         bear.stage.defaultTo("two");//todo fixme!!
         bear.task.defaultTo(taskDef);
-        bear.checkDependencies.defaultTo(false);
+//        bear.checkDependencies.defaultTo(false);
     }
 }

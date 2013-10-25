@@ -47,12 +47,12 @@ public class MySqlPlugin extends Plugin<Task, TaskDef<?>> {
     private static final Logger logger = LoggerFactory.getLogger(MySqlPlugin.class);
 
     public final DynamicVariable<String>
-        version = Variables.strVar().setDesc("null means ANY").defaultTo(null),
-        adminUser = Variables.strVar().setDesc("admin user").defaultTo("root"),
-        adminPassword = Variables.strVar().setDesc("admin password").defaultTo("root"),
-        dbName = Variables.strVar().setDesc("database name"),
-        user = Variables.strVar().setDesc("default user for operations").setEqualTo(adminUser),
-        password = Variables.strVar().setDesc("pw").setEqualTo(adminPassword),
+        version = Variables.strVar().desc("null means ANY").defaultTo(null),
+        adminUser = Variables.strVar().desc("admin user").defaultTo("root"),
+        adminPassword = Variables.strVar().desc("admin password").defaultTo("root"),
+        dbName = Variables.strVar().desc("database name"),
+        user = Variables.strVar().desc("default user for operations").setEqualTo(adminUser),
+        password = Variables.strVar().desc("pw").setEqualTo(adminPassword),
         serverPackage = Variables.newVar("mysql55-server"),
         clientPackage = Variables.newVar("mysql55"),
         mysqlTempScriptName = Variables.strVar().defaultTo("temp.sql"),

@@ -1,4 +1,4 @@
-package bear.main;
+package bear.main.event;
 
 import chaschev.json.JacksonMapper;
 import chaschev.json.Mapper;

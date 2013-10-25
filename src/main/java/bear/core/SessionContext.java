@@ -41,7 +41,6 @@ import static bear.session.Variables.dynamic;
 public class SessionContext extends AbstractContext{
     public static final DateTimeFormatter TIME_FORMATTER = DateTimeFormat.forPattern("HH:mm:ss:SSS");
     //    public final GlobalContext globalContext;
-    private GlobalContext global;
     public final SystemEnvironmentPlugin.SystemSessionDef sysDef;
     public GenericUnixLocalEnvironmentPlugin localSysEnv;
     public GenericUnixRemoteEnvironmentPlugin remoteSysEnv;
@@ -53,8 +52,8 @@ public class SessionContext extends AbstractContext{
 
     public class ExecutionContext{
         public final DateTime startedAt = new DateTime();
-        public final DynamicVariable<StringBuilder> text = dynamic(StringBuilder.class).setDesc("text appended in session").defaultTo(new StringBuilder(8192));
-        public final DynamicVariable<String> textAppended = dynamic(String.class).setDesc("text appended in session").defaultTo("");
+        public final DynamicVariable<StringBuilder> text = dynamic(StringBuilder.class).desc("text appended in session").defaultTo(new StringBuilder(8192));
+        public final DynamicVariable<String> textAppended = dynamic(String.class).desc("text appended in session").defaultTo("");
         public final DynamicVariable<TaskExecutionContext> rootExecutionContext = dynamic(TaskExecutionContext.class);
         public final DynamicVariable<Task> currentTask = dynamic(Task.class);
         public final DynamicVariable<CommandExecutionEntry> currentCommand = dynamic(CommandExecutionEntry.class);
@@ -78,6 +77,7 @@ public class SessionContext extends AbstractContext{
         this.runner = runner;
 
         global.wire(this);       //sets bear, global and the SystemEnvironment plugin =)
+        this.global = global;
 
         layer.put(bear.sessionHostname, address.getName());
         layer.put(bear.sessionAddress, address.getAddress());
@@ -90,6 +90,7 @@ public class SessionContext extends AbstractContext{
         sysDef = ((address instanceof SshAddress) ? remoteSysEnv : localSysEnv).getTaskDef();
         sys = sysDef.newSession(this, null);
 
+        this.layer.name = address.getName();
 
         if (address instanceof SshAddress) {
             SshAddress a = (SshAddress) address;
@@ -181,7 +182,7 @@ public class SessionContext extends AbstractContext{
 
     @Override
     public GlobalContext getGlobal() {
-        return global;
+        return (GlobalContext) global;
     }
 
     public String getName() {

@@ -13,8 +13,8 @@ import bear.task.TaskRunner;
 * @author Andrey Chaschev chaschev@gmail.com
 */
 public class ShShellMode extends PluginShellMode implements CommandInterpreter {
-    public ShShellMode(Plugin plugin) {
-        super(plugin, "sh");
+    public ShShellMode(Plugin plugin, String shortCut) {
+        super(plugin, shortCut);
     }
 
     public Task interpret(final String command, SessionContext $, Task parent, TaskDef taskDef){
@@ -27,5 +27,10 @@ public class ShShellMode extends PluginShellMode implements CommandInterpreter {
                     .run();
             }
         };
+    }
+
+    @Override
+    public boolean multiLine() {
+        return false;
     }
 }

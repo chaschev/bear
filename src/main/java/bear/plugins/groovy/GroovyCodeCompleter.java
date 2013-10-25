@@ -154,7 +154,8 @@ public class GroovyCodeCompleter {
 
             return new Replacements(start, end).addAll(candidates);
         } else {
-            firstTokenClass = shell.getVariable(tokens.get(0).name).getClass();
+            Object variable = shell.getVariable(tokens.get(0).name);
+            firstTokenClass = variable == null ? null : variable.getClass();
         }
 
         List<Class<?>> currentClasses = firstTokenClass == null ? new ArrayList<Class<?>>() : Lists.<Class<?>>newArrayList(firstTokenClass);

@@ -52,7 +52,6 @@ public abstract class SystemEnvironmentPlugin extends Plugin<SystemSession, Syst
         super(global, new SystemSessionDef());
         taskDefMixin.setPlugin(this);
         this.name = name;
-        this.shell = new ShShellMode(this);
     }
 
     public static ConsoleCallback passwordCallback(final String password) {

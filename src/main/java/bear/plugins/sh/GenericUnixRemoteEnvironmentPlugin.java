@@ -56,11 +56,16 @@ import java.util.concurrent.TimeUnit;
 /**
  * @author Andrey Chaschev chaschev@gmail.com
  */
+
+@Shell("ssh")
 public class GenericUnixRemoteEnvironmentPlugin extends SystemEnvironmentPlugin {
     private static final Logger logger = LoggerFactory.getLogger(GenericUnixRemoteEnvironmentPlugin.class);
 
     public GenericUnixRemoteEnvironmentPlugin(GlobalContext global) {
         super(global, "remote unix plugin");
+
+
+        this.shell = new ShShellMode(this, cmdAnnotation());
     }
 
     public static class RemoteConsole extends AbstractConsole {
@@ -84,9 +89,9 @@ public class GenericUnixRemoteEnvironmentPlugin extends SystemEnvironmentPlugin 
         return new SystemSession(parent, taskDefMixin, $) {
 
             {
-                Preconditions.checkNotNull($.address);
-                Preconditions.checkNotNull($.address.getName());
-                Preconditions.checkNotNull($.address.getAddress());
+                Preconditions.checkNotNull($.address, "address not initialized");
+                Preconditions.checkNotNull($.address.getName(), "address not initialized");
+                Preconditions.checkNotNull($.address.getAddress(), "address not initialized");
 
                 address = $.address;
             }

@@ -19,6 +19,8 @@ public abstract class PluginShellMode<T extends Plugin> implements CommandInterp
     protected PluginShellMode(T plugin, String commandName) {
         this.plugin = plugin;
         this.commandName = commandName;
+        this.global = plugin.getGlobal();
+        this.bear = global.bear;
     }
 
     public String getCommandName() {
@@ -32,7 +34,7 @@ public abstract class PluginShellMode<T extends Plugin> implements CommandInterp
 
     @Override
     public Stage getStage() {
-        return global.var(bear.getStage);
+        return null;
     }
 
     /**
@@ -49,5 +51,13 @@ public abstract class PluginShellMode<T extends Plugin> implements CommandInterp
     @Override
     public Replacements completeCode(String script, int position) {
         return Replacements.EMPTY;
+    }
+
+    /**
+     * JS, Groovy, Java are multi-line. Sh is not.
+     * @return
+     */
+    public boolean multiLine(){
+        return true;
     }
 }

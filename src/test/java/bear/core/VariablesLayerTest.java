@@ -57,16 +57,16 @@ public class VariablesLayerTest {
 
     @Test
     public void testAutowires1_ScopedBinding(){
-//        assertThat(layer.wire(new AutoWiring1()).list).isNull();
-//        assertThat(layer.wire(new AutoWiring1()).arrayList).isNull();
-//        assertThat(layer.wire(new AutoWiring1()).linkedList).isNull();
-//        assertThat(layer.wire(new AutoWiring1()).s1).isEqualTo("s1");
-//        assertThat(layer.wire(new AutoWiring1()).s3).isNull();
+        assertThat(layer.wire(new AutoWiring1()).s1).isEqualTo("s1");
+        assertThat(layer.wire(new AutoWiring1()).list).isNull();
+        assertThat(layer.wire(new AutoWiring1()).arrayList).isNull();
+        assertThat(layer.wire(new AutoWiring1()).linkedList).isNull();
+        assertThat(layer.wire(new AutoWiring1()).s3).isNull();
 
-        layer.putConst("MyVars.s3", "s3");
-        layer.putConstObj("MyVars.list", new ArrayList());
-        layer.putConstObj("MyVars.linkedList", new LinkedList());
-        layer.putConstObj("MyVars.arrayList", new ArrayList());
+        layer.putConst("myVars.s3", "s3");
+        layer.putConstObj("myVars.list", new ArrayList());
+        layer.putConstObj("myVars.linkedList", new LinkedList());
+        layer.putConstObj("myVars.arrayList", new ArrayList());
 
         assertThat(layer.wire(new AutoWiring1()).s3).isEqualTo("s3");
         assertThat(layer.wire(new AutoWiring1()).list).isNotNull();

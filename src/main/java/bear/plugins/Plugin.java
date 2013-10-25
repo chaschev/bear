@@ -17,10 +17,7 @@
 package bear.plugins;
 
 import bear.console.AbstractConsole;
-import bear.core.Bear;
-import bear.core.GlobalContext;
-import bear.core.Role;
-import bear.core.SessionContext;
+import bear.core.*;
 import bear.task.*;
 
 import java.util.Set;
@@ -151,5 +148,9 @@ public abstract class Plugin<TASK extends Task, TASK_DEF extends TaskDef<? exten
 
     public GlobalContext getGlobal() {
         return global;
+    }
+
+    protected final String cmdAnnotation() {
+        return this.getClass().getAnnotation(Shell.class).value();
     }
 }
