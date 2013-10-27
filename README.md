@@ -44,6 +44,7 @@ frame = javax.swing.JFrame("close me!")
 frame.add(javax.swing.JButton("click me!"))
 frame.setSize(200, 100)
 frame.visible = true
+```
 
 ### Bear UI
 
