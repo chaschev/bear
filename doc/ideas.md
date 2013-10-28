@@ -4,6 +4,8 @@
 
 If you look at the [Capistrano tag](http://stackoverflow.com/questions/tagged/capistrano) at Stackoverflow, you will notice that Java is almost never used with Capistrano though recommended to use as a universal deployment tool. Bear is there to fill this gap.
 
+Other advantages of having Capistrano
+
 ### <a id="id-goes-here">Start a new project with remote resource deployments
 
     $ bear --capify
@@ -59,9 +61,15 @@ Bear script is a sequence of plugin shell executions.
 :use shell groovy
 
 # this enables the session-scope, task is distributed between hosts
-:set groovy.sendToHosts=true
-runner.runTask(tasks.deploy)
-runner.runTask(tasks.restartApp)
+:set stage='two'
+:set groovyShell.sendToHosts=true
+:use shell ssh
+pwd
+:set bear.overriddenInteractiveRun=false
+:set bear.autoInstallPlugins=true
+:use shell groovy
+runner.run(tasks.setup)
+
 
 # switch to remote sh mode (distributed)
 :use shell remote
@@ -79,6 +87,8 @@ show tables;
 _.run(tasks.deploy)
 _.run(tasks.restartApp)
 ```
+
+
 
 ### Run commands from console
 
@@ -146,3 +156,6 @@ Terminal log will contain
 
 - badges like (task 'setup') and (command 'ls xxx')
 - plain text in between
+
+### FAQ
+

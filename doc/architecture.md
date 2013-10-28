@@ -20,3 +20,20 @@ Plugin initialization:
 5. Topologically sort the graph
 6. Initialize plugins (plugin.initPlugin)
 
+### DI
+
+Think of a DI engine
+
+### Distributed bear installation
+
+This is an idea so far.
+
+Installation:
+
+1. Copy files
+2. Install as a service
+
+Remote execution plugin
+
+- Netty/Akka/KryoNet request handler (so there is BearFX, BearCLI, BearCLI + BearRemotePlugin)
+- Receives messages: { settings: {type: [file|string], }, shell:

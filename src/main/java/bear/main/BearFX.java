@@ -127,10 +127,6 @@ public class BearFX {
 
                 configurator.configure();
 
-                //////////
-                //////////
-                //////////
-
                 final WebView webView = new WebView();
                 webEngine = webView.getEngine();
 

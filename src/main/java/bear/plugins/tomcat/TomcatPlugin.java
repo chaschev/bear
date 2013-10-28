@@ -16,9 +16,9 @@
 
 package bear.plugins.tomcat;
 
+import bear.core.Fun;
 import bear.core.GlobalContext;
 import bear.core.SessionContext;
-import bear.core.VarFun;
 import bear.plugins.AbstractContext;
 import bear.plugins.ZippedToolPlugin;
 import bear.session.BearVariables;
@@ -61,7 +61,7 @@ public class TomcatPlugin extends ZippedToolPlugin {
         webapps = Variables.condition(bear.isUnix, webappsUnix, webappsWin);
         warPath = BearVariables.joinPath(webapps, warName);
 
-        distrWwwAddress.setDynamic(new VarFun<String, AbstractContext>() {
+        distrWwwAddress.setDynamic(new Fun<String, AbstractContext>() {
             public String apply(AbstractContext $) {
                 String version = $.var(TomcatPlugin.this.version);
 
@@ -144,7 +144,7 @@ public class TomcatPlugin extends ZippedToolPlugin {
         }
     };
 
-    public final DynamicVariable<String[]> warCacheDirs = Variables.dynamic(new VarFun<String[], SessionContext>() {
+    public final DynamicVariable<String[]> warCacheDirs = Variables.dynamic(new Fun<String[], SessionContext>() {
         public String[] apply(SessionContext $) {
             final String name = FilenameUtils.getBaseName($.var(warName));
             return new String[]{

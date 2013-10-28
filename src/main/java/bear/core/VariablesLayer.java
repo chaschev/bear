@@ -31,7 +31,7 @@ import javax.annotation.Nullable;
 import java.lang.reflect.Field;
 import java.util.LinkedHashMap;
 
-import static bear.core.VarFun.UNDEFINED;
+import static bear.core.Fun.UNDEFINED;
 
 public class VariablesLayer extends HavingContext<Variables, AbstractContext> {
     private static final Logger logger = LoggerFactory.getLogger(VariablesLayer.class);

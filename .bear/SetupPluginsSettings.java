@@ -57,7 +57,7 @@ public class SetupPluginsSettings extends IBearSettings {
                 )
         );
 
-        bear.getStrategy.setDynamic(new VarFun<DeployStrategyTaskDef, SessionContext>() {
+        bear.getStrategy.setDynamic(new Fun<DeployStrategyTaskDef, SessionContext>() {
 
             public DeployStrategyTaskDef apply(final SessionContext $) {
                 grails.projectPath.setEqualTo(

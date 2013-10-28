@@ -57,7 +57,7 @@ public class Bear {
     public final DynamicVariable<String>
 
 
-    applicationsPath = strVar("System apps folder").setDynamic(new VarFun<String, SessionContext>() {
+    applicationsPath = strVar("System apps folder").setDynamic(new Fun<String, SessionContext>() {
         public String apply(SessionContext $) {
             return $.sys.isNativeUnix() ? "/var/lib" : "c:";
         }
@@ -65,7 +65,7 @@ public class Bear {
 
     bearPath = BearVariables.joinPath(applicationsPath, "bear"),
 
-    logsPath = strVar("System apps folder").setDynamic(new VarFun<String, SessionContext>() {
+    logsPath = strVar("System apps folder").setDynamic(new Fun<String, SessionContext>() {
         public String apply(SessionContext $) {
             return $.sys.isNativeUnix() ? "/var/log" : "c:";
         }
@@ -73,7 +73,7 @@ public class Bear {
 
     taskName = strVar("A task to run").defaultTo("deploy");
 
-    public final DynamicVariable<TaskDef> task = dynamic(new VarFun<TaskDef, SessionContext>() {
+    public final DynamicVariable<TaskDef> task = dynamic(new Fun<TaskDef, SessionContext>() {
         @Override
         public TaskDef apply(SessionContext $) {
             return (TaskDef) OpenBean.getFieldValue(global.tasks, $.var(taskName));
@@ -132,13 +132,13 @@ public class Bear {
 
     devEnvironment = enumConstant("devEnvironment", "Development environment", "dev", "test", "prod").defaultTo("prod"),
 
-    revision = strVar("Get head revision").setDynamic(new VarFun<String, SessionContext>() {
+    revision = strVar("Get head revision").setDynamic(new Fun<String, SessionContext>() {
         public String apply(SessionContext $) {
             return vcs.apply($).head();
         }
     }),
 
-    realRevision = strVar("Update revision from vcs").setDynamic(new VarFun<String, SessionContext>() {
+    realRevision = strVar("Update revision from vcs").setDynamic(new Fun<String, SessionContext>() {
         public String apply(SessionContext $) {
             final VcsCLIPlugin.Session vcsCLI = $.var(vcs);
             final Script<BranchInfoResult> line =
@@ -166,7 +166,7 @@ public class Bear {
 
     vcsBranchURI = BearVariables.joinPath(repositoryURI, vcsBranchName),
 
-    getLatestReleasePath = dynamic(new VarFun<String, SessionContext>() {
+    getLatestReleasePath = dynamic(new Fun<String, SessionContext>() {
         public String apply(SessionContext $) {
             final Releases r = $.var(getReleases);
 
@@ -176,7 +176,7 @@ public class Bear {
         }
     }).memoize(true),
 
-    getPreviousReleasePath = dynamic(new VarFun<String, SessionContext>() {
+    getPreviousReleasePath = dynamic(new Fun<String, SessionContext>() {
         public String apply(SessionContext $) {
             final Releases r = $.var(getReleases);
 
@@ -186,19 +186,19 @@ public class Bear {
         }
     }).memoize(true),
 
-    getCurrentRevision = dynamic(new VarFun<String, SessionContext>() {
+    getCurrentRevision = dynamic(new Fun<String, SessionContext>() {
         public String apply(SessionContext $) {
             return $.sys.readString($.joinPath(currentPath, "REVISION"), null);
         }
     }).memoize(true),
 
-    getLatestReleaseRevision = strVar("").setDynamic(new VarFun<String, SessionContext>() {
+    getLatestReleaseRevision = strVar("").setDynamic(new Fun<String, SessionContext>() {
         public String apply(SessionContext $) {
             return $.sys.readString($.joinPath(getLatestReleasePath, "REVISION"), null);
         }
     }).memoize(true),
 
-    getPreviousReleaseRevision = strVar("").setDynamic(new VarFun<String, SessionContext>() {
+    getPreviousReleaseRevision = strVar("").setDynamic(new Fun<String, SessionContext>() {
         public String apply(SessionContext $) {
             return $.sys.readString($.joinPath(getPreviousReleasePath, "REVISION"), null);
         }
@@ -211,17 +211,17 @@ public class Bear {
         speedUpBuild = and(not(productionDeployment), not(clean)),
         vcsAuthCache = dynamic(""),
         vcsPreferPrompt = dynamic(""),
-        isRemoteEnv = dynamic(new VarFun<Boolean, SessionContext>() {
+        isRemoteEnv = dynamic(new Fun<Boolean, SessionContext>() {
             public Boolean apply(SessionContext $) {
                 return $.sys.isRemote();
             }
         }),
-        isNativeUnix = dynamic(new VarFun<Boolean, SessionContext>() {
+        isNativeUnix = dynamic(new Fun<Boolean, SessionContext>() {
             public Boolean apply(SessionContext $) {
                 return $.sys.isNativeUnix();
             }
         }),
-        isUnix = dynamic(new VarFun<Boolean, SessionContext>() {
+        isUnix = dynamic(new Fun<Boolean, SessionContext>() {
             public Boolean apply(SessionContext $) {
                 return $.sys.isUnix();
             }
@@ -239,14 +239,14 @@ public class Bear {
         taskTimeoutSec = newVar(15 * 60)
     ;
 
-    public final DynamicVariable<Releases> getReleases = new DynamicVariable<Releases>("getReleases", "").setDynamic(new VarFun<Releases, SessionContext>() {
+    public final DynamicVariable<Releases> getReleases = new DynamicVariable<Releases>("getReleases", "").setDynamic(new Fun<Releases, SessionContext>() {
         public Releases apply(SessionContext $) {
             return new Releases($.sys.ls($.var(releasesPath)));
         }
     });
 
     public final DynamicVariable<Stages> stages = new DynamicVariable<Stages>("List of stages. Stage is collection of servers with roles and auth defined for each of the server.");
-    public final DynamicVariable<Stage> getStage = dynamic(new VarFun<Stage, GlobalContext>() {
+    public final DynamicVariable<Stage> getStage = dynamic(new Fun<Stage, GlobalContext>() {
         public Stage apply(GlobalContext $) {
             return findStage($);
         }
@@ -270,7 +270,7 @@ public class Bear {
         return stage;
     }
 
-    public final DynamicVariable<VcsCLIPlugin.Session> vcs = new DynamicVariable<VcsCLIPlugin.Session>("vcs", "VCS adapter").setDynamic(new VarFun<VcsCLIPlugin.Session, SessionContext>() {
+    public final DynamicVariable<VcsCLIPlugin.Session> vcs = new DynamicVariable<VcsCLIPlugin.Session>("vcs", "VCS adapter").setDynamic(new Fun<VcsCLIPlugin.Session, SessionContext>() {
         public VcsCLIPlugin.Session apply(SessionContext $) {
             Class<? extends VcsCLIPlugin> vcsCLI = null;
 
@@ -288,7 +288,7 @@ public class Bear {
 
     public final DynamicVariable<File>
         scriptsDir = newVar(new File(".bear")),
-        globalPropertiesFile = dynamic(new VarFun<File, SessionContext>() {
+        globalPropertiesFile = dynamic(new Fun<File, SessionContext>() {
             public File apply(SessionContext $) {
                 return new File($.var(scriptsDir), "global.properties");
             }

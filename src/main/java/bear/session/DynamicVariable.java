@@ -16,6 +16,7 @@
 
 package bear.session;
 
+import bear.core.Fun;
 import bear.core.Nameable;
 import bear.core.VarFun;
 import bear.plugins.AbstractContext;
@@ -33,7 +34,7 @@ public class DynamicVariable<T> implements Nameable<T> {
 
     public static abstract class ChangeListener<T>{
         public abstract void changedValue(DynamicVariable<T> var, T oldValue, T newValue);
-        public void changedDynamic(DynamicVariable<T> var, VarFun<T, ? extends AbstractContext> oldFun, VarFun<T, ? extends AbstractContext> newFun){}
+        public void changedDynamic(DynamicVariable<T> var, Fun<T, ? extends AbstractContext> oldFun, Fun<T, ? extends AbstractContext> newFun){}
     }
 
     protected List<ChangeListener<T>> listeners;
@@ -46,7 +47,7 @@ public class DynamicVariable<T> implements Nameable<T> {
     public String name;
     public String desc;
 
-    protected VarFun<T, ? extends AbstractContext> dynamicImplementation;
+    protected Fun<T, ? extends AbstractContext> fun;
 
     T defaultValue;
 
@@ -94,18 +95,18 @@ public class DynamicVariable<T> implements Nameable<T> {
     }
 
     public final Object apply(AbstractContext $, Object _default) {
-        if(_default != VarFun.UNDEFINED){
-            if (defaultValue == null && dynamicImplementation == null) {
+        if(_default != Fun.UNDEFINED){
+            if (defaultValue == null && fun == null) {
                 throw new UnsupportedOperationException("you should implement dynamic variable :" + name + " or set its default value");
             }
         }
 
-        if (dynamicImplementation != null) {
+        if (fun != null) {
             if (memoize && defaultValue != null) {
                 return defaultValue;
             }
 
-            final T r = ((VarFun<T, AbstractContext>)dynamicImplementation).apply($);
+            final T r = ((Fun<T, AbstractContext>)fun).apply($);
 
             if (memoize) {
                 defaultValue = r;
@@ -146,9 +147,9 @@ public class DynamicVariable<T> implements Nameable<T> {
     }
 
     public DynamicVariable<T> defaultTo(T defaultValue, boolean force) {
-        if (dynamicImplementation != null) {
+        if (fun != null) {
             if (force) {
-                dynamicImplementation = null;
+                fun = null;
                 memoize = false;
             } else {
                 throw new IllegalStateException("use force to override dynamic implementation");
@@ -163,11 +164,15 @@ public class DynamicVariable<T> implements Nameable<T> {
         return this;
     }
 
-    public DynamicVariable<T> setDynamic(VarFun<T, ? extends AbstractContext> impl) {
-        VarFun<T, ? extends AbstractContext> oldFun = this.dynamicImplementation;
-        this.dynamicImplementation = impl;
+    public DynamicVariable<T> setDynamic(Fun<T, ? extends AbstractContext> impl) {
+        Fun<T, ? extends AbstractContext> oldFun = this.fun;
+        this.fun = impl;
 
-        impl.setVar(this);
+        if (impl instanceof VarFun<?, ?>) {
+            VarFun<T, ?> varFun = (VarFun<T, ?>) impl;
+
+            varFun.setVar(this);
+        }
 
         defaultValue = null;
 
@@ -238,11 +243,11 @@ public class DynamicVariable<T> implements Nameable<T> {
     }
 
     public boolean isSet() {
-        return dynamicImplementation != null || defaultValue != null;
+        return fun != null || defaultValue != null;
     }
 
     public DynamicVariable<T> setEqualTo(final DynamicVariable<T> variable) {
-        setDynamic(new VarFun<T, AbstractContext>() {
+        setDynamic(new Fun<T, AbstractContext>() {
             public T apply(AbstractContext $) {
                 return variable.apply($);
             }

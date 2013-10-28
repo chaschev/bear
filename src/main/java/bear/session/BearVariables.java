@@ -1,7 +1,7 @@
 package bear.session;
 
+import bear.core.Fun;
 import bear.core.SessionContext;
-import bear.core.VarFun;
 import com.google.common.base.Function;
 import com.google.common.collect.Iterables;
 
@@ -16,7 +16,7 @@ public class BearVariables {
     }
 
     public static DynamicVariable<String> joinPath(String name, final DynamicVariable<String> root, final String... folders) {
-        return Variables.strVar("").setDynamic(new VarFun<String, SessionContext>() {
+        return Variables.strVar("").setDynamic(new Fun<String, SessionContext>() {
             public String apply(SessionContext $) {
                 return $.sys.joinPath($.var(root), $.joinPath(folders));
             }
@@ -28,7 +28,7 @@ public class BearVariables {
     }
 
     public static DynamicVariable<String> joinPath(String name, final DynamicVariable... folders) {
-        return Variables.strVar("").setDynamic(new VarFun<String, SessionContext>() {
+        return Variables.strVar("").setDynamic(new Fun<String, SessionContext>() {
             public String apply(final SessionContext $) {
                 return $.sys.joinPath(Iterables.transform(Arrays.asList(folders), new Function<DynamicVariable, String>() {
                     public String apply(DynamicVariable var) {

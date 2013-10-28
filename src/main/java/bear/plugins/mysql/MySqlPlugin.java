@@ -19,15 +19,15 @@ package bear.plugins.mysql;
 import bear.console.AbstractConsole;
 import bear.console.ConsoleCallback;
 import bear.core.Bear;
-import bear.core.SessionContext;
+import bear.core.Fun;
 import bear.core.GlobalContext;
-import bear.core.VarFun;
+import bear.core.SessionContext;
 import bear.plugins.AbstractContext;
+import bear.plugins.Plugin;
 import bear.plugins.sh.SystemEnvironmentPlugin;
 import bear.plugins.sh.SystemSession;
 import bear.session.*;
 import bear.task.*;
-import bear.plugins.Plugin;
 import bear.vcs.CommandLineResult;
 import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTime;
@@ -56,13 +56,13 @@ public class MySqlPlugin extends Plugin<Task, TaskDef<?>> {
         serverPackage = Variables.newVar("mysql55-server"),
         clientPackage = Variables.newVar("mysql55"),
         mysqlTempScriptName = Variables.strVar().defaultTo("temp.sql"),
-        mysqlTempScriptPath = Variables.dynamic(new VarFun<String, SessionContext>() {
+        mysqlTempScriptPath = Variables.dynamic(new Fun<String, SessionContext>() {
             @Override
             public String apply(SessionContext $) {
                 return $.sys.joinPath($.var(bear.projectSharedPath), $.var(mysqlTempScriptName));
             }
         }),
-        dumpName = Variables.dynamic(new VarFun<String, AbstractContext>() {
+        dumpName = Variables.dynamic(new Fun<String, AbstractContext>() {
             @Override
             public String apply(AbstractContext $) {
                 return String.format("dump_%s_%s.GMT_%s.sql",
@@ -70,13 +70,13 @@ public class MySqlPlugin extends Plugin<Task, TaskDef<?>> {
             }
         }),
         dumpsDirPath = BearVariables.joinPath(bear.projectSharedPath, "dumps"),
-        dumpPath = Variables.dynamic(new VarFun<String, SessionContext>() {
+        dumpPath = Variables.dynamic(new Fun<String, SessionContext>() {
             public String apply(SessionContext $) {
                 return $.sys.joinPath($.var(dumpsDirPath), $.var(dumpName) + ".bz2");
             }
         });
 
-    public final DynamicVariable<Version> getVersion = Variables.dynamic(new VarFun<Version, AbstractContext>() {
+    public final DynamicVariable<Version> getVersion = Variables.dynamic(new Fun<Version, AbstractContext>() {
         @Override
         public Version apply(AbstractContext $) {
             return Version.fromString($.var(version));

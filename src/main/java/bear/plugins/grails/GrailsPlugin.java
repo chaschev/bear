@@ -16,38 +16,38 @@
 
 package bear.plugins.grails;
 
-import bear.core.SessionContext;
+import bear.core.Fun;
 import bear.core.GlobalContext;
-import bear.core.VarFun;
+import bear.core.SessionContext;
 import bear.plugins.AbstractContext;
-import bear.session.BearVariables;
-import bear.session.Variables;
-import bear.task.*;
 import bear.plugins.ZippedToolPlugin;
 import bear.plugins.java.JavaPlugin;
+import bear.session.BearVariables;
 import bear.session.DynamicVariable;
+import bear.session.Variables;
+import bear.task.*;
 import org.apache.commons.lang3.StringUtils;
 
-import static bear.session.Variables.*;
+import static bear.session.Variables.dynamic;
 
 /**
  * @author Andrey Chaschev chaschev@gmail.com
  */
 public class GrailsPlugin extends ZippedToolPlugin {
     public final DynamicVariable<String>
-        homeParentPath = dynamic(new VarFun<String, AbstractContext>() {
+        homeParentPath = dynamic(new Fun<String, AbstractContext>() {
         public String apply(AbstractContext $) {
             return StringUtils.substringBeforeLast($.var(homePath), "/");
         }
     }),
-        currentVersionPath = dynamic(new VarFun<String, SessionContext>() {
+        currentVersionPath = dynamic(new Fun<String, SessionContext>() {
             public String apply(SessionContext $) {
                 return $.sys.joinPath($.var(homeParentPath), "grails-" + $.var(version));
             }
         }),
         grailsBin = BearVariables.joinPath(homePath, "bin"),
         projectPath = dynamic("Project root dir"),
-        grailsExecName = dynamic("'grails' or 'grails.bat'", new VarFun<String, SessionContext>() {
+        grailsExecName = dynamic("'grails' or 'grails.bat'", new Fun<String, SessionContext>() {
             public String apply(SessionContext $) {
                 return "grails" + ($.sys.isNativeUnix() ? "" : ".bat");
             }
@@ -67,13 +67,13 @@ public class GrailsPlugin extends ZippedToolPlugin {
         super(global);
 
         toolname.defaultTo("grails", true);
-        distrFilename.setDynamic(new VarFun<String, SessionContext>() {
+        distrFilename.setDynamic(new Fun<String, SessionContext>() {
             @Override
             public String apply(SessionContext $) {
                 return $.concat(versionName, ".zip");
             }
         });
-        distrWwwAddress.setDynamic(new VarFun<String, SessionContext>() {
+        distrWwwAddress.setDynamic(new Fun<String, SessionContext>() {
             public String apply(SessionContext $) {
                 return String.format("http://dist.springframework.org.s3.amazonaws.com/release/GRAILS/%s", $.var(distrFilename));
             }

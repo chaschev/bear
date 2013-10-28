@@ -22,8 +22,7 @@ import bear.session.DynamicVariable;
 /**
  * @author Andrey Chaschev chaschev@gmail.com
  */
-public abstract class VarFun<T, CONTEXT extends AbstractContext> {
-    public static final Object UNDEFINED = new UndefinedReturnValue();
+public abstract class VarFun<T, CONTEXT extends AbstractContext> implements Fun<T,CONTEXT> {
 
     protected DynamicVariable<T> var;
 
@@ -31,16 +30,8 @@ public abstract class VarFun<T, CONTEXT extends AbstractContext> {
     }
 
 
-    public abstract T apply(CONTEXT $);
-
     public void setVar(DynamicVariable<T> var) {
         this.var = var;
     }
 
-    private static class UndefinedReturnValue {
-        @Override
-        public String toString() {
-            return "UNDEFINED";
-        }
-    }
 }

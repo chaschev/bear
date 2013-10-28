@@ -33,12 +33,14 @@
     alert("inside JS");
     try {
         alert("enableFirebug");
+
         $('#enableFirebug').click(function (e)
         {
             alert("Enable firebug - click handler");
             e.preventDefault();
             window.app.enableFirebug();
         });
+
         alert("importPackage");
 
 

@@ -54,7 +54,7 @@ public class BearSettings extends IBearSettings {
                     .add("pac-test", "10.22.13.6"))
         );
 
-        bear.getStrategy.setDynamic(new VarFun<DeployStrategyTaskDef, SessionContext>() {
+        bear.getStrategy.setDynamic(new Fun<DeployStrategyTaskDef, SessionContext>() {
             public DeployStrategyTaskDef apply(final SessionContext $) {
                 grails.projectPath.setEqualTo(
                     bear.vcsBranchLocalPath
