@@ -16,7 +16,6 @@
 
 package bear.core;
 
-import bear.plugins.AbstractContext;
 import bear.plugins.DependencyInjection;
 import bear.plugins.HavingContext;
 import bear.session.DynamicVariable;
@@ -37,7 +36,7 @@ public class VariablesLayer extends HavingContext<Variables, AbstractContext> {
     private static final Logger logger = LoggerFactory.getLogger(VariablesLayer.class);
 
     String name;
-    private final VariablesLayer fallbackVariablesLayer;
+    VariablesLayer fallbackVariablesLayer;
 
     protected LinkedHashMap<Object, Object> constants = new LinkedHashMap<Object, Object>();
     protected LinkedHashMap<String, DynamicVariable> variables = new LinkedHashMap<String, DynamicVariable>();

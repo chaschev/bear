@@ -25,17 +25,57 @@ app.directive('chosen',function() {
         restrict: 'A',
         link: function (scope, element, attrs)
         {
-            var selected = attrs['chosen'];
-
             var $element = $(element[0]);
 
-            scope.$watch(selected, function ()
+            scope.$watch(attrs['chosen'], function ()
             {
                 $element.trigger('liszt:updated');
                 $element.trigger("chosen:updated");
             });
 
+//            $element.find('option')[0].attr('selected', true);
+//            $element.trigger("chosen:updated");
+//            $element.trigger('liszt:updated');
+
             $element.chosen({width: "100%"});
+        }
+    }
+});
+
+app.directive('switch',function() {
+    return {
+        restrict: 'A',
+        transclude: true,
+        replace:true,
+        link: function (scope, element, attrs)
+        {
+            var template =
+                '<div class="make-switch switch-small" data-off-label="local" data-on-label="remote" data-on="success">' +
+                    '<input type="checkbox">' +
+                '</div>';
+
+            element.append(template);
+
+            var $element = $(element[0]).find('.make-switch');
+
+            $element.bootstrapSwitch();
+
+            var modelAttr = attrs['switch'];
+
+            scope.$watch(modelAttr, function (newVal)
+            {
+                $element.bootstrapSwitch('setState', newVal === true || newVal === 'true');
+            });
+
+            $element.on('switch-change', function (e, data)
+            {
+                Java.log('switch-change to ' + data.value);
+                if(!scope.$$phase) {
+                    scope.$apply(function(){
+                        scope[modelAttr] = data.value;
+                    });
+                }
+            });
         }
     }
 });
@@ -128,14 +168,22 @@ app.directive("consoleMessages", function ($compile) {
             };
 
             $scope.addCommand  = function(command){
-                $scope.$apply(function(){
+                //todo ask at SO if this is a good practice
+                var updateCommand = function () {
                     $scope.terminal.currentCommand = command;
                     $scope.terminal.currentCommandStartedAt = new Date();
-                });
+                };
+
+                if(!$scope.$$phase){
+                    $scope.$apply(updateCommand);
+                } else {
+                    updateCommand();
+                }
 
                 $messages.append($('<div class="console-command text-info">$ ' + command + '</div>'));
                 this.messageCount++;
             };
+
             } catch (e) {
                 Java.log(e);
             }
@@ -266,7 +314,7 @@ function BearCtrl($scope){
 
     });
 
-    $scope.buildScripts = function(){
+    $scope.buildScripts = function(callback){
         try {
             Java.log("building scripts...");
 
@@ -280,6 +328,10 @@ function BearCtrl($scope){
         $scope.lastBuildTime = new Date();
         $scope.$digest();
         $scope.$broadcast('buildFinished');
+
+        if(callback != null){
+            callback();
+        }
     };
 
     $scope.updateHosts = function(hosts){
@@ -347,7 +399,7 @@ function DropdownCtrl($scope) {
     }
 }
 
-app.controller('FileTabsCtrl', ['$scope', function($scope) {
+app.controller('FileTabsCtrl', ['$scope', '$q', function($scope, $q) {
     Java.log("FileTabsCtrl init");
 
     // a small cheat
@@ -387,15 +439,16 @@ app.controller('FileTabsCtrl', ['$scope', function($scope) {
         }
     }
 
-    $scope.$on('buildFinished', function(e, args){
-        Java.log("buildFinished - updating files");
-
+    $scope.updateOnBuild = function(){
         try {
+            Java.log("updateOnBuild - updating files");
+
             $scope.scripts.files = window.bear.call('conf', 'getScriptNames');
             $scope.settings.files = window.bear.call('conf', 'getSettingsNames');
 
             if ($scope.selectedFile == null || $scope.selectedFile === 'Loading') {
                 Java.log('initializing selectedFile');
+
                 $scope.scripts.selectedFile = window.bear.call('conf', 'getSelectedScript');
                 $scope.settings.selectedFile = window.bear.call('conf', 'getSelectedSettings');
 
@@ -408,6 +461,13 @@ app.controller('FileTabsCtrl', ['$scope', function($scope) {
         } catch (e) {
             Java.log(e);
         }
+    };
+
+    // triggered by
+    // this update is needed and is triggered for each build
+    $scope.$on('buildFinished', function(e, args){
+        Java.log("buildFinished - $on - updating files");
+
     });
 
 //    $scope.files= [{name:"Settings.java", id:1}, {name:"XX.java", id:2}];
@@ -463,7 +523,7 @@ app.controller('FileTabsCtrl', ['$scope', function($scope) {
 
         var content;
 
-        if(Java.isFX &&  window.bear.isReady()){
+        if(Java.isFX &&  window.bear.isReady() && newVal != 'Loading'){
             content = window.bear.call('conf', 'getFileText', newVal);
         }else{
             content = 'Content of file <' + newVal + '>';
@@ -480,16 +540,65 @@ var ConsoleTabsCtrl = function ($scope) {
 
 };
 
-var ConsoleTabsChildCtrl = function ($scope) {
-    $scope.sendCommand = function(){
-        Java.log('sendCommand, terminal: ', $scope.terminal, 'scope:', $scope);
+//app.controller('FileTabsCtrl', ['$scope', function($scope) {
+app.controller('ConsoleTabsChildCtrl', ['$scope', '$q', function ($scope, $q) {
+    var updateShell = function (remoteEnv, shellPlugin)
+    {
+        Java.log('updating shell to', remoteEnv, shellPlugin);
+        var commandText = '';
+
+        switch (shellPlugin) {
+            case 'sh':
+                commandText = ':use shell ' + (remoteEnv ? 'ssh' : 'sh') + '\n';
+                break;
+            case 'groovy':
+                commandText = ':use shell ' + shellPlugin + "\n" +
+                    ':set groovyShell.sendToHosts=' + remoteEnv;
+
+                break;
+        }
+
+        $scope.sendCommand(commandText);
+    };
+
+    $scope.$watch('remoteEnv', function(newVal, oldVal){
+        if (newVal !== oldVal) {
+            Java.log("'remoteEnv' changed to:" + newVal);
+
+            updateShell(newVal, $scope.shellPlugin);
+        }
+    });
+
+    $scope.$watch('shellPlugin', function(newVal, oldVal){
+        if (newVal !== oldVal) {
+            Java.log("'shellPlugin' changed to:" + newVal);
+            updateShell($scope.remoteEnv, newVal);
+        }
+    });
+
+    $scope.sendCommand = function (commandText)
+    {
+        var editor = $scope.editor;
+        commandText = commandText || editor.getValue();
+
+        Java.log('sendCommand \'' + commandText +"', terminal:", $scope.terminal.name);
+
+        var scriptName = $scope.scripts.selectedFile;
+        var settingsName = $scope.settings.selectedFile;
+
+        if(scriptName === 'Loading' || settingsName === 'Loading'){
+//            var defer = $q.defer();
+            return;
+        }
 
         var response = JSON.parse(window.bear.jsonCall('conf', 'interpret',
-                $scope.editor.getValue(),
-                JSON.stringify({
-            scriptName:$scope.scripts.selectedFile,
-            settingsName:$scope.settings.selectedFile})))
-            ;
+            commandText,
+            JSON.stringify({
+                scriptName: scriptName,
+                settingsName: settingsName})));
+
+        $scope.addCommand(commandText);
+        editor.setValue('');
 
         Java.log('interpret response:', response);
     };
@@ -527,8 +636,6 @@ var ConsoleTabsChildCtrl = function ($scope) {
             bindKey: {win: "Ctrl-Enter", mac: "Command-Enter"},
             exec: function(editor) {
                 $scope.sendCommand();
-                $scope.addCommand(editor.getValue(''));
-                editor.setValue('');
             }
         });
 
@@ -593,4 +700,4 @@ var ConsoleTabsChildCtrl = function ($scope) {
             }
         });
     };
-};
+}]);

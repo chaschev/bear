@@ -19,7 +19,7 @@ package bear.session;
 import bear.core.Fun;
 import bear.core.Nameable;
 import bear.core.VarFun;
-import bear.plugins.AbstractContext;
+import bear.core.AbstractContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

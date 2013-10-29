@@ -1,7 +1,5 @@
-package bear.plugins;
+package bear.core;
 
-import bear.core.Nameable;
-import bear.core.VariablesLayer;
 import bear.session.DynamicVariable;
 import bear.session.Variables;
 import chaschev.lang.OpenBean;
@@ -226,5 +224,13 @@ public abstract class AbstractContext {
 
     public boolean isGlobal(){
         return global == null;
+    }
+
+    public AbstractContext setParent(AbstractContext context){
+        layer.fallbackVariablesLayer = context.layer;
+        if(global == null){
+            global = context;
+        }
+        return this;
     }
 }

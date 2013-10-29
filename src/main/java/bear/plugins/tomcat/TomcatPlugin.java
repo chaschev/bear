@@ -19,7 +19,7 @@ package bear.plugins.tomcat;
 import bear.core.Fun;
 import bear.core.GlobalContext;
 import bear.core.SessionContext;
-import bear.plugins.AbstractContext;
+import bear.core.AbstractContext;
 import bear.plugins.ZippedToolPlugin;
 import bear.session.BearVariables;
 import bear.session.DynamicVariable;

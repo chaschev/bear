@@ -1,11 +1,11 @@
 package bear.core;
 
-import bear.plugins.AbstractContext;
+import com.google.common.base.Function;
 
 /**
  * @author Andrey Chaschev chaschev@gmail.com
  */
-public interface Fun<T, CONTEXT extends AbstractContext> {
+public interface Fun<T, CONTEXT extends AbstractContext> extends Function<CONTEXT, T> {
     Object UNDEFINED = new UndefinedReturnValue();
 
     T apply(CONTEXT $);

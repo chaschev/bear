@@ -62,6 +62,8 @@ public class JavaCompiler2 extends Compiler {
             }
         }
 
+        result.timestamp = System.currentTimeMillis();
+
         return result;
     }
 

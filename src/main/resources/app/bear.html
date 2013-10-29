@@ -21,10 +21,16 @@
     </script>
     <script src="js/ace/ui-ace.js"></script>
 
+    <script type="text/ng-template" id="bootstrap-switch.html">
+
+    </script>
+
+
     <script src="js/bear.js"></script>
     <script src="js/stacktrace.js"></script>
     <script src="js/java-bindings.js"></script>
     <script src="js/pretty-time.js"></script>
+    <script src="js/bootstrap-switch.min.js"></script>
 
     <!--<script src="js/perfect-scrollbar.js"></script>
     <script src="js/angular-perfect-scrollbar.js"></script>
@@ -36,15 +42,19 @@
 
 
 
+
+
     <link rel="stylesheet" href="css/bootstrap.min.css"/>
     <link rel="stylesheet" href="css/chosen.css"/>
     <link rel="stylesheet" href="css/chosen-bootstrap.css"/>
 
     <link href="http://netdna.bootstrapcdn.com/font-awesome/3.2.1/css/font-awesome.css" rel="stylesheet">
+
+    <link rel="stylesheet" href="css/bootstrap-switch.css">
+
     <style>
         .ace_editor {
-
-            height: 200px;
+            height: 120px;
         }
 
         .aceEditor {
@@ -250,6 +260,10 @@
                 return;
             }
 
+            Java.log("bootstrapping angular");
+
+            angular.bootstrap(document, ['bear']);
+
             //window.bearFX.call('conf', 'getSettingsText')
 
             Java.log("started Java.initApp...");
@@ -297,10 +311,10 @@
 //            initAceEditor(localEditor);
 
             if(Java.isFX){
-//                settingsTextEditor.setValue(checkExc(window.bearFX.call('conf', 'getSettingsText')));
-//                scriptsEditor.setValue(checkExc(window.bearFX.call('conf', 'getScriptText')));
-
-                angular.element('body').scope().buildScripts();
+                var scope = angular.element('body').scope();
+                scope.buildScripts(function(){
+                    scope.updateOnBuild();
+                });
             }
         };
 
@@ -326,9 +340,14 @@
                 if (ctrlDown && (e.keyCode == vKey || e.keyCode == cKey)) return false;
             });
         });*/
+        $(document).ready(function(){
+            if(!Java.isFX){
+                Java.initApp();
+            }
+        });
     </script>
 </head>
-<body class="design" ng-app="bear" ng-controller="BearCtrl" id="BearCtrl">
+<body class="design" ng-controller="BearCtrl" id="BearCtrl">
 <!--<div class="btn-toolbar">-->
     <!--<div class="btn-group"><a href="#" class="btn btn-default">Button 1</a><a href="#" class="btn btn-default">Button-->
         <!--2</a><a href="#" class="btn btn-default">Button 3</a></div>-->
@@ -435,7 +454,7 @@
                 </table>
             </div>
         </div>
-        <div class="panel panel-primary">
+        <!--<div class="panel panel-primary">
             <div class="panel-heading">
                 <h3 class="panel-title">Hosts Log</h3>
             </div>
@@ -445,7 +464,7 @@
 10:05:34 vm03 Received answer: ... fdfd
                 </pre>
             </div>
-        </div>
+        </div>-->
         <div class="panel panel-primary">
 
             <div class="panel-body">
@@ -454,46 +473,47 @@
                     <tabset>
                         <tab ng-repeat="terminal in terminals.terminals"
                              heading="{{terminal.host.name}}">
-                            <div ng-controller="ConsoleTabsChildCtrl" name="{{terminal.host.name}}" class="scroller">
+                            <div ng-controller="ConsoleTabsChildCtrl" name="{{terminal.host.name}}">
+                                <div class="scroller">
                                 <console-messages>
                                     <div>{{terminal.host.name}}</div>
                                 </console-messages>
+                                </div>
                                 <table style="width: 100%">
-                                    <tr>
-                                        <td>
-                                            <!--<textarea class="form-control current-console-command" id="{{terminal.host.name}}-input" ng-model="terminal.sendCommandText" rows="2"></textarea>-->
-                                            <!--<div id="localEditor" class="aceEditor"></div>-->
+                                    <tr><td colspan="3">
                                             <div ui-ace="{onLoad: aceLoaded}"></div>
-
+                                    </td></tr>
+                                    <tr>
+                                        <td style="width: 90%">
+                                            <button class="btn btn-success btn-sm" ng-click="sendCommand()">Send
+                                            </button>
                                         </td>
-                                        <td style="width: 5%">
-                                            <button class="btn btn-success btn-sm" ng-click="sendCommand()">Send</button></td>
+                                        <td>
+                                            <div class="input-group input-group-sm">
+                                                <select class="chzn-select" ng-init="shellPlugin='sh'"
+                                                        ng-model="shellPlugin" ng-options="s for s in ['sh', 'groovy']">
+                                                </select>
+
+                                                <!--<input type="text" ng-model="remoteEnv"/>-->
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div switch="remoteEnv" ng-init="remoteEnv=true">
+                                            </div>
+                                        </td>
                                     </tr>
+
                                 </table>
+
+
                             </div>
 
                         </tab>
                     </tabset>
                 </div>
-
-
             </div>
-            <div class="input-group input-group-sm">
-                <input type="text" class="form-control">
 
-                <div class="input-group-btn">
-                    <div class="dropdown" ng-init="init(['a', 'b'])" ng-controller="DropdownCtrl">
-                        <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown">Action
-                            <span class="caret"></span></button>
-                        <ul class="dropdown-menu">
-                            <li ng-repeat="choice in items">
-                                <a>{{choice}}</a>
-                            </li>
-                        </ul>
-                    </div>
-                </div>
-                <!-- /btn-group -->
-            </div>
+
             <!-- /input-group -->
         </div>
     </div>

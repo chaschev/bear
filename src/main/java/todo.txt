@@ -10,24 +10,26 @@ top priority:
 - (ok) ui: groovy shell mode
 - (ok) ui: code completion for groovy plugin
 - (ok) ui: think of localhost vs local
-- ui: toggle modes: shh task, groovy task, groovy - global change
-- ui:
+- ui: toggle modes: ssh task, groovy remote, groovy local
+- building:
 - (ok) general Bear script
 - (declined) :use settings <path>
 - (declined) consider using only the groovy plugin - no, sometimes we just want to do ls, :set commands are shell-agnostic. plus there can be python or ruby
-- ruby plugin
 - (ok) ui: embed code completion
 
 - ui: command summary to the local shell tab (divide into groups)
 - ui: change scripts to snippets
-- ui: save scripts, refresh scripts from disk, save-and-build-on-run
-- ui: stage/roles/hosts selection
 - ui: preload stages, hosts and roles
+- ui: stage/roles/hosts selection
+- ui: save snippets, refresh snippets from disk, save-and-build-on-run
 - ui: download & install idea (core)
 - ui: generate pom (core) & open in idea (core)
 - (ok) ui: fix copy-paste
 
+- refactor BearScript and message sending (extract an interface from BearFX)
+- ruby plugin
 - mongo plugin
+- support :set groovy[Shell].sendToHosts=true
 - print '$host: capture shell' feature
 - ui: (1) order messages by timestamp (need to properly merge them on the client)
 - ui: (2) transform \n to <br>'s

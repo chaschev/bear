@@ -17,7 +17,6 @@
 package bear.core;
 
 import bear.cli.CommandLine;
-import bear.plugins.AbstractContext;
 import bear.plugins.sh.GenericUnixLocalEnvironmentPlugin;
 import bear.plugins.sh.GenericUnixRemoteEnvironmentPlugin;
 import bear.plugins.sh.SystemEnvironmentPlugin;

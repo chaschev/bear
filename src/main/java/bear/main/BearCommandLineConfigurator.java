@@ -188,10 +188,17 @@ public class BearCommandLineConfigurator {
 
         global.getPlugin(GroovyShellPlugin.class).getShell().set$(this);
 
+        build();
+
         return this;
     }
 
     public static class CompilationResult {
+        public long timestamp;
+
+        public CompilationResult() {
+        }
+
         public List<CompiledEntry> scriptClasses = new ArrayList<CompiledEntry>();
         public List<CompiledEntry> settingsClasses = new ArrayList<CompiledEntry>();
 
@@ -294,7 +301,6 @@ public class BearCommandLineConfigurator {
     }
 
     public void build() {
-
         compileManager.compileWithAll();
     }
 

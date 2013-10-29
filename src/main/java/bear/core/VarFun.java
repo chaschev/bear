@@ -16,7 +16,6 @@
 
 package bear.core;
 
-import bear.plugins.AbstractContext;
 import bear.session.DynamicVariable;
 
 /**

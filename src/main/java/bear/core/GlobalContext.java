@@ -16,7 +16,6 @@
 
 package bear.core;
 
-import bear.plugins.AbstractContext;
 import bear.plugins.Plugin;
 import bear.plugins.Plugins;
 import bear.plugins.groovy.GroovyShellPlugin;

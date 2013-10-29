@@ -18,7 +18,7 @@ package bear.session;
 
 import bear.core.Fun;
 import bear.core.VarFun;
-import bear.plugins.AbstractContext;
+import bear.core.AbstractContext;
 import com.google.common.base.Preconditions;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;

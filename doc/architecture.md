@@ -20,6 +20,12 @@ Plugin initialization:
 5. Topologically sort the graph
 6. Initialize plugins (plugin.initPlugin)
 
+### Bear Script execution
+
+- global context is reused
+- settings are created each time outside the script
+- settings can be empty, you can move it's code to the snippet
+
 ### DI
 
 Think of a DI engine
@@ -36,4 +42,16 @@ Installation:
 Remote execution plugin
 
 - Netty/Akka/KryoNet request handler (so there is BearFX, BearCLI, BearCLI + BearRemotePlugin)
-- Receives messages: { settings: {type: [file|string], }, shell:
+- Receiving messages:
+```javascript
+{
+    settings:
+        {type: '[file|string]', text:'...'},
+    shell: 'mongo',
+    scriptText: 'plugin(MongoPlugin.class).blabla OR new MongoDriver'
+}
+```
+
+### AngularJS
+
+- your app needs to start initialized (to be similar to a server side interaction)

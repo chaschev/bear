@@ -1,5 +1,6 @@
 package bear.plugins;
 
+import bear.core.AbstractContext;
 import bear.session.DynamicVariable;
 
 /**

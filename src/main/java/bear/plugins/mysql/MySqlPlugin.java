@@ -22,7 +22,7 @@ import bear.core.Bear;
 import bear.core.Fun;
 import bear.core.GlobalContext;
 import bear.core.SessionContext;
-import bear.plugins.AbstractContext;
+import bear.core.AbstractContext;
 import bear.plugins.Plugin;
 import bear.plugins.sh.SystemEnvironmentPlugin;
 import bear.plugins.sh.SystemSession;
