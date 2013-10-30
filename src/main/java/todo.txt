@@ -10,8 +10,14 @@ top priority:
 - (ok) ui: groovy shell mode
 - (ok) ui: code completion for groovy plugin
 - (ok) ui: think of localhost vs local
-- ui: toggle modes: ssh task, groovy remote, groovy local
-- building:
+- (ok) ui: toggle modes: ssh task, groovy remote, groovy local
+- ui: save snippets, refresh snippets from disk, save-and-build-on-run
+- ui: edit & reload settings - in groovy, open to edit in a window,
+        settings are active for a project, so need to be displayed in status,
+-- as a button opening the editor
+--
+
+- refactor building - settings can be in
 - (ok) general Bear script
 - (declined) :use settings <path>
 - (declined) consider using only the groovy plugin - no, sometimes we just want to do ls, :set commands are shell-agnostic. plus there can be python or ruby
@@ -21,9 +27,10 @@ top priority:
 - ui: change scripts to snippets
 - ui: preload stages, hosts and roles
 - ui: stage/roles/hosts selection
-- ui: save snippets, refresh snippets from disk, save-and-build-on-run
 - ui: download & install idea (core)
 - ui: generate pom (core) & open in idea (core)
+- ui: run a command in a separate shell
+- ui:
 - (ok) ui: fix copy-paste
 
 - refactor BearScript and message sending (extract an interface from BearFX)

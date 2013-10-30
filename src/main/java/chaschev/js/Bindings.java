@@ -1,18 +1,23 @@
 package chaschev.js;
 
+import bear.main.Response;
 import chaschev.json.JacksonMapper;
 import chaschev.json.Mapper;
 import chaschev.lang.OpenBean;
 import chaschev.lang.reflect.ClassDesc;
 import chaschev.lang.reflect.MethodDesc;
 import chaschev.util.Exceptions;
+import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
+import java.io.IOException;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 
 /**
 * @author Andrey Chaschev chaschev@gmail.com
@@ -225,4 +230,68 @@ public class Bindings {
             return new ExceptionWrapper(e, "className: " + className + ", params: " + Arrays.asList(params));
         }
     }
+
+
+    public static class FileItem{
+        public String name;
+        public boolean dir;
+        public long mod;
+
+        public FileItem(String name, boolean dir, long mod) {
+            this.name = name;
+            this.dir = dir;
+            this.mod = mod;
+        }
+    }
+
+    public static class ListFilesRequest{
+        public String dir;
+        public String[] extensions;
+        public boolean recursive;
+    }
+
+    public static class ListDirResponse extends Response{
+        public List<FileItem> files = new ArrayList<FileItem>();
+    }
+
+    public static abstract class FileManager{
+        private final Mapper mapper = new JacksonMapper();
+
+        public abstract String openFileDialog(String dir);
+
+        public ListDirResponse listDir(String json){
+            ListFilesRequest request = mapper.fromJSON(json, ListFilesRequest.class);
+
+            ListDirResponse response = new ListDirResponse();
+
+            for (File file : FileUtils.listFiles(new File(request.dir), request.extensions, request.recursive)) {
+                response.files.add(new FileItem(
+                    file.getName(),
+                    file.isDirectory(),
+                    file.lastModified()
+                ));
+            }
+
+            return response;
+        }
+
+        public String readFile(String dir, String name){
+            try {
+                return FileUtils.readFileToString(new File(dir, name));
+            } catch (IOException e) {
+                throw Exceptions.runtime(e);
+            }
+        }
+
+        public void writeFile(String dir, String name, String content){
+            try {
+                FileUtils.writeStringToFile(new File(dir, name), content);
+            } catch (IOException e) {
+                throw Exceptions.runtime(e);
+            }
+        }
+
+    }
+
+
 }

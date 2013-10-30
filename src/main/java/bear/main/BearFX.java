@@ -33,12 +33,14 @@ import javafx.scene.Scene;
 import javafx.scene.web.WebEngine;
 import javafx.scene.web.WebEvent;
 import javafx.scene.web.WebView;
+import javafx.stage.FileChooser;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
 import netscape.javascript.JSObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.Properties;
@@ -50,6 +52,17 @@ public class BearFX {
     public final BearCommandLineConfigurator conf;
     public final Facade facade = new Facade();
     public final BearFXApp bearFXApp;
+    public final Bindings.FileManager fileManager = new Bindings.FileManager() {
+        @Override
+        public String openFileDialog(String dir) {
+            FileChooser fileChooser = new FileChooser();
+            fileChooser.setInitialDirectory(new File(dir));
+
+            File file = fileChooser.showOpenDialog(bearFXApp.stage);
+
+            return file == null ? null : file.getAbsolutePath();
+        }
+    };
 
     private static final Logger logger = LoggerFactory.getLogger(BearFX.class);
     private static final Logger jsLogger = LoggerFactory.getLogger("js");
@@ -94,7 +107,8 @@ public class BearFX {
         private BearFX bearFX;
 
         private final Mapper mapper = new JacksonMapper();
-        private Bindings bindings = new Bindings();
+        Bindings bindings = new Bindings();
+        Stage stage;
 
         public void sendMessageToUI(EventToUI eventToUI){
             final String s = mapper.toJSON(eventToUI);
@@ -124,6 +138,7 @@ public class BearFX {
                 );
 
                 bearFX = new BearFX(this, configurator);
+                this.stage = stage;
 
                 configurator.configure();
 

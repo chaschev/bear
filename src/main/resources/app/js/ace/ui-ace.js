@@ -5,6 +5,8 @@
 //TODO handle Could not load worker ace.js:1
 //DOMException {message: "SECURITY_ERR: DOM Exception 18", name: "SECURITY_ERR", code: 18, stack: "Error: An attempt was made to break through the se…cloudfront.net/src-min-noconflict/ace.js:1:76296)", INDEX_SIZE_ERR: 1…}
 
+console.log('ui.ace');
+
 angular.module('ui.ace', [])
   .constant('uiAceConfig', {})
   .directive('uiAce', ['uiAceConfig', function (uiAceConfig) {

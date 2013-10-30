@@ -18,7 +18,11 @@
  * @author Andrey Chaschev chaschev@gmail.com
  */
 
-var app = angular.module('bear', ['ui.bootstrap', 'ui.ace']);
+var app = angular.module('bear', ['ui.bootstrap', 'ui.ace', 'fx.file.editor']);
+
+function safeApply(scope, fn) {
+    (scope.$$phase || scope.$root.$$phase) ? fn() : scope.$apply(fn);
+}
 
 app.directive('chosen',function() {
     return {
@@ -383,6 +387,29 @@ function BearCtrl($scope){
             default:
                 Java.log("not yet supported: ", e);
         }
+    };
+
+    $scope.fileManager = {
+        openFileDialog: function (curDir){
+            return window.bear.call('fileManager', 'openFileDialog', curDir);
+        },
+        listDir: function (curDir){
+           return window.bear.jsonCall('fileManager', 'listDir', JSON.stringify({dir: curDir, extensions: ['groovy', 'java'], recursive: false}));
+        },
+        readFile: function(dir, name){
+            return window.bear.call('fileManager', 'readFile', dir, name);
+        },
+        writeFile: function(dir, name, content){
+            return window.bear.call('fileManager', 'writeFile', dir, name, content);
+        }
+    };
+
+    $scope.openFileDialog = function (curDir){
+        return window.bear.call('conf', 'openFile', curDir);
+    };
+
+    $scope.listDirFunction = function (curDir){
+        return window.bear.jsonCall('conf', 'listDir', JSON.stringify({dir: curDir, extensions: ['groovy', 'java'], recursive: false}));
     };
 }
 

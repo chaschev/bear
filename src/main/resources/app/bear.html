@@ -11,6 +11,7 @@
     <script src="js/angular.min.js"></script>
     <script src="js/json2.js"></script>
     <script src="js/ui-bootstrap-tpls-0.6.0.js"></script>
+    <script src="js/ekathuwa.js"></script>
     <script src="js/bootstrap.js"></script>
     <script src="js/chosen.jquery.js"></script>
 
@@ -21,9 +22,7 @@
     </script>
     <script src="js/ace/ui-ace.js"></script>
 
-    <script type="text/ng-template" id="bootstrap-switch.html">
-
-    </script>
+    <script src="js/angular-fx-file-editor.js"></script>
 
 
     <script src="js/bear.js"></script>
@@ -40,15 +39,11 @@
 
     <script src='js/firebug-lite-compressed.js'></script>
 
-
-
-
-
     <link rel="stylesheet" href="css/bootstrap.min.css"/>
     <link rel="stylesheet" href="css/chosen.css"/>
     <link rel="stylesheet" href="css/chosen-bootstrap.css"/>
 
-    <link href="http://netdna.bootstrapcdn.com/font-awesome/3.2.1/css/font-awesome.css" rel="stylesheet">
+    <link href="http://netdna.bootstrapcdn.com/font-awesome/4.0.1/css/font-awesome.css" rel="stylesheet">
 
     <link rel="stylesheet" href="css/bootstrap-switch.css">
 
@@ -112,6 +107,8 @@
             height: 100%;
             vertical-align: middle !important;
         }
+
+        .modal {display: block;height: 0;overflow: visible;}
     </style>
     <script type="text/javascript">
         if (!Java.isFX) {
@@ -524,7 +521,11 @@
                 <h3 class="panel-title">Edit script</h3>
             </div>
 
-            <div class="panel-body" id="FileTabsCtrl" ng-controller="FileTabsCtrl">
+            <div class="panel-body" id="FileTabsCtrl" ng-controller="FileTabsCtrl" ng-init="filename='SetupPluginsSettings.java';selectedFile={dir: '.bear',filename: 'SetupPluginsSettings.java'}">
+                <div fx-editor-button
+                        selected="selectedFile"
+                        file-manager="fileManager"
+                        >Edit File</div>
                 <ul id="" class="nav nav-tabs">
                     <li class="active"><a href="#scriptTab">Script</a></li>
                     <li class=""><a href="#settingsTab">Settings</a></li>
