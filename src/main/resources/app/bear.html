@@ -37,7 +37,7 @@
     <!--<script src='http://getfirebug.com/releases/lite/1.2/firebug-lite-compressed.js'></script>-->
     <!--<script src='https://getfirebug.com/releases/lite/1.4/firebug-lite.js'></script>-->
 
-    <script src='js/firebug-lite-compressed.js'></script>
+    <!--<script src='js/firebug-lite-compressed.js'></script>-->
 
     <link rel="stylesheet" href="css/bootstrap.min.css"/>
     <link rel="stylesheet" href="css/chosen.css"/>
@@ -48,6 +48,27 @@
     <link rel="stylesheet" href="css/bootstrap-switch.css">
 
     <style>
+        html,body { height:100% !important; }
+
+        /*.wrapper {*/
+            /*min-height: 100%;*/
+            /*height: auto !important;*/
+            /*height: 100%;*/
+            /*margin: 0 auto -25px; *//* the bottom margin is the negative value of the footer's height */
+        /*}*/
+        /*.footer, .push {*/
+            /*height: 25px; *//* .push must be the same height as .footer */
+        /*}*/
+
+        .status-panel{
+            height: 220px;
+        }
+
+        .status-table-row{
+            height: 48px;
+            max-height: 48px;
+        }
+
         .ace_editor {
             height: 120px;
         }
@@ -85,17 +106,17 @@
             font-size: 11px;
         }
 
-        .status-table-row{
-            height: 48px;
-            max-height: 48px;
-        }
-
         .scroller {
             height: 300px;
             max-height: 300px;
             overflow-y: auto;
             position: relative;
             display: block;
+            vertical-align: bottom;
+        }
+
+        .consoleMessages{
+            vertical-align: bottom;
         }
 
         table.status-table td{
@@ -288,10 +309,27 @@
             }
         };
 
+        function updateHeights() {
+            var bodyHeight = $(window).height();
+            var $scrollers = $('.scroller');
+            var $consolesPanel = $('#consolesPanel');
+            var newHeight = (bodyHeight - $scrollers.offset().top - 270);     //270 is an approximate height of the ace fixed editing part and captions
+            console.log('resizing, newHeight:', newHeight, bodyHeight, $scrollers.offset(),
+                    $consolesPanel.innerHeight(),
+                    $consolesPanel.outerHeight()
+            );
+            $scrollers.css('height', newHeight + "px");
+            $scrollers.css('min-height', newHeight + "px");
+        }
         $(document).ready(function(){
             if(!Java.isFX){
                 Java.initApp();
             }
+
+            updateHeights();
+            $(window).resize(function() {
+                updateHeights();
+            });
         });
     </script>
 </head>
@@ -302,7 +340,7 @@
     <!--<div class="btn-group"><a href="#" class="btn btn-default">Button 1</a><a href="#" class="btn btn-default">Button-->
         <!--2</a><a href="#" class="btn btn-default">Button 3</a></div>-->
 <!--</div>-->
-<div class="row">
+<div class="row wrapper">
     <div class="col-md-2">
         <div class="panel panel-primary">
             <div class="panel-heading">
@@ -381,24 +419,24 @@
     </div>
     <div class="col-md-7">
         <div class="panel panel-primary">
-            <div class="panel-heading">
+            <!--<div class="panel-heading">
                 <h3 class="panel-title">Live Hosts Status</h3>
-            </div>
-            <div class="panel-body">
-                <table class="status-table table table-condensed">
+            </div>-->
+            <div class="panel-body status-panel" >
+                <table class="status-table table">
                     <tr>
-                        <th style="width: 10%"></th>
-                        <th style="width: 70%">Task</th>
+                        <th style="width: 10%">Host</th>
+                        <th style="width: 70%">Command</th>
+                        <th style="text-align: center">Task</th>
                         <th style="text-align: center">Status</th>
                     </tr>
                     <tr class="status-table-row {{terminal.getCssStatus()}}" ng-repeat="terminal in terminals.terminals">
                         <td>{{terminal.host.name}}</td>
-                        <td>
-                            <div>{{terminal.currentTask}}</div>
-                            <div class="current-console-command">cmd: {{terminal.currentCommand}}</div>
-                        </td>
+                        <td><div class="current-console-command">{{terminal.currentCommand}}</div></td>
+                        <td>{{terminal.currentTask}}</td>
                         <td><div class="status-column alert-{{terminal.getCssStatus()}}">{{terminal.getStringStatus()}}</div></td>
                     </tr>
+                    <tr></tr>
                 </table>
             </div>
         </div>
@@ -413,10 +451,8 @@
                 </pre>
             </div>
         </div>-->
-        <div class="panel panel-primary">
-
+        <div id="consolesPanel" class="panel panel-primary" style="">
             <div class="panel-body">
-
                 <div id="ConsoleTabsCtrl" ng-controller="ConsoleTabsCtrl">
                     <tabset>
                         <tab ng-repeat="terminal in terminals.terminals"
@@ -427,7 +463,7 @@
                                     <div>{{terminal.host.name}}</div>
                                 </console-messages>
                                 </div>
-                                <table style="width: 100%">
+                                <div><table style="width: 100%">
                                     <tr>
                                         <td style="width: 90%"><div ng-init="classes='btn btn-success btn-sm'" fx-editor-button selected="runScript" file-manager="fileManager"></div></td>
                                         <td>
@@ -455,7 +491,7 @@
 
                                     </tr>
 
-                                </table>
+                                </table></div>
 
 
                             </div>

@@ -11,11 +11,10 @@ top priority:
 - (ok) ui: code completion for groovy plugin
 - (ok) ui: think of localhost vs local
 - (ok) ui: toggle modes: ssh task, groovy remote, groovy local
-- ui: save snippets, refresh snippets from disk, save-and-build-on-run
-- ui: edit & reload settings - in groovy, open to edit in a window,
+- (ok) ui: save snippets, refresh snippets from disk, save-and-build-on-run
+- (ok) ui: edit & reload settings - in groovy, open to edit in a window,
         settings are active for a project, so need to be displayed in status,
--- as a button opening the editor
---
+-- (ok) as a button opening the editor
 
 - refactor building - settings can be in
 - (ok) general Bear script
@@ -23,14 +22,12 @@ top priority:
 - (declined) consider using only the groovy plugin - no, sometimes we just want to do ls, :set commands are shell-agnostic. plus there can be python or ruby
 - (ok) ui: embed code completion
 
+
 - ui: command summary to the local shell tab (divide into groups)
-- ui: change scripts to snippets
-- ui: preload stages, hosts and roles
-- ui: stage/roles/hosts selection
+- (ok) ui: change scripts to snippets
 - ui: download & install idea (core)
 - ui: generate pom (core) & open in idea (core)
-- ui: run a command in a separate shell
-- ui:
+- ui: run a command in on a single host from shell
 - (ok) ui: fix copy-paste
 
 - refactor BearScript and message sending (extract an interface from BearFX)
@@ -47,9 +44,12 @@ top priority:
 - ui: command history in the chosen combo (500 last commands)
 - ui: logback messages (output to file, a window to view, monitor errors and display red exclamation mark when there are)
 - ui: scroll to the bottom of the scrollable area on the new text
-- ui: adapt this theme: https://github.com/onokumus/Bootstrap-Admin-Template
 - ui: auto-size shell panel
+- ui: adapt this theme: https://github.com/onokumus/Bootstrap-Admin-Template
 - ui: help like with (search for 'ace/ext/keybinding_menu' in project)
+- ui: stage/roles/hosts selection
+- ui: preload stages, hosts and roles
+
 
 - ui: add global root task somewhere, add global timer
 - ui: code completion for :set
