@@ -13,12 +13,13 @@ angular.module('fx.file.editor', ['ui.bootstrap', 'ui.ace', 'ngEkathuwa'])
         restrict: 'A',
         scope: {
             fileManager: '=',
-            selected: '='
+            selected: '=',
+            classes: '@'
         },
         template: '' +
             '<div class="btn-group">' +
-            ' <button type="button" ng-click="showModal()" class="btn btn-info">{{selected.filename}}</button>' +
-            ' <button type="button" class="btn btn-info dropdown-toggle" data-toggle="dropdown">' +
+            ' <button type="button" ng-click="showModal()" class="btn btn-default">{{selected.filename}}</button>' +
+            ' <button type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown">' +
             '  <span class="caret"></span>' +
             ' </button>' +
             ' <ul class="dropdown-menu" role="menu">' +
@@ -26,16 +27,18 @@ angular.module('fx.file.editor', ['ui.bootstrap', 'ui.ace', 'ngEkathuwa'])
             ' </ul>' +
             '</div>',
 
-        link: function ($scope, $element)
-        {
+        link: function ($scope, $element) {
             Java.log('fxEditorButton for ', $element);
-            Java.log('selected', $scope.selected);
+            if ($scope.classes) {
+                $element.find('button:first-of-type').attr('class', $scope.classes);
+                $element.find('button:last-of-type').attr('class', $scope.classes + " dropdown-toggle");
+            }
 
             $scope.getCurrentDir = function () {
                 return ($scope.selected.dir = $scope.selected.dir || '.');
             };
 
-            $scope.filenames = function(){
+            $scope.filenames = function () {
                 var files = JSON.parse($scope.fileManager.listDir($scope.getCurrentDir()));
                 //todo fix this - there are 4 updates per click
 //                Java.log('files', files);
@@ -45,7 +48,7 @@ angular.module('fx.file.editor', ['ui.bootstrap', 'ui.ace', 'ngEkathuwa'])
                 var names = [];
 
                 for (var i = 0; i < files.length; i++) {
-                    if(!files[i].dir){
+                    if (!files[i].dir) {
                         names.push(files[i].name);
                     }
                 }
@@ -53,7 +56,7 @@ angular.module('fx.file.editor', ['ui.bootstrap', 'ui.ace', 'ngEkathuwa'])
                 return names;
             };
 
-            $scope.saveFile = function(){
+            $scope.saveFile = function () {
                 var dir = $scope.selected.dir;
                 var filename = $scope.selected.filename;
                 Java.log("saving to " + dir, filename);
@@ -62,7 +65,7 @@ angular.module('fx.file.editor', ['ui.bootstrap', 'ui.ace', 'ngEkathuwa'])
                     filename,
                     $scope.editor.getValue()
                 );
-                $timeout(function(){
+                $timeout(function () {
                     $scope.modified = '';
                 });
 
@@ -71,7 +74,7 @@ angular.module('fx.file.editor', ['ui.bootstrap', 'ui.ace', 'ngEkathuwa'])
 //                }
             };
 
-            $scope.fileDialog = function(){
+            $scope.fileDialog = function () {
                 try {
                     Java.log('fileDialog: ', $scope.getCurrentDir(), $scope.fileManager);
 
@@ -79,7 +82,7 @@ angular.module('fx.file.editor', ['ui.bootstrap', 'ui.ace', 'ngEkathuwa'])
 
                     Java.log('path: ', path);
 
-                    if(path == null) return;
+                    if (path == null) return;
 
                     var lastSep = path.lastIndexOf('/');
 
@@ -118,7 +121,7 @@ angular.module('fx.file.editor', ['ui.bootstrap', 'ui.ace', 'ngEkathuwa'])
                 });
             };
 
-            $scope.aceLoaded=function(editor){
+            $scope.aceLoaded = function (editor) {
                 Java.log("loaded ace editor in a modal", editor.getScrollSpeed());
 
                 editor.setScrollSpeed(200);
@@ -135,7 +138,7 @@ angular.module('fx.file.editor', ['ui.bootstrap', 'ui.ace', 'ngEkathuwa'])
                     enableSnippets: true
                 });
 
-                editor.on('change', function(e) {
+                editor.on('change', function (e) {
                     $scope.modified = '*';
 
                     try {
@@ -147,7 +150,7 @@ angular.module('fx.file.editor', ['ui.bootstrap', 'ui.ace', 'ngEkathuwa'])
                 editor.commands.addCommand({
                     name: "copyShortcut",
                     bindKey: {win: "Ctrl-C", mac: "Command-C"},
-                    exec: function(editor) {
+                    exec: function (editor) {
                         window.bear.call('conf', 'copyToClipboard', editor.getCopyText());
                     }
                 });
@@ -155,7 +158,7 @@ angular.module('fx.file.editor', ['ui.bootstrap', 'ui.ace', 'ngEkathuwa'])
                 editor.commands.addCommand({
                     name: "pasteShortcut",
                     bindKey: {win: "Ctrl-V", mac: "Command-V"},
-                    exec: function(editor) {
+                    exec: function (editor) {
                         var r = window.bear.call('conf', 'pasteFromClipboard');
                         editor.insert(r);
                     }
@@ -164,12 +167,12 @@ angular.module('fx.file.editor', ['ui.bootstrap', 'ui.ace', 'ngEkathuwa'])
                 editor.commands.addCommand({
                     name: "saveShortcut",
                     bindKey: {win: "Ctrl-S", mac: "Command-S"},
-                    exec: function(editor) {
+                    exec: function (editor) {
                         $scope.saveFile();
                     }
                 });
 
-                $scope.$watch('selected', function(newVal, oldVal){
+                $scope.$watch('selected', function (newVal, oldVal) {
                     var text = $scope.fileManager.readFile(
                         newVal.dir, newVal.filename
                     );

@@ -401,7 +401,7 @@ function BearCtrl($scope){
             return window.bear.call('fileManager', 'openFileDialog', curDir);
         },
         listDir: function (curDir){
-           return window.bear.jsonCall('fileManager', 'listDir', JSON.stringify({dir: curDir, extensions: ['groovy', 'java'], recursive: false}));
+           return window.bear.jsonCall('fileManager', 'listDir', JSON.stringify({dir: curDir, extensions: ['groovy', 'java', 'bear'], recursive: false}));
         },
         readFile: function(dir, name){
             return window.bear.call('fileManager', 'readFile', dir, name);
@@ -416,7 +416,7 @@ function BearCtrl($scope){
     };
 
     $scope.listDirFunction = function (curDir){
-        return window.bear.jsonCall('conf', 'listDir', JSON.stringify({dir: curDir, extensions: ['groovy', 'java'], recursive: false}));
+        return window.bear.jsonCall('conf', 'listDir', JSON.stringify({dir: curDir, extensions: ['groovy', 'java', 'bear'], recursive: false}));
     };
 }
 
@@ -575,6 +575,27 @@ app.controller('ConsoleTabsChildCtrl', ['$scope', '$q', function ($scope, $q) {
         Java.log("loaded ace editor");
 
         $scope.editor = editor;
+
+        $scope.$watch('runScript', function(newVal, oldVal){
+            Java.log('runScript.path watch:', newVal, oldVal);
+            if(newVal /*&& newVal.path !== oldVal.path*/){
+                Java.log('updating...');
+                editor.setValue($scope.fileManager.readFile(
+                    newVal.dir,
+                    newVal.filename
+                ), -1);
+            }
+        }, true);
+
+        $scope.$watch('runScript.path', function(newVal, oldVal){
+            Java.log('runScript.path watch:', newVal, oldVal);
+            if(newVal && newVal !== oldVal){
+                editor.setValue($scope.fileManager.readFile(
+                    $scope.runScript.dir,
+                    $scope.runScript.filename
+                ));
+            }
+        });
 
         var session = editor.getSession();
 

@@ -257,7 +257,7 @@ public class Bindings {
     public static abstract class FileManager{
         private final Mapper mapper = new JacksonMapper();
 
-        public abstract String openFileDialog(String dir);
+        public abstract String openFileDialog(String json);
 
         public ListDirResponse listDir(String json){
             ListFilesRequest request = mapper.fromJSON(json, ListFilesRequest.class);

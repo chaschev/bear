@@ -1,0 +1,9 @@
+# this enables the session-scope, task is distributed between hosts
+:set stage='two'
+:set groovyShell.sendToHosts=true
+:use shell ssh
+pwd
+:set bear.overriddenInteractiveRun=false
+:set bear.autoInstallPlugins=true
+:use shell groovy
+runner.run(tasks.setup)

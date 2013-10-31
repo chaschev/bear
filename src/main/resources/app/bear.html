@@ -428,14 +428,8 @@
                                 </console-messages>
                                 </div>
                                 <table style="width: 100%">
-                                    <tr><td colspan="3">
-                                            <div ui-ace="{onLoad: aceLoaded}"></div>
-                                    </td></tr>
                                     <tr>
-                                        <td style="width: 90%">
-                                            <button class="btn btn-success btn-sm" ng-click="sendCommand()">Send
-                                            </button>
-                                        </td>
+                                        <td style="width: 90%"><div ng-init="classes='btn btn-success btn-sm'" fx-editor-button selected="runScript" file-manager="fileManager"></div></td>
                                         <td>
                                             <div class="input-group input-group-sm">
                                                 <select class="chzn-select" ng-init="shellPlugin='sh'"
@@ -449,6 +443,16 @@
                                             <div switch="remoteEnv" ng-init="remoteEnv=true">
                                             </div>
                                         </td>
+                                    </tr>
+                                    <tr><td colspan="3">
+                                            <div ui-ace="{onLoad: aceLoaded}"></div>
+                                    </td></tr>
+                                    <tr>
+                                        <td colspan="3">
+                                            <button class="btn btn-success btn-sm" ng-click="sendCommand()">Send
+                                            </button>
+                                        </td>
+
                                     </tr>
 
                                 </table>
@@ -477,10 +481,8 @@
                 settingsScript={dir: '.bear', filename: 'SetupPluginsSettings.java'};
                 runScript={dir: '.bear', filename: 'SetupPluginsScript.java'};
 -->
-
-
                 <div fx-editor-button selected="settingsScript" file-manager="fileManager"></div>
-                <div fx-editor-button selected="runScript" file-manager="fileManager"></div>
+
             </div>
         </div>
 
