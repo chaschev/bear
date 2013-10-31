@@ -3,6 +3,7 @@ package bear.main;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
 import com.google.common.collect.Iterables;
+import org.apache.commons.io.FilenameUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -59,11 +60,13 @@ public class CompileManager {
         return new File(sourcesDir, name);
     }
 
-    public CompiledEntry findClass(final String className, boolean script) {
-        if(lastCompilationResult == null){
-            logger.info("not compiled yet, compiling...");
+    public CompiledEntry findClass(final String filePath, boolean script) {
+//        if(lastCompilationResult == null){
+//            logger.info("not compiled yet, compiling...");
             compileWithAll();
-        }
+//        }
+
+        final String className = FilenameUtils.getBaseName(filePath);
 
         Preconditions.checkNotNull(lastCompilationResult, "you need to compile first to load classes");
 

@@ -50,6 +50,7 @@ import java.util.Properties;
  */
 public class BearFX {
     public final BearCommandLineConfigurator conf;
+    final Properties bearProperties;
     public final Facade facade = new Facade();
     public final BearFXApp bearFXApp;
     public final Bindings.FileManager fileManager = new Bindings.FileManager() {
@@ -96,9 +97,10 @@ public class BearFX {
     public Object call(String delegate, String method, Object p1, Object p2, Object p3, Object p4, Object p5, Object p6, Object p7) { return facade.call(delegate, method, p1, p2,p3,p4,p5,p6,p7); }
     public Object call(String delegate, String method, Object p1, Object p2, Object p3, Object p4, Object p5, Object p6, Object p7, Object p8) { return facade.call(delegate, method, p1, p2,p3,p4,p5,p6,p7,p8); }
 
-    public BearFX(BearFXApp bearFXApp, BearCommandLineConfigurator conf) {
+    public BearFX(BearFXApp bearFXApp, BearCommandLineConfigurator conf, Properties bearProperties) {
         this.bearFXApp = bearFXApp;
         this.conf = conf;
+        this.bearProperties = bearProperties;
         conf.bearFX = this;
     }
 
@@ -137,7 +139,7 @@ public class BearFX {
                     "--props=" + properties.get("bear-fx.properties")
                 );
 
-                bearFX = new BearFX(this, configurator);
+                bearFX = new BearFX(this, configurator, properties);
                 this.stage = stage;
 
                 configurator.configure();

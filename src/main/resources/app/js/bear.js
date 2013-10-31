@@ -313,6 +313,13 @@ function BearCtrl($scope){
         address: 'shell'
     }]);
 
+    $scope.initScripts = function(){
+        $scope.settingsScript = JSON.parse(window.bear.jsonCall('conf', 'getPropertyAsFile', 'bear-fx.settings'));
+        $scope.runScript = JSON.parse(window.bear.jsonCall('conf', 'getPropertyAsFile', 'bear-fx.script'));
+
+        Java.log('initScripts, files: ', $scope.settingsScript, $scope.runScript);
+    };
+
     $scope.$watch('lastBuildTime', function(){
 //        Java.log("updating fields on new build");
 
@@ -434,14 +441,12 @@ app.controller('FileTabsCtrl', ['$scope', '$q', function($scope, $q) {
 
     $scope.selectedTab = 'script';
 
-    $scope.scripts = {
-        files: ["Loading"]
-    };
+//    $scope.settingsScript = {
+//        dir: '.',
+//        filename: 'loading'
+//    };
 
-    $scope.settings = {
-        files: ["Loading"]
-    };
-
+    //todo remove
     $scope.runScript = function(){
         try {
 //            var scope = angular.element('#FileTabsCtrl').scope();
@@ -451,7 +456,7 @@ app.controller('FileTabsCtrl', ['$scope', '$q', function($scope, $q) {
 
             Java.log('my scope ', $scope, 'parent scope: ', $scope.$parent);
 
-            var hosts = JSON.parse(window.bear.jsonCall('conf', 'run', $scope.scripts.selectedFile, $scope.settings.selectedFile));
+            var hosts = JSON.parse(window.bear.jsonCall('conf', 'run', $scope.runScript.path, $scope.settingsScript.path));
 
             $scope.terminals.onScriptStart(hosts.hosts);
         } catch (e) {
@@ -470,21 +475,22 @@ app.controller('FileTabsCtrl', ['$scope', '$q', function($scope, $q) {
         try {
             Java.log("updateOnBuild - updating files");
 
-            $scope.scripts.files = window.bear.call('conf', 'getScriptNames');
-            $scope.settings.files = window.bear.call('conf', 'getSettingsNames');
-
-            if ($scope.selectedFile == null || $scope.selectedFile === 'Loading') {
-                Java.log('initializing selectedFile');
-
-                $scope.scripts.selectedFile = window.bear.call('conf', 'getSelectedScript');
-                $scope.settings.selectedFile = window.bear.call('conf', 'getSelectedSettings');
-
-                $scope.selectedFile = $scope.scripts.selectedFile;
-            }
-
-            Java.log('files:', $scope.scripts.files, "selectedFile:", $scope.selectedFile);
-
-            $scope.selectTab($scope.selectedTab);
+            //simplifying things
+//            $scope.scripts.files = window.bear.call('conf', 'getScriptNames');
+//            $scope.settings.files = window.bear.call('conf', 'getSettingsNames');
+//
+//            if ($scope.selectedFile == null || $scope.selectedFile === 'Loading') {
+//                Java.log('initializing selectedFile');
+//
+//                $scope.scripts.selectedFile = window.bear.call('conf', 'getSelectedScript');
+//                $scope.settings.selectedFile = window.bear.call('conf', 'getSelectedSettings');
+//
+//                $scope.selectedFile = $scope.scripts.selectedFile;
+//            }
+//
+//            Java.log('files:', $scope.scripts.files, "selectedFile:", $scope.selectedFile);
+//
+//            $scope.selectTab($scope.selectedTab);
         } catch (e) {
             Java.log(e);
         }
@@ -495,71 +501,6 @@ app.controller('FileTabsCtrl', ['$scope', '$q', function($scope, $q) {
     $scope.$on('buildFinished', function(e, args){
         Java.log("buildFinished - $on - updating files");
 
-    });
-
-//    $scope.files= [{name:"Settings.java", id:1}, {name:"XX.java", id:2}];
-    $scope.currentTab = function(){
-        return ($scope.selectedTab === 'script') ?
-            $scope.scripts : $scope.settings;
-    };
-
-    $scope.files = function(){
-        return $scope.currentTab().files;
-    };
-
-    $scope.getSelectedFile = function(){
-        var currentTab = $scope.currentTab();
-
-        if(!currentTab.selectedFile){
-            currentTab.selectedFile = currentTab.files[0];
-        }
-
-        return currentTab.selectedFile;
-    };
-
-    $scope.selectedFile = $scope.getSelectedFile();
-
-
-    $scope.selectTab = function(tab){
-        Java.log('selecting tab: ' + tab);
-        $scope.selectedTab = tab;
-        $scope.selectedFile = $scope.getSelectedFile();
-        $scope.$digest();
-    };
-
-    $scope.$watch('selectedTab', function(newVal){
-        Java.log("selectedTab watch: ", newVal, "scope:", $scope.currentTab());
-    });
-
-    $scope.$watch('currentTab()', function(newVal){
-        Java.log("currentTab watch: ", newVal);
-    });
-
-    $scope.$watch('files()', function(newVal, oldVal){
-        Java.log("files watch: ", newVal);
-    });
-
-    $scope.$watch('file', function(newVal, oldVal){
-        Java.log("file watch: ", newVal);
-    });
-
-    $scope.$watch('selectedFile', function(newVal, oldVal){
-        Java.log("selectedFile watch: ", newVal, ", updating editor");
-
-        $scope.currentTab().selectedFile = newVal;
-
-        var content;
-
-        if(Java.isFX &&  window.bear.isReady() && newVal != 'Loading'){
-            content = window.bear.call('conf', 'getFileText', newVal);
-        }else{
-            content = 'Content of file <' + newVal + '>';
-        }
-
-        var editor = ace.edit($scope.selectedTab + "Text");
-        var cursor = editor.selection.getCursor();
-
-        editor.setValue(content, cursor);
     });
 }]);
 
@@ -610,18 +551,18 @@ app.controller('ConsoleTabsChildCtrl', ['$scope', '$q', function ($scope, $q) {
 
         Java.log('sendCommand \'' + commandText +"', terminal:", $scope.terminal.name);
 
-        var scriptName = $scope.scripts.selectedFile;
-        var settingsName = $scope.settings.selectedFile;
+//        var scriptName = $scope.scripts.selectedFile;
+        var settingsName = $scope.settingsScript.path;
 
-        if(scriptName === 'Loading' || settingsName === 'Loading'){
-//            var defer = $q.defer();
+        if(!settingsName || settingsName === 'Loading'){
+            Java.log('cancelled sending a command, because settings is:', settingsName);
             return;
         }
 
         var response = JSON.parse(window.bear.jsonCall('conf', 'interpret',
             commandText,
             JSON.stringify({
-                scriptName: scriptName,
+                script: $scope.runScript.path,
                 settingsName: settingsName})));
 
         $scope.addCommand(commandText);
@@ -727,4 +668,5 @@ app.controller('ConsoleTabsChildCtrl', ['$scope', '$q', function ($scope, $q) {
             }
         });
     };
+
 }]);

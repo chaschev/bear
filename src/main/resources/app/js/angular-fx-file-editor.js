@@ -37,7 +37,8 @@ angular.module('fx.file.editor', ['ui.bootstrap', 'ui.ace', 'ngEkathuwa'])
 
             $scope.filenames = function(){
                 var files = JSON.parse($scope.fileManager.listDir($scope.getCurrentDir()));
-                Java.log('files', files);
+                //todo fix this - there are 4 updates per click
+//                Java.log('files', files);
 
                 files = files.files;
 
@@ -88,6 +89,7 @@ angular.module('fx.file.editor', ['ui.bootstrap', 'ui.ace', 'ngEkathuwa'])
 
                     $scope.selected.dir = path.substring(0, lastSep);
                     $scope.selected.filename = path.substr(lastSep + 1);
+                    $scope.selected.path = $scope.selected.dir + "/" + $scope.selected.filename;
                 } catch (e) {
                     Java.log(e);
                 }

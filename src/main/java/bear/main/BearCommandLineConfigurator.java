@@ -22,7 +22,6 @@ import com.google.common.base.Predicate;
 import com.google.common.collect.Iterables;
 import javafx.scene.input.Clipboard;
 import javafx.scene.input.DataFormat;
-import javafx.stage.FileChooser;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
@@ -322,9 +321,9 @@ public class BearCommandLineConfigurator {
 
         BearScript.UIContext uiContext = commandInterpreter.mapper.fromJSON(uiContextS, BearScript.UIContext.class);
 
-        file = compileManager.findScript(uiContext.scriptName);
+        file = compileManager.findScript(uiContext.script);
 
-        Preconditions.checkNotNull(file.exists(), "%s not found", uiContext.scriptName);
+        Preconditions.checkNotNull(file.exists(), "%s not found", uiContext.script);
 
         String s = FileUtils.readFileToString(file);
 
@@ -432,5 +431,29 @@ public class BearCommandLineConfigurator {
 
     public void evaluateInFX(Runnable runnable){
         bearFX.bearFXApp.runLater(runnable);
+    }
+
+    public static class FileResponse{
+        public String dir;
+        public String filename;
+        public String path;
+
+        public FileResponse(File file) {
+            dir = file.getParent();
+            filename = file.getName();
+            path = file.getAbsolutePath();
+        }
+    }
+
+    public FileResponse getPropertyAsFile(String property){
+        String file = bearFX.bearProperties.getProperty(property);
+
+        Preconditions.checkNotNull(file, "no such property: %s", property);
+
+        if(file.indexOf('/') == -1 && file.indexOf('\'') == -1){
+            return new FileResponse(new File(scriptsDir, file));
+        }
+
+        return new FileResponse(new File(file));
     }
 }

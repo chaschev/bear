@@ -70,7 +70,6 @@ pwd
 :use shell groovy
 runner.run(tasks.setup)
 
-
 # switch to remote sh mode (distributed)
 :use shell remote
 ls -ltr /var/lib/myApp

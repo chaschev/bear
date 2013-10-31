@@ -340,7 +340,7 @@ public class BearScript {
 
     public static class UIContext {
         public String settingsName;
-        public String scriptName;
+        public String script;
     }
 
     public static class SwitchResponse extends MessageResponse {

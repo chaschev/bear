@@ -280,33 +280,6 @@
                 $(this).tab('show');
             });
 
-            function initAceEditor(editor)
-            {
-
-                var session = editor.getSession();
-
-                session.setMode("ace/mode/java");
-                session.setTabSize(2);
-                session.setUseWorker(false);
-
-                editor.setOptions({
-                    enableBasicAutocompletion: true,
-                    enableSnippets: true
-                });
-
-                editor.renderer.setShowGutter(false);
-            }
-
-
-
-            var settingsTextEditor = ace.edit("settingsText");
-            var scriptsEditor = ace.edit("scriptText");
-//            var localEditor = ace.edit("localEditor");
-
-            initAceEditor(settingsTextEditor);
-            initAceEditor(scriptsEditor);
-//            initAceEditor(localEditor);
-
             if(Java.isFX){
                 var scope = angular.element('body').scope();
                 scope.buildScripts(function(){
@@ -315,28 +288,6 @@
             }
         };
 
-        /*$(document).ready(function(){
-            if(!Java.isFX){
-                Java.initApp();
-            }
-
-            var ctrlDown = false;
-            var ctrlKey = 17, vKey = 86, cKey = 67;
-
-            $(document).keydown(function(e)
-            {
-                if (e.keyCode == ctrlKey) ctrlDown = true;
-
-            }).keyup(function(e)
-                    {
-                        if (e.keyCode == ctrlKey) ctrlDown = false;
-                    });
-
-            $(".no-copy-paste").keydown(function(e)
-            {
-                if (ctrlDown && (e.keyCode == vKey || e.keyCode == cKey)) return false;
-            });
-        });*/
         $(document).ready(function(){
             if(!Java.isFX){
                 Java.initApp();
@@ -521,55 +472,15 @@
                 <h3 class="panel-title">Edit script</h3>
             </div>
 
-            <div class="panel-body" id="FileTabsCtrl" ng-controller="FileTabsCtrl" ng-init="filename='SetupPluginsSettings.java';selectedFile={dir: '.bear',filename: 'SetupPluginsSettings.java'}">
-                <div fx-editor-button
-                        selected="selectedFile"
-                        file-manager="fileManager"
-                        >Edit File</div>
-                <ul id="" class="nav nav-tabs">
-                    <li class="active"><a href="#scriptTab">Script</a></li>
-                    <li class=""><a href="#settingsTab">Settings</a></li>
-                    <li>
-                        <div class="pull-right" >
-                            <div style="display: inline-block">
-                                <select id="fileSelect" chosen="selectedFile"  class="chzn-select"
-                                        ng-model="selectedFile" ng-options="file for file in files()">
-                                </select>
-                            </div>
-                            <div class="btn-toolbar" style="display: inline-block">
-                                <div class="btn-group">
-                                    <button class="btn btn-default btn-xs"><i class="icon-trash"></i></button>
-                                    <button class="btn btn-default btn-xs"><i class="icon-refresh"></i></button>
-                                    <button class="btn btn-default btn-xs"><i class="icon-save"></i></button>
-                                    <button class="btn btn-default btn-xs" ng-click="runScript()"><i class="icon-play"></i></button>
-                                </div>
-                                <div class="btn-group">
-                                    <button class="btn btn-default btn-xs"><i class="icon-cog"></i></button>
-                                </div>
-                            </div>
-                        </div>
-                    </li>
+            <div class="panel-body" id="FileTabsCtrl" ng-controller="FileTabsCtrl" ng-init="initScripts()">
+<!--
+                settingsScript={dir: '.bear', filename: 'SetupPluginsSettings.java'};
+                runScript={dir: '.bear', filename: 'SetupPluginsScript.java'};
+-->
 
-                </ul>
 
-                <div class="tab-content">
-                    <div id="scriptTab" class="fade in tab-pane active" mytab>
-                        <div id="scriptText" class="aceEditor">
-                            function foo(items) {
-                                var x = "All this is syntax highlighted";
-                                return x;
-                            }
-                        </div>
-                    </div>
-                    <div id="settingsTab" class="fade in tab-pane" mytab>
-                        <div id="settingsText" class="aceEditor">
-                        function foo(items) {
-                            var x = "All this is syntax highlighted";
-                            return x;
-                        }
-                        </div>
-                    </div>
-                </div>
+                <div fx-editor-button selected="settingsScript" file-manager="fileManager"></div>
+                <div fx-editor-button selected="runScript" file-manager="fileManager"></div>
             </div>
         </div>
 

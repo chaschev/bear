@@ -22,11 +22,11 @@ public class SetupPluginsSettings extends IBearSettings {
     GlobalContext global;
     GitCLIPlugin git;
 
-    public SetupPluginsSettings(GlobalContextFactory factory) {
+    public  SetupPluginsSettings(GlobalContextFactory factory) {
         super(factory);
     }
 
-    SetupPluginsSettings(GlobalContextFactory factory, String resource) {
+    public SetupPluginsSettings(GlobalContextFactory factory, String resource) {
         super(factory, resource);
     }
 
