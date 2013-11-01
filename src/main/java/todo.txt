@@ -16,7 +16,7 @@ top priority:
         settings are active for a project, so need to be displayed in status,
 -- (ok) as a button opening the editor
 
-- refactor building - settings can be in
+- (ok) refactor building - settings can be in
 - (ok) general Bear script
 - (declined) :use settings <path>
 - (declined) consider using only the groovy plugin - no, sometimes we just want to do ls, :set commands are shell-agnostic. plus there can be python or ruby
@@ -35,8 +35,8 @@ top priority:
 - mongo plugin
 - support :set groovy[Shell].sendToHosts=true
 - print '$host: capture shell' feature
-- ui: (1) order messages by timestamp (need to properly merge them on the client)
-- ui: (2) transform \n to <br>'s
+- ui: (ok, 1) order messages by timestamp (need to properly merge them on the client)
+- ui: (ok, 2) transform \n to <br>'s
 - ui: (3) color highlighting for unix terminals
 - ui: (4) mysql shell mode
 - ui: (5) mongo shell mode (core)

@@ -21,6 +21,8 @@ public abstract class Task<TASK_DEF extends TaskDef> extends HavingContext<Task<
 
     protected TaskExecutionContext executionContext;
 
+    public final String id = SessionContext.randomId();
+
     public Task(Task parent, TASK_DEF definition, SessionContext $) {
         super($);
 

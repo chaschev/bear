@@ -1,5 +1,6 @@
 package bear.console;
 
+import bear.core.SessionContext;
 import bear.vcs.CommandLineResult;
 
 /**
@@ -8,6 +9,8 @@ import bear.vcs.CommandLineResult;
 public abstract class AbstractConsoleCommand<T extends CommandLineResult>{
     protected long timeoutMs;
     protected StringBuilder output = new StringBuilder(8192);
+
+    public final String id = SessionContext.randomId();
 
     protected TextListener textListener;
 

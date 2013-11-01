@@ -88,8 +88,15 @@ var Session = function(index){
     this.index = index;
 };
 
+/*
+<div class="task" id="x1">
+<div class="command" id="xxx">
+    <div class="commandText"></div>
+    <span>:set stage='two'<br/></span><span>:set groovyShell.sendToHosts=true</span>
+</div>
+ */
 
-app.directive("consoleMessages", function ($compile) {
+app.directive("consoleMessages", ['$timeout', function ($timeout) {
     return {
         template: '<div class="consoleMessages" ng-transclude></div>',
         restrict: 'E',
@@ -98,13 +105,16 @@ app.directive("consoleMessages", function ($compile) {
         scope: {
         },
         link: function ($scope, $el, attrs) {
+            var unprocessedTexts= [];
+            var     unprocessedCommands = [];
+            var     unprocessedTasks = []
             try {
             Java.log("my el:" , $el, "my terminal is: ", $scope.terminal, " and scope is: ", $scope);
 
             $scope = $scope.$parent;
 //            $scope.terminal = $scope.$parent.terminal;
 
-            Java.log('terminal: ', $scope.terminal.host.name,'messages element: ', $el);
+            Java.log('terminal: ', $scope.terminal.host.name, 'messages element: ', $el);
             var $messages = $el;
 
             $scope.$on("message", function(event, e){
@@ -114,18 +124,96 @@ app.directive("consoleMessages", function ($compile) {
 
                 Java.log('received broadcasted message: ', e);
 
+                function sortByTS($el){
+                    $el.sort(function(a,b){
+                        return parseInt($(a).attr('timestamp')) < parseInt($(b).attr('timestamp'));
+                    });
+                }
+
+                function quicklyInsertText(e){
+                    var $parent = $('#' + e.parentId);
+
+                    if($parent.length === 0) return false;
+
+                    var text = e.textAdded;
+
+                    console.log('non=replaced text: ', text);
+
+                    text = text.replace(/[\n\r]/g,'<br>');
+
+                    console.log('replaced text: ', text);
+
+                    $parent.append($('<span timestamp="' + e.timestamp +'">' + text + '</span>'));
+
+                    sortByTS($parent);
+
+                    return true;
+                }
+
+                function quicklyInsertCommand(e){
+                    var $parent = $('#' + e.parentId);
+
+                    if($parent.length === 0) return false;
+
+                    $parent.append($(
+                        '<div class="command" timestamp="' + e.timestamp +'" id="' + e.id + '">' +
+                        '<div class="commandText"><b>$ ' + e.command + '</b></div>' +
+                        '</div>'
+                    ));
+
+                    sortByTS($parent);
+
+                    return true;
+                }
+
+                function quicklyInsertTask(e){
+                    var $parent = $('#' + e.parentId);
+
+                    if($parent.length === 0) return false;
+
+                    $parent.append($(
+                        '<div class="task" timestamp="' + e.timestamp +'" id="' + e.id + '">' +
+                            '<div class="taskName"><i>' + e.task + '</i></div>' +
+                        '</div>'
+                    ));
+
+                    sortByTS($parent);
+
+                    return true;
+                }
+
+                function quicklyInsertSession(e){
+                    $messages.append($(
+                        '<div class="session" id="' + e.id + '">' +
+                            '</div>'
+                    ));
+
+                    return true;
+                }
+
                 switch(e.subType){
                     case 'textAdded':
-                        $scope.addMessage(e.textAdded);
+//                        $scope.addMessage(e.textAdded);
+                        if(!quicklyInsertText(e)){
+                            unprocessedTexts.push(e);
+                        }
                         break;
                     case 'command':
+                        if(!quicklyInsertCommand(e)){
+                            unprocessedCommands.push(e);
+                        }
                         $scope.addCommand(e.command);
                         break;
                     case 'task':
+                        if(!quicklyInsertTask(e)){
+                            unprocessedTasks.push(e);
+                        }
                         $scope.addTask(e.task);
                         break;
+                    case 'session':
+                        quicklyInsertSession(e);
+                        break;
                     case 'rootTaskFinished':
-
                         $scope.$apply(function(){
                             $scope.terminal.lastTaskDuration = e.duration;
                             $scope.terminal.currentTaskResult = e.result;
@@ -133,6 +221,34 @@ app.directive("consoleMessages", function ($compile) {
                         break;
                     default:
                         throw "not yet supported subType:" + e.subType;
+                }
+
+                var tasksAdded = false;
+                var obj, i;
+
+                // the idea of optimization: no need to insert into children
+                // if there is no update to parent
+                if(unprocessedTasks.length > 0){
+                    for (i = 0; i < unprocessedTasks.length; i++) {
+                        obj = unprocessedTasks[i];
+                        if(quicklyInsertTask(obj)) tasksAdded = true;
+                    }
+                }
+
+                var commandsAdded = false;
+
+                if(tasksAdded && unprocessedCommands.length > 0){
+                    for (i = 0; i < unprocessedCommands.length; i++) {
+                        obj = unprocessedCommands[i];
+                        if(quicklyInsertCommand(obj)) commandsAdded = true;
+                    }
+                }
+
+                if(commandsAdded && unprocessedTexts.length > 0){
+                    for (i = 0; i < unprocessedTexts.length; i++) {
+                        obj = unprocessedTexts[i];
+                        quicklyInsertCommand(obj);
+                    }
                 }
             });
 
@@ -162,29 +278,22 @@ app.directive("consoleMessages", function ($compile) {
                 this.messageCount++;
             };
 
-            $scope.addTask  = function(task){
-                $scope.$apply(function(){
+            $scope.addTask = function(task){
+                $timeout(function(){
                     $scope.terminal.currentTask = task;
                 });
 
-                $messages.append($('<div class="console-task btn btn-primary">' + task + '</div>'));
+//                $messages.append($('<div class="console-task btn btn-primary">' + task + '</div>'));
                 this.messageCount++;
             };
 
-            $scope.addCommand  = function(command){
-                //todo ask at SO if this is a good practice
-                var updateCommand = function () {
+            $scope.addCommand = function(command){
+                $timeout(function () {
                     $scope.terminal.currentCommand = command;
                     $scope.terminal.currentCommandStartedAt = new Date();
-                };
+                });
 
-                if(!$scope.$$phase){
-                    $scope.$apply(updateCommand);
-                } else {
-                    updateCommand();
-                }
-
-                $messages.append($('<div class="console-command text-info">$ ' + command + '</div>'));
+//                $messages.append($('<div class="console-command text-info">$ ' + command + '</div>'));
                 this.messageCount++;
             };
 
@@ -193,7 +302,7 @@ app.directive("consoleMessages", function ($compile) {
             }
         }
     };
-});
+}]);
 
 
 // @host.name

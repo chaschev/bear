@@ -22,6 +22,7 @@ package bear.main.event;
 public abstract class EventToUI {
     protected final String type;
     protected final String subType;
+    protected String parentId;
 
     public final long timestamp = System.currentTimeMillis();
 
@@ -41,5 +42,14 @@ public abstract class EventToUI {
 
     public String getSubType() {
         return subType;
+    }
+
+    public EventToUI setParentId(String parentId) {
+        this.parentId = parentId;
+        return this;
+    }
+
+    public String getParentId() {
+        return parentId;
     }
 }

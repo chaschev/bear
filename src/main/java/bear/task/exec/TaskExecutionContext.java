@@ -45,7 +45,7 @@ public class TaskExecutionContext extends HavingContext<TaskExecutionContext, Se
     }
 
     public void onNewSubTask(Task<? extends TaskDef> task){
-        pendingEntry = new TaskExecutionEntry(task);
+        pendingEntry = new TaskExecutionEntry(getLastEntry(), task);
     }
 
     public void onEndSubTask(Task<? extends TaskDef> task, TaskResult result) {
@@ -55,7 +55,7 @@ public class TaskExecutionContext extends HavingContext<TaskExecutionContext, Se
     }
 
     public <T extends CommandLineResult> void onNewCommand(AbstractConsoleCommand<T> command) {
-        CommandExecutionEntry commandEntry = new CommandExecutionEntry(command);
+        CommandExecutionEntry commandEntry = new CommandExecutionEntry(getLastEntry(), command);
 
         pendingEntry = commandEntry;
 

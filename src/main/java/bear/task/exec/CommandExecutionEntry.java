@@ -25,11 +25,12 @@ import bear.vcs.CommandLineResult;
 * @author Andrey Chaschev chaschev@gmail.com
 */
 public class CommandExecutionEntry extends ExecutionEntry {
-    AbstractConsoleCommand command;
+    public AbstractConsoleCommand command;
 
     protected CommandLineResult result;
 
-    public <T extends CommandLineResult> CommandExecutionEntry(AbstractConsoleCommand<T> command) {
+    public CommandExecutionEntry(ExecutionEntry parent, AbstractConsoleCommand command) {
+        super(parent);
         this.command = command;
     }
 

@@ -28,6 +28,7 @@ import bear.task.TaskResult;
 import bear.task.TaskRunner;
 import bear.task.exec.CommandExecutionEntry;
 import bear.task.exec.TaskExecutionContext;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.joda.time.DateTime;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
@@ -48,6 +49,12 @@ public class SessionContext extends AbstractContext{
     public Bear bear;
     public Address address;
     protected CompositeTaskRunContext taskRunContext;
+
+    public final String id = randomId();
+
+    public static String randomId() {
+        return RandomStringUtils.randomAlphanumeric(6);
+    }
 
     public class ExecutionContext{
         public final DateTime startedAt = new DateTime();

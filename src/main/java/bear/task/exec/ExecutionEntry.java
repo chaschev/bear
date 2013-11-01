@@ -24,8 +24,14 @@ import org.joda.time.DateTime;
 * @author Andrey Chaschev chaschev@gmail.com
 */
 public abstract class ExecutionEntry {
+    public final ExecutionEntry parent;
+
     DateTime startedAt = new DateTime();
     DateTime finishedAt;
+
+    protected ExecutionEntry(ExecutionEntry parent) {
+        this.parent = parent;
+    }
 
     public void onEnd(TaskResult result) {
         finishedAt = new DateTime();

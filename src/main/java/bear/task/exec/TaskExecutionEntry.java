@@ -26,7 +26,8 @@ import bear.task.TaskDef;
 public class TaskExecutionEntry extends ExecutionEntry {
     protected Task<? extends TaskDef> task;
 
-    public TaskExecutionEntry(Task<? extends TaskDef> task) {
+    public TaskExecutionEntry(ExecutionEntry parent, Task<? extends TaskDef> task) {
+        super(parent);
         this.task = task;
     }
 
