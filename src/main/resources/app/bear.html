@@ -6,6 +6,7 @@
 
     <meta charset="UTF-8">
     <!--<script src="js/firebug-lite.js"></script>-->
+    <script src="js/diff_match_patch.js"></script>
 
     <script src="js/jquery-2.0.3.min.js"></script>
     <script src="js/angular.min.js"></script>
@@ -89,18 +90,21 @@
             height: 200px;
         }
 
-        .commandText, .command span, .taskName{
+        .consoleMessages{
+            white-space: pre-wrap;
             font-family: 'source-code-pro', 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', monospace;
             font-size: 12px;
         }
 
+        .command {
+            margin-top: 2px;
+        }
+
         div.session .taskName {
-            margin-top: 3px;
-            margin-bottom: 3px;
+            padding-top: 3px;
+            padding-bottom: 3px;
             font-size: 14px;
             border-bottom: 1px dashed black;
-
-
         }
 
         div.session .task:first-of-type {

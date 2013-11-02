@@ -3,6 +3,8 @@
 :set groovyShell.sendToHosts=true
 :use shell ssh
 pwd
+echo `hostname`
+cat /home/andrey/texty
 :set bear.overriddenInteractiveRun=false
 :set bear.autoInstallPlugins=true
 :use shell groovy

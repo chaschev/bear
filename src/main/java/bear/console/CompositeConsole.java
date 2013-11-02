@@ -76,7 +76,7 @@ public class CompositeConsole {
             futures.add(fut);
         }
 
-        return new CompositeConsoleArrival(null, futures, consoles, null);
+        return new CompositeConsoleArrival(null, futures, consoles, null, null);
     }
 
     public int size() {

@@ -61,9 +61,49 @@ public class BearScript {
         this.bear = global.bear;
     }
 
+    private static class ShellRunContext{
+        public final String sessionId = SessionContext.randomId();
+        public final String taskId = SessionContext.randomId();
+
+        /**
+         * When <0 the method is synchronious. When =0, there is no timeout.
+         */
+        long timeout = -1;
+        TimeUnit unit = null;
+        String name;
+        String script;
+
+
+        public ShellRunContext setTimeout(long timeout) {
+            this.timeout = timeout;
+            return this;
+        }
+
+        public ShellRunContext setUnit(TimeUnit unit) {
+            this.unit = unit;
+            return this;
+        }
+
+        public ShellRunContext setName(String name) {
+            this.name = name;
+            return this;
+        }
+
+        public ShellRunContext setScript(String script) {
+            this.script = script;
+            return this;
+        }
+    }
+
     public Response exec(String script) {
+        ShellRunContext shellRunContext = new ShellRunContext();
 
         Response lastResponse = null;
+
+        bearFX.sendMessageToUI(new NewSessionConsoleEventToUI("shell", shellRunContext.sessionId));
+        bearFX.sendMessageToUI(new TaskConsoleEventToUI("shell", shellRunContext.taskId + ", todo: add script name and date")
+            .setId(shellRunContext.taskId)
+            .setParentId(shellRunContext.sessionId));
 
         Splitter splitter = Splitter.on("\n")
             .trimResults()
@@ -82,12 +122,13 @@ public class BearScript {
                     String secondWord = substringBefore(command, " ");
 
                     if ("shell".equals(secondWord)) {
-                        Response runResult = runScript();
+                        Response runResult = runScript(shellRunContext);
                         lastResponse = elvis(runResult, lastResponse);
 
-                        switchToPlugin(substringAfter(command, " ").trim());
+                        switchToPlugin(substringAfter(command, " ").trim(), shellRunContext);
                     } else {
-                        bearFX.sendMessageToUI(new TextConsoleEventToUI("shell", "command not supported: <i> " + secondWord + "</i><br>"));
+                        bearFX.sendMessageToUI(new TextConsoleEventToUI("shell", "command not supported: <i>" + secondWord + "</i><br>")
+                            .setParentId(shellRunContext.taskId));
 
                         return new MessageResponse("command not supported: " + secondWord);
                     }
@@ -101,29 +142,36 @@ public class BearScript {
             currentScript.add(line);
         }
 
-        lastResponse = elvis(runScript(), lastResponse);
+        lastResponse = elvis(runScript(shellRunContext), lastResponse);
 
         return lastResponse;
     }
 
-    private Response runScript() {
-        return runScript(-1, null);
-    }
-
-    private Response runScript(long timeout, TimeUnit unit) {
+    private Response runScript(ShellRunContext shellContext) {
         if (currentScript.isEmpty()) {
             logger.info("skipping empty script before shell switch");
             return null;
         }
+
         Response last;
+
         if (currentPlugin.getShell().multiLine()) {
-            String script = Joiner.on("\n").join(currentScript);
-            String name = currentScript.get(0);
-            last = runWithInterpreter(script, name, timeout, unit);
+            shellContext.script = Joiner.on("\n").join(currentScript);
+            shellContext.name = currentScript.get(0);
+            bearFX.sendMessageToUI(new CommandConsoleEventToUI("shell", substringBefore(shellContext.script, "\n"))
+                .setParentId(shellContext.taskId));
+
+            last = runWithInterpreter(shellContext);
         } else {
             last = null;
             for (String s : currentScript) {
-                last = runWithInterpreter(s, s, -1, null);
+                bearFX.sendMessageToUI(new CommandConsoleEventToUI("shell", s)
+                    .setParentId(shellContext.taskId));
+
+                last = runWithInterpreter(shellContext
+                    .setName(s).setScript(s)
+//                    .setTimeout(-1).setUnit(null)
+                );
             }
         }
 
@@ -132,11 +180,7 @@ public class BearScript {
         return last;
     }
 
-    /**
-     * @param timeout When <0 the method is synchronious. When =0, there is no timeout.
-     * @param unit
-     */
-    private RunResponse runWithInterpreter(final String script, String name, long timeout, TimeUnit unit) {
+    private RunResponse runWithInterpreter(final ShellRunContext shellContext) {
         try {
             logger.info("running with interpreter: '{}'", currentPlugin.toString());
 
@@ -146,12 +190,12 @@ public class BearScript {
                 global.putConst(bear.getStage, stage);
             }
 
-            final RunResponse runResponse = runWithScript(new SingleTaskScript(new TaskDef(name) {
+            final RunResponse runResponse = runWithScript(new SingleTaskScript(new TaskDef(shellContext.name) {
                 @Override
                 public Task newSession(SessionContext $, Task parent) {
-                    return currentPlugin.getShell().interpret(script, $, parent, this);
+                    return currentPlugin.getShell().interpret(shellContext.script, $, parent, this);
                 }
-            }));
+            }), shellContext);
 
             final CountDownLatch latch = new CountDownLatch(1);
 
@@ -161,17 +205,23 @@ public class BearScript {
                     if (newValue.get() == runResponse.runContext.size()) {
                         logger.info("finally home. removing stage from global scope");
                         global.removeConst(bear.getStage);
+
+                        List<CompositeConsoleArrival.EqualityGroup> groups = runResponse.runContext.getConsoleArrival().divideIntoGroups();
+
+                        bearFX.sendMessageToUI(
+                            new AllTasksFinishedEventToUI(System.currentTimeMillis() - runResponse.runContext.getStartedAtMs(),
+                                groups).setParentId(shellContext.taskId));
+
                         latch.countDown();
                     }
 
                 }
             });
 
-            bearFX.sendMessageToUI(new RMIEventToUI("terminals", "onScriptStart", runResponse.hosts));
 
-            if (timeout >= 0) {
-                if (timeout > 0) {
-                    latch.await(timeout, unit);
+            if (shellContext.timeout >= 0) {
+                if (shellContext.timeout > 0) {
+                    latch.await(shellContext.timeout, shellContext.unit);
                 }
             } else {
                 //todo task timeout
@@ -184,19 +234,26 @@ public class BearScript {
         }
     }
 
-    private RunResponse runWithScript(Script script) {
+    private RunResponse runWithScript(Script script, ShellRunContext shellContext) {
         CompositeTaskRunContext context = new BearRunner(settings, script, factory)
 //            .init()
             .prepareToRun();
 
-        CompositeConsoleArrival<SessionContext> consoleArrival = context.getConsoleArrival();
+        final CompositeConsoleArrival<SessionContext> consoleArrival = context.getConsoleArrival();
 
         List<SessionContext> $s = consoleArrival.getEntries();
+
+        //todo this should not be async - this message might be slow
+        bearFX.sendMessageToUI(new RMIEventToUI("terminals", "onScriptStart", getHosts($s)));
+        bearFX.sendMessageToUI(new CommandConsoleEventToUI(
+            "shell", shellContext.name
+        ));
+
 
         for (final SessionContext $ : $s) {
             final SessionContext.ExecutionContext execContext = $.getExecutionContext();
 
-            bearFX.sendMessageToUI(new SessionConsoleEventToUI($.getName(), $.id));
+            bearFX.sendMessageToUI(new NewSessionConsoleEventToUI($.getName(), $.id));
 
             execContext.textAppended.addListener(new DynamicVariable.ChangeListener<String>() {
                 public void changedValue(DynamicVariable<String> var, String oldValue, String newValue) {
@@ -234,7 +291,9 @@ public class BearScript {
                 @Override
                 public void changedValue(DynamicVariable<TaskExecutionContext> var, TaskExecutionContext oldValue, TaskExecutionContext newValue) {
                     if (newValue.taskResult != null) {
-                        bearFX.sendMessageToUI(new RootTaskFinishedEventToUI(newValue.taskResult, newValue.getDuration(), $.getName()));
+                        RootTaskFinishedEventToUI eventToUI = new RootTaskFinishedEventToUI(newValue.taskResult, newValue.getDuration(), $.getName());
+
+                        bearFX.sendMessageToUI(eventToUI);
                     }
                 }
             });
@@ -249,11 +308,15 @@ public class BearScript {
 
         context.submitTasks();
 
-        return new RunResponse(context, Lists.transform(context.getConsoleArrival().getEntries(), new Function<SessionContext, RunResponse.Host>() {
+        return new RunResponse(context, getHosts(context.getConsoleArrival().getEntries()));
+    }
+
+    public static List<RunResponse.Host> getHosts(List<SessionContext> $s) {
+        return Lists.transform($s, new Function<SessionContext, RunResponse.Host>() {
             public RunResponse.Host apply(SessionContext $) {
                 return new RunResponse.Host($.sys.getName(), $.sys.getAddress());
             }
-        }));
+        });
     }
 
     private MessageResponse setVariable(String line) {
@@ -273,7 +336,7 @@ public class BearScript {
         return new MessageResponse(String.format("assigned '%s' to '%s'", varName, o));
     }
 
-    private void switchToPlugin(final String pluginName) {
+    private void switchToPlugin(final String pluginName, ShellRunContext shellRunContext) {
         List<Class<? extends Plugin>> matchingClasses = newArrayList(Collections2.filter(getPlugins(pluginName),
             new Predicate<Class<? extends Plugin>>() {
                 @Override
@@ -285,10 +348,14 @@ public class BearScript {
             }));
 
         if (matchingClasses.isEmpty()) {
+            bearFX.sendMessageToUI(new TextConsoleEventToUI("shell", "no plugins found for '<i>" + pluginName + "</i>'\n")
+                .setParentId(shellRunContext.taskId));
             throw new RuntimeException("no plugins found for '" + pluginName + "'");
         }
 
         if (matchingClasses.size() > 1) {
+            bearFX.sendMessageToUI(new TextConsoleEventToUI("shell", "1+ plugins found for '<i>" + pluginName + "</i>': " + matchingClasses + "\n")
+                .setParentId(shellRunContext.taskId));
             throw new RuntimeException("1+ plugins found for '" + pluginName + "': " + pluginName);
         }
 
@@ -296,13 +363,15 @@ public class BearScript {
     }
 
     private SwitchResponse switchToPlugin(Class<? extends Plugin> aClass) {
+//        bearFX.sendMessageToUI(new TextConsoleEventToUI("shell", "switching to plugin: <i>" + aClass.getSimpleName() +"</i>\n"));
+
         logger.info("switching to plugin: {}", aClass.getSimpleName());
 
         this.currentPlugin = global.getPlugin(aClass);
 
-        SwitchResponse response = new SwitchResponse(currentPlugin.name, currentPlugin.getShell().getCommandName() + "$");
+        SwitchResponse response = new SwitchResponse(currentPlugin.name, "$ " + currentPlugin.getShell().getCommandName());
 
-        bearFX.sendMessageToUI(new TextConsoleEventToUI("shell", response.message));
+        bearFX.sendMessageToUI(new TextConsoleEventToUI("shell", response.message + "\n"));
 
         return response;
     }
@@ -359,7 +428,7 @@ public class BearScript {
         public final String prompt;
 
         public SwitchResponse(String pluginName, String prompt) {
-            super("switched to shell '" + pluginName + "'");
+            super("switched to shell '<i>" + pluginName + "</i>'");
             this.pluginName = pluginName;
             this.prompt = prompt;
         }

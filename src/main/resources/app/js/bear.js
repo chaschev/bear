@@ -96,7 +96,7 @@ var Session = function(index){
 </div>
  */
 
-app.directive("consoleMessages", ['$timeout', function ($timeout) {
+app.directive("consoleMessages", ['$timeout', '$compile', '$ekathuwa', function ($timeout, $compile, $ekathuwa) {
     return {
         template: '<div class="consoleMessages" ng-transclude></div>',
         restrict: 'E',
@@ -107,7 +107,7 @@ app.directive("consoleMessages", ['$timeout', function ($timeout) {
         link: function ($scope, $el, attrs) {
             var unprocessedTexts= [];
             var     unprocessedCommands = [];
-            var     unprocessedTasks = []
+            var     unprocessedTasks = [];
             try {
             Java.log("my el:" , $el, "my terminal is: ", $scope.terminal, " and scope is: ", $scope);
 
@@ -117,38 +117,43 @@ app.directive("consoleMessages", ['$timeout', function ($timeout) {
             Java.log('terminal: ', $scope.terminal.host.name, 'messages element: ', $el);
             var $messages = $el;
 
+            function sortByTS($el){
+                $el.sort(function(a,b){
+                    return parseInt($(a).attr('timestamp')) < parseInt($(b).attr('timestamp'));
+                });
+            }
+
+            function quicklyInsertText(e){
+                var $parent = $('#' + e.parentId);
+
+                if($parent.length === 0) return false;
+
+                var text = e.textAdded;
+
+//                text = text
+//                    .replace(/\r\n/g,'<br>')
+//                    .replace(/\n/g,'<br>')
+//                ;
+
+                var $span = angular.element('<span timestamp="' + e.timestamp + '">' + text + '</span>');
+
+                $compile($span.contents())($scope);
+
+                $parent.append($span);
+
+                sortByTS($parent);
+
+                return true;
+            }
+
+
             $scope.$on("message", function(event, e){
-                if(e.console !== $scope.terminal.host.name){
+                if(e.console !== $scope.terminal.name){
                     return;
                 }
 
                 Java.log('received broadcasted message: ', e);
 
-                function sortByTS($el){
-                    $el.sort(function(a,b){
-                        return parseInt($(a).attr('timestamp')) < parseInt($(b).attr('timestamp'));
-                    });
-                }
-
-                function quicklyInsertText(e){
-                    var $parent = $('#' + e.parentId);
-
-                    if($parent.length === 0) return false;
-
-                    var text = e.textAdded;
-
-                    console.log('non=replaced text: ', text);
-
-                    text = text.replace(/[\n\r]/g,'<br>');
-
-                    console.log('replaced text: ', text);
-
-                    $parent.append($('<span timestamp="' + e.timestamp +'">' + text + '</span>'));
-
-                    sortByTS($parent);
-
-                    return true;
-                }
 
                 function quicklyInsertCommand(e){
                     var $parent = $('#' + e.parentId);
@@ -252,32 +257,6 @@ app.directive("consoleMessages", ['$timeout', function ($timeout) {
                 }
             });
 
-            $scope.addMessage = function(text){
-                var $prev = $messages.find(".console-message:last");
-                var prevHtml = $prev.html();
-
-//                Java.log($messages, $prev);
-
-                // make sure previous line ends with "\n". If it's not, we append a full line to the last element.
-
-                if(prevHtml && prevHtml[prevHtml.length -1]!='\n' && prevHtml[prevHtml.length]!='\r'){
-                    var indexOfEOL = text.indexOf('\n');
-                    if(indexOfEOL == -1){
-                        $prev.append(text.replace('\n', '<br>'));
-                        text = '';
-                    }else{
-                        $prev.append(text.substring(0, indexOfEOL).replace('\n', '<br>'));
-                        text = text.substring(indexOfEOL).replace('\n', '<br>');
-                    }
-                }
-
-                if(text !== ''){
-                    $messages.append($('<div class="console-message">' + text + '</div>'));
-                }
-
-                this.messageCount++;
-            };
-
             $scope.addTask = function(task){
                 $timeout(function(){
                     $scope.terminal.currentTask = task;
@@ -297,6 +276,77 @@ app.directive("consoleMessages", ['$timeout', function ($timeout) {
                 this.messageCount++;
             };
 
+            var dmp = new diff_match_patch();
+
+            $scope.compareSessions = function(id1, id2){
+                //from http://stackoverflow.com/questions/11905943/jquery-text-interpretbr-as-new-line
+                function convertToText(id) {
+                    var c = document.getElementById(id);
+                    return c.textContent || c.innerText;
+                }
+
+                var text1 = convertToText(id1);
+                var text2 = convertToText(id2);
+
+                console.log('text1: ', text1.indexOf('\n') != -1, text1);
+
+                dmp.Diff_Timeout = 100;
+                dmp.Diff_EditCost = 4;
+
+                var d = dmp.diff_main(text1, text2);
+
+                dmp.diff_cleanupSemantic(d);
+
+                var ds = dmp.diff_prettyHtml(d);
+
+                $ekathuwa.modal({
+                    id: "compareSessionsDialogId",
+                    scope: $scope,
+                    contentPreSize: "lg",
+                    templateHTML: '' +
+                        '<div class="modal fade" id="compareSessionsDialogId" >' +
+                        '<div class="modal-dialog">' +
+                        '<div class="modal-content">' +
+                        '<div class="modal-header">' +
+                        ' <button aria-hidden="true" data-dismiss="modal" class="close" type="button">x</button>' +
+                        ' <h4 id="myModalLabel" class="modal-title">Compare</h4>' +
+                        '</div>' +
+                        '<div>' + ds + '</div>' +
+                        '<div class="modal-footer">' +
+                        ' <button data-dismiss="modal" class="btn btn-default" type="button" ng-click="">Close</button></div>' +
+                        '</div>' +
+                        '</div>' +
+                        '</div>'
+                });
+            };
+
+            $scope.$on("allFinished", function(event, e){
+                var terminal = $scope.terminal;
+                var groups = e.groups;
+
+                console.log('allFinished, groups', groups, terminal.name);
+
+                if(terminal.name !== 'shell') return;
+
+                if(groups.length === 1){
+                    e.textAdded = "took " + durationToString(e.duration, true) + "ms [no diff]";
+                    quicklyInsertText(e);
+//                    $messages.append(
+//                        '<div timestamp="' + e.timestamp +'" class="commandText">finished. all results look similar ' +  +'</div>'
+//                    );
+                }else{
+                    var comparisonLink = "compareSessions(" +
+                        "'" + groups[0].id + "', '" + groups[1].id + "')";
+                    var diffLinkCaption = '[' + groups[1].distance + '% diff]';
+
+                    e.textAdded = "took " + durationToString(e.duration, true) + "s " +
+                        '<a ng-click="' + comparisonLink + '">' +diffLinkCaption + '</a>';
+
+                    quicklyInsertText(e);
+                }
+
+            });
+
             } catch (e) {
                 Java.log(e);
             }
@@ -313,6 +363,7 @@ app.directive("consoleMessages", ['$timeout', function ($timeout) {
 // @currentCommandStartedAt
 var Terminal = function(host){
     this.host = host;
+    this.name = host.name;
     this.messageCount = 0;
 };
 
@@ -398,6 +449,12 @@ Terminals.prototype.updateHosts = function(hosts){
 Terminals.prototype.updateStats = function(stats){
     Java.log('updating stats with: ', stats);
     this.stats = stats;
+};
+
+Terminals.prototype.findByName = function(name){
+    var i = this.indexByName(name);
+    if( i === -1) return null;
+    return this.terminals[i];
 };
 
 Terminals.prototype.indexByName = function(name){
@@ -493,6 +550,11 @@ function BearCtrl($scope){
             case 'console':
 //                Java.log('broadcasting', e);
                 $scope.$broadcast('message', e);
+
+                break;
+
+            case 'allFinished':
+                $scope.$broadcast('allFinished', e);
 
                 break;
             case 'status':

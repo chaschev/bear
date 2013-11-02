@@ -10,6 +10,7 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -35,20 +36,23 @@ public class CompositeConsoleArrival<ENTRY> {
     protected String[] convertedEntries;
 
     protected Function<ENTRY, String> entryAsText;
+    protected Function<ENTRY, String> entryId;
 
     protected double thresholdDistancePct = 5;
 
     public CompositeConsoleArrival(
         List<ENTRY> entries, List<ListenableFuture<ENTRY>> futures, List<? extends AbstractConsole> consoles,
-        Function<ENTRY, String> entryAsText) {
+        Function<ENTRY, String> entryAsText, Function<ENTRY, String> entryId) {
 
         this.entries = entries;
 
         this.futures = futures;
         this.consoles = consoles;
         this.entryAsText = entryAsText;
+        this.entryId = entryId;
 
         arrivedEntries = LangUtils.newFilledArrayList(entries.size(), null);
+        convertedEntries = new String[entries.size()];
     }
 
     public void addArrival(int i, ENTRY entry) {
@@ -65,7 +69,7 @@ public class CompositeConsoleArrival<ENTRY> {
 
 
     public static class EqualityGroups {
-        List<EqualityGroup> groups = new ArrayList<EqualityGroup>();
+        public List<EqualityGroup> groups = new ArrayList<EqualityGroup>();
 
         int size;
 
@@ -91,30 +95,41 @@ public class CompositeConsoleArrival<ENTRY> {
         }
     }
 
-    public static class EqualityGroup<ENTRY> {
-        String text;
-        int firstEntry;
-        private final double thresholdDistancePct;
-        List<Integer> entries = new ArrayList<Integer>();
+    public static class EqualityGroup<ENTRY> implements Comparable<EqualityGroup<?>>{
+        public String id;
+        public String text;
+        public int firstEntry;
+        public  final double thresholdDistancePct;
+        public List<String> entriesIds = new ArrayList<String>();
+        public int distance;
 
-        private EqualityGroup(String text, int firstEntry, double thresholdDistancePct) {
+        private EqualityGroup(String id, String text, int firstEntry, double thresholdDistancePct) {
+            this.id = id;
             this.text = text;
             this.firstEntry = firstEntry;
             this.thresholdDistancePct = thresholdDistancePct;
         }
 
-        public boolean sameGroup(String otherText) {
+        public boolean sameGroup(double distance) {
+            return distance < thresholdDistancePct;
+        }
 
-            return getLevenshteinDistance(text, otherText, 5000) * 1.0 /
-                (text.length() + otherText.length()) < thresholdDistancePct;
+        private double distancePct(String otherText) {
+            return getLevenshteinDistance(text, otherText, 5000) * 100.0 /
+                (text.length() + otherText.length());
         }
 
         public int size() {
-            return entries.size();
+            return entriesIds.size() + 1;
         }
 
-        public void add(int i) {
-            entries.add(i);
+        public void add(String id) {
+            entriesIds.add(id);
+        }
+
+        @Override
+        public int compareTo(EqualityGroup<?> o) {
+            return size() - o.size();
         }
     }
 
@@ -124,19 +139,42 @@ public class CompositeConsoleArrival<ENTRY> {
         }
 
         List<EqualityGroup> groups = new ArrayList<EqualityGroup>();
-        groups.add(new EqualityGroup(convertedEntries[0], 0, thresholdDistancePct));
+
+        groups.add(newGroupByIndex(0));
 
         for (int i = 1; i < convertedEntries.length; i++) {
             String entryText = convertedEntries[i];
 
+            boolean foundGroup = false;
+            double distance = 0;
+
             for (EqualityGroup group : groups) {
-                if (group.sameGroup(entryText)) {
-                    group.add(i);
+                distance = group.distancePct(entryText);
+                if (group.sameGroup(distance)) {
+                    group.add(entryId.apply(entries.get(i)));
+                    foundGroup = true;
+                    break;
                 }
+            }
+
+            if(!foundGroup){
+                EqualityGroup group = newGroupByIndex(i);
+                groups.add(group);
+                group.distance = (int) distance;
             }
         }
 
+//        EqualityGroups equalityGroups = new EqualityGroups(groups);
+
+        Collections.sort(groups);
+
         return groups;
+    }
+
+    private EqualityGroup newGroupByIndex(int index) {
+        return new EqualityGroup(
+            entryId.apply(arrivedEntries.get(index)),
+            convertedEntries[index], index, thresholdDistancePct);
     }
 
     public List<ListenableFuture<ENTRY>> getFutures() {

@@ -20,7 +20,9 @@ import bear.console.CompositeConsoleArrival;
 import bear.main.BearCommandLineConfigurator;
 import bear.plugins.Plugin;
 import bear.plugins.sh.SystemSession;
-import bear.session.*;
+import bear.session.DynamicVariable;
+import bear.session.Result;
+import bear.session.Variables;
 import bear.task.*;
 import bear.task.exec.TaskExecutionContext;
 import bear.vcs.CommandLineResult;
@@ -32,6 +34,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class CompositeTaskRunContext {
+    private final long startedAtMs = System.currentTimeMillis();
     private final GlobalContext global;
     private final TaskDef task;
     private final CompositeConsoleArrival<SessionContext> consoleArrival;
@@ -61,8 +64,8 @@ public class CompositeTaskRunContext {
         stats.getDefaultValue().addArrival(isOk);
         stats.fireExternalModification();
 
-        arrivedCount.getDefaultValue().incrementAndGet();
-        arrivedCount.fireExternalModification();
+        this.arrivedCount.getDefaultValue().incrementAndGet();
+        this.arrivedCount.fireExternalModification();
     }
 
     public void submitTasks() {
@@ -125,7 +128,6 @@ public class CompositeTaskRunContext {
                         throw Exceptions.runtime(e);
                     }finally {
                         try {
-                            $.executionContext.rootExecutionContext.fireExternalModification();
                             addArrival(finalI, $);
                         } catch (Exception e) {
                             BearCommandLineConfigurator.logger.warn("", e);
@@ -188,5 +190,9 @@ public class CompositeTaskRunContext {
 
     public int size(){
         return consoleArrival.getEntries().size();
+    }
+
+    public long getStartedAtMs() {
+        return startedAtMs;
     }
 }

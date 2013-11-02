@@ -87,6 +87,7 @@ public class GenericUnixRemoteEnvironmentPlugin extends SystemEnvironmentPlugin 
         connect();
 
         return new SystemSession(parent, taskDefMixin, $) {
+            SshSession sshSession;
 
             {
                 Preconditions.checkNotNull($.address, "address not initialized");
@@ -436,6 +437,7 @@ public class GenericUnixRemoteEnvironmentPlugin extends SystemEnvironmentPlugin 
                 @Override
                 public SSHClient call() throws Exception {
                     try {
+                        logger.info("connecting to " + sshAddress.address);
                         SSHClient ssh = new SSHClient();
                         ssh.loadKnownHosts(new File(SystemUtils.getUserHome(), ".ssh/known_hosts"));
                         ssh.connect(sshAddress.address);
@@ -517,11 +519,6 @@ public class GenericUnixRemoteEnvironmentPlugin extends SystemEnvironmentPlugin 
             return s;
         }
     }
-
-    SshSession sshSession;
-
-
-
 
 
     public static Address newUnixRemote(String name, String address) {

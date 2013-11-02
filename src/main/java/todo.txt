@@ -16,18 +16,22 @@ top priority:
         settings are active for a project, so need to be displayed in status,
 -- (ok) as a button opening the editor
 
+- pwd not printed (session not created)
+- <br>x2 bug
+
 - (ok) refactor building - settings can be in
 - (ok) general Bear script
 - (declined) :use settings <path>
 - (declined) consider using only the groovy plugin - no, sometimes we just want to do ls, :set commands are shell-agnostic. plus there can be python or ruby
 - (ok) ui: embed code completion
-
-
 - ui: command summary to the local shell tab (divide into groups)
+- ui: sent commands should be printed as well
+- ui: command history on the right: short summary (first line), clicking
 - (ok) ui: change scripts to snippets
 - ui: download & install idea (core)
 - ui: generate pom (core) & open in idea (core)
 - ui: run a command in on a single host from shell
+- ui: green button usability - click edit, edit, if modified at least once, ask load?
 - (ok) ui: fix copy-paste
 
 - refactor BearScript and message sending (extract an interface from BearFX)

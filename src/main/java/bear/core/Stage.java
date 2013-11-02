@@ -17,9 +17,9 @@
 package bear.core;
 
 import bear.console.CompositeConsoleArrival;
+import bear.plugins.sh.SystemSession;
 import bear.session.Address;
 import bear.session.SshAddress;
-import bear.plugins.sh.SystemSession;
 import bear.task.TaskDef;
 import bear.task.TaskRunner;
 import com.google.common.base.Function;
@@ -86,6 +86,10 @@ public class Stage {
             @Override
             public String apply(SessionContext $) {
                 return $.executionContext.text.apply($).toString();
+            }
+        }, new Function<SessionContext, String>() {
+            public String apply(SessionContext $) {
+                return $.id;
             }
         });
 
