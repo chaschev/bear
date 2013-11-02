@@ -188,9 +188,7 @@ app.directive("consoleMessages", ['$timeout', '$compile', '$ekathuwa', function 
                 }
 
                 function quicklyInsertSession(e){
-                    $messages.append($(
-                        '<div class="session" id="' + e.id + '">' +
-                            '</div>'
+                    $messages.append($('<div class="session" id="' + e.id + '"></div>'
                     ));
 
                     return true;
@@ -328,22 +326,32 @@ app.directive("consoleMessages", ['$timeout', '$compile', '$ekathuwa', function 
 
                 if(terminal.name !== 'shell') return;
 
+                var addLink;
+                var comparisonLink;
+                var diffLinkCaption;
+
                 if(groups.length === 1){
-                    e.textAdded = "took " + durationToString(e.duration, true) + "ms [no diff]";
-                    quicklyInsertText(e);
-//                    $messages.append(
-//                        '<div timestamp="' + e.timestamp +'" class="commandText">finished. all results look similar ' +  +'</div>'
-//                    );
+                    var hasEntries = groups[0].entriesIds.length > 0; //hosts > 0
+
+                    comparisonLink = hasEntries ? "compareSessions(" +
+                        "'" + groups[0].id + "', '" + groups[0].entriesIds[0] + "')" : "";
+                    diffLinkCaption = '[no diff]';
+
+                    addLink = hasEntries;
+
                 }else{
-                    var comparisonLink = "compareSessions(" +
+                    comparisonLink = "compareSessions(" +
                         "'" + groups[0].id + "', '" + groups[1].id + "')";
-                    var diffLinkCaption = '[' + groups[1].distance + '% diff]';
-
-                    e.textAdded = "took " + durationToString(e.duration, true) + "s " +
-                        '<a ng-click="' + comparisonLink + '">' +diffLinkCaption + '</a>';
-
-                    quicklyInsertText(e);
+                    diffLinkCaption = '<span class = "diffError">[' + groups[1].distance + '% diff]</span>';
+                    addLink = true;
                 }
+
+                e.textAdded = "took " + durationToString(e.duration, true) + "s " +
+                    (addLink ? '<a ng-click="' + comparisonLink + '">' +diffLinkCaption + '</a>' : diffLinkCaption) +
+                    '\n';
+
+                quicklyInsertText(e);
+
 
             });
 

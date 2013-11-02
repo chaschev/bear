@@ -16,16 +16,17 @@ top priority:
         settings are active for a project, so need to be displayed in status,
 -- (ok) as a button opening the editor
 
-- pwd not printed (session not created)
-- <br>x2 bug
+- (ok) pwd not printed (session not created)
+- (ok) <br>x2 bug
+- reload button for scripts, Ctrl-S inside mini-script editor
 
 - (ok) refactor building - settings can be in
 - (ok) general Bear script
 - (declined) :use settings <path>
 - (declined) consider using only the groovy plugin - no, sometimes we just want to do ls, :set commands are shell-agnostic. plus there can be python or ruby
 - (ok) ui: embed code completion
-- ui: command summary to the local shell tab (divide into groups)
-- ui: sent commands should be printed as well
+- (ok) ui: command summary to the local shell tab (divide into groups)
+- (ok) ui: sent commands should be printed as well
 - ui: command history on the right: short summary (first line), clicking
 - (ok) ui: change scripts to snippets
 - ui: download & install idea (core)
@@ -55,6 +56,7 @@ top priority:
 - ui: preload stages, hosts and roles
 
 
+- ui: better formatting for diff (i.e. \n after div)
 - ui: add global root task somewhere, add global timer
 - ui: code completion for :set
 - ui: nicer button placement for scripts, use the space

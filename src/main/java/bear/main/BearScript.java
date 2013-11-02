@@ -245,9 +245,8 @@ public class BearScript {
 
         //todo this should not be async - this message might be slow
         bearFX.sendMessageToUI(new RMIEventToUI("terminals", "onScriptStart", getHosts($s)));
-        bearFX.sendMessageToUI(new CommandConsoleEventToUI(
-            "shell", shellContext.name
-        ));
+//        bearFX.sendMessageToUI(new CommandConsoleEventToUI("shell", shellContext.name)
+//            .setParentId(shellContext.taskId));
 
 
         for (final SessionContext $ : $s) {
@@ -359,10 +358,10 @@ public class BearScript {
             throw new RuntimeException("1+ plugins found for '" + pluginName + "': " + pluginName);
         }
 
-        switchToPlugin(matchingClasses.get(0));
+        switchToPlugin(matchingClasses.get(0), shellRunContext);
     }
 
-    private SwitchResponse switchToPlugin(Class<? extends Plugin> aClass) {
+    private SwitchResponse switchToPlugin(Class<? extends Plugin> aClass, ShellRunContext shellContext) {
 //        bearFX.sendMessageToUI(new TextConsoleEventToUI("shell", "switching to plugin: <i>" + aClass.getSimpleName() +"</i>\n"));
 
         logger.info("switching to plugin: {}", aClass.getSimpleName());
@@ -371,7 +370,8 @@ public class BearScript {
 
         SwitchResponse response = new SwitchResponse(currentPlugin.name, "$ " + currentPlugin.getShell().getCommandName());
 
-        bearFX.sendMessageToUI(new TextConsoleEventToUI("shell", response.message + "\n"));
+        bearFX.sendMessageToUI(new TextConsoleEventToUI("shell", response.message + "\n")
+            .setParentId(shellContext.taskId));
 
         return response;
     }
