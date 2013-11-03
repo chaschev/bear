@@ -175,12 +175,17 @@ app.directive("consoleMessages", ['$timeout', '$compile', '$ekathuwa', function 
                     var $parent = $('#' + e.parentId);
 
                     if($parent.length === 0) return false;
+                    var date = new Date();
+                    var $el = $(
+                        '<div class="task" timestamp="' + e.timestamp + '" id="' + e.id + '">' +
+                            '<div class="taskName"><i>' + e.task + '</i><span class="pull-right">{{' + date.getTime() +
+                            '|date:"MMM dd, yyyy HH:mm:ss Z"}}</span></div>' +
+                            '</div>'
+                    );
 
-                    $parent.append($(
-                        '<div class="task" timestamp="' + e.timestamp +'" id="' + e.id + '">' +
-                            '<div class="taskName"><i>' + e.task + '</i></div>' +
-                        '</div>'
-                    ));
+                    $compile($el.contents())($scope);
+
+                    $parent.append($el);
 
                     sortByTS($parent);
 
@@ -188,8 +193,7 @@ app.directive("consoleMessages", ['$timeout', '$compile', '$ekathuwa', function 
                 }
 
                 function quicklyInsertSession(e){
-                    $messages.append($('<div class="session" id="' + e.id + '"></div>'
-                    ));
+                    $messages.append($('<div class="session" id="' + e.id + '" phaseId="' + e.phaseId + '"></div>'));
 
                     return true;
                 }
@@ -309,7 +313,7 @@ app.directive("consoleMessages", ['$timeout', '$compile', '$ekathuwa', function 
                         ' <button aria-hidden="true" data-dismiss="modal" class="close" type="button">x</button>' +
                         ' <h4 id="myModalLabel" class="modal-title">Compare</h4>' +
                         '</div>' +
-                        '<div>' + ds + '</div>' +
+                        '<div class="consoleMessages">' + ds + '</div>' +
                         '<div class="modal-footer">' +
                         ' <button data-dismiss="modal" class="btn btn-default" type="button" ng-click="">Close</button></div>' +
                         '</div>' +
@@ -688,7 +692,7 @@ var ConsoleTabsCtrl = function ($scope) {
 };
 
 //app.controller('FileTabsCtrl', ['$scope', function($scope) {
-app.controller('ConsoleTabsChildCtrl', ['$scope', '$q', function ($scope, $q) {
+app.controller('ConsoleTabsChildCtrl', ['$scope', '$q', '$timeout', function ($scope, $q, $timeout) {
     var updateShell = function (remoteEnv, shellPlugin)
     {
         Java.log('updating shell to', remoteEnv, shellPlugin);
@@ -750,19 +754,30 @@ app.controller('ConsoleTabsChildCtrl', ['$scope', '$q', function ($scope, $q) {
         Java.log('interpret response:', response);
     };
 
+    var refreshScriptText = function(runScript) {
+        $timeout(function(){
+            $scope.editor.setValue($scope.fileManager.readFile(
+                runScript.dir,
+                runScript.filename
+            ), -1);
+        });
+    };
+
+
+    $scope.refreshRunScript = function(){
+        refreshScriptText($scope.runScript);
+    };
+
     $scope.aceLoaded = function(editor){
         Java.log("loaded ace editor");
 
         $scope.editor = editor;
 
         $scope.$watch('runScript', function(newVal, oldVal){
-            Java.log('runScript.path watch:', newVal, oldVal);
+            Java.log(newVal, newVal, oldVal);
             if(newVal /*&& newVal.path !== oldVal.path*/){
                 Java.log('updating...');
-                editor.setValue($scope.fileManager.readFile(
-                    newVal.dir,
-                    newVal.filename
-                ), -1);
+                refreshScriptText(newVal);
             }
         }, true);
 

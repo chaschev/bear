@@ -101,7 +101,7 @@
         }
 
         div.session .taskName {
-            padding-top: 3px;
+            padding-top: 7px;
             padding-bottom: 3px;
             font-size: 14px;
             border-bottom: 1px dashed black;
@@ -333,10 +333,11 @@
         };
 
         function updateHeights() {
+            var fireBugHeight = $("body > head > script[src^='firebug']").length === 0 ? 300 :0 ;
             var bodyHeight = $(window).height();
             var $scrollers = $('.scroller');
             var $consolesPanel = $('#consolesPanel');
-            var newHeight = (bodyHeight - $scrollers.offset().top - 270);     //270 is an approximate height of the ace fixed editing part and captions
+            var newHeight = (bodyHeight - $scrollers.offset().top - 270 - fireBugHeight);     //270 is an approximate height of the ace fixed editing part and captions
             console.log('resizing, newHeight:', newHeight, bodyHeight, $scrollers.offset(),
                     $consolesPanel.innerHeight(),
                     $consolesPanel.outerHeight()
@@ -484,12 +485,15 @@
                             <div ng-controller="ConsoleTabsChildCtrl" name="{{terminal.host.name}}">
                                 <div class="scroller">
                                 <console-messages>
-                                    <div>{{terminal.host.name}}</div>
+                                    <!--<div>{{terminal.host.name}}</div>-->
                                 </console-messages>
                                 </div>
                                 <div><table style="width: 100%">
                                     <tr>
-                                        <td style="width: 90%"><div ng-init="classes='btn btn-success btn-sm'" fx-editor-button selected="runScript" file-manager="fileManager"></div></td>
+                                        <td style="width: 90%">
+                                            <div ng-init="classes='btn btn-success btn-sm';" fx-editor-button selected="runScript" file-manager="fileManager" style="display:inline-block;"></div>
+                                            <button class="btn btn-sm btn-default" style="display: inline-block"><i class="fa fa-refresh" ng-click="refreshRunScript()"></i></button>
+                                        </td>
                                         <td>
                                             <div class="input-group input-group-sm">
                                                 <select class="chzn-select" ng-init="shellPlugin='sh'"

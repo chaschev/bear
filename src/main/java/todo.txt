@@ -18,8 +18,9 @@ top priority:
 
 - (ok) pwd not printed (session not created)
 - (ok) <br>x2 bug
-- reload button for scripts, Ctrl-S inside mini-script editor
+- (ok) reload button for scripts, Ctrl-S inside mini-script editor
 
+- ui: general compare sessions dialog (via class='session', phaseId='*')
 - (ok) refactor building - settings can be in
 - (ok) general Bear script
 - (declined) :use settings <path>

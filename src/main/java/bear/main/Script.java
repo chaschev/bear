@@ -19,6 +19,7 @@ package bear.main;
 import bear.core.Bear;
 import bear.core.CompositeTaskRunContext;
 import bear.core.GlobalContext;
+import bear.core.SessionContext;
 
 import java.io.File;
 
@@ -35,6 +36,7 @@ public abstract class Script {
 
     public GlobalContext global;
     public Bear bear;
+    public final String id = SessionContext.randomId();
 
     protected abstract void configure() throws Exception;
 

@@ -14,10 +14,11 @@ angular.module('fx.file.editor', ['ui.bootstrap', 'ui.ace', 'ngEkathuwa'])
         scope: {
             fileManager: '=',
             selected: '=',
-            classes: '@'
+            classes: '@',
+            styles: '@'
         },
         template: '' +
-            '<div class="btn-group">' +
+            '<div class="btn-group" style="{{styles}}">' +
             ' <button type="button" ng-click="showModal()" class="btn btn-default">{{selected.filename}}</button>' +
             ' <button type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown">' +
             '  <span class="caret"></span>' +
