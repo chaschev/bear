@@ -18,11 +18,109 @@
  * @author Andrey Chaschev chaschev@gmail.com
  */
 
-var app = angular.module('bear', ['ui.bootstrap', 'ui.ace', 'fx.file.editor']);
+var app = angular.module('bear', ['ui.bootstrap', 'ui.ace', 'fx.file.editor', 'pretty.time']);
 
 function safeApply(scope, fn) {
     (scope.$$phase || scope.$root.$$phase) ? fn() : scope.$apply(fn);
 }
+
+app.service('fileManager', [function () {
+    this.openFileDialog = function (curDir) {
+        return window.bear.call('fileManager', 'openFileDialog', curDir);
+    };
+    this.listDir = function (curDir) {
+        return window.bear.jsonCall('fileManager', 'listDir', JSON.stringify({dir: curDir, extensions: ['groovy', 'java', 'bear'], recursive: false}));
+    };
+    this.readFile = function (dir, name) {
+        return window.bear.call('fileManager', 'readFile', dir, name);
+    };
+    this.readFileByPath = function (path) {
+        return window.bear.call('fileManager', 'readFileByPath', path);
+    };
+    this.writeFile = function (dir, name, content) {
+        return window.bear.call('fileManager', 'writeFile', dir, name, content);
+    };
+    this.writeFileByPath = function (path, content) {
+        return window.bear.call('fileManager', 'writeFileByPath', path, content);
+    };
+    this.getBaseName = function(path){
+        var i = path.lastIndexOf('\\');
+        if(i == -1) i = path.lastIndexOf('/');
+        return path.substr(i + 1);
+    }
+
+}]);
+
+app.service('historyManager', ['fileManager', function(fileManager){
+    this.entries = [];
+
+    this.loadEntries = function(){
+        this.historyFilePath = JSON.parse(window.bear.jsonCall('conf', 'getPropertyAsFile', 'bear-fx.history')).path;
+        this.fileManager = fileManager;
+
+        console.log("this.historyFilePath: " , this.historyFilePath);
+
+        var json = fileManager.readFileByPath(this.historyFilePath);
+        if(!json || json.length === 0) return;
+
+        var jsonEntries = JSON.parse(json);
+
+        for (var i = 0; i < jsonEntries.length; i++) {
+            var e = jsonEntries[i];
+            var r = null;
+
+            console.log('loading entry: ', e, e.file);
+
+            switch(e.type){
+                case 'file':
+                    r = new FileReferenceHistoryEntry(e.file);
+                    break;
+                case 'script':
+                    r = new ScriptHistoryEntry(e.script);
+                    break;
+                default:
+                    throw "Unknown type: " + e.type;
+            }
+
+            r.time = e.time;
+
+            entries.add(r);
+        }
+    };
+
+    this.saveEntries = function(){
+        console.log("saving entries...");
+
+        if(this.entries.length >= 100){
+            this.entries.slice(this.entries.length - 100, this.entries.length);
+        }
+
+        fileManager.writeFileByPath(this.historyFilePath, JSON.stringify(this.entries));
+    };
+
+    this.addFileRef = function(file){
+        this.entries.unshift(new FileReferenceHistoryEntry(file));
+        this.saveEntries();
+    };
+
+    this.addScript = function(script){
+        this.entries.unshift(new ScriptHistoryEntry(script));
+        this.saveEntries();
+    };
+}]);
+
+app.controller('HistoryController', ['historyManager', '$scope', function(historyManager, $scope){
+    $scope.historyManager = historyManager;
+
+    $scope.init = function(){
+        try {
+            console.log('HistoryController - init()');
+            historyManager.loadEntries();
+        } catch (e) {
+            console.log("exception", e);
+        }
+    };
+}]);
 
 app.directive('chosen',function() {
     return {
@@ -481,7 +579,7 @@ Terminals.prototype.indexByName = function(name){
     return -1;
 };
 
-function BearCtrl($scope){
+app.controller('BearCtrl', ['fileManager', '$scope', function (fileManager, $scope){
     $scope.lastBuildTime = new Date();
 
     $scope.terminals = new Terminals();
@@ -569,30 +667,19 @@ function BearCtrl($scope){
                 $scope.$broadcast('allFinished', e);
 
                 break;
+
             case 'status':
                 $scope.$apply(function(){
                     $scope.terminals.updateStats(e.stats);
                 });
                 break;
+
             default:
                 Java.log("not yet supported: ", e);
         }
     };
 
-    $scope.fileManager = {
-        openFileDialog: function (curDir){
-            return window.bear.call('fileManager', 'openFileDialog', curDir);
-        },
-        listDir: function (curDir){
-           return window.bear.jsonCall('fileManager', 'listDir', JSON.stringify({dir: curDir, extensions: ['groovy', 'java', 'bear'], recursive: false}));
-        },
-        readFile: function(dir, name){
-            return window.bear.call('fileManager', 'readFile', dir, name);
-        },
-        writeFile: function(dir, name, content){
-            return window.bear.call('fileManager', 'writeFile', dir, name, content);
-        }
-    };
+    $scope.fileManager = fileManager;
 
     $scope.openFileDialog = function (curDir){
         return window.bear.call('conf', 'openFile', curDir);
@@ -601,7 +688,7 @@ function BearCtrl($scope){
     $scope.listDirFunction = function (curDir){
         return window.bear.jsonCall('conf', 'listDir', JSON.stringify({dir: curDir, extensions: ['groovy', 'java', 'bear'], recursive: false}));
     };
-}
+}]);
 
 
 function DropdownCtrl($scope) {
@@ -692,7 +779,7 @@ var ConsoleTabsCtrl = function ($scope) {
 };
 
 //app.controller('FileTabsCtrl', ['$scope', function($scope) {
-app.controller('ConsoleTabsChildCtrl', ['$scope', '$q', '$timeout', function ($scope, $q, $timeout) {
+app.controller('ConsoleTabsChildCtrl', ['$scope', '$q', '$timeout', 'historyManager', function ($scope, $q, $timeout, historyManager) {
     var updateShell = function (remoteEnv, shellPlugin)
     {
         Java.log('updating shell to', remoteEnv, shellPlugin);
@@ -727,6 +814,27 @@ app.controller('ConsoleTabsChildCtrl', ['$scope', '$q', '$timeout', function ($s
         }
     });
 
+    var readRunScript = function (runScript) {
+        return $scope.fileManager.readFile(
+            runScript.dir,
+            runScript.filename
+        );
+    };
+
+    var refreshScriptText = function(runScript) {
+        $timeout(function(){
+            console.log('refreshScriptText - before setValue');
+            $scope.editor.setValue(readRunScript(runScript), -1);
+            console.log('refreshScriptText - after setValue');
+            $scope.runScriptModified = null;
+        });
+    };
+
+
+//    $scope.isRunScriptModified = function(){
+//        return $scope.editor.getValue() == readRunScript($scope.runScript);
+//    };
+
     $scope.sendCommand = function (commandText)
     {
         var editor = $scope.editor;
@@ -742,25 +850,24 @@ app.controller('ConsoleTabsChildCtrl', ['$scope', '$q', '$timeout', function ($s
             return;
         }
 
-        var response = JSON.parse(window.bear.jsonCall('conf', 'interpret',
-            commandText,
-            JSON.stringify({
-                script: $scope.runScript.path,
-                settingsName: settingsName})));
+//        var response = JSON.parse(window.bear.jsonCall('conf', 'interpret',
+//            commandText,
+//            JSON.stringify({
+//                script: $scope.runScript.path,
+//                settingsName: settingsName})));
+//
+//        Java.log('interpret response:', response);
+
+        if($scope.runScriptModified){
+            historyManager.addScript(commandText);
+        } else{
+            console.log($scope.runScript, $scope);
+            historyManager.addFileRef($scope.runScript.path);
+        }
 
         $scope.addCommand(commandText);
         editor.setValue('');
 
-        Java.log('interpret response:', response);
-    };
-
-    var refreshScriptText = function(runScript) {
-        $timeout(function(){
-            $scope.editor.setValue($scope.fileManager.readFile(
-                runScript.dir,
-                runScript.filename
-            ), -1);
-        });
     };
 
 
@@ -776,13 +883,13 @@ app.controller('ConsoleTabsChildCtrl', ['$scope', '$q', '$timeout', function ($s
         $scope.$watch('runScript', function(newVal, oldVal){
             Java.log(newVal, newVal, oldVal);
             if(newVal /*&& newVal.path !== oldVal.path*/){
-                Java.log('updating...');
                 refreshScriptText(newVal);
             }
         }, true);
 
         $scope.$watch('runScript.path', function(newVal, oldVal){
             Java.log('runScript.path watch:', newVal, oldVal);
+
             if(newVal && newVal !== oldVal){
                 editor.setValue($scope.fileManager.readFile(
                     $scope.runScript.dir,

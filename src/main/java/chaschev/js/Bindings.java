@@ -276,8 +276,20 @@ public class Bindings {
         }
 
         public String readFile(String dir, String name){
+            return readFile(new File(dir, name));
+        }
+
+        public String readFileByPath(String path){
+            return readFile(new File(path));
+        }
+
+        private static String readFile(File file) {
             try {
-                return FileUtils.readFileToString(new File(dir, name));
+                if(!file.exists()){
+                    return null;
+                }
+
+                return FileUtils.readFileToString(file);
             } catch (IOException e) {
                 throw Exceptions.runtime(e);
             }
@@ -291,6 +303,13 @@ public class Bindings {
             }
         }
 
+        public void writeFileByPath(String path, String content){
+            try {
+                FileUtils.writeStringToFile(new File(path), content);
+            } catch (IOException e) {
+                throw Exceptions.runtime(e);
+            }
+        }
     }
 
 

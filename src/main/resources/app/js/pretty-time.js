@@ -1,3 +1,5 @@
+prettyTime = angular.module('pretty.time', []);
+
 function timeSince(date, useMs) {
     var durationMs = new Date() - date;
 
@@ -13,25 +15,56 @@ function durationToString(durationMs, useMs){
     if (interval > 1) {
         return interval + "y";
     }
+
     interval = Math.floor(seconds / 2592000);
+
     if (interval > 1) {
         return interval + "m";
     }
     interval = Math.floor(seconds / 86400);
+
     if (interval > 1) {
         return interval + "d";
     }
+
     interval = Math.floor(seconds / 3600);
+
     if (interval > 1) {
         return interval + "h";
     }
-    interval = Math.floor(seconds / 60);
+
+    var minutes = Math.floor(seconds / 60);
 
     var r = '';
 
-    if (interval > 1) {
-        r = interval + "m ";
+    if(minutes >= 3){
+        return minutes + "m";
+    }
+    if (minutes > 1) {
+        r = minutes + "m ";
     }
 
-    return r + (Math.floor(seconds)  + (useMs ? "." + ms : " s"));
+    return r + (Math.floor(seconds - minutes * 60)  + (useMs ? "." + ms : "s"));
 }
+
+prettyTime.filter('prettyDuration', function(){
+        return function(input, useMs){
+            try {
+                console.log('prettyDuration', input, useMs);
+                var type = typeof input;
+
+                switch (type) {
+                    case 'string':
+                        throw "todo: implement date parsing";
+                    case 'number':
+                        return durationToString(new Date().getTime() - input, useMs);
+                }
+
+                throw "not supported: " + type;
+            } catch (e) {
+                console.log(e);
+            }
+        };
+    }
+);
+

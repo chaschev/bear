@@ -437,11 +437,13 @@ public class BearCommandLineConfigurator {
         public String dir;
         public String filename;
         public String path;
+        public String absPath;
 
         public FileResponse(File file) {
             dir = file.getParent();
             filename = file.getName();
-            path = file.getAbsolutePath();
+            path = file.getPath();
+            absPath = file.getAbsolutePath();
         }
     }
 

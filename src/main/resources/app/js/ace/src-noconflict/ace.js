@@ -1990,6 +1990,7 @@ var Editor = function(renderer, session) {
         return this.session;
     };
     this.setValue = function(val, cursorPos) {
+//        console.log(val, cursorPos, this, this.session);
         this.session.doc.setValue(val);
 
         if (!cursorPos)

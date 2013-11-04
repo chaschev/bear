@@ -6,6 +6,7 @@
 
     <meta charset="UTF-8">
     <!--<script src="js/firebug-lite.js"></script>-->
+    <script src="js/app/history-manager.js"></script>
     <script src="js/diff_match_patch.js"></script>
 
     <script src="js/jquery-2.0.3.min.js"></script>
@@ -22,14 +23,12 @@
         ace.require("ace/ext/language_tools");
     </script>
     <script src="js/ace/ui-ace.js"></script>
-
     <script src="js/angular-fx-file-editor.js"></script>
-
+    <script src="js/pretty-time.js"></script>
 
     <script src="js/bear.js"></script>
     <script src="js/stacktrace.js"></script>
     <script src="js/java-bindings.js"></script>
-    <script src="js/pretty-time.js"></script>
     <script src="js/bootstrap-switch.min.js"></script>
 
     <!--<script src="js/perfect-scrollbar.js"></script>
@@ -88,6 +87,28 @@
 
         #conTabsRootPanel {
             height: 200px;
+        }
+
+        .history .list-group-item{
+            padding: 6px 8px;
+            line-height: 10px;
+        }
+
+        .history .list-group-item:hover{
+            background-color: #dbf5fa;
+            cursor: pointer;
+        }
+
+        .history-small,.history-normal{
+            font-family: 'source-code-pro', 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', monospace;
+        }
+
+        .history-normal{
+            font-size: 11px;
+            font-weight: bold;
+        }
+        .history-small{
+            font-size: 10px;
         }
 
         .consoleMessages{
@@ -372,7 +393,7 @@
                 <h3 class="panel-title">Status</h3>
             </div>
             <div class="panel-body">
-                <ul class="list-group">
+                <ul class="list-group history">
                     <li class="list-group-item">
                         <span class="badge">{{terminals.stats.partiesCount}}</span>Servers
                     </li>
@@ -509,7 +530,7 @@
                                         </td>
                                     </tr>
                                     <tr><td colspan="3">
-                                            <div ui-ace="{onLoad: aceLoaded}"></div>
+                                            {{runScriptModified}}<div ui-ace="{onLoad: aceLoaded}" modified="runScriptModified"></div>
                                     </td></tr>
                                     <tr>
                                         <td colspan="3">
@@ -554,18 +575,24 @@
             <div class="panel-heading">
                 <h3 class="panel-title">History</h3>
             </div>
-            <div class="panel-body"><br>
-                <ul class="list-group">
-                    <li class="list-group-item">
-                        <span class="badge">1m</span>mkdir -p ~/prj/bear
+            <div class="panel-body" ng-controller="HistoryController" ng-init="init()"><br>
+                <ul class="list-group history">
+                    <li ng-repeat="entry in historyManager.entries" class="list-group-item">
+                        <table style="width: 100%">
+                            <tr>
+                                <td><span class="history-normal">{{entry.getName(fileManager)}}</span> <br/>
+                                    <span class="history-small">{{entry.getDesc(fileManager)}}</span></td>
+                                <td style="width: 5%"><span class="badge">{{entry.getTime() | prettyDuration}}</span></td>
+                            </tr>
+                        </table>
                     </li>
-                    <li class="list-group-item">
+                    <!--<li class="list-group-item">
                         <span class="badge">4m</span>cd ~/prj/bear
                     </li>
                     <li class="list-group-item">
                         <span class="badge">1h</span>
                         Morbi leo risus
-                    </li>
+                    </li>-->
                 </ul>
             </div>
         </div>
