@@ -28,7 +28,7 @@ top priority:
 - (ok) ui: embed code completion
 - (ok) ui: command summary to the local shell tab (divide into groups)
 - (ok) ui: sent commands should be printed as well
-- ui: command history on the right: short summary (first line), clicking
+- (ok) ui: command history on the right: short summary (first line), clicking
 - (ok) ui: change scripts to snippets
 - ui: download & install idea (core)
 - ui: generate pom (core) & open in idea (core)

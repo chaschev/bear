@@ -23,12 +23,14 @@ var AbstractHistoryEntry = function(){
 };
 
 AbstractHistoryEntry.prototype.getTime = function(){
-    console.log('getTime', this.time);
-
     return this.time;
 };
 
 AbstractHistoryEntry.prototype.getText = function(fileManager){
+    throw "not implemented!";
+};
+
+AbstractHistoryEntry.prototype.dup = function(){
     throw "not implemented!";
 };
 
@@ -66,7 +68,7 @@ AbstractHistoryEntry.prototype._initNameAndDesc = function (text) {
 };
 
 AbstractHistoryEntry.prototype.computeText = function(fileManager){
-    throw "abstract!";
+    throw ((this.type) + ".computeText: abstract!");
 };
 
 AbstractHistoryEntry.prototype.getText = function(fileManager){
@@ -109,10 +111,28 @@ FileReferenceHistoryEntry.prototype.computeText = function(fileManager){
     return fileManager.readFileByPath(this.file);
 };
 
+FileReferenceHistoryEntry.prototype.dup = function(){
+    return {
+        type:this.type,
+        time:this.time,
+        file:this.file
+    };
+};
+
 
 var ScriptHistoryEntry = function(script){
+    AbstractHistoryEntry.call(this);
+
     this.text = script;
     this.type = 'script';
 };
 
 extend(ScriptHistoryEntry, AbstractHistoryEntry);
+
+ScriptHistoryEntry.prototype.dup = function(){
+    return {
+        type:this.type,
+        time:this.time,
+        text:this.text
+    };
+};

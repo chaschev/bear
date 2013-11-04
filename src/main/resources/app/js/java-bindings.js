@@ -182,6 +182,7 @@ Java.log = function (){
                     s = s.substring(s.indexOf('html/'));
 
                     stackEntries[k] = s;
+                    console.log(s);
                 }
 
                 stackEntries.unshift(obj.toString());

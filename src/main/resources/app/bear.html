@@ -155,6 +155,14 @@
             vertical-align: bottom;
         }
 
+        .history-scroller {
+            height: 300px;
+            max-height: 300px;
+            overflow-y: auto;
+            position: relative;
+            display: block;
+        }
+
         .consoleMessages{
             vertical-align: bottom;
         }
@@ -341,7 +349,7 @@
                 angular.element(href).scope().selectTab(tabId.substring(0, tabId.length - 3));
             });
 
-            $('#TabsDemoCtrl').find('.nav.nav-tabs').find('li>a').click(function (e) {
+            $('#TabsDemoCtrl').find('.nav.nav-tabs').find('li > a').click(function (e) {
                 $(this).tab('show');
             });
 
@@ -366,6 +374,7 @@
             $scrollers.css('height', newHeight + "px");
             $scrollers.css('min-height', newHeight + "px");
         }
+
         $(document).ready(function(){
             if(!Java.isFX){
                 Java.initApp();
@@ -393,7 +402,7 @@
                 <h3 class="panel-title">Status</h3>
             </div>
             <div class="panel-body">
-                <ul class="list-group history">
+                <ul class="list-group">
                     <li class="list-group-item">
                         <span class="badge">{{terminals.stats.partiesCount}}</span>Servers
                     </li>
@@ -502,7 +511,7 @@
                 <div id="ConsoleTabsCtrl" ng-controller="ConsoleTabsCtrl">
                     <tabset>
                         <tab ng-repeat="terminal in terminals.terminals"
-                             heading="{{terminal.host.name}}">
+                             heading="{{terminal.host.name}}" active="terminal.active">
                             <div ng-controller="ConsoleTabsChildCtrl" name="{{terminal.host.name}}">
                                 <div class="scroller">
                                 <console-messages>
@@ -576,8 +585,9 @@
                 <h3 class="panel-title">History</h3>
             </div>
             <div class="panel-body" ng-controller="HistoryController" ng-init="init()"><br>
-                <ul class="list-group history">
-                    <li ng-repeat="entry in historyManager.entries" class="list-group-item">
+                <div class="history-scroller">
+                    <ul class="list-group history">
+                    <li ng-repeat="entry in historyManager.entries" class="list-group-item" ng-click="updateRunScript(entry)">
                         <table style="width: 100%">
                             <tr>
                                 <td><span class="history-normal">{{entry.getName(fileManager)}}</span> <br/>
@@ -586,14 +596,8 @@
                             </tr>
                         </table>
                     </li>
-                    <!--<li class="list-group-item">
-                        <span class="badge">4m</span>cd ~/prj/bear
-                    </li>
-                    <li class="list-group-item">
-                        <span class="badge">1h</span>
-                        Morbi leo risus
-                    </li>-->
                 </ul>
+                </div>
             </div>
         </div>
     </div>

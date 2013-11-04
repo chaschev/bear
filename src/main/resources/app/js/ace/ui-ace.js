@@ -31,7 +31,7 @@ angular.module('ui.ace', [])
             var setValueInProgress = false;
 
             editor.setValue = function(text, cursor){
-                console.log('overloaded setValue');
+//                console.log('overloaded setValue');
 
                 setValueInProgress = true;
 
@@ -50,13 +50,13 @@ angular.module('ui.ace', [])
                 console.log('onChange initial call');
                 return function (e) {
                     var newValue = session.getValue();
-                    console.log('onChange outside $timeout', setValueInProgress, e, e.data);
+//                    console.log('onChange outside $timeout', setValueInProgress, e, e.data);
 
                     var noModification = setValueInProgress;
 
                     if (newValue !== scope.$eval(attrs.value)) {
                         $timeout(function () {
-                            console.log('onChange inside $timeout', modified, noModification);
+//                            console.log('onChange inside $timeout', modified, noModification);
                             if(modified != null && !noModification){
 //                                scope.$parent[modified] = '*';
 //                                scope.$parent.$parent[modified] = '*';

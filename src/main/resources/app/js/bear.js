@@ -20,8 +20,11 @@
 
 var app = angular.module('bear', ['ui.bootstrap', 'ui.ace', 'fx.file.editor', 'pretty.time']);
 
+function isDigestRunning(scope) {
+    return scope.$$phase || scope.$root.$$phase;
+}
 function safeApply(scope, fn) {
-    (scope.$$phase || scope.$root.$$phase) ? fn() : scope.$apply(fn);
+    (isDigestRunning(scope)) ? fn() : scope.$apply(fn);
 }
 
 app.service('fileManager', [function () {
@@ -69,14 +72,14 @@ app.service('historyManager', ['fileManager', function(fileManager){
             var e = jsonEntries[i];
             var r = null;
 
-            console.log('loading entry: ', e, e.file);
+            Java.log('loading entry: ', e);
 
             switch(e.type){
                 case 'file':
                     r = new FileReferenceHistoryEntry(e.file);
                     break;
                 case 'script':
-                    r = new ScriptHistoryEntry(e.script);
+                    r = new ScriptHistoryEntry(e.text);
                     break;
                 default:
                     throw "Unknown type: " + e.type;
@@ -84,7 +87,7 @@ app.service('historyManager', ['fileManager', function(fileManager){
 
             r.time = e.time;
 
-            entries.add(r);
+            this.entries.push(r);
         }
     };
 
@@ -95,7 +98,14 @@ app.service('historyManager', ['fileManager', function(fileManager){
             this.entries.slice(this.entries.length - 100, this.entries.length);
         }
 
-        fileManager.writeFileByPath(this.historyFilePath, JSON.stringify(this.entries));
+        var arrayToSave = [];
+
+        for (var i = 0; i < this.entries.length; i++) {
+            var e = this.entries[i];
+            arrayToSave.push(e.dup());
+        }
+
+        fileManager.writeFileByPath(this.historyFilePath, JSON.stringify(arrayToSave));
     };
 
     this.addFileRef = function(file){
@@ -117,8 +127,14 @@ app.controller('HistoryController', ['historyManager', '$scope', function(histor
             console.log('HistoryController - init()');
             historyManager.loadEntries();
         } catch (e) {
-            console.log("exception", e);
+            Java.log("exception while loading", e);
         }
+    };
+
+    $scope.updateRunScript = function(entry){
+        console.log('updateRunScript', entry, entry.getText());
+        $scope.$parent.$broadcast("setActiveEditorValue", entry.getText());
+//        $scope.editor.setValue();
     };
 }]);
 
@@ -822,12 +838,16 @@ app.controller('ConsoleTabsChildCtrl', ['$scope', '$q', '$timeout', 'historyMana
     };
 
     var refreshScriptText = function(runScript) {
-        $timeout(function(){
+        console.log('refreshScriptText - click!');
+
+        var fn = function () {
             console.log('refreshScriptText - before setValue');
             $scope.editor.setValue(readRunScript(runScript), -1);
             console.log('refreshScriptText - after setValue');
             $scope.runScriptModified = null;
-        });
+        };
+
+        $timeout(fn);
     };
 
 
@@ -874,6 +894,13 @@ app.controller('ConsoleTabsChildCtrl', ['$scope', '$q', '$timeout', 'historyMana
     $scope.refreshRunScript = function(){
         refreshScriptText($scope.runScript);
     };
+
+    $scope.$on('setActiveEditorValue', function(event, text){
+//        console.log('setActiveEditorValue', $scope.terminal);
+        if($scope.terminal.active){
+            $scope.editor.setValue(text, -1);
+        }
+    });
 
     $scope.aceLoaded = function(editor){
         Java.log("loaded ace editor");

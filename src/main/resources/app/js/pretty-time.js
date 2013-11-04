@@ -50,7 +50,7 @@ function durationToString(durationMs, useMs){
 prettyTime.filter('prettyDuration', function(){
         return function(input, useMs){
             try {
-                console.log('prettyDuration', input, useMs);
+//                console.log('prettyDuration', input, useMs);
                 var type = typeof input;
 
                 switch (type) {
