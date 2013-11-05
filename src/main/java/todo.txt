@@ -30,13 +30,15 @@ top priority:
 - (ok) ui: sent commands should be printed as well
 - (ok) ui: command history on the right: short summary (first line), clicking
 - (ok) ui: change scripts to snippets
-- ui: download & install idea (core)
-- ui: generate pom (core) & open in idea (core)
+- (declined) ui: download & install idea (core)
+- (ok) ui: generate pom (core) & (declined) open in idea (core)
 - ui: run a command in on a single host from shell
-- ui: green button usability - click edit, edit, if modified at least once, ask load?
+- ui: green button usability - click edit, edit, if modified at least once, ask 'load?'
+- ui: cancel command
 - (ok) ui: fix copy-paste
 
-- refactor BearScript and message sending (extract an interface from BearFX)
+- (1) refactor BearScript and message sending (extract an interface from BearFX)
+- (2) send messages from plugins via uiLogger (sends to 'ui'), logger (sends to console)
 - ruby plugin
 - mongo plugin
 - support :set groovy[Shell].sendToHosts=true

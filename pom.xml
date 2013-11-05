@@ -213,6 +213,7 @@
 
 
 
+<!--
             <plugin>
                 <groupId>com.github.wvengen</groupId>
                 <artifactId>proguard-maven-plugin</artifactId>
@@ -238,8 +239,8 @@
                     <options>
                         <option>-dontoptimize</option>
                         <option>-ignorewarnings</option>
-                        <!--<option>-optimizationpasses 2</option>-->
-                        <!--<option>-dontshrink</option>-->
+                        &lt;!&ndash;<option>-optimizationpasses 2</option>&ndash;&gt;
+                        &lt;!&ndash;<option>-dontshrink</option>&ndash;&gt;
                         <option>
                             -keepclassmembers enum * {
                                 public static **[] values();
@@ -248,10 +249,10 @@
                             -keepparameternames
                             -keepattributes Exceptions,InnerClasses,Signature,Deprecated,SourceFile,LineNumberTable,*Annotation*,EnclosingMethod
                         </option>
-                        <!-- -renamesourcefileattribute SourceFile-->
+                        &lt;!&ndash; -renamesourcefileattribute SourceFile&ndash;&gt;
                         <option>-keep class org.slf4j.**{*;}</option>
-                        <!--<option>-keep class * implements chaschev.conf.ProguardKeep{*;}</option>
-                        <option>-keepclassmembers class * implements chaschev.conf.ProguardKeepNames{*;}</option>-->
+                        &lt;!&ndash;<option>-keep class * implements chaschev.conf.ProguardKeep{*;}</option>
+                        <option>-keepclassmembers class * implements chaschev.conf.ProguardKeepNames{*;}</option>&ndash;&gt;
 
                         <option>-keep class bear.**{*;}</option>
                         <option>-keepclassmembers class bear.**{*;}</option>
@@ -266,7 +267,7 @@
                         <option>-keepclassmembers class java.util.concurrent.Callable{*;}</option>
 
                         <option>-keep class com.google.common.collect.AbstractIterator$State {*;}</option>
-                        <!-- can be partially removed -->
+                        &lt;!&ndash; can be partially removed &ndash;&gt;
 
                         <option>-dontwarn com.google.common.collect.MinMaxPriorityQueue</option>
                     </options>
@@ -279,6 +280,7 @@
                     </dependency>
                 </dependencies>
             </plugin>
+-->
 
 
 

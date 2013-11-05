@@ -47,7 +47,7 @@ public abstract class ZippedToolPlugin extends Plugin<Task, TaskDef<?>> {
         versionName = concat(toolDistrName, "-", version).desc("i.e. apache-maven-3.0.5"),
         distrFilename = concat(versionName, ".tar.gz"),
         homeParentPath = Variables.newVar("/var/lib"),
-        homePath = concat(homeParentPath,"/", toolname).desc("Tool root dir"),
+        homePath = concat(homeParentPath, "/", toolname).desc("Tool root dir"),
         homeVersionPath = concat(homeParentPath, "/", versionName).desc("i.e. /var/lib/apache-maven-7.0.42"),
         currentVersionPath = concat(homeParentPath, "/", versionName),
 

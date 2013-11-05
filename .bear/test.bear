@@ -1,3 +1,4 @@
+# Bear sample script.
 # this enables the session-scope, task is distributed between hosts
 :set stage='two'
 :set groovyShell.sendToHosts=true

@@ -49,7 +49,7 @@ import java.util.Properties;
  * @author Andrey Chaschev chaschev@gmail.com
  */
 public class BearFX {
-    public final BearCommandLineConfigurator conf;
+    public final FXConf conf;
     final Properties bearProperties;
     public final Facade facade = new Facade();
     public final BearFXApp bearFXApp;
@@ -97,7 +97,7 @@ public class BearFX {
     public Object call(String delegate, String method, Object p1, Object p2, Object p3, Object p4, Object p5, Object p6, Object p7) { return facade.call(delegate, method, p1, p2,p3,p4,p5,p6,p7); }
     public Object call(String delegate, String method, Object p1, Object p2, Object p3, Object p4, Object p5, Object p6, Object p7, Object p8) { return facade.call(delegate, method, p1, p2,p3,p4,p5,p6,p7,p8); }
 
-    public BearFX(BearFXApp bearFXApp, BearCommandLineConfigurator conf, Properties bearProperties) {
+    public BearFX(BearFXApp bearFXApp, FXConf conf, Properties bearProperties) {
         this.bearFXApp = bearFXApp;
         this.conf = conf;
         this.bearProperties = bearProperties;
@@ -133,10 +133,9 @@ public class BearFX {
                 Properties properties = new Properties();
                 properties.load(new FileInputStream(".bear/bear-fx.properties"));
 
-                BearCommandLineConfigurator configurator = new BearCommandLineConfigurator(
-                    "--script=" + properties.get("bear-fx.script"),
-                    "--settings=" + properties.get("bear-fx.settings"),
-                    "--props=" + properties.get("bear-fx.properties")
+                FXConf configurator = new FXConf(
+                    "-Vcli.settingsFile=" + properties.get("bear-fx.settings"),
+                    "-Vcli.propertiesFile=" + properties.get("bear-fx.properties")
                 );
 
                 bearFX = new BearFX(this, configurator, properties);
@@ -152,13 +151,7 @@ public class BearFX {
                 stage.setScene(scene);
 //                stage.setFullScreen(true);
 
-                Screen screen = Screen.getPrimary();
-                Rectangle2D bounds = screen.getVisualBounds();
-
-                stage.setX(bounds.getMinX());
-                stage.setY(bounds.getMinY());
-                stage.setWidth(bounds.getWidth());
-                stage.setHeight(bounds.getHeight());
+                setFullscreen(stage);
 //                stage.setWidth(1200);
 //                stage.setHeight(600);
                 stage.show();
@@ -204,6 +197,16 @@ public class BearFX {
         public static void main(String[] args) throws Exception {
             launch(args);
         }
+    }
+
+    public static void setFullscreen(Stage stage) {
+        Screen screen = Screen.getPrimary();
+        Rectangle2D bounds = screen.getVisualBounds();
+
+        stage.setX(bounds.getMinX());
+        stage.setY(bounds.getMinY());
+        stage.setWidth(bounds.getWidth());
+        stage.setHeight(bounds.getHeight());
     }
 
     public void sendMessageToUI(EventToUI eventToUI) {

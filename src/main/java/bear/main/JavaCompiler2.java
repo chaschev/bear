@@ -1,3 +1,19 @@
+/*
+ * Copyright (C) 2013 Andrey Chaschev.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package bear.main;
 
 import bear.core.IBearSettings;
@@ -36,7 +52,7 @@ public class JavaCompiler2 extends Compiler {
         return new String[]{"java"};
     }
 
-    public BearCommandLineConfigurator.CompilationResult compile() {
+    public FXConf.CompilationResult compile() {
         final List<File> filesList = compileScripts(sourcesDir);
 
         try {
@@ -45,7 +61,7 @@ public class JavaCompiler2 extends Compiler {
             throw Exceptions.runtime(e);
         }
 
-        BearCommandLineConfigurator.CompilationResult result = new BearCommandLineConfigurator.CompilationResult();
+        FXConf.CompilationResult result = new FXConf.CompilationResult();
 
         for (File file : filesList) {
             try {
@@ -89,16 +105,16 @@ public class JavaCompiler2 extends Compiler {
 
         params.addAll(filePaths);
 
-        BearCommandLineConfigurator.logger.info("compiling {}", params);
+        Cli.logger.info("compiling {}", params);
 
         final JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
 
         final int r = compiler.run(null, null, null, params.toArray(new String[params.size()]));
 
         if (r == 0) {
-            BearCommandLineConfigurator.logger.info("compilation OK.");
+            Cli.logger.info("compilation OK.");
         } else {
-            BearCommandLineConfigurator.logger.info("compilation failed.");
+            Cli.logger.info("compilation failed.");
         }
 
         return filesList;

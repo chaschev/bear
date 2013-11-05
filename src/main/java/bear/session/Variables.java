@@ -16,14 +16,19 @@
 
 package bear.session;
 
+import bear.core.AbstractContext;
 import bear.core.Fun;
 import bear.core.VarFun;
-import bear.core.AbstractContext;
+import com.google.common.base.Function;
+import com.google.common.base.Functions;
 import com.google.common.base.Preconditions;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 
+import java.io.File;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * @author Andrey Chaschev chaschev@gmail.com
@@ -31,10 +36,48 @@ import java.util.Arrays;
 public class Variables {
 
 
+    public static final Function<String, File> TO_FILE = new Function<String, File>() {
+        public File apply(String input) {
+            return new File(input);
+        }
+    };
+
+    public static final Function<String, Boolean> TO_BOOLEAN = new Function<String, Boolean>() {
+        public Boolean apply(String input) {
+            return Boolean.valueOf(input);
+        }
+    };
+
+    protected static final Map<Class, Function<String, ?>> CONVERTERS;
+
+    static {
+        CONVERTERS = new HashMap<Class, Function<String, ?>>();
+        CONVERTERS.put(File.class, TO_FILE);
+        CONVERTERS.put(Boolean.class, TO_BOOLEAN);
+        CONVERTERS.put(String.class, Functions.<String>identity());
+    }
+
+    public static <T> Function<String, T> getConverter(Class<T> aClass){
+        return (Function<String, T>) CONVERTERS.get(aClass);
+    }
+
     public static DynamicVariable<Boolean> not(final DynamicVariable<Boolean> b) {
         return bool("").setDynamic(new Fun<Boolean, AbstractContext>() {
             public Boolean apply(AbstractContext $) {
                 return !$.varB(b);
+            }
+        });
+    }
+
+    public static <T> DynamicVariable<T> undefined() {
+        return new DynamicVariable().defaultTo(Fun.UNDEFINED);
+    }
+
+    public static <T, F> DynamicVariable<T> convert(final DynamicVariable<F> var, final Function<F, T> function) {
+        return dynamic(new Fun<T, AbstractContext>() {
+            @Override
+            public T apply(AbstractContext $) {
+                return function.apply($.var(var));
             }
         });
     }

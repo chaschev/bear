@@ -17,7 +17,7 @@
 package bear.core;
 
 import bear.console.CompositeConsoleArrival;
-import bear.main.BearCommandLineConfigurator;
+import bear.main.Cli;
 import bear.plugins.Plugin;
 import bear.plugins.sh.SystemSession;
 import bear.session.DynamicVariable;
@@ -117,7 +117,7 @@ public class CompositeTaskRunContext {
 
                         $.executionContext.rootExecutionContext.getDefaultValue().taskResult = run;
                     } catch (Throwable e) {
-                        BearCommandLineConfigurator.logger.warn("", e);
+                        Cli.logger.warn("", e);
 
                         $.executionContext.rootExecutionContext.getDefaultValue().taskResult = new CommandLineResult(Result.ERROR, e.toString());
 
@@ -130,7 +130,7 @@ public class CompositeTaskRunContext {
                         try {
                             addArrival(finalI, $);
                         } catch (Exception e) {
-                            BearCommandLineConfigurator.logger.warn("", e);
+                            Cli.logger.warn("", e);
                         }
                     }
 

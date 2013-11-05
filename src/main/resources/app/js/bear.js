@@ -732,6 +732,10 @@ app.controller('FileTabsCtrl', ['$scope', '$q', function($scope, $q) {
 //        filename: 'loading'
 //    };
 
+    $scope.createPom = function(){
+        window.bear.call('conf', 'createPom');
+    };
+
     //todo remove
     $scope.runScript = function(){
         try {
@@ -870,13 +874,13 @@ app.controller('ConsoleTabsChildCtrl', ['$scope', '$q', '$timeout', 'historyMana
             return;
         }
 
-//        var response = JSON.parse(window.bear.jsonCall('conf', 'interpret',
-//            commandText,
-//            JSON.stringify({
-//                script: $scope.runScript.path,
-//                settingsName: settingsName})));
-//
-//        Java.log('interpret response:', response);
+        var response = JSON.parse(window.bear.jsonCall('conf', 'interpret',
+            commandText,
+            JSON.stringify({
+                script: $scope.runScript.path,
+                settingsName: settingsName})));
+
+        Java.log('interpret response:', response);
 
         if($scope.runScriptModified){
             historyManager.addScript(commandText);

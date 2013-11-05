@@ -55,3 +55,11 @@ Remote execution plugin
 ### AngularJS
 
 - your app needs to start initialized (to be similar to a server side interaction)
+
+### Refactor Todo
+
+- VarRegistry, Cli -> VarsFramework
+- Separate BearFXCli, ConsoleCli and VarsCli
+- Properties initialization (for a session vs globally)
+- Global creation/reusing in a new classloader (reusing)
+-

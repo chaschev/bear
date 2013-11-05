@@ -51,7 +51,7 @@ public class Bear {
 
     public Bear(GlobalContext global) {
         this.global = global;
-        DependencyInjection.nameVars(this);
+        DependencyInjection.nameVars(this, global);
     }
 
     public final DynamicVariable<String>

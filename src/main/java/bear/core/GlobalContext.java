@@ -18,10 +18,12 @@ package bear.core;
 
 import bear.plugins.Plugin;
 import bear.plugins.Plugins;
+import bear.plugins.PomPlugin;
 import bear.plugins.groovy.GroovyShellPlugin;
 import bear.plugins.sh.GenericUnixLocalEnvironmentPlugin;
 import bear.plugins.sh.GenericUnixRemoteEnvironmentPlugin;
 import bear.plugins.sh.SystemSession;
+import bear.session.DynamicVariable;
 import bear.session.LocalAddress;
 import bear.task.Task;
 import bear.task.TaskDef;
@@ -34,6 +36,7 @@ import com.google.common.util.concurrent.ListeningExecutorService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.lang.reflect.Field;
 import java.util.Collection;
 import java.util.concurrent.*;
 
@@ -52,6 +55,8 @@ public class GlobalContext extends AbstractContext{
     public final Tasks tasks;
 
     public final Plugins plugins = new Plugins(this);
+
+    public final VariableRegistry variableRegistry = new VariableRegistry(this);
 
     public final ListeningExecutorService taskExecutor = listeningDecorator(new ThreadPoolExecutor(2, 32,
         5L, TimeUnit.SECONDS,
@@ -87,6 +92,7 @@ public class GlobalContext extends AbstractContext{
         plugins.add(GenericUnixRemoteEnvironmentPlugin.class);
         plugins.add(GenericUnixLocalEnvironmentPlugin.class);
         plugins.add(GroovyShellPlugin.class);
+        plugins.add(PomPlugin.class);
         plugins.build();
 
         final TaskRunner localRunner = new TaskRunner(null, this);
@@ -158,5 +164,9 @@ public class GlobalContext extends AbstractContext{
     @Override
     public GlobalContext getGlobal() {
         return this;
+    }
+
+    public void registerVariable(DynamicVariable var, Field field) {
+        variableRegistry.register(var, field);
     }
 }

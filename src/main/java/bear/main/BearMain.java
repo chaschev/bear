@@ -16,14 +16,13 @@
 
 package bear.main;
 
-import bear.core.GlobalContext;
-import chaschev.util.JOptOptions;
-import com.google.common.base.Optional;
+import joptsimple.OptionParser;
 import joptsimple.OptionSpec;
+import joptsimple.util.KeyValuePair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.collect.Lists.newArrayList;
+import java.util.List;
 
 /**
  * @author Andrey Chaschev chaschev@gmail.com
@@ -31,42 +30,53 @@ import static com.google.common.collect.Lists.newArrayList;
 public class BearMain {
     public static final Logger logger = LoggerFactory.getLogger(BearMain.class);
 
-    @SuppressWarnings("unchecked")
-    static class Options extends JOptOptions {
-        public final static OptionSpec<String> BEARIFY = parser.accepts("bearify", "adds bear files to the current dir").withOptionalArg().ofType(String.class).describedAs("dir").defaultsTo(".");
-        public final static OptionSpec<String> SETTINGS_FILE = parser.accepts("settings", "path to BearSettings.java").withRequiredArg().ofType(String.class).describedAs("path").defaultsTo(".bear/BearSettings.java");
-        public final static OptionSpec<String> PROPERTIES_FILE = parser.accepts("props", "name of *.properties").withRequiredArg().ofType(String.class).describedAs("path").defaultsTo("settings.properties");
-        public final static OptionSpec<String> SCRIPTS_DIR = parser.accepts("scriptsDir", "path to scripts dir").withRequiredArg().ofType(String.class).describedAs("path").defaultsTo(".bear");
-        public final static OptionSpec<String> SCRIPT = parser.accepts("script", "script to run").withRequiredArg().ofType(String.class).describedAs("path");
 
-        public final static OptionSpec<Void> HELP = parser.acceptsAll(newArrayList("h", "help"), "show help");
-
-        public Options(String[] args) {
-            super(args);
-        }
-    }
 
     public static void main(String[] args) throws Exception {
-        BearCommandLineConfigurator configurator = new BearCommandLineConfigurator(args).configure();
+//        Cli configurator = new Cli(args).configure();
+//
+//        if (configurator.shouldExit()) {
+//            return;
+//        }
+//
+//        Optional<CompiledEntry> scriptToRun = configurator.getScriptToRun();
+//        GlobalContext global = configurator.getGlobal();
+//        bear.core.Bear bear = configurator.getBear();
+//
+//        if (scriptToRun.isPresent()) {
+//            System.out.printf("running script %s...%n", scriptToRun.get().getName());
+//
+//            new BearRunner(configurator)
+//                .shutdownAfterRun(true)
+//                .prepareToRun();
+//        } else {
+//            System.err.printf("Didn't find a script with name %s. Exiting.%n", global.var(bear.deployScript));
+//            System.exit(-1);
+//        }
+    }
 
-        if (configurator.shouldExit()) {
-            return;
+    public static class Test{
+        public static void main(String[] args) {
+            OptionParser parser = new OptionParser();
+            parser.allowsUnrecognizedOptions();
+            OptionSpec<KeyValuePair> spec = parser.accepts("D").withRequiredArg().withValuesConvertedBy(new Cli.KeyValueConverter()).withValuesSeparatedBy(",");
+
+            List<KeyValuePair> list = parser.parse("-Dx=y,a=b").valuesOf(spec);
+
+            printList(list);
+
+            List<KeyValuePair> list2 = parser.parse("-Dx=y", "-Da=b").valuesOf(spec);
+
+            printList(list2);
         }
 
-        Optional<CompiledEntry> scriptToRun = configurator.getScriptToRun();
-        GlobalContext global = configurator.getGlobal();
-        bear.core.Bear bear = configurator.getBear();
-
-        if (scriptToRun.isPresent()) {
-            System.out.printf("running script %s...%n", scriptToRun.get().getName());
-
-            new BearRunner(configurator)
-                .shutdownAfterRun(true)
-                .prepareToRun();
-        } else {
-            System.err.printf("Didn't find script with name %s. Exiting.%n", global.var(bear.deployScript));
-            System.exit(-1);
+        private static void printList(List<KeyValuePair> list) {
+            for (KeyValuePair kv : list) {
+                System.out.printf("%s = %s%n", kv.key, kv.value);
+            }
         }
+
+
     }
 
 }

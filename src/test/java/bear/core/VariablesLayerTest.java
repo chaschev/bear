@@ -50,7 +50,7 @@ public class VariablesLayerTest {
     MyVars myVars = new MyVars();
 
     {
-        DependencyInjection.nameVars(myVars);
+        DependencyInjection.nameVars(myVars, GlobalContext.getInstance());
         layer.addVariables(myVars);
     }
 

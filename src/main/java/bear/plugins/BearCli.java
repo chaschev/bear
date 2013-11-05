@@ -14,16 +14,11 @@
  * limitations under the License.
  */
 
-package bear.core;
+package bear.plugins;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+/**
+ * @author Andrey Chaschev chaschev@gmail.com
+ */
+public class BearCli {
 
-@Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.FIELD)
-public @interface Var {
-    String value() default "";
-    boolean autoWireImpl() default false;
 }

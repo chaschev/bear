@@ -269,4 +269,8 @@ public class DynamicVariable<T> implements Nameable<T> {
 
         return this;
     }
+
+    public boolean isUndefined(){
+        return defaultValue == Fun.UNDEFINED;
+    }
 }
