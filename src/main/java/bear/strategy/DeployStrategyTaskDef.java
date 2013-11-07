@@ -37,7 +37,7 @@ import java.util.List;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.TimeUnit;
 
-import static bear.plugins.DependencyInjection.inject;
+import static bear.context.DependencyInjection.inject;
 import static org.apache.commons.io.FileUtils.byteCountToDisplaySize;
 
 /**

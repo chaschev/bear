@@ -1,26 +1,7 @@
-/*
- * Copyright (C) 2013 Andrey Chaschev.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+package bear.context;
 
-package bear.main;
-
-import bear.core.Bear;
-import bear.core.GlobalContext;
-import bear.core.GlobalContextFactory;
-import bear.plugins.DependencyInjection;
-import bear.plugins.HavingContext;
+import bear.core.BearApp;
+import bear.main.BearMain;
 import bear.session.DynamicVariable;
 import chaschev.util.JOptOptions;
 import com.google.common.base.Preconditions;
@@ -28,61 +9,48 @@ import joptsimple.OptionSpec;
 import joptsimple.ValueConverter;
 import joptsimple.util.KeyValuePair;
 import org.apache.commons.io.IOUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Map;
-import java.util.Properties;
 
-import static bear.main.Cli.Options.HELP;
-import static bear.main.Cli.Options.VARIABLES;
+import static bear.context.AppCli.Options.HELP;
+import static bear.context.AppCli.Options.VARIABLES;
 import static bear.session.Variables.*;
 import static com.google.common.collect.Lists.newArrayList;
 
 /**
  * @author Andrey Chaschev chaschev@gmail.com
  */
-public class Cli extends HavingContext<Cli, GlobalContext> {
-    public static final Logger logger = LoggerFactory.getLogger(Cli.class);
+public class AppCli<GLOBAL extends AppGlobalContext<GLOBAL, BEAR_APP>, BEAR_APP extends BearApp<GLOBAL>> extends HavingContext<Cli, GLOBAL> {
+    protected final BEAR_APP bear;
 
     public final DynamicVariable<File>
-        bearDir = newVar(new File(".bear")),
-        settingsFile = convert(concat(bearDir, "/BearSettings.java"), TO_FILE),
-        scriptsDir = equalTo(bearDir),
-        propertiesFile = convert(concat(bearDir, "/settings.properties"), TO_FILE),
-        script = undefined(),
-        buildDir = convert(concat(scriptsDir, "/classes"), TO_FILE)
-            ;
+        appConfigDir,
+        scriptsDir,
+        propertiesFile,
+        buildDir;
 
     public final DynamicVariable<Boolean>
         bearify = newVar(false);
 
-    public final DynamicVariable<Properties>
-        newRunProperties = newVar(new Properties());
-
+    protected final GLOBAL global;
+    protected String[] args;
     private boolean shouldExit;
-    private String[] args;
-    protected final GlobalContext global;
 
-    protected Bear bear;
-    protected GlobalContextFactory factory = GlobalContextFactory.INSTANCE;
+    public AppCli(GLOBAL $, String... args) {
+        super($);
 
-    protected BearFX bearFX;
-
-    public Cli(String... args) {
-        super(GlobalContextFactory.INSTANCE.getGlobal());
-
+        this.bear = $.bear;
         this.args = args;
-
         this.global = $;
 
-        bear = $.bear;
-
-        DependencyInjection.nameVars(this, $);
+        appConfigDir = convert(newVar(".bear"), TO_FILE);
+        scriptsDir = equalTo(appConfigDir);
+        propertiesFile = convert(concat(appConfigDir, "/settings.properties"), TO_FILE);
+        buildDir = convert(concat(scriptsDir, "/classes"), TO_FILE);
     }
 
     private static void copyResource(String resource, File bearDir) throws IOException {
@@ -96,20 +64,21 @@ public class Cli extends HavingContext<Cli, GlobalContext> {
         IOUtils.copy(BearMain.class.getResourceAsStream("/" + resource), new FileOutputStream(file));
     }
 
+    private static File fileRequired(File settingsFile) {
+        Preconditions.checkArgument(settingsFile.exists(), settingsFile.getAbsolutePath() + " does not exist. Use --bearify to create it.");
+        return settingsFile;
+    }
+
     boolean shouldExit() {
         return shouldExit;
     }
 
-    public GlobalContext getGlobal() {
+    public GLOBAL getGlobal() {
         return $;
     }
 
-    public Bear getBear() {
-        return bear;
-    }
-
     //todo move to vars framework
-    public Cli configure() throws IOException {
+    public AppCli configure() throws IOException {
 
         Options options = new Options(args);
 
@@ -134,7 +103,7 @@ public class Cli extends HavingContext<Cli, GlobalContext> {
         $.loadProperties($(propertiesFile));
 
         if ($(bearify)) {
-            final File dir = $(bearDir);
+            final File dir = $(appConfigDir);
 
 //            System.out.printf("saving to dir %s%n", bearDir.getAbsolutePath());;
 
@@ -154,17 +123,6 @@ public class Cli extends HavingContext<Cli, GlobalContext> {
         fileRequired($(scriptsDir));
 
         return this;
-    }
-
-
-    private static File fileRequired(File settingsFile) {
-        Preconditions.checkArgument(settingsFile.exists(), settingsFile.getAbsolutePath() + " does not exist. Use --bearify to create it.");
-        return settingsFile;
-    }
-
-
-    public GlobalContextFactory getFactory() {
-        return factory;
     }
 
     @SuppressWarnings("unchecked")
@@ -198,5 +156,4 @@ public class Cli extends HavingContext<Cli, GlobalContext> {
             return null;
         }
     }
-
 }

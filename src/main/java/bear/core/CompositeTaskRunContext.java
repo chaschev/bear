@@ -17,7 +17,7 @@
 package bear.core;
 
 import bear.console.CompositeConsoleArrival;
-import bear.main.Cli;
+import bear.context.Cli;
 import bear.plugins.Plugin;
 import bear.plugins.sh.SystemSession;
 import bear.session.DynamicVariable;

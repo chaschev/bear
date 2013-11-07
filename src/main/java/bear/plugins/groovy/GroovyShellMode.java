@@ -19,7 +19,7 @@ package bear.plugins.groovy;
 import bear.core.GlobalContext;
 import bear.core.SessionContext;
 import bear.core.Stage;
-import bear.main.Cli;
+import bear.context.Cli;
 import bear.plugins.CommandInterpreter;
 import bear.plugins.PluginShellMode;
 import bear.session.Result;

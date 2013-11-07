@@ -1,6 +1,6 @@
-package bear.core;
+package bear.context;
 
-import bear.plugins.DependencyInjection;
+import bear.core.GlobalContext;
 import bear.session.DynamicVariable;
 import bear.session.Variables;
 import org.junit.Test;
@@ -15,10 +15,14 @@ import static org.fest.assertions.api.Assertions.assertThat;
  * @author Andrey Chaschev chaschev@gmail.com
  */
 public class VariablesLayerTest {
-    AbstractContext context = new AbstractContext() {
+    VariablesLayer layer = new VariablesLayer("testLayer", null);
+
+    AbstractContext context = new AbstractContext(layer) {
     };
 
-    VariablesLayer layer = new VariablesLayer(context, "testLayer", null);
+    {
+        layer.$ = context;
+    }
 
     private static class MyVars{
         public DynamicVariable<String> s1 = Variables.newVar("s1");

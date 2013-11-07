@@ -1,84 +1,49 @@
 top priority:
 
-- (ok) ui: pending timer (http://jsfiddle.net/ganarajpr/LQGE2/)
-- (ok) ui: add status counters notices
-- (ok) ui: add current task notices
-- (ok) ui: test multi servers
-- (ok) ui: scrollable
-- (ok) ui: console commands (split this task into sub-tasks, implement via doc)
-- (ok) ui: local shell tab
-- (ok) ui: groovy shell mode
-- (ok) ui: code completion for groovy plugin
-- (ok) ui: think of localhost vs local
-- (ok) ui: toggle modes: ssh task, groovy remote, groovy local
-- (ok) ui: save snippets, refresh snippets from disk, save-and-build-on-run
-- (ok) ui: edit & reload settings - in groovy, open to edit in a window,
-        settings are active for a project, so need to be displayed in status,
--- (ok) as a button opening the editor
-
-- (ok) pwd not printed (session not created)
-- (ok) <br>x2 bug
-- (ok) reload button for scripts, Ctrl-S inside mini-script editor
-
 - ui: general compare sessions dialog (via class='session', phaseId='*')
-- (ok) refactor building - settings can be in
-- (ok) general Bear script
-- (declined) :use settings <path>
-- (declined) consider using only the groovy plugin - no, sometimes we just want to do ls, :set commands are shell-agnostic. plus there can be python or ruby
-- (ok) ui: embed code completion
-- (ok) ui: command summary to the local shell tab (divide into groups)
-- (ok) ui: sent commands should be printed as well
-- (ok) ui: command history on the right: short summary (first line), clicking
-- (ok) ui: change scripts to snippets
-- (declined) ui: download & install idea (core)
-- (ok) ui: generate pom (core) & (declined) open in idea (core)
 - ui: run a command in on a single host from shell
 - ui: green button usability - click edit, edit, if modified at least once, ask 'load?'
 - ui: cancel command
-- (ok) ui: fix copy-paste
 
-- (1) refactor BearScript and message sending (extract an interface from BearFX)
 - (2) send messages from plugins via uiLogger (sends to 'ui'), logger (sends to console)
-- ruby plugin
+- (3) ui: logback messages (output to file, a window to view, monitor errors and display red exclamation mark when there are)
+- (4) save logs from hosts to separate folders (log4j2?)
+- (5) print '$host: capture shell' feature
+- ui: check how vcs plugins work through ui
+- refactor BearScript and message sending (extract an interface from BearFX)
+
+- monitor (external) changes to settings file
 - mongo plugin
-- support :set groovy[Shell].sendToHosts=true
-- print '$host: capture shell' feature
+- ruby plugin
 - ui: (ok, 1) order messages by timestamp (need to properly merge them on the client)
 - ui: (ok, 2) transform \n to <br>'s
 - ui: (3) color highlighting for unix terminals
 - ui: (4) mysql shell mode
 - ui: (5) mongo shell mode (core)
 - ui: (6) style console messages
-- ui: command history in the chosen combo (500 last commands)
-- ui: logback messages (output to file, a window to view, monitor errors and display red exclamation mark when there are)
+
+- variable annotations (aliases, visibility level)
+- support :set groovy[Shell].sendToHosts=true
+
 - ui: scroll to the bottom of the scrollable area on the new text
-- ui: auto-size shell panel
+- (ok) ui: auto-size shell panel
 - ui: adapt this theme: https://github.com/onokumus/Bootstrap-Admin-Template
 - ui: help like with (search for 'ace/ext/keybinding_menu' in project)
 - ui: stage/roles/hosts selection
 - ui: preload stages, hosts and roles
-
-
 - ui: better formatting for diff (i.e. \n after div)
 - ui: add global root task somewhere, add global timer
 - ui: code completion for :set
-- ui: nicer button placement for scripts, use the space
-- reproduce and fix useless installations (timeout? stream is closed before it's fully read?)
-- (ok) DI for scripts and plugins
-- (ok) rollback command
+- (ok) ui: nicer button placement for scripts, use the space
+- reproduce and fix useless installations (timeout? stream is closed before it's fully read? cat texty)
 - test error messages by setting incorrect rights at each step
--- (ok) reuse setup task validation
--- (ok) dependencies
 - test revert to previous when deploy fails
 - stop when errors
 - think of unit testing
 - test rollback
 - maven installation (via dependencies:get)
 - JRuby console
-- proper logging (store on server)
 - make settings file more readable
-- idea installation (command line -> ui)
-
 
 utils:
 
@@ -92,7 +57,7 @@ general testing:
 features:
 
 - global task: concise API
-- possible memory issue: after running two scripts memory jumps to 1.5GB
+- (ok) possible memory issue: after running two scripts memory jumps to 1.5GB
 - download plugin (wget, viaLocalCache option)
 - tomcat plugin: configurable rights as of a service
 - (ok) jdk plugin
@@ -105,8 +70,6 @@ features:
 - fix weird error messages when errors occur
 - make DynVars similar to JavaFX properties
 - validation step: validation [ validate(closure) ]
-- (ok) GitHub support
-- (ok) replace Functions with VarFunctions
 - upstart plugin
 - play plugin
 - maven plugin
@@ -134,32 +97,55 @@ Settings.java:
 - Sets roles for servers and tasks
 - Sets common vars
 
-Script is a slight modification of Settings to support the most common scenarios
-When launching with no params:
-
-0) run script? (if there are scripts - list them)
-1) choose stage: pac-dev
-2) choose branch: trunk
-3) define common options: interactive, dry
-4) choose a task
-5) console/deploy
-6)
-7) ready to deploy - save your input to reuse? Saved as a script with name
-
-
 - support different auth types
 
 - refactor remote console
 - add bash prompt?
-- (ok) add svn revision to the build
-- (ok) keepLastX
-- (ok) rollbacks
-- (ok) transactions
-- (ok) caching
-- (ok) releases dir
 
 os plugin:
 
 - check dep is installed
 - configure installation list
 - check/add/remove users
+
+## History
+
+- (ok) ui: pending timer (http://jsfiddle.net/ganarajpr/LQGE2/)
+- (ok) ui: add status counters notices
+- (ok) ui: add current task notices
+- (ok) ui: test multi servers
+- (ok) ui: scrollable
+- (ok) ui: console commands (split this task into sub-tasks, implement via doc)
+- (ok) ui: local shell tab
+- (ok) ui: groovy shell mode
+- (ok) ui: code completion for groovy plugin
+- (ok) ui: think of localhost vs local
+- (ok) ui: toggle modes: ssh task, groovy remote, groovy local
+- (ok) ui: save snippets, refresh snippets from disk, save-and-build-on-run
+- (ok) ui: edit & reload settings - in groovy, open to edit in a window,
+        settings are active for a project, so need to be displayed in status,
+-- (ok) as a button opening the editor
+
+- (ok) pwd not printed (session not created)
+- (ok) <br>x2 bug
+- (ok) reload button for scripts, Ctrl-S inside mini-script editor
+
+- (ok) refactor building - settings can be in
+- (ok) general Bear script
+- (declined) :use settings <path>
+- (declined) consider using only the groovy plugin - no, sometimes we just want to do ls, :set commands are shell-agnostic. plus there can be python or ruby
+- (ok) ui: embed code completion
+- (ok) ui: command summary to the local shell tab (divide into groups)
+- (ok) ui: sent commands should be printed as well
+- (ok) ui: command history on the right: short summary (first line), clicking
+- (ok) ui: change scripts to snippets
+- (declined) ui: download & install idea (core)
+- (ok) ui: generate pom (core) & (declined) open in idea (core)
+- (ok) ui: fix copy-paste
+- (ok) ui: command history in the chosen combo (500 last commands)
+- (ok) DI for scripts and plugins
+- (ok) rollback command
+-- (ok) reuse setup task validation
+-- (ok) dependencies
+- (ok) GitHub support
+- (ok) replace Functions with VarFunctions

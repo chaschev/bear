@@ -16,9 +16,9 @@
 
 package bear.session;
 
-import bear.core.AbstractContext;
-import bear.core.Fun;
-import bear.core.VarFun;
+import bear.context.AbstractContext;
+import bear.context.Fun;
+import bear.context.VarFun;
 import com.google.common.base.Function;
 import com.google.common.base.Functions;
 import com.google.common.base.Preconditions;
@@ -71,6 +71,10 @@ public class Variables {
 
     public static <T> DynamicVariable<T> undefined() {
         return new DynamicVariable().defaultTo(Fun.UNDEFINED);
+    }
+
+    public static <T> DynamicVariable<T> undefined(String desc) {
+        return new DynamicVariable().defaultTo(Fun.UNDEFINED).desc(desc);
     }
 
     public static <T, F> DynamicVariable<T> convert(final DynamicVariable<F> var, final Function<F, T> function) {

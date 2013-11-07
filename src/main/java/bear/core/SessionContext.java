@@ -17,6 +17,7 @@
 package bear.core;
 
 import bear.cli.CommandLine;
+import bear.context.AbstractContext;
 import bear.plugins.sh.GenericUnixLocalEnvironmentPlugin;
 import bear.plugins.sh.GenericUnixRemoteEnvironmentPlugin;
 import bear.plugins.sh.SystemEnvironmentPlugin;
@@ -38,7 +39,7 @@ import static bear.session.Variables.dynamic;
 /**
  * @author Andrey Chaschev chaschev@gmail.com
  */
-public class SessionContext extends AbstractContext{
+public class SessionContext extends AbstractContext {
     public static final DateTimeFormatter TIME_FORMATTER = DateTimeFormat.forPattern("HH:mm:ss:SSS");
     //    public final GlobalContext globalContext;
     public final SystemEnvironmentPlugin.SystemSessionDef sysDef;
@@ -77,7 +78,7 @@ public class SessionContext extends AbstractContext{
     protected ExecutionContext executionContext = new ExecutionContext();
 
     public SessionContext(GlobalContext global, Address address, TaskRunner runner) {
-        super(global);
+        super(global, address.getName());
 
         ///this can be extracted into newContext(aClass, parent, Object... fields)
         this.runner = runner;
@@ -96,7 +97,7 @@ public class SessionContext extends AbstractContext{
         sysDef = ((address instanceof SshAddress) ? remoteSysEnv : localSysEnv).getTaskDef();
         sys = sysDef.newSession(this, null);
 
-        this.layer.name = address.getName();
+        this.setName(address.getName());
 
         if (address instanceof SshAddress) {
             SshAddress a = (SshAddress) address;

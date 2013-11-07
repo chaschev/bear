@@ -16,7 +16,7 @@
 
 package bear.session;
 
-import bear.core.Var;
+import bear.context.Var;
 
 /**
 * @author Andrey Chaschev chaschev@gmail.com

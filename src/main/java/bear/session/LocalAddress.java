@@ -17,7 +17,7 @@
 package bear.session;
 
 import bear.core.Bear;
-import bear.core.WireFields;
+import bear.context.WireFields;
 
 /**
  * @author Andrey Chaschev chaschev@gmail.com

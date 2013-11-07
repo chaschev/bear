@@ -16,7 +16,8 @@
 
 package bear.core;
 
-import bear.plugins.DependencyInjection;
+import bear.context.VariablesLayer;
+import bear.context.DependencyInjection;
 import bear.plugins.Plugin;
 import bear.session.SystemEnvironments;
 import bear.task.Task;

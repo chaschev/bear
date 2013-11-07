@@ -16,6 +16,7 @@
 
 package bear.main;
 
+import bear.context.Cli;
 import joptsimple.OptionParser;
 import joptsimple.OptionSpec;
 import joptsimple.util.KeyValuePair;

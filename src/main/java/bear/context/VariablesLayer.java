@@ -14,10 +14,8 @@
  * limitations under the License.
  */
 
-package bear.core;
+package bear.context;
 
-import bear.plugins.DependencyInjection;
-import bear.plugins.HavingContext;
 import bear.session.DynamicVariable;
 import bear.session.Variables;
 import chaschev.lang.OpenBean;
@@ -30,7 +28,7 @@ import javax.annotation.Nullable;
 import java.lang.reflect.Field;
 import java.util.LinkedHashMap;
 
-import static bear.core.Fun.UNDEFINED;
+import static bear.context.Fun.UNDEFINED;
 
 public class VariablesLayer extends HavingContext<Variables, AbstractContext> {
     private static final Logger logger = LoggerFactory.getLogger(VariablesLayer.class);
@@ -41,8 +39,8 @@ public class VariablesLayer extends HavingContext<Variables, AbstractContext> {
     protected LinkedHashMap<Object, Object> constants = new LinkedHashMap<Object, Object>();
     protected LinkedHashMap<String, DynamicVariable> variables = new LinkedHashMap<String, DynamicVariable>();
 
-    public VariablesLayer(AbstractContext $, String name, VariablesLayer fallbackVariablesLayer) {
-        super($);
+    public VariablesLayer(String name, VariablesLayer fallbackVariablesLayer) {
+        super(null);
 
         this.name = name;
         this.fallbackVariablesLayer = fallbackVariablesLayer;
@@ -83,6 +81,12 @@ public class VariablesLayer extends HavingContext<Variables, AbstractContext> {
 
     public VariablesLayer put(Nameable key, DynamicVariable value) {
         return putUnlessFrozen(key, value);
+    }
+
+    public VariablesLayer put(String key, DynamicVariable value) {
+        putUnlessFrozen(key, value);
+
+        return this;
     }
 
     public VariablesLayer putConstObj(Object key, Object value) {
@@ -176,9 +180,19 @@ public class VariablesLayer extends HavingContext<Variables, AbstractContext> {
         return getByVarName(var, varName, _default, this);
     }
 
+    /**
+     *
+     * @param var null, if not
+     * @param varName
+     * @param _default
+     * @param initialLayer
+     * @return
+     */
     protected Object getByVarName(
         @Nullable DynamicVariable<?> var, String varName, Object _default,
          VariablesLayer initialLayer) {
+        Preconditions.checkArgument(var != null || varName != null, "they can't both be null!");
+
         final Object thisLayerResult;
 
         //first check if var was overridden in this layer
@@ -201,6 +215,13 @@ public class VariablesLayer extends HavingContext<Variables, AbstractContext> {
             }else{
                 // there is no fallback, we are in a global scope,
                 // apply variable in the initial context
+
+                // if var is not provided, try to get it's function from re
+                VariableInfo info = $.getGlobal().variableRegistry.get(varName);
+
+                if(info != null){
+                    var = info.var;
+                }
 
                 if (var != null) {
                     Object temp;
@@ -225,9 +246,6 @@ public class VariablesLayer extends HavingContext<Variables, AbstractContext> {
             thisLayerResult = chooseDefined(r.apply($), _default);
             logger.debug("{}: :{} <- {} (overridden var)", name, varName, thisLayerResult);
         }
-
-
-
 
         return thisLayerResult;
     }
@@ -272,7 +290,9 @@ public class VariablesLayer extends HavingContext<Variables, AbstractContext> {
 //    }
 
     public VariablesLayer dup() {
-        final VariablesLayer v = new VariablesLayer($, "dup of " + name, fallbackVariablesLayer);
+        final VariablesLayer v = new VariablesLayer("dup of " + name, fallbackVariablesLayer);
+
+        v.set$($);
 
         v.variables = new LinkedHashMap<String, DynamicVariable>(variables);
 
@@ -316,10 +336,10 @@ public class VariablesLayer extends HavingContext<Variables, AbstractContext> {
 //                    !ClassUtils.isPrimitiveOrWrapper(fieldClass);
 
                 if (autoImplThis) {
-                    Preconditions.checkArgument("".equals(varAnnotation.value()), "value & auto-impl for field " + field);
+                    Preconditions.checkArgument("".equals(varAnnotation.constant()), "value & auto-impl for field " + field);
                 }
 
-                if (autoImplThis || "".equals(varAnnotation.value())) {
+                if (autoImplThis || "".equals(varAnnotation.constant())) {
                     Object closestClass = findClosestClass(fieldClass, layer.constants.keySet(), field, layer);
 
                     if (closestClass == null) {
@@ -333,7 +353,7 @@ public class VariablesLayer extends HavingContext<Variables, AbstractContext> {
                     continue;
                 }
 
-                setField(field, object, layer, concatBlank(scope, varAnnotation.value()));
+                setField(field, object, layer, concatBlank(scope, varAnnotation.constant()));
 
                 continue;
             }
@@ -430,6 +450,7 @@ public class VariablesLayer extends HavingContext<Variables, AbstractContext> {
             if (!(key instanceof Class)) {
                 continue;
             }
+
             Class key1 = (Class) key;
 
             if (!fieldClass.isAssignableFrom(key1)) continue;
@@ -442,6 +463,7 @@ public class VariablesLayer extends HavingContext<Variables, AbstractContext> {
                 throw new MultipleDICandidates("two types possible to inject to field " + field + ": " + key1.getSimpleName() + " and " + closestClass);
             }
         }
+
         return closestClass;
     }
 

@@ -17,7 +17,8 @@
 package bear.core;
 
 import bear.cli.Script;
-import bear.plugins.DependencyInjection;
+import bear.context.Fun;
+import bear.context.VarFun;
 import bear.plugins.Plugin;
 import bear.session.BearVariables;
 import bear.session.DynamicVariable;
@@ -44,14 +45,12 @@ import static bear.session.Variables.*;
 /**
  * @author Andrey Chaschev chaschev@gmail.com
  */
-public class Bear {
+public class Bear extends BearApp<GlobalContext> {
     public static final DateTimeZone GMT = DateTimeZone.forTimeZone(TimeZone.getTimeZone("GMT"));
     public static final DateTimeFormatter RELEASE_FORMATTER = DateTimeFormat.forPattern("yyyyMMdd.HHmmss").withZone(GMT);
-    public final GlobalContext global;
 
-    public Bear(GlobalContext global) {
-        this.global = global;
-        DependencyInjection.nameVars(this, global);
+    public Bear() {
+
     }
 
     public final DynamicVariable<String>
@@ -82,8 +81,7 @@ public class Bear {
 
     public final DynamicVariable<String>
 
-    applicationName = strVar().desc("Your app name"),
-        appLogsPath = BearVariables.joinPath("appLogsPath", logsPath, applicationName),
+        appLogsPath = BearVariables.joinPath("appLogsPath", logsPath, name),
         sshUsername = dynamic(new VarFun<String, SessionContext>() {
             @Override
             public String apply(SessionContext $) {
@@ -121,7 +119,7 @@ public class Bear {
 
     deployScript = strVar("Script to use").defaultTo("CreateNewScript"),
 
-    deployTo = BearVariables.joinPath("deployTo", applicationsPath, applicationName).desc("Current release dir"),
+    deployTo = BearVariables.joinPath("deployTo", applicationsPath, name).desc("Current release dir"),
 
     currentDirName = strVar("Current release dir").defaultTo("current"),
         sharedDirName = strVar("").defaultTo("shared"),

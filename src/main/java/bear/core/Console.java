@@ -16,6 +16,7 @@
 
 package bear.core;
 
+import bear.context.Nameable;
 import bear.session.DynamicVariable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

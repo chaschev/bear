@@ -21,7 +21,7 @@ import bear.core.SessionContext;
 import bear.core.GlobalContext;
 import bear.session.Result;
 import bear.vcs.CommandLineResult;
-import bear.plugins.HavingContext;
+import bear.context.HavingContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

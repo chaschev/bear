@@ -14,23 +14,12 @@
  * limitations under the License.
  */
 
-package bear.core;
-
-import bear.session.DynamicVariable;
+package bear.context;
 
 /**
  * @author Andrey Chaschev chaschev@gmail.com
  */
-public abstract class VarFun<T, CONTEXT extends AbstractContext> implements Fun<T,CONTEXT> {
 
-    protected DynamicVariable<T> var;
-
-    public VarFun() {
-    }
-
-
-    public void setVar(DynamicVariable<T> var) {
-        this.var = var;
-    }
-
+public interface Nameable<T> {
+    String name();
 }

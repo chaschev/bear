@@ -14,11 +14,13 @@
  * limitations under the License.
  */
 
-package bear.plugins;
+package bear.context;
 
 import bear.core.Bear;
 import bear.core.GlobalContext;
 import bear.core.SessionContext;
+import bear.plugins.Plugin;
+import bear.plugins.Plugins;
 import bear.session.DynamicVariable;
 import bear.plugins.sh.SystemEnvironmentPlugin;
 import bear.task.Tasks;
@@ -34,7 +36,7 @@ import java.lang.reflect.Field;
  * @author Andrey Chaschev chaschev@gmail.com
  */
 public class DependencyInjection {
-    public static void nameVars(Object obj, GlobalContext global) {
+    public static void nameVars(Object obj, AppGlobalContext global) {
         final Class<?> aClass = obj.getClass();
         final String className = shorten(aClass.getSimpleName());
         final Field[] fields = OpenBean.getClassDesc(aClass).fields;
@@ -47,13 +49,20 @@ public class DependencyInjection {
 
                 final DynamicVariable var = (DynamicVariable) field.get(obj);
                 Preconditions.checkNotNull(var, field.getName() + " is null!");
-                var.setName(shorten(field.getDeclaringClass().getSimpleName()) + "." + field.getName());
+                var.setName(shortName(aClass, className, field) + "." + field.getName());
 
                 global.registerVariable(var, field);
             }
         } catch (IllegalAccessException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    //optimization
+    private static String shortName(Class<?> aClass, String className, Field field) {
+        Class<?> thisFieldClass = field.getDeclaringClass();
+
+        return aClass == thisFieldClass ? className : shorten(thisFieldClass.getSimpleName());
     }
 
     public static String shorten(String className) {

@@ -14,13 +14,19 @@
  * limitations under the License.
  */
 
-package bear.core;
+package bear.context;
 
-/**
- * @author Andrey Chaschev chaschev@gmail.com
- */
-public class GlobalOptions {
-    public boolean exceptionOnError = true;
-    public int timeoutPerCommandOptionMs = 30000;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
+@Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.TYPE)
+public @interface WireFields {
+    boolean autowire() default true;
+    Class value() default Void.class;
+
+    //same as class value, but provides a string instead
+    String namespace() default "";
 }

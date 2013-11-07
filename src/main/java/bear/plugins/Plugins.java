@@ -16,6 +16,7 @@
 
 package bear.plugins;
 
+import bear.context.DependencyInjection;
 import bear.core.SessionContext;
 import bear.core.GlobalContext;
 import bear.plugins.graph.DirectedGraph;
@@ -63,7 +64,8 @@ public class Plugins {
                 pluginMap.put(plugin.getShell().getCommandName(), plugin);
             }
 
-            globalContext.put(plugin.getClass(), plugin);
+            globalContext.getInjectors().simpleBind(plugin.getClass(), plugin);
+//            globalContext.put(plugin.getClass(), plugin);
         }
 
         for (Plugin plugin : plugins) {

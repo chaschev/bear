@@ -19,10 +19,10 @@ package bear.plugins.mysql;
 import bear.console.AbstractConsole;
 import bear.console.ConsoleCallback;
 import bear.core.Bear;
-import bear.core.Fun;
+import bear.context.Fun;
 import bear.core.GlobalContext;
 import bear.core.SessionContext;
-import bear.core.AbstractContext;
+import bear.context.AbstractContext;
 import bear.plugins.Plugin;
 import bear.plugins.sh.SystemEnvironmentPlugin;
 import bear.plugins.sh.SystemSession;
@@ -66,7 +66,7 @@ public class MySqlPlugin extends Plugin<Task, TaskDef<?>> {
             @Override
             public String apply(AbstractContext $) {
                 return String.format("dump_%s_%s.GMT_%s.sql",
-                    $.var(bear.applicationName), Bear.RELEASE_FORMATTER.print(new DateTime()), $.var(bear.sessionHostname));
+                    $.var(bear.name), Bear.RELEASE_FORMATTER.print(new DateTime()), $.var(bear.sessionHostname));
             }
         }),
         dumpsDirPath = BearVariables.joinPath(bear.projectSharedPath, "dumps"),

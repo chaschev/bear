@@ -16,7 +16,7 @@
 
 package bear.session;
 
-import bear.core.Fun;
+import bear.context.Fun;
 import bear.core.SessionContext;
 import com.google.common.base.Function;
 import com.google.common.collect.Iterables;

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package bear.core;
+package bear.context;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -22,8 +22,10 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 @Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.TYPE)
-public @interface WireFields {
-    boolean autowire() default true;
-    Class value() default Void.class;
+@Target(ElementType.FIELD)
+public @interface Var {
+    String value() default "";
+    String constant() default "";
+    boolean autoWireImpl() default true;
+    boolean skipWiring() default false;
 }

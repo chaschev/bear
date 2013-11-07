@@ -101,7 +101,7 @@ public class BearFX {
         this.bearFXApp = bearFXApp;
         this.conf = conf;
         this.bearProperties = bearProperties;
-        conf.bearFX = this;
+//        conf.bearFX = this;
     }
 
     public static class BearFXApp extends Application {
@@ -109,6 +109,7 @@ public class BearFX {
         private BearFX bearFX;
 
         private final Mapper mapper = new JacksonMapper();
+
         Bindings bindings = new Bindings();
         Stage stage;
 
@@ -134,11 +135,11 @@ public class BearFX {
                 properties.load(new FileInputStream(".bear/bear-fx.properties"));
 
                 FXConf configurator = new FXConf(
-                    "-Vcli.settingsFile=" + properties.get("bear-fx.settings"),
-                    "-Vcli.propertiesFile=" + properties.get("bear-fx.properties")
+                    "-VappCli.settingsFile=" + properties.get("bear-fx.settings"),
+                    "-VappCli.propertiesFile=" + properties.get("bear-fx.properties")
                 );
 
-                bearFX = new BearFX(this, configurator, properties);
+                configurator.bearFX = bearFX = new BearFX(this, configurator, properties);
                 this.stage = stage;
 
                 configurator.configure();

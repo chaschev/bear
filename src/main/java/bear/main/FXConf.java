@@ -16,8 +16,10 @@
 
 package bear.main;
 
-import bear.core.Fun;
+import bear.context.Cli;
+import bear.context.Fun;
 import bear.core.GlobalContext;
+import bear.core.GlobalContextFactory;
 import bear.core.IBearSettings;
 import bear.plugins.CommandInterpreter;
 import bear.plugins.Plugin;
@@ -55,12 +57,11 @@ import static com.google.common.collect.Lists.transform;
  */
 public class FXConf extends Cli {
     private CompileManager compileManager;
-    private Optional<CompiledEntry> scriptToRun;
 
     private BearCommandInterpreter commandInterpreter;
 
     public FXConf(String... args) {
-        super(args);
+        super(GlobalContextFactory.INSTANCE.getGlobal(), args);
     }
 
     public IBearSettings newSettings() {
@@ -81,10 +82,6 @@ public class FXConf extends Cli {
         } catch (Exception e) {
             throw Exceptions.runtime(e);
         }
-    }
-
-    public Optional<CompiledEntry> getScriptToRun() {
-        return scriptToRun;
     }
 
     private Optional<CompiledEntry> compileAndLoadScript() throws MalformedURLException {
@@ -214,7 +211,7 @@ public class FXConf extends Cli {
             logger.info("writing POM to {}...", file.getAbsolutePath());
 
             CharStreams.write(
-                bear.global.getPlugin(PomPlugin.class).generate(),
+                bear.getGlobal().getPlugin(PomPlugin.class).generate(),
                 Files.newWriterSupplier(file, Charsets.UTF_8)
             );
         } catch (IOException e) {

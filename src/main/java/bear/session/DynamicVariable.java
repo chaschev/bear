@@ -16,10 +16,10 @@
 
 package bear.session;
 
-import bear.core.Fun;
-import bear.core.Nameable;
-import bear.core.VarFun;
-import bear.core.AbstractContext;
+import bear.context.Fun;
+import bear.context.Nameable;
+import bear.context.VarFun;
+import bear.context.AbstractContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

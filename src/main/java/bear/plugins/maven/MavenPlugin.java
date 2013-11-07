@@ -16,7 +16,7 @@
 
 package bear.plugins.maven;
 
-import bear.core.Fun;
+import bear.context.Fun;
 import bear.core.GlobalContext;
 import bear.core.SessionContext;
 import bear.plugins.ZippedToolPlugin;

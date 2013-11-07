@@ -16,6 +16,7 @@
 
 package bear.main;
 
+import bear.context.Cli;
 import bear.core.IBearSettings;
 import chaschev.util.Exceptions;
 import com.google.common.base.Function;

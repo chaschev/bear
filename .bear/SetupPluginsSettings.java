@@ -1,4 +1,5 @@
 import atocha.Atocha;
+import bear.context.Fun;
 import bear.core.*;
 import bear.plugins.grails.GrailsBuilderTask;
 import bear.plugins.grails.GrailsPlugin;

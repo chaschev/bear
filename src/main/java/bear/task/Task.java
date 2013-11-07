@@ -18,7 +18,7 @@ package bear.task;
 
 import bear.console.AbstractConsoleCommand;
 import bear.core.SessionContext;
-import bear.plugins.HavingContext;
+import bear.context.HavingContext;
 import bear.task.exec.TaskExecutionContext;
 import bear.vcs.CommandLineResult;
 

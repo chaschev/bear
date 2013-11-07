@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package bear.core;
+package bear.context;
 
 import com.google.common.base.Function;
 
@@ -32,4 +32,32 @@ public interface Fun<T, CONTEXT extends AbstractContext> extends Function<CONTEX
             return "UNDEFINED";
         }
     }
+
+    public static final class UndefinedException extends RuntimeException{
+        public UndefinedException() {
+        }
+
+        public UndefinedException(String message) {
+            super(message);
+        }
+
+        public UndefinedException(String message, Throwable cause) {
+            super(message, cause);
+        }
+
+        public UndefinedException(Throwable cause) {
+            super(cause);
+        }
+
+        public UndefinedException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
+            super(message, cause, enableSuppression, writableStackTrace);
+        }
+
+        public static void throwUndefined(){
+            throw new UndefinedException();
+        }
+    }
+
+
+
 }

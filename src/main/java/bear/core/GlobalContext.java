@@ -16,6 +16,7 @@
 
 package bear.core;
 
+import bear.context.AppGlobalContext;
 import bear.plugins.Plugin;
 import bear.plugins.Plugins;
 import bear.plugins.PomPlugin;
@@ -23,7 +24,6 @@ import bear.plugins.groovy.GroovyShellPlugin;
 import bear.plugins.sh.GenericUnixLocalEnvironmentPlugin;
 import bear.plugins.sh.GenericUnixRemoteEnvironmentPlugin;
 import bear.plugins.sh.SystemSession;
-import bear.session.DynamicVariable;
 import bear.session.LocalAddress;
 import bear.task.Task;
 import bear.task.TaskDef;
@@ -36,7 +36,6 @@ import com.google.common.util.concurrent.ListeningExecutorService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.lang.reflect.Field;
 import java.util.Collection;
 import java.util.concurrent.*;
 
@@ -45,7 +44,7 @@ import static com.google.common.util.concurrent.MoreExecutors.listeningDecorator
 /**
  * @author Andrey Chaschev chaschev@gmail.com
  */
-public class GlobalContext extends AbstractContext{
+public class GlobalContext extends AppGlobalContext<GlobalContext, Bear> {
     private static final Logger logger = LoggerFactory.getLogger(GlobalContext.class);
 
     //    public static final GlobalContext INSTANCE = new GlobalContext();
@@ -55,8 +54,6 @@ public class GlobalContext extends AbstractContext{
     public final Tasks tasks;
 
     public final Plugins plugins = new Plugins(this);
-
-    public final VariableRegistry variableRegistry = new VariableRegistry(this);
 
     public final ListeningExecutorService taskExecutor = listeningDecorator(new ThreadPoolExecutor(2, 32,
         5L, TimeUnit.SECONDS,
@@ -79,16 +76,13 @@ public class GlobalContext extends AbstractContext{
     public final SessionContext localCtx;
     public final Stage localStage;
 
-    public final Bear bear;
-
     private GlobalContext() {
-        super();
+        super(new Bear());
 
-        layer = new VariablesLayer(this, "global layer", null);
-
-        bear = new Bear(this);
+//        layer = new VariablesLayer(this, "global layer", null);
 
         logger.info("adding bootstrap plugins...");
+
         plugins.add(GenericUnixRemoteEnvironmentPlugin.class);
         plugins.add(GenericUnixLocalEnvironmentPlugin.class);
         plugins.add(GroovyShellPlugin.class);
@@ -122,8 +116,14 @@ public class GlobalContext extends AbstractContext{
     }
 
     public <T extends Plugin> T getPlugin(Class<T> pluginClass) {
-//        return (T) plugins.get(pluginClass);
-        return (T) getConstant(pluginClass);
+        return (T) plugins.get(pluginClass);
+//        InjectingVariable variable = Iterables.getFirst(injectors.findForDeclaredType(pluginClass), null);
+//
+//        if(variable == null){
+//            throw new RuntimeException("plugin not found: " + pluginClass.getSimpleName());
+//        }
+//
+//        return (T) var(variable);
     }
 
     public <T extends Plugin> Task<TaskDef> newPluginSession(Class<T> pluginClass, SessionContext $, Task<?> parentTask) {
@@ -166,7 +166,4 @@ public class GlobalContext extends AbstractContext{
         return this;
     }
 
-    public void registerVariable(DynamicVariable var, Field field) {
-        variableRegistry.register(var, field);
-    }
 }

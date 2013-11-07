@@ -65,18 +65,18 @@ public class BearRunner {
         }
     }
 
-    public BearRunner(FXConf configurator) {
-        try {
-            this.bearSettings = configurator.newSettings();
-            this.script = (Script) configurator.getScriptToRun().get().aClass.newInstance();
-
-            factory = configurator.getFactory();
-
-            init();
-        } catch (Exception e) {
-            throw Exceptions.runtime(e);
-        }
-    }
+//    public BearRunner(FXConf configurator) {
+//        try {
+//            this.bearSettings = configurator.newSettings();
+//            this.script = (Script) configurator.getScriptToRun().get().aClass.newInstance();
+//
+//            factory = configurator.getFactory();
+//
+//            init();
+//        } catch (Exception e) {
+//            throw Exceptions.runtime(e);
+//        }
+//    }
 
     public final BearRunner init() throws Exception {
         bearSettings.configure(factory);

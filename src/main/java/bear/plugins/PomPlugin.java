@@ -40,7 +40,7 @@ public class PomPlugin extends Plugin{
             "    <modelVersion>4.0.0</modelVersion>\n" +
             "\n" +
             "    <groupId>bear</groupId>\n" +
-            "    <artifactId>" + global.var(bear.applicationName) + "</artifactId>\n" +
+            "    <artifactId>" + global.var(bear.name) + "</artifactId>\n" +
             "    <version>1.0-SNAPSHOT</version>\n" +
             "\n" +
             "    <dependencies>\n" +

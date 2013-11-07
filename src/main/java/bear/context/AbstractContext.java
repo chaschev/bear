@@ -14,51 +14,64 @@
  * limitations under the License.
  */
 
-package bear.core;
+package bear.context;
 
 import bear.session.DynamicVariable;
 import bear.session.Variables;
-import chaschev.lang.OpenBean;
-import chaschev.lang.reflect.ClassDesc;
 import chaschev.util.Exceptions;
 import com.google.common.base.Function;
 import com.google.common.base.Functions;
 import com.google.common.base.Preconditions;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.lang.reflect.Field;
-import java.util.Arrays;
 import java.util.Enumeration;
 import java.util.Properties;
 
+import static bear.session.Variables.dynamic;
 import static bear.session.Variables.getConverter;
 
 /**
 * @author Andrey Chaschev chaschev@gmail.com
 */
 public abstract class AbstractContext {
+    private static final Logger logger = LoggerFactory.getLogger(AbstractContext.class);
+
     protected VariablesLayer layer;
-    protected AbstractContext global;
+    protected AbstractContext parent;
+    protected AppGlobalContext global;
     protected Properties properties = new Properties();
-
-    protected AbstractContext() {
-
-    }
+    protected final InjectingContext<?> injectingContext;
+    String name;
 
     protected AbstractContext(VariablesLayer layer) {
-        this.layer = layer;
+        this(layer, null);
     }
 
-    protected AbstractContext(AbstractContext parentContext) {
-        this(new VariablesLayer(null, null, parentContext.layer));
+    protected AbstractContext(AbstractContext parentContext, String name) {
+        this(new VariablesLayer(name, parentContext.layer), parentContext);
+    }
+
+    protected AbstractContext(AppGlobalContext global, String name) {
+        this((AbstractContext) global, name);
+        this.global = global;
+
+        if(injectingContext != null) injectingContext.global = global;
+    }
+
+    protected AbstractContext(VariablesLayer layer, AbstractContext parentContext) {
+        this.name = layer.name;
+        this.layer = layer;
+
+        this.parent = parentContext;
+
         layer.set$(this);
-    }
 
-    protected AbstractContext(VariablesLayer layer, AbstractContext global) {
-        this.layer = layer;
+        injectingContext = this instanceof InjectingContext ? null : new InjectingContext(this);
     }
 
     public <T> T var(Nameable<T> var){
@@ -77,6 +90,10 @@ public abstract class AbstractContext {
         return layer.get(var);
     }
 
+    public <T> T var(String varName, T _default) {
+        return layer.get(varName, _default);
+    }
+
     public <T> boolean isSet(Nameable<T> variable){
         final DynamicVariable<T> x = layer.getVariable(variable);
 
@@ -86,11 +103,19 @@ public abstract class AbstractContext {
     /**
      * Should be overridden to specify type.
      */
-    public AbstractContext getGlobal() {
+    public AppGlobalContext getGlobal() {
         return global;
     }
 
+    public VariablesLayer put(Nameable key, Fun<?,?> fun) {
+        return put(key, dynamic(fun));
+    }
+
     public VariablesLayer put(Nameable key, DynamicVariable value) {
+        return layer.put(key, value);
+    }
+
+    public VariablesLayer put(String key, DynamicVariable value) {
         return layer.put(key, value);
     }
 
@@ -111,35 +136,16 @@ public abstract class AbstractContext {
     }
 
     public <T> T wire(T object) {
-        try {
-            Class<? extends AbstractContext> myClass = this.getClass();
-            Field[] contextFields = OpenBean.getClassDesc(myClass).fields;
-
-            for (Field field : OpenBean.getClassDesc(object.getClass()).fields) {
-                if(myClass == field.getType()){
-                    field.set(object, this);
-                    continue;
-                }
-
-                int i = Arrays.binarySearch(contextFields, field, ClassDesc.FIELD_COMPARATOR);
-
-                if(i>=0){
-                    Field contextField = contextFields[i];
-
-                    //don't copy field like layer
-                    if(contextField.getDeclaringClass() != AbstractContext.class){
-                        field.set(object, contextField.get(this));
-                    }
-                }
-            }
-
-            return layer.wire(object);
-        } catch (IllegalAccessException e) {
-            throw Exceptions.runtime(e);
+        if(injectingContext != null){
+            return injectingContext.wire(object);
         }
+
+        throw new IllegalStateException();
+
     }
 
     public void setName(String name) {
+        this.name = name;
         layer.setName(name);
     }
 
@@ -229,7 +235,7 @@ public abstract class AbstractContext {
     }
 
     public AbstractContext convertAndPutConst(String name, String value, Class<?> type) {
-        Function<String,?> converter;
+        Function<String, ?> converter;
 
         if(type == null){
             converter = Functions.identity();
@@ -258,14 +264,24 @@ public abstract class AbstractContext {
     }
 
     public boolean isGlobal(){
-        return global == null;
+        return false; //global == null
     }
 
     public AbstractContext setParent(AbstractContext context){
         layer.fallbackVariablesLayer = context.layer;
-        if(global == null){
-            global = context;
+
+        this.parent = context;
+
+        if(global == null && context instanceof AppGlobalContext<?, ?>){
+            global = (AppGlobalContext) context;
         }
+
         return this;
     }
+
+    public AbstractContext getParent() {
+        return parent;
+    }
 }
+
+

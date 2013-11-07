@@ -16,10 +16,10 @@
 
 package bear.plugins.tomcat;
 
-import bear.core.Fun;
+import bear.context.Fun;
 import bear.core.GlobalContext;
 import bear.core.SessionContext;
-import bear.core.AbstractContext;
+import bear.context.AbstractContext;
 import bear.plugins.ZippedToolPlugin;
 import bear.session.BearVariables;
 import bear.session.DynamicVariable;

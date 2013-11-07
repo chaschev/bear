@@ -16,10 +16,10 @@
 
 package bear.plugins.grails;
 
-import bear.core.Fun;
+import bear.context.Fun;
 import bear.core.GlobalContext;
 import bear.core.SessionContext;
-import bear.core.AbstractContext;
+import bear.context.AbstractContext;
 import bear.plugins.ZippedToolPlugin;
 import bear.plugins.java.JavaPlugin;
 import bear.session.BearVariables;

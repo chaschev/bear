@@ -14,16 +14,20 @@
  * limitations under the License.
  */
 
-package bear.core;
+package bear.context;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+/**
+ * @author Andrey Chaschev chaschev@gmail.com
+ */
+public class Name implements Nameable {
+    String name;
 
-@Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.FIELD)
-public @interface Var {
-    String value() default "";
-    boolean autoWireImpl() default false;
+    public Name(String name) {
+        this.name = name;
+    }
+
+    @Override
+    public String name() {
+        return name;
+    }
 }

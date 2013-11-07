@@ -14,43 +14,22 @@
  * limitations under the License.
  */
 
-package bear.plugins;
+package bear.context;
 
-import bear.core.AbstractContext;
 import bear.session.DynamicVariable;
 
 /**
  * @author Andrey Chaschev chaschev@gmail.com
  */
+public abstract class VarFun<T, CONTEXT extends AbstractContext> implements Fun<T,CONTEXT> {
+    protected DynamicVariable<T> var;
 
-
-public class HavingContext<CHILD, CONTEXT extends AbstractContext> {
-    protected CONTEXT $;
-
-    public HavingContext(CONTEXT $) {
-        this.$ = $;
+    public VarFun() {
     }
 
-    public HavingContext(Object $) {
-        this.$ = (CONTEXT) $;
+
+    public void setVar(DynamicVariable<T> var) {
+        this.var = var;
     }
 
-    public <T> T $(DynamicVariable<T> varName) {
-        Object var = $.var(varName);
-        return (T) var;
-    }
-
-    public CHILD set$(CONTEXT $) {
-        this.$ = $;
-        return (CHILD) this;
-    }
-
-    public CHILD set$(Object $) {
-        this.$ = (CONTEXT) $;
-        return (CHILD) this;
-    }
-
-    public CONTEXT $() {
-        return $;
-    }
 }
