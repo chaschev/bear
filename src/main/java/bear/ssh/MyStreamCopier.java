@@ -17,6 +17,7 @@
 package bear.ssh;
 
 import bear.session.Result;
+import chaschev.util.CatchyCallable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -94,7 +95,7 @@ public class MyStreamCopier {
     }
 
     public Future<Result> spawn(ExecutorService service) {
-        return service.submit(new Callable<Result>() {
+        return service.submit(new CatchyCallable<Result>(new Callable<Result>() {
             @Override
             public Result call() {
                 while (!stopFlag) {
@@ -116,7 +117,7 @@ public class MyStreamCopier {
 
                 return Result.OK;
             }
-        });
+        }));
     }
 
     public long nonBlockingCopy() throws Exception {

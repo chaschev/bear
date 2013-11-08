@@ -19,21 +19,6 @@ package bear.main.event;
 /**
  * @author Andrey Chaschev chaschev@gmail.com
  */
-public class CommandConsoleEventToUI extends ConsoleEventToUI implements EventWithId {
-    public String id;
-    public String command;
-
-    public CommandConsoleEventToUI(String console, String command) {
-        super(console, "command");
-        this.command = command;
-    }
-
-    public CommandConsoleEventToUI setId(String id) {
-        this.id = id;
-        return this;
-    }
-
-    public String getId() {
-        return id;
-    }
+public interface EventWithId {
+    String getId();
 }

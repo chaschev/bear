@@ -1,14 +1,17 @@
 top priority:
 
+- ui: check how vcs plugins work through ui
 - ui: run a command in on a single host from shell
-- ui: green button usability - click edit, edit, if modified at least once, ask 'load?'
 - ui: cancel command
+- ui: adapt this theme: https://github.com/onokumus/Bootstrap-Admin-Template
+- ui: stage/roles/hosts selection
+- ui: preload stages, hosts and roles
 
 - (ok, 2) send messages from plugins via uiLogger (sends to 'ui'), logger (sends to console)
-- (3) ui: logback messages (output to file, a window to view, monitor errors and display red exclamation mark when there are)
+- (ok, 3) ui: logback messages (output to file, a window to view, monitor errors and display red exclamation mark when there are)
+
 - (4) save logs from hosts to separate folders (log4j2?)
 - (5) print '$host: capture shell' feature
-- ui: check how vcs plugins work through ui
 - refactor BearScript and message sending (extract an interface from BearFX)
 
 - monitor (external) changes to settings file
@@ -20,8 +23,10 @@ top priority:
 - ui: (4) mysql shell mode
 - ui: (5) mongo shell mode (core)
 - ui: (ok, 6) style console messages
+- ui: notify about errors in logs
 
-- ui: update tabs on new messages arrival
+- ui: green button usability - click edit, edit, if modified at least once, ask 'load?'
+- ui: modified tabs (add *) on new messages arrival
 - ui: draggable tabs, save tab layout
 - ui: general compare sessions dialog (via class='session', phaseId='*')
 
@@ -30,10 +35,7 @@ top priority:
 
 - ui: scroll to the bottom of the scrollable area on the new text
 - (ok) ui: auto-size shell panel
-- ui: adapt this theme: https://github.com/onokumus/Bootstrap-Admin-Template
 - ui: help like with (search for 'ace/ext/keybinding_menu' in project)
-- ui: stage/roles/hosts selection
-- ui: preload stages, hosts and roles
 - ui: better formatting for diff (i.e. \n after div)
 - ui: add global root task somewhere, add global timer
 - ui: code completion for :set

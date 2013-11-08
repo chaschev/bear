@@ -92,7 +92,7 @@ public class TaskRunner extends HavingContext<TaskRunner, SessionContext>{
 
     private TaskResult runCollectionOfTasks(List<TaskDef> tasks, String desc, boolean thisIsMe) {
         if (!tasks.isEmpty() && !desc.isEmpty()) {
-            logger.info(desc);
+            logger.debug(desc);
         }
 
         TaskResult runResult = TaskResult.OK;

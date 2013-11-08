@@ -236,17 +236,20 @@ app.directive("consoleMessages", ['$timeout', '$compile', '$ekathuwa', 'ansi2htm
                 return arr.length == 0 ? null : arr[arr.length - 1];
             }
 
-            function updateLastParent$(selector, lastParent) {
+            var updateLastParent$ = function (selector, lastParent) {
                 var $lastCommand = $el.find(selector);
 
                 var x = lastParent;
 
                 if ($lastCommand.length > 0) {
+                    Java.log('updateLastParent$', $lastCommand);
                     x = updateLastParent(lastParent, {id: $lastCommand.attr('id'), timestamp: parseInt($lastCommand.attr('timestamp'))});
+                } else{
+                    Java.log('no matches for', selector);
                 }
 
                 return x;
-            }
+            };
 
             try {
             Java.log("my el:" , $el, "my terminal is: ", $scope.terminal, " and scope is: ", $scope);
@@ -258,7 +261,7 @@ app.directive("consoleMessages", ['$timeout', '$compile', '$ekathuwa', 'ansi2htm
             var $messages = $el;
 
             function sortByTS($el){
-                $el.sort(function(a,b){
+                $el.sort(function(a, b){
                     return parseInt($(a).attr('timestamp')) < parseInt($(b).attr('timestamp'));
                 });
             }
@@ -266,8 +269,12 @@ app.directive("consoleMessages", ['$timeout', '$compile', '$ekathuwa', 'ansi2htm
             function quicklyInsertText(e){
                 var $parent = $('#' + e.parentId);
 
+                Java.log('parent: ', $parent);
+
                 if($parent.length === 0) {
+                    Java.log('no parent');
                     if(e.level != null){
+                        Java.log('trying to find parent...');
                         var lastParent = null;
 
                         lastParent = updateLastParent(lastParent, getLast(unprocessedCommands));
@@ -279,9 +286,11 @@ app.directive("consoleMessages", ['$timeout', '$compile', '$ekathuwa', 'ansi2htm
 
                         if(!lastParent || lastParent.id == null){
                             Java.log('[WARNING] unable to find parent for ', e);
+                        }else{
+                            e.parentId = lastParent.id;
+                            Java.log('parent: ' + lastParent.id, $('#' + lastParent.id));
                         }
 
-                        e.parentId = lastParent.id;
                     }
 
                     return false;
@@ -315,8 +324,7 @@ app.directive("consoleMessages", ['$timeout', '$compile', '$ekathuwa', 'ansi2htm
                     return;
                 }
 
-                Java.log('received broadcasted message: ', e);
-
+                Java.log('(' + $scope.terminal.name + ') received broadcasted message: ', e);
 
                 function quicklyInsertCommand(e){
                     var $parent = $('#' + e.parentId);

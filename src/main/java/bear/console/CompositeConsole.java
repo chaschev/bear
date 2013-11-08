@@ -17,6 +17,7 @@
 package bear.console;
 
 import bear.vcs.CommandLineResult;
+import chaschev.util.CatchyCallable;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
@@ -70,7 +71,7 @@ public class CompositeConsole {
 
             final int finalI = i;
 
-            ListenableFuture<CommandLineResult> fut = executorService.submit(new Callable<CommandLineResult>() {
+            ListenableFuture<CommandLineResult> fut = executorService.submit(new CatchyCallable<CommandLineResult>(new Callable<CommandLineResult>() {
                 @Override
                 public CommandLineResult call() throws Exception {
                     CommandLineResult result = console.sendCommand(command, new ConsoleCallback() {
@@ -87,7 +88,7 @@ public class CompositeConsole {
 
                     return result;
                 }
-            });
+            }));
 
             futures.add(fut);
         }

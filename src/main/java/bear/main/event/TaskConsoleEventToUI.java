@@ -19,7 +19,7 @@ package bear.main.event;
 /**
  * @author Andrey Chaschev chaschev@gmail.com
  */
-public class TaskConsoleEventToUI extends ConsoleEventToUI {
+public class TaskConsoleEventToUI extends ConsoleEventToUI implements EventWithId {
     public String id;
     public String task;
 
@@ -31,5 +31,9 @@ public class TaskConsoleEventToUI extends ConsoleEventToUI {
     public TaskConsoleEventToUI setId(String id) {
         this.id = id;
         return this;
+    }
+
+    public String getId() {
+        return id;
     }
 }

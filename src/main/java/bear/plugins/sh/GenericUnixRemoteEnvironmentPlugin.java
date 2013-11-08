@@ -26,6 +26,7 @@ import bear.session.SshAddress;
 import bear.task.Task;
 import bear.vcs.CommandLineResult;
 import bear.vcs.RemoteCommandLine;
+import chaschev.util.CatchyCallable;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import net.schmizz.sshj.SSHClient;
@@ -433,7 +434,7 @@ public class GenericUnixRemoteEnvironmentPlugin extends SystemEnvironmentPlugin 
         public SshSession(final SshAddress sshAddress, GlobalContext global) {
             this.sshAddress = sshAddress;
 
-            sshFuture = global.localExecutor.submit(new Callable<SSHClient>() {
+            sshFuture = global.localExecutor.submit(new CatchyCallable<SSHClient>(new Callable<SSHClient>() {
                 @Override
                 public SSHClient call() throws Exception {
                     try {
@@ -456,7 +457,7 @@ public class GenericUnixRemoteEnvironmentPlugin extends SystemEnvironmentPlugin 
                         return ssh;
                     }
                 }
-            });
+            }));
         }
 
         public synchronized SSHClient getSsh() {

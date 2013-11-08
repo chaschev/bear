@@ -196,6 +196,7 @@ public class BearScript {
                 }
 
                 bearFX.sendMessageToUI(new CommandConsoleEventToUI("shell", s)
+                    .setId(SessionContext.randomId())
                     .setParentId(shellContext.taskId));
 
                 last = runWithInterpreter(shellContext

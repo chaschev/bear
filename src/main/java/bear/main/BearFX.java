@@ -17,6 +17,7 @@
 package bear.main;
 
 import bear.main.event.EventToUI;
+import bear.main.event.EventWithId;
 import bear.main.event.NewSessionConsoleEventToUI;
 import chaschev.js.Bindings;
 import chaschev.js.ExceptionWrapper;
@@ -24,6 +25,7 @@ import chaschev.json.JacksonMapper;
 import chaschev.json.Mapper;
 import chaschev.lang.OpenBean;
 import chaschev.util.Exceptions;
+import com.google.common.base.Preconditions;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.beans.value.ChangeListener;
@@ -125,6 +127,11 @@ public class BearFX {
         Stage stage;
 
         public void sendMessageToUI(EventToUI eventToUI){
+            if (eventToUI instanceof EventWithId) {
+                String id = ((EventWithId) eventToUI).getId();
+                Preconditions.checkNotNull(id, "id is null for %s", eventToUI);
+            }
+
             final String s = mapper.toJSON(eventToUI);
 
             Platform.runLater(new Runnable() {
@@ -199,23 +206,23 @@ public class BearFX {
                 webEngine.getLoadWorker().stateProperty().addListener(new ChangeListener<Worker.State>() {
                     @Override
                     public void changed(ObservableValue<? extends Worker.State> ov, Worker.State t, Worker.State t1) {
-                        logger.info("[JAVA INIT] setting...");
+                        logger.debug("[JAVA INIT] setting...");
 
                         if (t1 == Worker.State.SUCCEEDED) {
-                            logger.info("ok");
                             JSObject window = (JSObject) webEngine.executeScript("window");
 
                             window.setMember("bearFX", bearFX);
                             window.setMember("OpenBean", OpenBean.INSTANCE);
                             window.setMember("Bindings", bindings);
 
-                            logger.info("[JAVA INIT] calling bindings JS initializer...");
+                            logger.debug("[JAVA INIT] calling bindings JS initializer...");
                             webEngine.executeScript("Java.init(window);");
-                            logger.info("[JAVA INIT] calling app JS initializer...");
+                            logger.debug("[JAVA INIT] calling app JS initializer...");
                             webEngine.executeScript("Java.initApp();");
 
                             bearFX.sendMessageToUI(new NewSessionConsoleEventToUI("status", randomId(), randomId()));
 
+                            logger.error("[Loggers Diagnostics]");
                             LoggerFactory.getLogger(BearFX.class).debug("MUST NOT BE SEEN started the Bear - -1!");
                             LoggerFactory.getLogger("fx").info("started the Bear - 0!");
                             LoggerFactory.getLogger("fx").warn("started the Bear - 1!");

@@ -31,6 +31,7 @@ import bear.plugins.sh.GenericUnixRemoteEnvironmentPlugin;
 import bear.session.Question;
 import chaschev.json.JacksonMapper;
 import chaschev.lang.Lists2;
+import chaschev.util.CatchyCallable;
 import chaschev.util.Exceptions;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.google.common.base.*;
@@ -50,6 +51,7 @@ import java.net.MalformedURLException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.concurrent.Callable;
 
 import static com.google.common.collect.Lists.transform;
 
@@ -185,27 +187,27 @@ public class FXConf extends Cli {
         Clipboard.getSystemClipboard().setContent(map);
     }
 
-    public String completeCode(String script, int caretPos){
+    public String completeCode(String script, int caretPos) {
         return commandInterpreter.completeCode(script, caretPos);
     }
 
-    public void evaluateInFX(Runnable runnable){
+    public void evaluateInFX(Runnable runnable) {
         bearFX.bearFXApp.runLater(runnable);
     }
 
-    public FileResponse getPropertyAsFile(String property){
+    public FileResponse getPropertyAsFile(String property) {
         String file = bearFX.bearProperties.getProperty(property);
 
         Preconditions.checkNotNull(file, "no such property: %s", property);
 
-        if(file.indexOf('/') == -1 && file.indexOf('\'') == -1){
+        if (file.indexOf('/') == -1 && file.indexOf('\'') == -1) {
             return new FileResponse(new File($(scriptsDir), file));
         }
 
         return new FileResponse(new File(file));
     }
 
-    public void createPom(){
+    public void createPom() {
         try {
             File file = new File(".bear/pom.xml");
 
@@ -234,7 +236,7 @@ public class FXConf extends Cli {
         }
     }
 
-    public static class FileResponse{
+    public static class FileResponse {
         public String dir;
         public String filename;
         public String path;
@@ -268,7 +270,7 @@ public class FXConf extends Cli {
          * @param command
          */
         public Response interpret(final String command, String uiContextS) throws Exception {
-            logger.info("interpreting command: '{}', params: {}", command, uiContextS);
+//            logger.info("interpreting command: '{}', params: {}", command, uiContextS);
             ui.info("interpreting command: '{}', params: {}", StringUtils.substringBefore(command, "\n").trim(), uiContextS);
 
             BearScript.UIContext uiContext = mapper.fromJSON(uiContextS, BearScript.UIContext.class);
@@ -280,14 +282,15 @@ public class FXConf extends Cli {
 
             global.putConst(bear.internalInteractiveRun, true);
 
-            global.taskExecutor.submit(new Runnable() {
+            global.taskExecutor.submit(new CatchyCallable<Response>(new Callable<Response>() {
                 @Override
-                public void run() {
+                public Response call() throws Exception {
                     Response exec = script.exec(command);
                     currentShellPlugin = script.currentPlugin;
                     global.removeConst(bear.internalInteractiveRun);
+                    return exec;
                 }
-            });
+            }));
 
             return new BearScript.MessageResponse("started script execution");
         }

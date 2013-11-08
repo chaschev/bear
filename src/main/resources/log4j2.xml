@@ -9,11 +9,12 @@
         </File>
     </Appenders>
     <Loggers>
-        <Logger name="net.schmizz" level="info">
+        <Logger name="net.schmizz" level="error">
             <AppenderRef ref="Console"/>
         </Logger>
-        <Logger name="fx" level="debug" additivity="false">
 
+        <Logger name="net.schmizz" level="error">
+            <AppenderRef ref="Console"/>
         </Logger>
 
         <Root level="debug" additivity="false">

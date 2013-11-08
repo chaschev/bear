@@ -30,8 +30,14 @@ public class FXAppender extends AbstractAppender{
 
         String threadName = event.getThreadName();
         bearFX.sendMessageToUI(new LogEventToUI(
-            threadName.startsWith("JavaFX") ? "status" : threadName,
+            isSessionAddress(threadName) ? threadName:"status",
             s, event.getLevel().intLevel()
         ));
+    }
+
+    //this is a hack
+    private boolean isSessionAddress(String threadName) {
+        return !(threadName.startsWith("JavaFX") || threadName.startsWith("Thread-") ||
+        threadName.startsWith("pool-"));
     }
 }

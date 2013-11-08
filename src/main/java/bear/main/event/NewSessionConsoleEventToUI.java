@@ -19,7 +19,7 @@ package bear.main.event;
 /**
  * @author Andrey Chaschev chaschev@gmail.com
  */
-public class NewSessionConsoleEventToUI extends ConsoleEventToUI {
+public class NewSessionConsoleEventToUI extends ConsoleEventToUI implements EventWithId {
     public final String id;
     public final String phaseId;
 
@@ -29,5 +29,7 @@ public class NewSessionConsoleEventToUI extends ConsoleEventToUI {
         this.phaseId = phaseId;
     }
 
-
+    public String getId() {
+        return id;
+    }
 }
