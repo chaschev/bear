@@ -18,7 +18,7 @@
  * @author Andrey Chaschev chaschev@gmail.com
  */
 
-var app = angular.module('bear', ['ui.bootstrap', 'ui.ace', 'fx.file.editor', 'pretty.time']);
+var app = angular.module('bear', ['ui.bootstrap', 'ui.ace', 'fx.file.editor', 'pretty.time', 'ansiToHtml']);
 
 function isDigestRunning(scope) {
     return scope.$$phase || scope.$root.$$phase;
@@ -210,7 +210,7 @@ var Session = function(index){
 </div>
  */
 
-app.directive("consoleMessages", ['$timeout', '$compile', '$ekathuwa', function ($timeout, $compile, $ekathuwa) {
+app.directive("consoleMessages", ['$timeout', '$compile', '$ekathuwa', 'ansi2html', function ($timeout, $compile, $ekathuwa, ansi2html) {
     return {
         template: '<div class="consoleMessages" ng-transclude></div>',
         restrict: 'E',
@@ -293,6 +293,8 @@ app.directive("consoleMessages", ['$timeout', '$compile', '$ekathuwa', function 
 //                    .replace(/\r\n/g,'<br>')
 //                    .replace(/\n/g,'<br>')
 //                ;
+
+                text = ansi2html.toHtml(text);
 
                 var $span = angular.element('<span timestamp="' + e.timestamp + '"' +
                     (e.level != null ? ' level=' + e.level + '"' : '') +

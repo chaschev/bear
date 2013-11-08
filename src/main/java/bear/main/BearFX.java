@@ -23,6 +23,7 @@ import chaschev.js.ExceptionWrapper;
 import chaschev.json.JacksonMapper;
 import chaschev.json.Mapper;
 import chaschev.lang.OpenBean;
+import chaschev.util.Exceptions;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.beans.value.ChangeListener;
@@ -38,6 +39,12 @@ import javafx.stage.FileChooser;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
 import netscape.javascript.JSObject;
+import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.core.Appender;
+import org.apache.logging.log4j.core.Filter;
+import org.apache.logging.log4j.core.LoggerContext;
+import org.apache.logging.log4j.core.config.LoggerConfig;
 import org.apache.logging.log4j.core.layout.PatternLayout;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -146,14 +153,24 @@ public class BearFX {
                 configurator.bearFX = bearFX = new BearFX(this, configurator, properties);
                 this.stage = stage;
 
-                {
-                    logger.info("creating fx appender...");
+                logger.info("creating fx appender...");
 
-                    FXAppender appender = new FXAppender("fxApp", null,
-                        PatternLayout.createLayout("%d{HH:mm:ss.S} %-5level %c{1.} - %msg%n", null, null, null, null), true, bearFX);
+                //createFilter("DEBUG", "INFO", null, null)
 
-                    addLog4jAppender("fx", appender);
-                }
+                FXAppender fxAppDebug =
+                    new FXAppender("fxAppDebug", ThresholdRangeFilter.createFilter("DEBUG", "INFO", null, null),
+                        PatternLayout.createLayout("%highlight{%d{HH:mm:ss.S} %-5level %c{1.} - %msg%n}", null, null, null, null), true, bearFX);
+
+                FXAppender fxAppInfo =
+                    new FXAppender("fxAppInfo", ThresholdRangeFilter.createFilter("INFO", "FATAL", null, null),
+                        PatternLayout.createLayout("%highlight{%d{HH:mm:ss.S} %-5level %c{1.} - %msg%n}", null, null, null, null), true, bearFX);
+
+//                FXAppender fxAppInfo =
+//                    new FXAppender("fxAppInfo", createFilter("info", null, null), PatternLayout.createLayout("%highlight{%d{HH:mm:ss.S} %-5level %c{1.} - %msg%n}", null, null, null, null), true, bearFX);
+
+
+                addLog4jAppender("root", fxAppInfo, null, null);
+                addLog4jAppender("fx", fxAppDebug, null, null);
 
                 configurator.configure();
 
@@ -198,8 +215,14 @@ public class BearFX {
                             webEngine.executeScript("Java.initApp();");
 
                             bearFX.sendMessageToUI(new NewSessionConsoleEventToUI("status", randomId(), randomId()));
-//                            bearFX.sendMessageToUI(new NewSessionConsoleEventToUI("status", randomId(), randomId()));
-                            LoggerFactory.getLogger("fx").info("started the Bear");
+
+                            LoggerFactory.getLogger(BearFX.class).debug("MUST NOT BE SEEN started the Bear - -1!");
+                            LoggerFactory.getLogger("fx").info("started the Bear - 0!");
+                            LoggerFactory.getLogger("fx").warn("started the Bear - 1!");
+                            LoggerFactory.getLogger("root").warn("started the Bear - 2!");
+                            LoggerFactory.getLogger(BearFX.class).warn("started the Bear - 3!");
+                            LogManager.getLogger(BearFX.class).warn("started the Bear - 4!");
+                            LoggerFactory.getLogger("fx").debug("started the Bear - 5!");
                         }
                     }
                 });
@@ -218,18 +241,42 @@ public class BearFX {
         }
     }
 
-    private static void addLog4jAppender(String loggerName, FXAppender appender) {
-        org.apache.logging.log4j.Logger logger
-        = org.apache.logging.log4j.LogManager.getLogger(loggerName);
-        org.apache.logging.log4j.core.Logger coreLogger
-            = (org.apache.logging.log4j.core.Logger)logger;
-        org.apache.logging.log4j.core.LoggerContext context
-            = coreLogger.getContext();
+    private static void addLog4jAppender(String loggerName, Appender appender, Level level, Filter filter) {
+        try {
+            org.apache.logging.log4j.core.Logger coreLogger
+                = (org.apache.logging.log4j.core.Logger) org.apache.logging.log4j.LogManager.getLogger(loggerName);
+        LoggerContext context = coreLogger.getContext();
         org.apache.logging.log4j.core.config.BaseConfiguration configuration
             = (org.apache.logging.log4j.core.config.BaseConfiguration)context.getConfiguration();
+            
+            coreLogger.addAppender(appender);
 
+            if("root".equals(loggerName)){
+                for (LoggerConfig loggerConfig : configuration.getLoggers().values()) {
+                    loggerConfig.addAppender(appender, level, filter);
+                }
+            }
 
-        coreLogger.addAppender(appender);
+//            coreLogger
+//                = (org.apache.logging.log4j.core.Logger) org.apache.logging.log4j.LogManager.getLogger(loggerName);
+//
+//            Logger slf4jLogger = LoggerFactory.getLogger(loggerName);
+//            
+//            
+//
+//            if(slf4jLogger != null){
+//                Field field = slf4jLogger.getClass().getDeclaredField("logger");
+//                field.setAccessible(true);
+//                AbstractLoggerWrapper loggerWrapper = (AbstractLoggerWrapper) field.get(slf4jLogger);
+//
+//                field = loggerWrapper.getClass().getDeclaredField("logger");
+//                field.setAccessible(true);
+//                field.set(loggerWrapper, coreLogger);
+//            }
+
+        } catch (Exception e) {
+            throw Exceptions.runtime(e);
+        }
     }
 
     public static void setFullscreen(Stage stage) {

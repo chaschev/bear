@@ -1,11 +1,10 @@
 top priority:
 
-- ui: general compare sessions dialog (via class='session', phaseId='*')
 - ui: run a command in on a single host from shell
 - ui: green button usability - click edit, edit, if modified at least once, ask 'load?'
 - ui: cancel command
 
-- (2) send messages from plugins via uiLogger (sends to 'ui'), logger (sends to console)
+- (ok, 2) send messages from plugins via uiLogger (sends to 'ui'), logger (sends to console)
 - (3) ui: logback messages (output to file, a window to view, monitor errors and display red exclamation mark when there are)
 - (4) save logs from hosts to separate folders (log4j2?)
 - (5) print '$host: capture shell' feature
@@ -17,13 +16,14 @@ top priority:
 - ruby plugin
 - ui: (ok, 1) order messages by timestamp (need to properly merge them on the client)
 - ui: (ok, 2) transform \n to <br>'s
-- ui: (3) color highlighting for unix terminals
+- ui: (ok, 3) color highlighting for unix terminals
 - ui: (4) mysql shell mode
 - ui: (5) mongo shell mode (core)
-- ui: (6) style console messages
+- ui: (ok, 6) style console messages
 
 - ui: update tabs on new messages arrival
 - ui: draggable tabs, save tab layout
+- ui: general compare sessions dialog (via class='session', phaseId='*')
 
 - variable annotations (aliases, visibility level)
 - support :set groovy[Shell].sendToHosts=true
