@@ -220,8 +220,34 @@ app.directive("consoleMessages", ['$timeout', '$compile', '$ekathuwa', function 
         },
         link: function ($scope, $el, attrs) {
             var unprocessedTexts= [];
-            var     unprocessedCommands = [];
-            var     unprocessedTasks = [];
+            var unprocessedCommands = [];
+            var unprocessedTasks = [];
+
+            function updateLastParent(lastParent, event) {
+                Java.log("updateLastParent", lastParent, event);
+                var x = lastParent;
+                if (event && (!lastParent || lastParent.timestamp < event.timestamp)) {
+                    x = event;
+                }
+                return x;
+            }
+
+            function getLast(arr) {
+                return arr.length == 0 ? null : arr[arr.length - 1];
+            }
+
+            function updateLastParent$(selector, lastParent) {
+                var $lastCommand = $el.find(selector);
+
+                var x = lastParent;
+
+                if ($lastCommand.length > 0) {
+                    x = updateLastParent(lastParent, {id: $lastCommand.attr('id'), timestamp: parseInt($lastCommand.attr('timestamp'))});
+                }
+
+                return x;
+            }
+
             try {
             Java.log("my el:" , $el, "my terminal is: ", $scope.terminal, " and scope is: ", $scope);
 
@@ -240,7 +266,26 @@ app.directive("consoleMessages", ['$timeout', '$compile', '$ekathuwa', function 
             function quicklyInsertText(e){
                 var $parent = $('#' + e.parentId);
 
-                if($parent.length === 0) return false;
+                if($parent.length === 0) {
+                    if(e.level != null){
+                        var lastParent = null;
+
+                        lastParent = updateLastParent(lastParent, getLast(unprocessedCommands));
+                        lastParent = updateLastParent(lastParent, getLast(unprocessedTasks));
+
+                        lastParent = updateLastParent$('.command:last', lastParent);
+                        lastParent = updateLastParent$('.task:last', lastParent);
+                        lastParent = updateLastParent$('.session:last', lastParent);
+
+                        if(!lastParent || lastParent.id == null){
+                            Java.log('[WARNING] unable to find parent for ', e);
+                        }
+
+                        e.parentId = lastParent.id;
+                    }
+
+                    return false;
+                }
 
                 var text = e.textAdded;
 
@@ -249,7 +294,9 @@ app.directive("consoleMessages", ['$timeout', '$compile', '$ekathuwa', function 
 //                    .replace(/\n/g,'<br>')
 //                ;
 
-                var $span = angular.element('<span timestamp="' + e.timestamp + '">' + text + '</span>');
+                var $span = angular.element('<span timestamp="' + e.timestamp + '"' +
+                    (e.level != null ? ' level=' + e.level + '"' : '') +
+                    '>' + text + '</span>');
 
                 $compile($span.contents())($scope);
 
@@ -307,9 +354,13 @@ app.directive("consoleMessages", ['$timeout', '$compile', '$ekathuwa', function 
                 }
 
                 function quicklyInsertSession(e){
-                    $messages.append($('<div class="session" id="' + e.id + '" phaseId="' + e.phaseId + '"></div>'));
+                    $messages.append($('<div class="session" timestamp="' + e.timestamp + '" id="' + e.id + '" phaseId="' + e.phaseId + '"></div>'));
 
                     return true;
+                }
+
+                if(!e.parentId && !e.level && e.subType!='session'){
+                    Java.log('[WARNING] parentId is null for ', e);
                 }
 
                 switch(e.subType){
@@ -344,33 +395,40 @@ app.directive("consoleMessages", ['$timeout', '$compile', '$ekathuwa', function 
                         throw "not yet supported subType:" + e.subType;
                 }
 
-                var tasksAdded = false;
                 var obj, i;
 
                 // the idea of optimization: no need to insert into children
                 // if there is no update to parent
-                if(unprocessedTasks.length > 0){
-                    for (i = 0; i < unprocessedTasks.length; i++) {
-                        obj = unprocessedTasks[i];
-                        if(quicklyInsertTask(obj)) tasksAdded = true;
-                    }
-                }
+//                for (i = 0; i < unprocessedTasks.length; i++) {
+//                    obj = unprocessedTasks[i];
+//                    if(quicklyInsertTask(obj)) {
+//
+//                    }
+//                }
 
-                var commandsAdded = false;
+                unprocessedTasks = unprocessedTasks.filter(function(obj){
+                    return !quicklyInsertTask(obj);
+                });
 
-                if(tasksAdded && unprocessedCommands.length > 0){
-                    for (i = 0; i < unprocessedCommands.length; i++) {
-                        obj = unprocessedCommands[i];
-                        if(quicklyInsertCommand(obj)) commandsAdded = true;
-                    }
-                }
+                unprocessedCommands = unprocessedCommands.filter(function(obj){
+                    return !quicklyInsertCommand(obj);
+                });
 
-                if(commandsAdded && unprocessedTexts.length > 0){
-                    for (i = 0; i < unprocessedTexts.length; i++) {
-                        obj = unprocessedTexts[i];
-                        quicklyInsertCommand(obj);
-                    }
-                }
+                unprocessedTexts = unprocessedTexts.filter(function(obj){
+                    return !quicklyInsertText(obj);
+                });
+
+//                for (i = 0; i < unprocessedCommands.length; i++) {
+//                    obj = unprocessedCommands[i];
+//                    if() {
+//
+//                    }
+//                }
+//
+//                for (i = 0; i < unprocessedTexts.length; i++) {
+//                    obj = unprocessedTexts[i];
+//                    quicklyInsertCommand(obj);
+//                }
             });
 
             $scope.addTask = function(task){
@@ -546,6 +604,21 @@ var Terminals = function(){
     };
 };
 
+
+Terminals.prototype.remoteTerminals = function(){
+    var r = [];
+
+    for (var i = 0; i < this.terminals.length; i++) {
+        var term = this.terminals[i];
+
+        if(term.name == 'shell' || term.name == 'status') continue;
+
+        r.push(term);
+    }
+
+    return r;
+};
+
 Terminals.prototype.onScriptStart = function(hosts){
     this.updateHosts(hosts);
 
@@ -600,10 +673,15 @@ app.controller('BearCtrl', ['fileManager', '$scope', function (fileManager, $sco
 
     $scope.terminals = new Terminals();
 
-    $scope.terminals.updateHosts([{
-        name: 'shell',
-        address: 'shell'
-    }]);
+    $scope.terminals.updateHosts([
+        {
+            name: 'shell',
+            address: 'shell'
+        },
+        {
+            name: 'status',
+            address: 'status'
+        }]);
 
     $scope.initScripts = function(){
         $scope.settingsScript = JSON.parse(window.bear.jsonCall('conf', 'getPropertyAsFile', 'bear-fx.settings'));

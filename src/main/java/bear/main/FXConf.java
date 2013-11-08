@@ -41,6 +41,7 @@ import javafx.scene.input.Clipboard;
 import javafx.scene.input.DataFormat;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.lang3.StringUtils;
 
 import java.io.File;
 import java.io.IOException;
@@ -267,7 +268,8 @@ public class FXConf extends Cli {
          * @param command
          */
         public Response interpret(final String command, String uiContextS) throws Exception {
-            logger.info("interpreting command: {}, params: {}", command, uiContextS);
+            logger.info("interpreting command: '{}', params: {}", command, uiContextS);
+            ui.info("interpreting command: '{}', params: {}", StringUtils.substringBefore(command, "\n").trim(), uiContextS);
 
             BearScript.UIContext uiContext = mapper.fromJSON(uiContextS, BearScript.UIContext.class);
 

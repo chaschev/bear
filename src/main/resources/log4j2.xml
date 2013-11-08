@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="WARN">
+    <Appenders>
+        <Console name="Console" target="SYSTEM_OUT">
+            <PatternLayout pattern="%d{HH:mm:ss.SSS} [%thread{10}] %-5level %c{1.} - %msg%n"/>
+        </Console>
+        <File name="File1" fileName=".bear/logs/bear.log">
+
+        </File>
+    </Appenders>
+    <Loggers>
+        <Logger name="net.schmizz" level="info">
+            <AppenderRef ref="Console"/>
+        </Logger>
+        <Logger name="fx" level="debug">
+
+        </Logger>
+
+        <Root level="debug">
+            <AppenderRef ref="Console"/>
+        </Root>
+    </Loggers>
+</Configuration>

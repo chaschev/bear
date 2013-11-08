@@ -152,7 +152,7 @@
             overflow-y: auto;
             position: relative;
             display: block;
-            vertical-align: bottom;
+            vertical-align: top;
         }
 
         .history-scroller {
@@ -485,7 +485,7 @@
                         <th style="text-align: center">Task</th>
                         <th style="text-align: center">Status</th>
                     </tr>
-                    <tr class="status-table-row {{terminal.getCssStatus()}}" ng-repeat="terminal in terminals.terminals">
+                    <tr class="status-table-row {{terminal.getCssStatus()}}" ng-repeat="terminal in terminals.remoteTerminals()">
                         <td>{{terminal.host.name}}</td>
                         <td><div class="current-console-command">{{terminal.currentCommand}}</div></td>
                         <td>{{terminal.currentTask}}</td>

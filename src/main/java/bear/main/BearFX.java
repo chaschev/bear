@@ -17,6 +17,7 @@
 package bear.main;
 
 import bear.main.event.EventToUI;
+import bear.main.event.NewSessionConsoleEventToUI;
 import chaschev.js.Bindings;
 import chaschev.js.ExceptionWrapper;
 import chaschev.json.JacksonMapper;
@@ -37,6 +38,7 @@ import javafx.stage.FileChooser;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
 import netscape.javascript.JSObject;
+import org.apache.logging.log4j.core.layout.PatternLayout;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -44,6 +46,8 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.Properties;
+
+import static bear.core.SessionContext.randomId;
 
 /**
  * @author Andrey Chaschev chaschev@gmail.com
@@ -142,6 +146,15 @@ public class BearFX {
                 configurator.bearFX = bearFX = new BearFX(this, configurator, properties);
                 this.stage = stage;
 
+                {
+                    logger.info("creating fx appender...");
+
+                    FXAppender appender = new FXAppender("fxApp", null,
+                        PatternLayout.createLayout("%d{HH:mm:ss.S} %-5level %c{1.} - %msg%n", null, null, null, null), true, bearFX);
+
+                    addLog4jAppender("fx", appender);
+                }
+
                 configurator.configure();
 
                 final WebView webView = new WebView();
@@ -174,6 +187,7 @@ public class BearFX {
                         if (t1 == Worker.State.SUCCEEDED) {
                             logger.info("ok");
                             JSObject window = (JSObject) webEngine.executeScript("window");
+
                             window.setMember("bearFX", bearFX);
                             window.setMember("OpenBean", OpenBean.INSTANCE);
                             window.setMember("Bindings", bindings);
@@ -182,6 +196,10 @@ public class BearFX {
                             webEngine.executeScript("Java.init(window);");
                             logger.info("[JAVA INIT] calling app JS initializer...");
                             webEngine.executeScript("Java.initApp();");
+
+                            bearFX.sendMessageToUI(new NewSessionConsoleEventToUI("status", randomId(), randomId()));
+//                            bearFX.sendMessageToUI(new NewSessionConsoleEventToUI("status", randomId(), randomId()));
+                            LoggerFactory.getLogger("fx").info("started the Bear");
                         }
                     }
                 });
@@ -198,6 +216,20 @@ public class BearFX {
         public static void main(String[] args) throws Exception {
             launch(args);
         }
+    }
+
+    private static void addLog4jAppender(String loggerName, FXAppender appender) {
+        org.apache.logging.log4j.Logger logger
+        = org.apache.logging.log4j.LogManager.getLogger(loggerName);
+        org.apache.logging.log4j.core.Logger coreLogger
+            = (org.apache.logging.log4j.core.Logger)logger;
+        org.apache.logging.log4j.core.LoggerContext context
+            = coreLogger.getContext();
+        org.apache.logging.log4j.core.config.BaseConfiguration configuration
+            = (org.apache.logging.log4j.core.config.BaseConfiguration)context.getConfiguration();
+
+
+        coreLogger.addAppender(appender);
     }
 
     public static void setFullscreen(Stage stage) {

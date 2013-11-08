@@ -34,6 +34,7 @@ import static bear.session.Variables.*;
  */
 public class Cli extends AppCli<GlobalContext, Bear> {
     public static final Logger logger = LoggerFactory.getLogger(Cli.class);
+    public static final Logger ui = LoggerFactory.getLogger("fx");
 
     public final DynamicVariable<File> settingsFile = convert(concat(appConfigDir, "/BearSettings.java"), TO_FILE);
     public final DynamicVariable<File> script = undefined();

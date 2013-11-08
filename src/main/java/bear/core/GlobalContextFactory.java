@@ -17,7 +17,6 @@
 package bear.core;
 
 import bear.context.VariablesLayer;
-import bear.context.DependencyInjection;
 import bear.plugins.Plugin;
 import bear.session.SystemEnvironments;
 import bear.task.Task;
@@ -60,7 +59,8 @@ public class GlobalContextFactory {
             global.initPlugins();
         }
 
-        DependencyInjection.inject(bearSettings, global);
+        global.wire(bearSettings);
+//        DependencyInjection.inject(bearSettings, global);
     }
 
     public static interface GlobalVarsInitPhase {

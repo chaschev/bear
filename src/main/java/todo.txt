@@ -22,6 +22,9 @@ top priority:
 - ui: (5) mongo shell mode (core)
 - ui: (6) style console messages
 
+- ui: update tabs on new messages arrival
+- ui: draggable tabs, save tab layout
+
 - variable annotations (aliases, visibility level)
 - support :set groovy[Shell].sendToHosts=true
 

@@ -28,4 +28,6 @@ public class NewSessionConsoleEventToUI extends ConsoleEventToUI {
         this.id = id;
         this.phaseId = phaseId;
     }
+
+
 }
