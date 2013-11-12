@@ -23,13 +23,16 @@ import java.util.List;
 /**
  * @author Andrey Chaschev chaschev@gmail.com
  */
-public class AllTasksFinishedEventToUI extends EventToUI {
+public class PhaseFinishedEventToUI extends EventToUI {
     public long duration;
     public final List<CompositeConsoleArrival.EqualityGroup> groups;
+    public final String phaseName;
 
-    public AllTasksFinishedEventToUI(long duration, List<CompositeConsoleArrival.EqualityGroup> groups) {
-        super("allFinished", "allFinished");
+    public PhaseFinishedEventToUI(long duration, List<CompositeConsoleArrival.EqualityGroup> groups, String phaseName) {
+        super("phaseFinished", "phaseFinished");
+
         this.duration = duration;
         this.groups = groups;
+        this.phaseName = phaseName;
     }
 }

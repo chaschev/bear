@@ -30,6 +30,7 @@ import bear.task.exec.TaskExecutionContext;
 import chaschev.util.CatchyCallable;
 import com.google.common.base.*;
 import com.google.common.collect.Collections2;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import groovy.lang.GroovyShell;
 import org.apache.commons.lang3.StringUtils;
@@ -47,6 +48,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
+import static chaschev.lang.Predicates2.contains;
+import static com.google.common.base.Predicates.not;
 import static com.google.common.collect.Lists.newArrayList;
 import static org.apache.commons.lang3.StringUtils.substringAfter;
 import static org.apache.commons.lang3.StringUtils.substringBefore;
@@ -100,7 +103,11 @@ public class BearScript {
         }
 
         public String asOneLineDesc(){
-            return pluginName + ": " + lines.get(0);
+            Optional<String> nonCommandLine = Iterables.tryFind(lines, not(contains(":set")));
+
+            String line = nonCommandLine.or(lines.get(0));
+
+            return pluginName + ": " + line;
         }
     }
 
@@ -174,7 +181,7 @@ public class BearScript {
             if (currentPlugin.getShell().multiLine()) {
                 shellContext.script = Joiner.on("\n").join(lines);
                 shellContext.name = lines.get(0);
-                bearFX.sendMessageToUI(newShellCommand(substringBefore(shellContext.script, "\n"), shellContext));
+//                bearFX.sendMessageToUI(newShellCommand(substringBefore(shellContext.script, "\n"), shellContext));
 //              bearFX.sendMessageToUI(new CommandConsoleEventToUI("shell", substringBefore(shellContext.script, "\n"))
 //                .setParentId(shellContext.taskId));
 
@@ -210,12 +217,12 @@ public class BearScript {
                     shellContext.script = s;
 
                     if(i == 0){
-                        bearFX.sendMessageToUI(newShellCommand(substringBefore(s, "\n") + "...", shellContext));
+//                        bearFX.sendMessageToUI(newShellCommand(substringBefore(s, "\n") + "...", shellContext));
                     }
 
-                    bearFX.sendMessageToUI(new CommandConsoleEventToUI("shell", s)
-                        .setId(SessionContext.randomId())
-                        .setParentId(shellContext.phaseId));
+//                    bearFX.sendMessageToUI(new CommandConsoleEventToUI("shell", s)
+//                        .setId(SessionContext.randomId())
+//                        .setParentId(shellContext.phaseId));
 
                     Task<?> task = currentPlugin.getShell().interpret(shellContext.script, $, parent, taskDef);
 
@@ -304,18 +311,11 @@ public class BearScript {
         }
 
         private SwitchResponse switchToPlugin(Class<? extends Plugin> aClass, ShellRunContext shellContext) {
-//        bearFX.sendMessageToUI(new TextConsoleEventToUI("shell", "switching to plugin: <i>" + aClass.getSimpleName() +"</i>\n"));
-
             logger.info("switching to plugin: {}", aClass.getSimpleName());
 
             this.currentPlugin = global.getPlugin(aClass);
 
-            SwitchResponse response = new SwitchResponse(currentPlugin.name, "$ " + currentPlugin.getShell().getCommandName());
-
-//            bearFX.sendMessageToUI(new TextConsoleEventToUI("shell", response.message + "\n")
-//                .setParentId(shellContext.phaseId));
-
-            return response;
+            return new SwitchResponse(currentPlugin.name, "$ " + currentPlugin.getShell().getCommandName());
         }
     }
 
@@ -328,6 +328,7 @@ public class BearScript {
 
         BearFX bearFX;
         private final ShellRunContext shellContext;
+        private final ScriptItem scriptItem;
 
         GroupDivider<SessionContext> groupDivider;
 
@@ -338,10 +339,11 @@ public class BearScript {
         public int partiesPending;
         public int partiesFailed = 0;
 
-        public BearScriptPhase(String id, BearFX bearFX, GroupDivider<SessionContext> groupDivider, ShellRunContext shellContext) {
+        public BearScriptPhase(String id, BearFX bearFX, GroupDivider<SessionContext> groupDivider, ShellRunContext shellContext, ScriptItem scriptItem) {
             this.id = id;
             this.bearFX = bearFX;
             this.shellContext = shellContext;
+            this.scriptItem = scriptItem;
             this.partiesCount = groupDivider.getEntries().size();
             this.groupDivider = groupDivider;
         }
@@ -396,8 +398,8 @@ public class BearScript {
             List<CompositeConsoleArrival.EqualityGroup> groups = groupDivider.divideIntoGroups();
 
             bearFX.sendMessageToUI(
-                new AllTasksFinishedEventToUI(duration, groups)
-                    .setParentId(shellContext.phaseId));
+                new PhaseFinishedEventToUI(duration, groups, scriptItem.asOneLineDesc())
+                    .setParentId(id));
         }
     }
 
@@ -437,10 +439,11 @@ public class BearScript {
                         }
                     });
 
-                    phases.put(id, phase = new BearScriptPhase(id, bearFX, divider, shellContext));
+                    phases.put(id, phase = new BearScriptPhase(id, bearFX, divider, shellContext, scriptItem));
 
-                    bearFX.sendMessageToUI(new TaskConsoleEventToUI("shell", "step " + scriptItem.asOneLineDesc(), null)
-                        .setId(shellContext.phaseId)
+                    bearFX.sendMessageToUI(new TaskConsoleEventToUI("shell", "step " + scriptItem.asOneLineDesc() + "(" + scriptItem.id +
+                        ")", null)
+                        .setId(id)
                         .setParentId(shellContext.sessionId)
                     );
                 }
@@ -523,20 +526,29 @@ public class BearScript {
                 return new Task<TaskDef>(parent, taskDef, $) {
                     @Override
                     protected TaskResult exec(TaskRunner runner) {
-                        BearScriptExecContext scriptExecContext =
-                            new BearScriptExecContext(initialPlugin, $, parent, taskDef);
-
                         TaskResult result = TaskResult.OK;
 
-                        for (ScriptItem scriptItem : parseResult.scriptItems) {
-                            result = scriptExecContext.runItem(shellContext, scriptItem);
+                        try {
+                            BearScriptExecContext scriptExecContext =
+                                new BearScriptExecContext(initialPlugin, $, parent, taskDef);
 
-                            if (result.nok()) {
-                                break;
+                            for (ScriptItem scriptItem : parseResult.scriptItems) {
+                                result = scriptExecContext.runItem(shellContext, scriptItem);
+
+                                if (result.nok()) {
+                                    break;
+                                }
                             }
-                        }
 
-                        return result;
+                            return result;
+                        }
+                        catch (Exception e){
+                            result = new ExceptionResult(e);
+                            return result;
+                        } finally {
+                            bearFX.sendMessageToUI(new ScriptFinishedEventToUI($.getName(),
+                                System.currentTimeMillis() - $.getExecutionContext().startedAt.getMillis(), result));
+                        }
                     }
                 };
             }
@@ -632,11 +644,11 @@ public class BearScript {
 
                     global.removeConst(bear.internalInteractiveRun);
 
-                    List<CompositeConsoleArrival.EqualityGroup> groups = runContext.getConsoleArrival().divideIntoGroups();
+//                    List<CompositeConsoleArrival.EqualityGroup> groups = runContext.getConsoleArrival().divideIntoGroups();
 
-                    bearFX.sendMessageToUI(
-                        new AllTasksFinishedEventToUI(System.currentTimeMillis() - runContext.getStartedAtMs(),
-                            groups).setParentId(shellContext.phaseId));
+//                    bearFX.sendMessageToUI(
+//                        new AllTasksFinishedEventToUI(System.currentTimeMillis() - runContext.getStartedAtMs(),
+//                            groups, scriptItem.asOneLineDesc()).setParentId(shellContext.phaseId));
                 }
             }
         });

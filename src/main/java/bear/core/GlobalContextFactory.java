@@ -69,12 +69,14 @@ public class GlobalContextFactory {
 
     public GlobalVarsInitPhase globalVarsInitPhase;
 
-    private List<Class<? extends Plugin<Task, TaskDef<?>>>> userRegisteredPlugins = new ArrayList<Class<? extends Plugin<Task, TaskDef<?>>>>();
+    private final List<Class<? extends Plugin<Task, TaskDef<?>>>> userRegisteredPlugins = new ArrayList<Class<? extends Plugin<Task, TaskDef<?>>>>();
 
     public GlobalContextFactory requirePlugins(Class<? extends Plugin<Task, TaskDef<?>>>... plugins){
         for (Class<? extends Plugin<Task, TaskDef<?>>> plugin : plugins) {
-            if(!userRegisteredPlugins.contains(plugin)){
-                userRegisteredPlugins.add(plugin);
+            synchronized (userRegisteredPlugins) {
+                if (!userRegisteredPlugins.contains(plugin)) {
+                    userRegisteredPlugins.add(plugin);
+                }
             }
         }
 

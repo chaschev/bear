@@ -486,13 +486,15 @@
                         <th style="width: 70%">Command</th>
                         <th style="text-align: center">Task</th>
                         <th style="text-align: center">Status</th>
+                        <th style="width: 5%; text-align: center"><a ng-click="terminals.cancelAll()" ng-show='terminals.isPending()'>cancel all</a></th>
                     </tr>
                     <tr class="status-table-row {{terminal.getCssStatus()}}" ng-repeat="terminal in terminals.remoteTerminals()">
                         <td>{{terminal.host.name}}</td>
                         <td><div class="current-console-command">{{terminal.currentCommand}}</div></td>
                         <td>{{terminal.currentTask}}</td>
                         <td><div class="status-column alert-{{terminal.getCssStatus()}}">{{terminal.getStringStatus()}}
-                            <button ng-click="terminal.cancel()" ng-show="terminal.isPending()" class="btn btn-default btn-xs"><i class="fa fa-trash-o"></i></button></div></td>
+                            </div></td>
+                        <td><button ng-click="terminal.cancel()" ng-show="terminal.isPending()" class="btn btn-default btn-xs"><i class="fa fa-trash-o"></i></button></td>
                     </tr>
                     <tr></tr>
                 </table>

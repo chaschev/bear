@@ -400,6 +400,9 @@ app.directive("consoleMessages", ['$timeout', '$compile', '$ekathuwa', 'ansi2htm
                             $scope.terminal.taskCompleted(e);
                         });
                         break;
+                    case 'scriptFinished':
+                        $scope.terminal.scriptCompleted(e);
+                        break;
                     default:
                         throw "not yet supported subType:" + e.subType;
                 }
@@ -503,11 +506,11 @@ app.directive("consoleMessages", ['$timeout', '$compile', '$ekathuwa', 'ansi2htm
                 });
             };
 
-            $scope.$on("allFinished", function(event, e){
+            $scope.$on("phaseFinished", function(event, e){
                 var terminal = $scope.terminal;
                 var groups = e.groups;
 
-                console.log('allFinished, groups', groups, terminal.name);
+                console.log('phaseFinished, groups', e, terminal.name);
 
                 if(terminal.name !== 'shell') return;
 
@@ -535,6 +538,7 @@ app.directive("consoleMessages", ['$timeout', '$compile', '$ekathuwa', 'ansi2htm
                 if(groups.length > 0){
                     e.textAdded = "took " + durationToString(e.duration, true) + "s " +
                         (addLink ? '<a ng-click="' + comparisonLink + '">' +diffLinkCaption + '</a>' : diffLinkCaption) +
+                        '(' + e.phaseName + ')' +
                         '\n';
 
                     quicklyInsertText(e);
@@ -568,7 +572,11 @@ Terminal.prototype.getCssStatus = function(){
     if(this.isPending()){
         result = "";
     }else{
-        result = (this.currentTaskResult.result === 'OK') ? "success" : "danger";
+        if(!this.currentTaskResult) {
+            result = 'danger';
+        }else{
+            result = (this.currentTaskResult.result === 'OK') ? "success" : "danger";
+        }
     }
 
     return  result;
@@ -582,7 +590,7 @@ Terminal.prototype.isPending = function ()
 Terminal.prototype.cancel = function ()
 {
     this.state = 'cancelling';
-    return this.currentTaskResult == null;
+    window.bear.call('conf', 'cancelThread', this.name);
 };
 
 Terminal.prototype.taskCompleted = function (event)
@@ -632,6 +640,7 @@ Terminal.prototype.onScriptStart = function(){
 // @stats: see Stats class in Java
 var Terminals = function(){
     this.terminals = [];
+    this.state = 'not.running';         // not.running -> pending -> [complete, cancelling -> not-running]
 
     this.stats = {
         partiesArrived: 0,
@@ -643,23 +652,40 @@ var Terminals = function(){
     };
 };
 
+Terminals.prototype.isPending = function (){
+    return this.state === 'pending';
+};
 
-Terminals.prototype.remoteTerminals = function(){
-    var r = [];
+Terminals.prototype.cancelAll = function ()
+{
+    this.eachRemoteShell(function(term){
+        if(term.state == 'pending'){
+            term.cancel();
+        }
+    });
+};
 
+
+Terminals.prototype.eachRemoteShell = function (fn) {
     for (var i = 0; i < this.terminals.length; i++) {
         var term = this.terminals[i];
 
-        if(term.name == 'shell' || term.name == 'status') continue;
+        if (term.name == 'shell' || term.name == 'status') continue;
 
-        r.push(term);
+        fn(term);
     }
+};
+Terminals.prototype.remoteTerminals = function(){
+    var r = [];
+
+    this.eachRemoteShell(function(term){r.push(term);});
 
     return r;
 };
 
 Terminals.prototype.onScriptStart = function(hosts){
     this.updateHosts(hosts);
+    this.state = 'pending';
 
     for (var i = 0; i < this.terminals.length; i++) {
         var term = this.terminals[i];
@@ -687,6 +713,10 @@ Terminals.prototype.updateHosts = function(hosts){
 Terminals.prototype.updateStats = function(stats){
     Java.log('updating stats with: ', stats);
     this.stats = stats;
+
+    if(stats.partiesArrived === stats.partiesCount){
+        this.state = 'not.running';
+    }
 };
 
 Terminals.prototype.findByName = function(name){
@@ -796,8 +826,8 @@ app.controller('BearCtrl', ['fileManager', '$scope', function (fileManager, $sco
 
                 break;
 
-            case 'allFinished':
-                $scope.$broadcast('allFinished', e);
+            case 'phaseFinished':
+                $scope.$broadcast('phaseFinished', e);
 
                 break;
 
