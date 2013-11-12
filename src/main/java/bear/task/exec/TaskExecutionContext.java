@@ -32,6 +32,8 @@ import java.util.List;
 import static chaschev.lang.LangUtils.elvis;
 
 /**
+ * This is a field in Task.
+ *
 * @author Andrey Chaschev chaschev@gmail.com
 */
 public class TaskExecutionContext extends HavingContext<TaskExecutionContext, SessionContext> {
@@ -115,5 +117,13 @@ public class TaskExecutionContext extends HavingContext<TaskExecutionContext, Se
         finishedAt = finishedAt == null ? new DateTime() : finishedAt;
 
         return finishedAt.getMillis() - firstEntry.getFinishedAt().getMillis();
+    }
+
+    public boolean isRunning(){
+        return taskResult == null;
+    }
+
+    public boolean isFinished(){
+        return !isRunning();
     }
 }

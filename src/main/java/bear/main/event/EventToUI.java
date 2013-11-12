@@ -16,13 +16,15 @@
 
 package bear.main.event;
 
+
 /**
 * @author Andrey Chaschev chaschev@gmail.com
 */
-public abstract class EventToUI {
+public abstract class EventToUI extends ObjectMessage{
     protected final String type;
     protected final String subType;
     protected String parentId;
+    protected int level = -10;
 
     public final long timestamp = System.currentTimeMillis();
 
@@ -51,5 +53,14 @@ public abstract class EventToUI {
 
     public String getParentId() {
         return parentId;
+    }
+
+    public Integer getLevel() {
+        return level == -10 ? null : level;
+    }
+
+    public EventToUI setLevel(int level) {
+        this.level = level;
+        return this;
     }
 }

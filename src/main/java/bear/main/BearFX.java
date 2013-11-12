@@ -134,6 +134,8 @@ public class BearFX {
 
             final String s = mapper.toJSON(eventToUI);
 
+            logger.debug("sending to ui: {}", s);
+
             Platform.runLater(new Runnable() {
                 @Override
                 public void run() {
@@ -153,8 +155,8 @@ public class BearFX {
                 properties.load(new FileInputStream(".bear/bear-fx.properties"));
 
                 FXConf configurator = new FXConf(
-                    "-VappCli.settingsFile=" + properties.get("bear-fx.settings"),
-                    "-VappCli.propertiesFile=" + properties.get("bear-fx.properties")
+                    "-VfXConf.settingsFile=" + properties.get("bear-fx.settings"),
+                    "-VfXConf.propertiesFile=" + properties.get("bear-fx.properties")
                 );
 
                 configurator.bearFX = bearFX = new BearFX(this, configurator, properties);
@@ -220,7 +222,7 @@ public class BearFX {
                             logger.debug("[JAVA INIT] calling app JS initializer...");
                             webEngine.executeScript("Java.initApp();");
 
-                            bearFX.sendMessageToUI(new NewSessionConsoleEventToUI("status", randomId(), randomId()));
+                            bearFX.sendMessageToUI(new NewSessionConsoleEventToUI("status", randomId()));
 
                             logger.error("[Loggers Diagnostics]");
                             LoggerFactory.getLogger(BearFX.class).debug("MUST NOT BE SEEN started the Bear - -1!");

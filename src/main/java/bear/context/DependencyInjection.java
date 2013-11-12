@@ -62,7 +62,7 @@ public class DependencyInjection {
     private static String shortName(Class<?> aClass, String className, Field field) {
         Class<?> thisFieldClass = field.getDeclaringClass();
 
-        return aClass == thisFieldClass ? className : shorten(thisFieldClass.getSimpleName());
+        return aClass == thisFieldClass ? className : shorten(aClass.getSimpleName());
     }
 
     public static String shorten(String className) {

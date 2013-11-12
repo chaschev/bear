@@ -18,9 +18,8 @@ package bear.main;
 
 import bear.context.Cli;
 import bear.context.Fun;
-import bear.core.GlobalContext;
-import bear.core.GlobalContextFactory;
-import bear.core.IBearSettings;
+import bear.core.*;
+import bear.main.event.LogEventToUI;
 import bear.plugins.CommandInterpreter;
 import bear.plugins.Plugin;
 import bear.plugins.PomPlugin;
@@ -31,7 +30,7 @@ import bear.plugins.sh.GenericUnixRemoteEnvironmentPlugin;
 import bear.session.Question;
 import chaschev.json.JacksonMapper;
 import chaschev.lang.Lists2;
-import chaschev.util.CatchyCallable;
+import chaschev.lang.Predicates2;
 import chaschev.util.Exceptions;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.google.common.base.*;
@@ -43,6 +42,9 @@ import javafx.scene.input.DataFormat;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.logging.log4j.LogManager;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
@@ -51,7 +53,6 @@ import java.net.MalformedURLException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.concurrent.Callable;
 
 import static com.google.common.collect.Lists.transform;
 
@@ -60,6 +61,9 @@ import static com.google.common.collect.Lists.transform;
  */
 public class FXConf extends Cli {
     private CompileManager compileManager;
+
+    private static final Logger logger = LoggerFactory.getLogger(FXConf.class);
+    private static final org.apache.logging.log4j.Logger ui = LogManager.getLogger("ui");
 
     private BearCommandInterpreter commandInterpreter;
 
@@ -80,6 +84,8 @@ public class FXConf extends Cli {
             IBearSettings settings = (IBearSettings) settingsEntry.newInstance(factory);
 
             settings.loadProperties($(newRunProperties));
+
+            settings.configure(factory);
 
             return settings;
         } catch (Exception e) {
@@ -170,7 +176,7 @@ public class FXConf extends Cli {
     public Response runWithScript(String bearScript, String settingsName) throws Exception {
         IBearSettings settings = newSettings(settingsName);
 
-        return new BearScript(global, bearFX, null, settings).exec(bearScript);
+        return new BearScript(global, bearFX, null, settings).exec(bearScript, true);
     }
 
     public Response interpret(String command, String uiContextS) throws Exception {
@@ -276,21 +282,10 @@ public class FXConf extends Cli {
             BearScript.UIContext uiContext = mapper.fromJSON(uiContextS, BearScript.UIContext.class);
 
             IBearSettings settings = newSettings(uiContext.settingsName);
-            settings.configure(factory);
 
             final BearScript script = new BearScript(global, bearFX, currentShellPlugin, settings);
 
-            global.putConst(bear.internalInteractiveRun, true);
-
-            global.taskExecutor.submit(new CatchyCallable<Response>(new Callable<Response>() {
-                @Override
-                public Response call() throws Exception {
-                    Response exec = script.exec(command);
-                    currentShellPlugin = script.currentPlugin;
-                    global.removeConst(bear.internalInteractiveRun);
-                    return exec;
-                }
-            }));
+            script.exec(command, true);
 
             return new BearScript.MessageResponse("started script execution");
         }
@@ -349,4 +344,37 @@ public class FXConf extends Cli {
         return (String[]) Lists2.projectMethod(classes, "getName").toArray(new String[classes.size()]);
     }
 
+    public void cancelAll(){
+        CompositeTaskRunContext runContext = global.currentGlobalRunContext;
+
+        if(runContext == null){
+            ui.warn(new LogEventToUI("shell", "not running"));
+            return;
+        }
+
+        List<SessionContext> entries = runContext.getConsoleArrival().getEntries();
+
+        for (SessionContext $ : entries) {
+            if($.isRunning()){
+                try {
+                    $.terminate();
+                } catch (Exception e) {
+                    logger.warn("could not terminate", e);
+                }
+            }
+        }
+    }
+
+    public void cancelThread(String name){
+        CompositeTaskRunContext runContext = global.currentGlobalRunContext;
+
+        if(runContext == null){
+            ui.warn(new LogEventToUI("shell", "not running"));
+            return;
+        }
+
+        SessionContext $ = Iterables.find(runContext.getConsoleArrival().getEntries(), Predicates2.methodEquals("getName", name));
+
+        $.terminate();
+    }
 }

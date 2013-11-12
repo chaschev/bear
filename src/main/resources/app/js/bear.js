@@ -224,7 +224,7 @@ app.directive("consoleMessages", ['$timeout', '$compile', '$ekathuwa', 'ansi2htm
             var unprocessedTasks = [];
 
             function updateLastParent(lastParent, event) {
-                Java.log("updateLastParent", lastParent, event);
+//                Java.log("updateLastParent", lastParent, event);
                 var x = lastParent;
                 if (event && (!lastParent || lastParent.timestamp < event.timestamp)) {
                     x = event;
@@ -242,10 +242,10 @@ app.directive("consoleMessages", ['$timeout', '$compile', '$ekathuwa', 'ansi2htm
                 var x = lastParent;
 
                 if ($lastCommand.length > 0) {
-                    Java.log('updateLastParent$', $lastCommand);
+//                    Java.log('updateLastParent$', $lastCommand);
                     x = updateLastParent(lastParent, {id: $lastCommand.attr('id'), timestamp: parseInt($lastCommand.attr('timestamp'))});
                 } else{
-                    Java.log('no matches for', selector);
+//                    Java.log('no matches for', selector);
                 }
 
                 return x;
@@ -269,7 +269,7 @@ app.directive("consoleMessages", ['$timeout', '$compile', '$ekathuwa', 'ansi2htm
             function quicklyInsertText(e){
                 var $parent = $('#' + e.parentId);
 
-                Java.log('parent: ', $parent);
+//                Java.log('parent: ', $parent);
 
                 if($parent.length === 0) {
                     Java.log('no parent');
@@ -348,7 +348,7 @@ app.directive("consoleMessages", ['$timeout', '$compile', '$ekathuwa', 'ansi2htm
                     if($parent.length === 0) return false;
                     var date = new Date();
                     var $el = $(
-                        '<div class="task" timestamp="' + e.timestamp + '" id="' + e.id + '">' +
+                        '<div class="task" timestamp="' + e.timestamp + '" id="' + e.id + '" phaseId="' + e.phaseId +'">' +
                             '<div class="taskName"><i>' + e.task + '</i><span class="pull-right">{{' + date.getTime() +
                             '|date:"MMM dd, yyyy HH:mm:ss Z"}}</span></div>' +
                             '</div>'
@@ -364,7 +364,7 @@ app.directive("consoleMessages", ['$timeout', '$compile', '$ekathuwa', 'ansi2htm
                 }
 
                 function quicklyInsertSession(e){
-                    $messages.append($('<div class="session" timestamp="' + e.timestamp + '" id="' + e.id + '" phaseId="' + e.phaseId + '"></div>'));
+                    $messages.append($('<div class="session" timestamp="' + e.timestamp + '" id="' + e.id + '"></div>'));
 
                     return true;
                 }
@@ -397,8 +397,7 @@ app.directive("consoleMessages", ['$timeout', '$compile', '$ekathuwa', 'ansi2htm
                         break;
                     case 'rootTaskFinished':
                         $scope.$apply(function(){
-                            $scope.terminal.lastTaskDuration = e.duration;
-                            $scope.terminal.currentTaskResult = e.result;
+                            $scope.terminal.taskCompleted(e);
                         });
                         break;
                     default:
@@ -525,20 +524,21 @@ app.directive("consoleMessages", ['$timeout', '$compile', '$ekathuwa', 'ansi2htm
 
                     addLink = hasEntries;
 
-                }else{
+                }else
+                if(groups.length > 1){
                     comparisonLink = "compareSessions(" +
                         "'" + groups[0].id + "', '" + groups[1].id + "')";
                     diffLinkCaption = '<span class = "diffError">[' + groups[1].distance + '% diff]</span>';
                     addLink = true;
                 }
 
-                e.textAdded = "took " + durationToString(e.duration, true) + "s " +
-                    (addLink ? '<a ng-click="' + comparisonLink + '">' +diffLinkCaption + '</a>' : diffLinkCaption) +
-                    '\n';
+                if(groups.length > 0){
+                    e.textAdded = "took " + durationToString(e.duration, true) + "s " +
+                        (addLink ? '<a ng-click="' + comparisonLink + '">' +diffLinkCaption + '</a>' : diffLinkCaption) +
+                        '\n';
 
-                quicklyInsertText(e);
-
-
+                    quicklyInsertText(e);
+                }
             });
 
             } catch (e) {
@@ -559,6 +559,7 @@ var Terminal = function(host){
     this.host = host;
     this.name = host.name;
     this.messageCount = 0;
+    this.state = 'not.running'; // not.running -> pending -> [complete, cancelling -> not-running]
 };
 
 Terminal.prototype.getCssStatus = function(){
@@ -575,11 +576,38 @@ Terminal.prototype.getCssStatus = function(){
 
 Terminal.prototype.isPending = function ()
 {
+    return this.state == 'pending';
+};
+
+Terminal.prototype.cancel = function ()
+{
+    this.state = 'cancelling';
     return this.currentTaskResult == null;
 };
 
+Terminal.prototype.taskCompleted = function (event)
+{
+    this.currentTaskResult = event.result;
+    this.lastTaskDuration = event.duration;
+};
+
+Terminal.prototype.scriptCompleted = function (event)
+{
+    this.state = 'complete';
+    this.lastTaskDuration = event.duration;
+    this.currentTaskResult = event.result;
+};
+
+
 Terminal.prototype.getStringStatus = function(){
-    return (this.isPending() ? 'Pending...' : this.currentTaskResult.result + ", " ) + ' ' + this.currentTaskTime() + ""
+    switch (this.state){
+        case 'not.running': return "Not Running";
+        case 'pending': return "Pending... " + this.currentTaskTime();
+        case 'cancelling': return "Cancelling... " + this.currentTaskTime();
+        case 'complete': return "Complete in " + this.currentTaskTime();
+    }
+
+    return "illegal state " + this.state;
 };
 
 Terminal.prototype.currentTaskTime = function(){
@@ -598,6 +626,7 @@ Terminal.prototype.onScriptStart = function(){
     this.currentCommand = null;
     this.currentTaskResult = null;
     this.lastTaskDuration = null;
+    this.state = 'pending';
 };
 
 // @stats: see Stats class in Java

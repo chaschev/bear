@@ -21,12 +21,10 @@ package bear.main.event;
  */
 public class NewSessionConsoleEventToUI extends ConsoleEventToUI implements EventWithId {
     public final String id;
-    public final String phaseId;
 
-    public NewSessionConsoleEventToUI(String console, String id, String phaseId) {
+    public NewSessionConsoleEventToUI(String console, String id) {
         super(console, "session");
         this.id = id;
-        this.phaseId = phaseId;
     }
 
     public String getId() {

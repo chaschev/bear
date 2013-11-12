@@ -22,7 +22,10 @@ import bear.plugins.sh.GenericUnixLocalEnvironmentPlugin;
 import bear.plugins.sh.GenericUnixRemoteEnvironmentPlugin;
 import bear.plugins.sh.SystemEnvironmentPlugin;
 import bear.plugins.sh.SystemSession;
-import bear.session.*;
+import bear.session.Address;
+import bear.session.DynamicVariable;
+import bear.session.SshAddress;
+import bear.session.Variables;
 import bear.task.Task;
 import bear.task.TaskDef;
 import bear.task.TaskResult;
@@ -30,16 +33,21 @@ import bear.task.TaskRunner;
 import bear.task.exec.CommandExecutionEntry;
 import bear.task.exec.TaskExecutionContext;
 import org.apache.commons.lang3.RandomStringUtils;
+import org.apache.logging.log4j.LogManager;
 import org.joda.time.DateTime;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
 
 import static bear.session.Variables.dynamic;
+import static bear.session.Variables.newVar;
+import static bear.session.Variables.undefined;
 
 /**
  * @author Andrey Chaschev chaschev@gmail.com
  */
 public class SessionContext extends AbstractContext {
+
+
     public static final DateTimeFormatter TIME_FORMATTER = DateTimeFormat.forPattern("HH:mm:ss:SSS");
     //    public final GlobalContext globalContext;
     public final SystemEnvironmentPlugin.SystemSessionDef sysDef;
@@ -50,32 +58,81 @@ public class SessionContext extends AbstractContext {
     public Bear bear;
     public Address address;
     protected CompositeTaskRunContext taskRunContext;
+    private static final org.apache.logging.log4j.Logger ui = LogManager.getLogger("fx");
+
+    protected Task<?> currentTask;
+
+    protected ExecutionContext executionContext = new ExecutionContext();
 
     public final String id = randomId();
+    protected Thread thread;
 
     public static String randomId() {
         return RandomStringUtils.randomAlphanumeric(6);
     }
 
+    public Thread getThread() {
+        return thread;
+    }
+
+    public void setThread(Thread thread) {
+        this.thread = thread;
+        thread.setName(threadName());
+    }
+
+    public void whenSessionComplete() {
+        thread = null;
+    }
+
+    public void cancel(){
+        if(thread == null){
+            throw new IllegalStateException("not running or already cancelled");
+        }
+
+        thread.interrupt();
+    }
+
+    public void terminate() {
+        if(thread == null){
+            throw new IllegalStateException("not running or already cancelled");
+        }
+
+        ui.info("terminating...");
+
+        thread.interrupt();
+    }
+
+    public boolean isRunning() {
+        return executionContext.isRunning();
+    }
+
     public class ExecutionContext{
         public final DateTime startedAt = new DateTime();
-        public final DynamicVariable<StringBuilder> text = dynamic(StringBuilder.class).desc("text appended in session").defaultTo(new StringBuilder(8192));
+        public final DynamicVariable<String> phaseId = undefined();
+        public final DynamicVariable<StringBuilder> text = newVar(new StringBuilder(8192)).desc("text appended in session");
+        public final DynamicVariable<StringBuilder> phaseText = newVar(new StringBuilder(8192)).desc("text appended in session");
         public final DynamicVariable<String> textAppended = dynamic(String.class).desc("text appended in session").defaultTo("");
         public final DynamicVariable<TaskExecutionContext> rootExecutionContext = dynamic(TaskExecutionContext.class);
         public final DynamicVariable<Task> currentTask = dynamic(Task.class);
         public final DynamicVariable<CommandExecutionEntry> currentCommand = dynamic(CommandExecutionEntry.class);
+        public String phaseName;
 
         public void textAdded(String textAdded) {
-            StringBuilder sb = text.apply(SessionContext.this);
-            sb.append(textAdded);
-            text.fireExternalModification(null, sb);
+            updateBuffer(textAdded, text);
+            updateBuffer(textAdded, phaseText);
             textAppended.defaultTo(textAdded);
         }
+
+        private void updateBuffer(String textAdded, DynamicVariable<StringBuilder> sbVar) {
+            StringBuilder sb = sbVar.apply(SessionContext.this);
+            sb.append(textAdded);
+            sbVar.fireExternalModification(null, sb);
+        }
+
+        public boolean isRunning(){
+            return rootExecutionContext.getDefaultValue().isRunning();
+        }
     }
-
-    protected Task<?> currentTask;
-
-    protected ExecutionContext executionContext = new ExecutionContext();
 
     public SessionContext(GlobalContext global, Address address, TaskRunner runner) {
         super(global, address.getName());

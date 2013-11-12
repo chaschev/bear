@@ -491,7 +491,8 @@
                         <td>{{terminal.host.name}}</td>
                         <td><div class="current-console-command">{{terminal.currentCommand}}</div></td>
                         <td>{{terminal.currentTask}}</td>
-                        <td><div class="status-column alert-{{terminal.getCssStatus()}}">{{terminal.getStringStatus()}}</div></td>
+                        <td><div class="status-column alert-{{terminal.getCssStatus()}}">{{terminal.getStringStatus()}}
+                            <button ng-click="terminal.cancel()" ng-show="terminal.isPending()" class="btn btn-default btn-xs"><i class="fa fa-trash-o"></i></button></div></td>
                     </tr>
                     <tr></tr>
                 </table>

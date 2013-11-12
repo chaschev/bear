@@ -81,7 +81,7 @@ public class Bear extends BearApp<GlobalContext> {
 
     public final DynamicVariable<String>
 
-        appLogsPath = BearVariables.joinPath("appLogsPath", logsPath, name),
+        appLogsPath = BearVariables.joinPath(logsPath, name),
         sshUsername = dynamic(new VarFun<String, SessionContext>() {
             @Override
             public String apply(SessionContext $) {
@@ -119,7 +119,7 @@ public class Bear extends BearApp<GlobalContext> {
 
     deployScript = strVar("Script to use").defaultTo("CreateNewScript"),
 
-    deployTo = BearVariables.joinPath("deployTo", applicationsPath, name).desc("Current release dir"),
+    deployTo = BearVariables.joinPath(applicationsPath, name).desc("Current release dir"),
 
     currentDirName = strVar("Current release dir").defaultTo("current"),
         sharedDirName = strVar("").defaultTo("shared"),

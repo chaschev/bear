@@ -47,6 +47,6 @@ public class ShShellMode extends PluginShellMode implements CommandInterpreter {
 
     @Override
     public boolean multiLine() {
-        return false;
+        return true;
     }
 }

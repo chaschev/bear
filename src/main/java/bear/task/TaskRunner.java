@@ -16,12 +16,12 @@
 
 package bear.task;
 
+import bear.context.HavingContext;
 import bear.core.Bear;
-import bear.core.SessionContext;
 import bear.core.GlobalContext;
+import bear.core.SessionContext;
 import bear.session.Result;
 import bear.vcs.CommandLineResult;
-import bear.context.HavingContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -148,6 +148,7 @@ public class TaskRunner extends HavingContext<TaskRunner, SessionContext>{
         if(result.ok()){
             result = taskSession.run(this);
         }
+
         return result;
     }
 

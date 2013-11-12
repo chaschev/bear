@@ -21,11 +21,13 @@ package bear.main.event;
  */
 public class TaskConsoleEventToUI extends ConsoleEventToUI implements EventWithId {
     public String id;
+    public String phaseId;
     public String task;
 
-    public TaskConsoleEventToUI(String console, String task) {
+    public TaskConsoleEventToUI(String console, String phaseName, String phaseId) {
         super(console, "task");
-        this.task = task;
+        this.task = phaseName;
+        this.phaseId = phaseId;
     }
 
     public TaskConsoleEventToUI setId(String id) {

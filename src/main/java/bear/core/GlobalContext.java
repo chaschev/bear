@@ -33,6 +33,8 @@ import com.google.common.base.Predicates;
 import com.google.common.collect.Collections2;
 import com.google.common.collect.Iterables;
 import com.google.common.util.concurrent.ListeningExecutorService;
+import com.google.common.util.concurrent.ListeningScheduledExecutorService;
+import com.google.common.util.concurrent.MoreExecutors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -59,7 +61,7 @@ public class GlobalContext extends AppGlobalContext<GlobalContext, Bear> {
         5L, TimeUnit.SECONDS,
         new LinkedBlockingQueue<Runnable>()));
 
-    public final ListeningExecutorService localExecutor = listeningDecorator(new ThreadPoolExecutor(4, 64,
+    public final ListeningExecutorService localExecutor = listeningDecorator(new ThreadPoolExecutor(4, 32,
         5L, TimeUnit.SECONDS,
         new SynchronousQueue<Runnable>(),
         new ThreadFactory() {
@@ -71,13 +73,18 @@ public class GlobalContext extends AppGlobalContext<GlobalContext, Bear> {
             }
         }));
 
+    public final ListeningScheduledExecutorService scheduler = MoreExecutors.listeningDecorator(Executors.newScheduledThreadPool(3));
+
     public final SystemSession local;
 
     public final SessionContext localCtx;
     public final Stage localStage;
+    public CompositeTaskRunContext currentGlobalRunContext;
 
     private GlobalContext() {
         super(new Bear());
+
+
 
 //        layer = new VariablesLayer(this, "global layer", null);
 
@@ -113,6 +120,9 @@ public class GlobalContext extends AppGlobalContext<GlobalContext, Bear> {
     public void shutdown() throws InterruptedException {
         taskExecutor.shutdown();
         taskExecutor.awaitTermination(10, TimeUnit.SECONDS);
+
+        scheduler.shutdown();
+        scheduler.awaitTermination(10, TimeUnit.SECONDS);
     }
 
     public <T extends Plugin> T getPlugin(Class<T> pluginClass) {

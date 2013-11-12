@@ -83,10 +83,7 @@ public class CompositeTaskRunContext {
                 @Override
                 public SessionContext call() {
                     try {
-                        Thread.currentThread().setName($.threadName());
-
-
-//                        $.sys.connect();
+                        $.setThread(Thread.currentThread());
 
                         if ($.var($.bear.verifyPlugins)) {
                             DependencyResult r = new DependencyResult(Result.OK);
@@ -127,7 +124,9 @@ public class CompositeTaskRunContext {
 
                         throw Exceptions.runtime(e);
                     }finally {
+                        $.executionContext.rootExecutionContext.fireExternalModification();
                         try {
+                            $.whenSessionComplete();
                             addArrival(finalI, $);
                         } catch (Exception e) {
                             Cli.logger.warn("", e);

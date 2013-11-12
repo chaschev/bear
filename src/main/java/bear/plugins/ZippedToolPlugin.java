@@ -16,20 +16,26 @@
 
 package bear.plugins;
 
-import bear.core.SessionContext;
-import bear.plugins.sh.SystemEnvironmentPlugin;
-import bear.session.Variables;
-import bear.task.*;
 import bear.cli.Script;
 import bear.console.ConsoleCallback;
 import bear.core.GlobalContext;
+import bear.core.SessionContext;
 import bear.plugins.java.JavaPlugin;
+import bear.plugins.sh.SystemEnvironmentPlugin;
 import bear.session.DynamicVariable;
+import bear.session.Variables;
+import bear.task.*;
+import bear.vcs.CommandLineResult;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
 import org.apache.commons.lang3.StringUtils;
 
-import static bear.session.Variables.*;
+import static bear.session.Variables.concat;
+import static bear.session.Variables.dynamic;
+import static chaschev.lang.Predicates2.contains;
+import static com.google.common.base.Predicates.or;
+import static com.google.common.base.Splitter.on;
+import static com.google.common.collect.Iterables.find;
 
 /**
  * User: chaschev
@@ -109,10 +115,18 @@ public abstract class ZippedToolPlugin extends Plugin<Task, TaskDef<?>> {
 
         protected void download(){
             if(!$.sys.exists($.sys.joinPath($(myDirPath), $(distrFilename)))){
-                $.sys.script()
+                String url = $(distrWwwAddress);
+                CommandLineResult run = $.sys.script()
                     .cd($(myDirPath))
-                    .line().timeoutMin(60).addRaw("wget %s", $(distrWwwAddress)).build()
-                .run();
+                    .line().timeoutMin(60).addRaw("wget %s", url).build()
+                    .run();
+
+                Predicate<String> errorPredicate = or(contains("404 Not Found"), contains("ERROR"));
+
+                if(errorPredicate.apply(run.text)){
+                    throw new RuntimeException("Error during download of " + url +
+                        ": " + find(on('\n').split(run.text), errorPredicate));
+                }
             }
         }
 

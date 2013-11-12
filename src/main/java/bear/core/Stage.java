@@ -39,6 +39,11 @@ import static bear.plugins.sh.GenericUnixRemoteEnvironmentPlugin.newUnixRemote;
  */
 public class Stage {
     private static final Logger logger = LoggerFactory.getLogger(Stage.class);
+    public static final Function<SessionContext,String> SESSION_ID = new Function<SessionContext, String>() {
+    public String apply(SessionContext $) {
+        return $.id;
+    }
+};
 
     public String name;
     String description;
@@ -83,15 +88,12 @@ public class Stage {
 
         final CompositeConsoleArrival<SessionContext> consoleArrival = new CompositeConsoleArrival<SessionContext>($s, futures, consoles,
             new Function<SessionContext, String>() {
-            @Override
-            public String apply(SessionContext $) {
-                return $.executionContext.text.apply($).toString();
-            }
-        }, new Function<SessionContext, String>() {
-            public String apply(SessionContext $) {
-                return $.id;
-            }
-        });
+                @Override
+                public String apply(SessionContext $) {
+                    return $.executionContext.text.apply($).toString();
+                }
+            }, SESSION_ID
+        );
 
         CompositeTaskRunContext taskRunContext = new CompositeTaskRunContext(global, task, consoleArrival);
 

@@ -53,7 +53,7 @@ public class TomcatPlugin extends ZippedToolPlugin {
     public TomcatPlugin(GlobalContext global) {
         super(global);
 
-        version.defaultTo("7.0.42", true);
+        version.defaultTo("7.0.45", true);
         toolname.defaultTo("tomcat", true);
         toolDistrName.defaultTo("apache-tomcat", true);
 

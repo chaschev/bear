@@ -158,7 +158,7 @@ public class Dependency extends Task<TaskDef> {
 
         @Override
         public boolean check() {
-            return matcher.apply(script.timeoutSec(15).run().text);
+            return matcher.apply(script.timeoutSec(30).run().text);
         }
 
         @Override

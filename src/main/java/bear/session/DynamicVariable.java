@@ -49,6 +49,7 @@ public class DynamicVariable<T> implements Nameable<T> {
 
     protected Fun<T, ? extends AbstractContext> fun;
 
+    //todo: change to object, make UNDEFINED default, throw an error when evaluating
     T defaultValue;
 
     private boolean memoize;

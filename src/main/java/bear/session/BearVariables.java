@@ -40,10 +40,6 @@ public class BearVariables {
     }
 
     public static DynamicVariable<String> joinPath(final DynamicVariable... folders) {
-        return joinPath(null, folders);
-    }
-
-    public static DynamicVariable<String> joinPath(String name, final DynamicVariable... folders) {
         return Variables.strVar("").setDynamic(new Fun<String, SessionContext>() {
             public String apply(final SessionContext $) {
                 return $.sys.joinPath(Iterables.transform(Arrays.asList(folders), new Function<DynamicVariable, String>() {

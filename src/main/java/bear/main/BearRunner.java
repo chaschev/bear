@@ -20,6 +20,8 @@ import bear.console.CompositeConsoleArrival;
 import bear.core.*;
 import chaschev.util.Exceptions;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Supplier;
+import com.google.common.base.Suppliers;
 
 /**
 * @author Andrey Chaschev chaschev@gmail.com
@@ -29,21 +31,27 @@ public class BearRunner {
     private IBearSettings bearSettings;
     private GlobalContextFactory factory;
     private GlobalContext global;
+
+    private Supplier<? extends Script> scriptSupplier;
+
     @Deprecated
-    private Script script;
     private String bearScript;
     private boolean shutdownAfterRun;
     private CompositeTaskRunContext runContext;
     private boolean await = true;
+    private transient Script script;
 
     public BearRunner(IBearSettings bearSettings, Script script, GlobalContextFactory factory) {
+        this(bearSettings, Suppliers.ofInstance(script), factory);
+    }
+
+    public BearRunner(IBearSettings bearSettings, Supplier<? extends Script> scriptSupplier, GlobalContextFactory factory) {
         try {
+            this.scriptSupplier = scriptSupplier;
             this.bearSettings = bearSettings;
             this.factory = factory;
-            this.script = script;
             this.global = bearSettings.getGlobal();
 
-            init();
         } catch (Exception e) {
             throw Exceptions.runtime(e);
         }
@@ -59,7 +67,7 @@ public class BearRunner {
 
             factory = configurator.getFactory();
 
-            init();
+//            init();
         } catch (Exception e) {
             throw Exceptions.runtime(e);
         }
@@ -79,8 +87,12 @@ public class BearRunner {
 //    }
 
     public final BearRunner init() throws Exception {
-        bearSettings.configure(factory);
-        if(script != null){
+        Preconditions.checkNotNull(scriptSupplier, "scriptSupplier not provided");
+        if(!bearSettings.isConfigured()){
+            bearSettings.configure(factory);
+        }
+        if(scriptSupplier != null){
+            script = scriptSupplier.get();
             script.setProperties(bearSettings.getGlobal(), null);
         }
         return this;
@@ -89,7 +101,7 @@ public class BearRunner {
     public CompositeTaskRunContext prepareToRun()  {
         try {
             Preconditions.checkArgument(bearSettings.isConfigured(), "settings must be configured. call settings.init() to configure");
-
+            init();
             runContext = script.prepareToRun();
 
             return runContext;

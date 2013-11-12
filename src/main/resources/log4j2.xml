@@ -17,6 +17,11 @@
             <AppenderRef ref="Console"/>
         </Logger>
 
+        <Logger name="bear.main.BearScript">
+            <AppenderRef ref="Console"/>
+            <AppenderRef ref="File" />
+        </Logger>
+
         <Root level="debug" additivity="false">
             <AppenderRef ref="Console" />
             <AppenderRef ref="File" />

@@ -150,7 +150,7 @@ public abstract class Plugin<TASK extends Task, TASK_DEF extends TaskDef<? exten
         return global;
     }
 
-    protected final String cmdAnnotation() {
+    public final String cmdAnnotation() {
         return this.getClass().getAnnotation(Shell.class).value();
     }
 }
