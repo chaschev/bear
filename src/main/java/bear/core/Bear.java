@@ -17,19 +17,24 @@
 package bear.core;
 
 import bear.cli.Script;
+import bear.context.AbstractContext;
 import bear.context.Fun;
 import bear.context.VarFun;
 import bear.plugins.Plugin;
+import bear.session.Address;
 import bear.session.BearVariables;
 import bear.session.DynamicVariable;
 import bear.strategy.DeployStrategyTaskDef;
 import bear.task.TaskDef;
 import bear.vcs.BranchInfoResult;
 import bear.vcs.VcsCLIPlugin;
+import chaschev.lang.Functions2;
 import chaschev.lang.OpenBean;
+import com.google.common.base.Function;
 import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
+import com.google.common.collect.Collections2;
 import com.google.common.collect.Iterables;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
@@ -37,8 +42,7 @@ import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
 
 import java.io.File;
-import java.util.Collections;
-import java.util.TimeZone;
+import java.util.*;
 
 import static bear.session.Variables.*;
 
@@ -97,9 +101,9 @@ public class Bear extends BearApp<GlobalContext> {
         sshPassword = dynamic(new VarFun<String, SessionContext>() {
             @Override
             public String apply(SessionContext $) {
-                String username  = $.getGlobal().getProperty($.concat(sessionHostname, ".password"));
+                String username = $.getGlobal().getProperty($.concat(sessionHostname, ".password"));
 
-                if(username == null){
+                if (username == null) {
                     username = $.getGlobal().getProperty(var.name);
                 }
 
@@ -141,7 +145,7 @@ public class Bear extends BearApp<GlobalContext> {
             final VcsCLIPlugin.Session vcsCLI = $.var(vcs);
             final Script<BranchInfoResult> line =
                 vcsCLI.queryRevision($.var(revision), Collections.<String, String>emptyMap())
-                .timeoutMs(20000);
+                    .timeoutMs(20000);
 
             BranchInfoResult r = $.sys.run(line, vcsCLI.passwordCallback());
 
@@ -247,6 +251,38 @@ public class Bear extends BearApp<GlobalContext> {
     public final DynamicVariable<Stage> getStage = dynamic(new Fun<Stage, GlobalContext>() {
         public Stage apply(GlobalContext $) {
             return findStage($);
+        }
+    });
+
+    public final DynamicVariable<List<String>> activeHosts = undefined();
+    public final DynamicVariable<List<String>> activeRoles = undefined();
+
+    public final DynamicVariable<Function<Stage, Collection<Address>>> addressesForStage = dynamic(new Fun<Function<Stage, Collection<Address>>, AbstractContext>() {
+        @Override
+        public Function<Stage, Collection<Address>> apply(final AbstractContext $) {
+            return new Function<Stage, Collection<Address>>() {
+                public Collection<Address> apply(Stage stage) {
+                    List<String> hosts = new ArrayList<String>();
+
+                    boolean hostsDefined = $.isDefined(activeHosts);
+
+                    if(hostsDefined){
+                        hosts.addAll(stage.validate($(activeHosts)));
+                    }
+
+                    boolean rolesDefined = $.isDefined(activeRoles);
+
+                    if(rolesDefined){
+                        hosts.addAll(Collections2.transform(stage.getHostsForRoles($(activeRoles)), Functions2.<Address, String>method("getName")));
+                    }
+
+                    if(hosts.isEmpty() && !(rolesDefined || hostsDefined)){
+                        return stage.getAddresses();
+                    }
+
+                    return stage.mapNamesToAddresses(hosts);
+                }
+            };
         }
     });
 

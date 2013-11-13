@@ -26,7 +26,9 @@ import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
 import java.lang.reflect.Field;
-import java.util.LinkedHashMap;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import static bear.context.Fun.UNDEFINED;
 
@@ -36,8 +38,8 @@ public class VariablesLayer extends HavingContext<Variables, AbstractContext> {
     String name;
     VariablesLayer fallbackVariablesLayer;
 
-    protected LinkedHashMap<Object, Object> constants = new LinkedHashMap<Object, Object>();
-    protected LinkedHashMap<String, DynamicVariable> variables = new LinkedHashMap<String, DynamicVariable>();
+    protected ConcurrentHashMap<Object, Object> constants = new ConcurrentHashMap<Object, Object>();
+    protected ConcurrentHashMap<String, DynamicVariable> variables = new ConcurrentHashMap<String, DynamicVariable>();
 
     public VariablesLayer(String name, VariablesLayer fallbackVariablesLayer) {
         super(null);
@@ -101,6 +103,10 @@ public class VariablesLayer extends HavingContext<Variables, AbstractContext> {
     }
 
     public VariablesLayer put(Nameable key, String value) {
+        return putConst(key.name(), value);
+    }
+
+    public <T> VariablesLayer putConst(DynamicVariable<T> key, T value) {
         return putConst(key.name(), value);
     }
 
@@ -189,7 +195,7 @@ public class VariablesLayer extends HavingContext<Variables, AbstractContext> {
      * @return
      */
     protected Object getByVarName(
-        @Nullable DynamicVariable<?> var, String varName, Object _default,
+        @Nullable DynamicVariable<?> var, @Nullable String varName, Object _default,
          VariablesLayer initialLayer) {
         Preconditions.checkArgument(var != null || varName != null, "they can't both be null!");
 
@@ -197,14 +203,14 @@ public class VariablesLayer extends HavingContext<Variables, AbstractContext> {
 
         //first check if var was overridden in this layer
 
-        Object o = constants.get(varName);
+        Object o = varName == null ? null : constants.get(varName);
 
         if(o != null){
             logger.debug("{}: :{} -> {} (const)", name, varName, o);
             return o;
         }
 
-        DynamicVariable<?> r = variables.get(varName);
+        DynamicVariable<?> r = varName == null ? null : variables.get(varName);
 
         if (r == null) {
             //not overridden, fall back
@@ -294,7 +300,7 @@ public class VariablesLayer extends HavingContext<Variables, AbstractContext> {
 
         v.set$($);
 
-        v.variables = new LinkedHashMap<String, DynamicVariable>(variables);
+        v.variables = new ConcurrentHashMap<String, DynamicVariable>(variables);
 
         return v;
     }
@@ -428,6 +434,59 @@ public class VariablesLayer extends HavingContext<Variables, AbstractContext> {
         } catch (IllegalAccessException e) {
             throw Exceptions.runtime(e);
         }
+    }
+
+    public <T> boolean isConstantDefined(Nameable<T> variable) {
+        return constants.containsKey(variable.name());
+    }
+
+    public <T> boolean isSet(Nameable<T> variable) {
+        if(isConstantDefined(variable)){
+            return true;
+        }
+
+        final DynamicVariable<T> x = getVariable(variable);
+
+        return x != null && x.isSet();
+    }
+
+    public VariablesLayer putMap(Map<?, ?> map) {
+        putMap(map, false);
+        return this;
+    }
+
+    public Map putMap(Map<?, ?> map, final boolean returnOldValues) {
+        Map oldValues = returnOldValues ? new HashMap(map.size()) : null;
+
+        for (Map.Entry<?, ?> entry : map.entrySet()) {
+            Object key = entry.getKey();
+            Object value = entry.getValue();
+
+            String stringKey;
+
+            if (key instanceof Nameable) {
+                stringKey = ((Nameable) key).name();
+            }else{
+                stringKey = (String) key;
+            }
+
+            if (value instanceof DynamicVariable) {
+                DynamicVariable variable = (DynamicVariable) value;
+
+
+                DynamicVariable oldValue = variables.put(stringKey, variable);
+                if(returnOldValues){
+                    oldValues.put(stringKey, oldValue);
+                }
+            }else{
+                Object oldValue = constants.put(stringKey, value);
+                if(returnOldValues){
+                    oldValues.put(stringKey, oldValue);
+                }
+            }
+        }
+
+        return oldValues;
     }
 
     private static class MultipleDICandidates extends RuntimeException {

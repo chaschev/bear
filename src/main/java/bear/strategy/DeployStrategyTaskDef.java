@@ -82,7 +82,7 @@ public abstract class DeployStrategyTaskDef extends TaskDef<Task> {
 
         Stage stage = localCtx.var(bear.getStage);
 
-        prepareRemoteDataBarrier = new CyclicBarrier(stage.getEnvironments().size(), new Runnable() {
+        prepareRemoteDataBarrier = new CyclicBarrier(stage.getAddresses().size(), new Runnable() {
             @Override
             public void run() {
                 deployZipPath = null;
@@ -109,7 +109,7 @@ public abstract class DeployStrategyTaskDef extends TaskDef<Task> {
             }
         });
 
-        updateRemoteFilesBarrier = new CyclicBarrier(stage.getEnvironments().size(), new Runnable() {
+        updateRemoteFilesBarrier = new CyclicBarrier(stage.getAddresses().size(), new Runnable() {
             @Override
             public void run() {
                 logger.info("50: remote update is done now");

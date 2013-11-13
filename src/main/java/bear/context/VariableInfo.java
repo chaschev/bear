@@ -4,6 +4,7 @@ import bear.session.DynamicVariable;
 import sun.reflect.generics.reflectiveObjects.ParameterizedTypeImpl;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.Type;
 
 /**
 * @author Andrey Chaschev chaschev@gmail.com
@@ -16,6 +17,8 @@ public class VariableInfo {
     public VariableInfo(DynamicVariable var, Field field) {
         this.var = var;
 
-        type = (Class<?>) ((ParameterizedTypeImpl) field.getGenericType()).getActualTypeArguments()[0];
+        Type varType = ((ParameterizedTypeImpl) field.getGenericType()).getActualTypeArguments()[0];
+        type = varType instanceof Class ? (Class) varType :
+            ((ParameterizedTypeImpl) varType).getRawType();
     }
 }

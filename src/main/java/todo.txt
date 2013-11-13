@@ -1,9 +1,9 @@
 top priority:
 
-- ui: check how vcs plugins work through ui
 - ui: run a command in on a single host from shell
+- ui: check how vcs plugins work through ui
 - ui: check if it's easy to send prompt
-- ui: cancel command
+- (ok) ui: cancel command
 - ui: adapt this theme: https://github.com/onokumus/Bootstrap-Admin-Template
 - ui: stage/roles/hosts selection
 - ui: preload stages, hosts and roles

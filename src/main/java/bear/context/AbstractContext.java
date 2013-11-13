@@ -30,7 +30,9 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Enumeration;
+import java.util.Map;
 import java.util.Properties;
+import java.util.concurrent.Callable;
 
 import static bear.session.Variables.dynamic;
 import static bear.session.Variables.getConverter;
@@ -95,9 +97,7 @@ public abstract class AbstractContext {
     }
 
     public <T> boolean isSet(Nameable<T> variable){
-        final DynamicVariable<T> x = layer.getVariable(variable);
-
-        return x != null && x.isSet();
+        return layer.isSet(variable);
     }
 
     /**
@@ -224,7 +224,12 @@ public abstract class AbstractContext {
         return layer.getVariable(key);
     }
 
-    public AbstractContext putConst(Nameable key, Object value) {
+    public <T> AbstractContext putConst(Nameable<T> key, T value) {
+        layer.putConst(key, value);
+        return this;
+    }
+
+    public <T> AbstractContext putConst(DynamicVariable<T> key, T value) {
         layer.putConst(key, value);
         return this;
     }
@@ -281,6 +286,26 @@ public abstract class AbstractContext {
 
     public AbstractContext getParent() {
         return parent;
+    }
+
+    public boolean isDefined(DynamicVariable var) {
+        return var.isDefined() || isSet(var);
+    }
+
+    public boolean isUndefined(DynamicVariable var) {
+        return !isDefined(var);
+    }
+
+    public <R> R withMap(Map<Object, Object> constantsAndVars, Callable<R> callable) {
+        Map savedEntries = layer.putMap(constantsAndVars, true);
+
+        try{
+            return callable.call();
+        } catch (Exception e) {
+            throw Exceptions.runtime(e);
+        } finally {
+            layer.putMap(savedEntries);
+        }
     }
 }
 

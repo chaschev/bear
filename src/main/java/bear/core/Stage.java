@@ -22,39 +22,50 @@ import bear.session.Address;
 import bear.session.SshAddress;
 import bear.task.TaskDef;
 import bear.task.TaskRunner;
+import chaschev.lang.Functions2;
+import chaschev.lang.MutableSupplier;
 import com.google.common.base.Function;
 import com.google.common.base.Predicates;
 import com.google.common.collect.Iterables;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 import com.google.common.util.concurrent.ListenableFuture;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.LinkedHashSet;
 import java.util.List;
 
-import static bear.plugins.sh.GenericUnixRemoteEnvironmentPlugin.newUnixRemote;
+import static com.google.common.base.Functions.forMap;
+import static com.google.common.collect.Collections2.transform;
+import static com.google.common.collect.Iterables.concat;
+import static com.google.common.collect.Lists.newArrayList;
+import static com.google.common.collect.Lists.transform;
 
 /**
  * @author Andrey Chaschev chaschev@gmail.com
  */
 public class Stage {
     private static final Logger logger = LoggerFactory.getLogger(Stage.class);
-    public static final Function<SessionContext,String> SESSION_ID = new Function<SessionContext, String>() {
-    public String apply(SessionContext $) {
-        return $.id;
-    }
-};
+    public static final Function<SessionContext, String> SESSION_ID = new Function<SessionContext, String>() {
+        public String apply(SessionContext $) {
+            return $.id;
+        }
+    };
 
     public String name;
     String description;
 
-    List<Address> addresses = new ArrayList<Address>();
+    final LinkedHashSet<Address> addresses = new LinkedHashSet<Address>();
 
     GlobalContext global;
 
-    public Stage(String name, GlobalContext global) {
+    private final MutableSupplier<Stages> stages = new MutableSupplier<Stages>();
+
+    public Stage(String name) {
         this.name = name;
-        this.global = global;
     }
 
     /**
@@ -65,7 +76,7 @@ public class Stage {
     }
 
     public CompositeTaskRunContext prepareToRunTask(final TaskDef task) {
-        List<Address> addresses = this.addresses;
+        Collection<Address> addresses = global.var(global.bear.addressesForStage).apply(this);
 
         final List<ListenableFuture<SessionContext>> futures = new ArrayList<ListenableFuture<SessionContext>>(addresses.size());
         final List<SystemSession> consoles = new ArrayList<SystemSession>(addresses.size());
@@ -104,21 +115,26 @@ public class Stage {
         return taskRunContext;
     }
 
-    public Stage add(String address) {
-        return add(address, address);
+    void addToStages(Stages stages) {
+        this.stages.setInstance(stages).makeFinal();
+        this.global = stages.global;
+
+        for (Address address : addresses) {
+            stages.putAddressToMap(address);
+        }
     }
 
-    public Stage add(String name, String address) {
-        return add(newUnixRemote(name, address));
-    }
+    public Stage add(Address address) {
+        addresses.add(address);
 
-    public Stage add(Address environment) {
-        addresses.add(environment);
+        if (stages.get() != null) {
+            stages.get().putAddressToMap(address);
+        }
 
         return this;
     }
 
-    public List<Address> getEnvironments() {
+    public LinkedHashSet<Address> getAddresses() {
         return addresses;
     }
 
@@ -138,8 +154,67 @@ public class Stage {
 
     }
 
-    public Stage addHosts(String... hosts) {
-        for (String host : hosts) {
+    public Collection<? extends Address> getHostsForRoles(List<String> stringRoles) {
+        List<Role> roles;
+        try {
+            roles = newArrayList(transform(stringRoles, forMap(stages.get().rolenameToRole)));
+        } catch (IllegalArgumentException e) {
+            throw new StagesException("role not found: " + e.getMessage() + " on stage '" + name + "'");
+        }
+
+        LinkedHashSet<Address> hashSet = null;
+
+
+        hashSet = Sets.newLinkedHashSet(
+            concat(transform(roles,
+                forMap(stages.get().roleToAddresses.asMap()))));
+
+
+        return Lists.newArrayList(Sets.intersection(hashSet, addresses));
+    }
+
+    public List<String> validate(List<String> hosts) {
+        List<Address> providedAddresses = hostsToAddresses(hosts);
+
+        _validate(providedAddresses);
+
+        return hosts;
+    }
+
+    public static final class StagesException extends RuntimeException {
+        public StagesException(String message) {
+            super(message);
+        }
+    }
+
+    public List<Address> mapNamesToAddresses(List<String> hosts) {
+        List<Address> providedAddresses = hostsToAddresses(hosts);
+
+        _validate(providedAddresses);
+
+        return newArrayList(providedAddresses);
+    }
+
+    private List<Address> hostsToAddresses(List<String> hosts) {
+        return transform(hosts, forMap(stages.get().hostToAddress));
+    }
+
+    private void _validate(List<Address> providedAddresses) {
+        try{
+        if (!addresses.containsAll(providedAddresses)) {
+            Sets.SetView<Address> missingHosts = Sets.difference(Sets.newHashSet(providedAddresses), addresses);
+
+            throw new StagesException("hosts don't exist on stage '" + name + "': " +
+                transform(missingHosts, Functions2.method("getName")));
+        }
+        }catch (IllegalArgumentException e){
+            throw new StagesException("host don't exist on any stage: " +
+                e.getMessage());
+        }
+    }
+
+    public Stage addHosts(Iterable<Address> hosts) {
+        for (Address host : hosts) {
             add(host);
         }
 

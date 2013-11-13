@@ -1025,7 +1025,9 @@ app.controller('ConsoleTabsChildCtrl', ['$scope', '$q', '$timeout', 'historyMana
             commandText,
             JSON.stringify({
                 script: $scope.runScript.path,
-                settingsName: settingsName})));
+                settingsName: settingsName,
+                shell: $scope.terminal.name
+            })));
 
         Java.log('interpret response:', response);
 

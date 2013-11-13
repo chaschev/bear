@@ -53,8 +53,12 @@ import java.net.MalformedURLException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.concurrent.Callable;
 
+import static chaschev.lang.Maps2.newHashMap;
 import static com.google.common.collect.Lists.transform;
+import static java.util.Collections.emptyList;
+import static java.util.Collections.singletonList;
 
 /**
  * @author Andrey Chaschev chaschev@gmail.com
@@ -276,18 +280,34 @@ public class FXConf extends Cli {
          * @param command
          */
         public Response interpret(final String command, String uiContextS) throws Exception {
-//            logger.info("interpreting command: '{}', params: {}", command, uiContextS);
             ui.info("interpreting command: '{}', params: {}", StringUtils.substringBefore(command, "\n").trim(), uiContextS);
 
             BearScript.UIContext uiContext = mapper.fromJSON(uiContextS, BearScript.UIContext.class);
 
-            IBearSettings settings = newSettings(uiContext.settingsName);
+            final IBearSettings settings = newSettings(uiContext.settingsName);
 
-            final BearScript script = new BearScript(global, bearFX, currentShellPlugin, settings);
+            Callable<BearScript.MessageResponse> execScriptCallable = new Callable<BearScript.MessageResponse>() {
+                @Override
+                public BearScript.MessageResponse call() throws Exception {
+                    final BearScript script = new BearScript(global, bearFX, currentShellPlugin, settings);
 
-            script.exec(command, true);
+                    script.exec(command, true);
 
-            return new BearScript.MessageResponse("started script execution");
+                    return new BearScript.MessageResponse("started script execution");
+                }
+            };
+
+            if(!"shell".equals(uiContext.shell)){
+                return global.withMap(
+                    newHashMap(
+                        bear.activeHosts, singletonList(uiContext.shell),
+                        bear.activeRoles, emptyList()
+                    ),
+                    execScriptCallable
+                );
+            } else{
+                return execScriptCallable.call();
+            }
         }
 
         private void switchToPlugin(Class<? extends Plugin> aClass) {

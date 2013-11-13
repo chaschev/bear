@@ -81,7 +81,7 @@ public class GlobalContext extends AppGlobalContext<GlobalContext, Bear> {
     public final Stage localStage;
     public CompositeTaskRunContext currentGlobalRunContext;
 
-    private GlobalContext() {
+    GlobalContext() {
         super(new Bear());
 
 
@@ -100,7 +100,7 @@ public class GlobalContext extends AppGlobalContext<GlobalContext, Bear> {
 
         localCtx = new SessionContext(this, new LocalAddress(), localRunner);
         local = new GenericUnixLocalEnvironmentPlugin(this).newSession(localCtx, null);
-        localStage = new Stage("localStage", this).add(new LocalAddress());
+        localStage = new Stage("localStage").add(new LocalAddress());
 
         tasks = new Tasks(this);
     }

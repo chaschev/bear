@@ -23,7 +23,7 @@ public class SetupPluginsSettings extends IBearSettings {
     GlobalContext global;
     GitCLIPlugin git;
 
-    public  SetupPluginsSettings(GlobalContextFactory factory) {
+    public SetupPluginsSettings(GlobalContextFactory factory) {
         super(factory);
     }
 
@@ -45,18 +45,20 @@ public class SetupPluginsSettings extends IBearSettings {
 
         grails.version.set("2.0.4");
 
+        Stages stages = new Stages(global);
         bear.stages.defaultTo(
-            new Stages()
+            stages
                 .add(
-                    new Stage("one", global)
-                        .add("vm01"))
+                    new Stage("one")
+                    .addHosts(stages.hosts("vm01")))
                 .add(
-                    new Stage("two", global)
-                        .addHosts("vm01", "vm02"))
-                .add(new Stage("three", global)
-                    .addHosts("vm01", "vm02", "vm03")
-                )
-        );
+                    new Stage("two")
+                        .addHosts(stages.hosts("vm01, vm02")))
+                .add(
+                    new Stage("three")
+                        .addHosts(stages.hosts("vm01, vm02, vm03"))
+                ))
+        ;
 
         bear.getStrategy.setDynamic(new Fun<DeployStrategyTaskDef, SessionContext>() {
 

@@ -69,4 +69,21 @@ public class SshAddress extends Address {
     public String getAddress() {
         return address;
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        SshAddress that = (SshAddress) o;
+
+        if (!address.equals(that.address)) return false;
+
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        return address.hashCode();
+    }
 }

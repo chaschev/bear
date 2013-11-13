@@ -167,6 +167,7 @@ public class BearScript {
             }
 
             switchToPlugin(scriptItem.pluginName, shellContext);
+
             if(!filteredLines.isEmpty()){
                 return runWithInterpreter(filteredLines, shellContext, scriptItem);
             }else {
@@ -235,6 +236,7 @@ public class BearScript {
                         last = $.runner.runSession(task);
                     }finally {
                         long duration = System.currentTimeMillis() - startedAt;
+
                         phase.addArrival($, duration, last);
                     }
 
@@ -254,9 +256,11 @@ public class BearScript {
 
             StringBuilder phaseSB = $.getExecutionContext().phaseText.getDefaultValue();
             phaseSB.setLength(0);
+
             $.getExecutionContext().phaseText.fireExternalModification();
             $.getExecutionContext().phaseName = scriptItem.asOneLineDesc();
             $.getExecutionContext().phaseId.defaultTo(shellContext.phaseId);
+
             return phase;
         }
 
@@ -726,9 +730,6 @@ public class BearScript {
         return new BearScriptParseResult(scriptItems, globalErrors);
     }
 
-
-
-
     public static List<RunResponse.Host> getHosts(List<SessionContext> $s) {
         return Lists.transform($s, new Function<SessionContext, RunResponse.Host>() {
             public RunResponse.Host apply(SessionContext $) {
@@ -736,10 +737,6 @@ public class BearScript {
             }
         });
     }
-
-
-
-
 
     private List<Class<? extends Plugin>> getPlugins() {
         if (pluginList == null) {
@@ -791,6 +788,7 @@ public class BearScript {
     public static class UIContext {
         public String settingsName;
         public String script;
+        public String shell;
     }
 
     public static class SwitchResponse extends MessageResponse {

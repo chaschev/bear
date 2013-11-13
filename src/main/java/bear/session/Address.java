@@ -17,6 +17,11 @@
 package bear.session;
 
 import bear.context.Var;
+import bear.core.Role;
+
+import javax.annotation.Nullable;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
 * @author Andrey Chaschev chaschev@gmail.com
@@ -24,6 +29,9 @@ import bear.context.Var;
 public abstract class Address {
     @Var("sessionHostname")
     String name;
+
+    @Nullable
+    private Set<Role> roles;
 
     public Address() {
     }
@@ -36,5 +44,15 @@ public abstract class Address {
         return name;
     }
 
+
     public abstract String getAddress();
+
+
+    public final Set<Role> getRoles() {
+        if(roles == null){
+            roles = new HashSet<Role>();
+        }
+
+        return roles;
+    }
 }

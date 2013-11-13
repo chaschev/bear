@@ -16,9 +16,41 @@
 
 package bear.core;
 
+import com.google.common.base.Preconditions;
+
+import javax.annotation.Nonnull;
+
 /**
  * @author Andrey Chaschev chaschev@gmail.com
  */
 public class Role {
-    public String role;
+    @Nonnull
+    public final String role;
+
+    public Role(String role) {
+        Preconditions.checkNotNull(role);
+        this.role = role;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        Role role1 = (Role) o;
+
+        if (!role.equals(role1.role)) return false;
+
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        return role.hashCode();
+    }
+
+    @Override
+    public String toString() {
+        return role;
+    }
 }
