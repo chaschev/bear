@@ -149,7 +149,7 @@ public class GenericUnixLocalEnvironmentPlugin extends SystemEnvironmentPlugin {
             }
 
             @Override
-            public <T extends CommandLineResult> CommandLine<T> newCommandLine(Class<T> aClass) {
+            public <T extends CommandLineResult> CommandLine<T, ?> newCommandLine(Class<T> aClass) {
                 return new LocalCommandLine<T>(this);
             }
 
@@ -172,7 +172,7 @@ public class GenericUnixLocalEnvironmentPlugin extends SystemEnvironmentPlugin {
                     return (T) new CommandLineResult(r.text, Result.ERROR);
                 }
 
-                final T t = ((CommandLine<T>)command).parseResult(r.text);
+                final T t = ((CommandLine<T, ?>)command).parseResult(r.text);
 
                 t.result = Result.OK;
 

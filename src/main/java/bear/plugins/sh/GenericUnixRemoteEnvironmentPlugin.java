@@ -109,7 +109,7 @@ public class GenericUnixRemoteEnvironmentPlugin extends SystemEnvironmentPlugin 
                 final AbstractConsoleCommand<T> command,
                 final ConsoleCallback userCallback) {
 
-                Preconditions.checkArgument(command instanceof CommandLine<?>);
+                Preconditions.checkArgument(command instanceof CommandLine<?, ?>);
 
                 if (sshSession == null) {
                     connect();
@@ -181,7 +181,7 @@ public class GenericUnixRemoteEnvironmentPlugin extends SystemEnvironmentPlugin 
 
                 sshSession.withSession(withSession);
 
-                final T t = ((CommandLine<T>)command).parseResult(withSession.text);
+                final T t = ((CommandLine<T, ?>)command).parseResult(withSession.text);
 
                 t.result = result[0];
 
@@ -247,7 +247,7 @@ public class GenericUnixRemoteEnvironmentPlugin extends SystemEnvironmentPlugin 
             }
 
             @Override
-            public <T extends CommandLineResult> CommandLine<T> newCommandLine(Class<T> aClass) {
+            public <T extends CommandLineResult> CommandLine<T, ?> newCommandLine(Class<T> aClass) {
                 return new RemoteCommandLine<T>(this);
             }
 
@@ -321,7 +321,7 @@ public class GenericUnixRemoteEnvironmentPlugin extends SystemEnvironmentPlugin 
 
             @Override
             public Result chown(String user, boolean recursive, String... files) {
-                final CommandLine<CommandLineResult> line = newCommandLine();
+                final CommandLine<CommandLineResult, ?> line = newCommandLine();
 
                 line.a("chown");
                 if (recursive) line.a("-R");
@@ -335,7 +335,7 @@ public class GenericUnixRemoteEnvironmentPlugin extends SystemEnvironmentPlugin 
 
             @Override
             public Result chmod(String octal, boolean recursive, String... files) {
-                final CommandLine<CommandLineResult> line = newCommandLine();
+                final CommandLine<CommandLineResult, ?> line = newCommandLine();
 
                 line.a("chmod");
                 if (recursive) line.a("-R");

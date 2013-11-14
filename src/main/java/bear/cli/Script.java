@@ -30,78 +30,62 @@ import java.util.List;
  *
  * @author Andrey Chaschev chaschev@gmail.com
  */
-public class Script <T extends CommandLineResult>{
-
-
-    public static class StubScript<T extends CommandLineResult> extends Script<T>{
-        private final T result;
-
-        public StubScript(SystemSession system, T result) {
-            super(system);
-
-            this.result = result;
-        }
-
-        @Override
-        public CommandLineResult run(ConsoleCallback callback) {
-            return result;
-        }
-
-        @Override
-        public T parseResult(String text) {
-            return result;
-        }
-    }
-
+public class Script <T extends CommandLineResult, CHILD extends Script>{
     public String cd = ".";
 
     protected SystemSession sys;
 
-    public List<CommandLine> lines = new ArrayList<CommandLine>();
+    public List<CommandLine<T, CHILD>> lines = new ArrayList<CommandLine<T, CHILD>>();
 
     protected Function<String, T> parser;
+
+    protected int timeoutMs = -1;
 
     public Script(SystemSession sys) {
         this.sys = sys;
     }
 
-    public CommandLine line() {
+    public CommandLine<T, CHILD> line() {
         final CommandLine line = sys.line(this);
 
-        lines.add(line);
+        add(line);
 
         return line;
     }
 
-    public Script line(CommandLine line) {
-        lines.add(line);
+    public CHILD line(CommandLine<T, CHILD> line) {
+        add(line);
 
-        return this;
+        return (CHILD) this;
     }
 
-    public Script add(CommandLine commandLine) {
+    public CHILD add(CommandLine<T, CHILD> commandLine) {
         lines.add(commandLine);
 
-        return this;
+        if(timeoutMs !=-1){
+            commandLine.timeoutMs(timeoutMs);
+        }
+
+        return (CHILD) this;
     }
 
-    public Script cd(String cd) {
+    public CHILD cd(String cd) {
         this.cd = cd;
-        return this;
+        return (CHILD) this;
     }
 
 
-    public CommandLineResult run() {
-        return sys.run(this);
+    public T run() {
+        return (T) sys.run(this);
     }
 
-    public CommandLineResult run(ConsoleCallback callback) {
+    public T run(ConsoleCallback callback) {
         return sys.run(this, callback);
     }
 
-    public Script<T> setParser(Function<String, T> parser) {
+    public CHILD setParser(Function<String, T> parser) {
         this.parser = parser;
-        return this;
+        return (CHILD) this;
     }
 
     public T parseResult(String text) {
@@ -114,17 +98,23 @@ public class Script <T extends CommandLineResult>{
         return (T) new CommandLineResult(text, Result.OK);
     }
 
-    public Script<T> timeoutSec(int sec) {
+    public CHILD timeoutMin(int min) {
+        return timeoutSec(60 * min);
+    }
+
+    public CHILD timeoutSec(int sec) {
         return timeoutMs(1000 * sec);
     }
 
-    public Script<T> timeoutMs(int ms) {
+    public CHILD timeoutMs(int ms) {
+        timeoutMs = ms;
+
         for (CommandLine line : lines) {
             if(line.getTimeoutMs() == 0){
                 line.timeoutMs(ms);
             }
         }
 
-        return this;
+        return (CHILD) this;
     }
 }

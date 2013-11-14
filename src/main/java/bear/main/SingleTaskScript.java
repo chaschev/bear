@@ -29,7 +29,7 @@ public class SingleTaskScript extends Script {
     }
 
     @Override
-    protected void configure() throws Exception {
+    public void configure() throws Exception {
         bear.stage.defaultTo("two");//todo fixme!!
         bear.task.defaultTo(taskDef);
 //        bear.checkDependencies.defaultTo(false);

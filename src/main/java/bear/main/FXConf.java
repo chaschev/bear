@@ -180,7 +180,8 @@ public class FXConf extends Cli {
     public Response runWithScript(String bearScript, String settingsName) throws Exception {
         IBearSettings settings = newSettings(settingsName);
 
-        return new BearScript(global, bearFX, null, settings).exec(bearScript, true);
+        return new BearScript(global, bearFX, null, settings).exec(true,
+            new BearScript.ParserScriptSupplier(null, bearScript));
     }
 
     public Response interpret(String command, String uiContextS) throws Exception {
@@ -282,7 +283,7 @@ public class FXConf extends Cli {
         public Response interpret(final String command, String uiContextS) throws Exception {
             ui.info("interpreting command: '{}', params: {}", StringUtils.substringBefore(command, "\n").trim(), uiContextS);
 
-            BearScript.UIContext uiContext = mapper.fromJSON(uiContextS, BearScript.UIContext.class);
+            final BearScript.UIContext uiContext = mapper.fromJSON(uiContextS, BearScript.UIContext.class);
 
             final IBearSettings settings = newSettings(uiContext.settingsName);
 
@@ -291,7 +292,15 @@ public class FXConf extends Cli {
                 public BearScript.MessageResponse call() throws Exception {
                     final BearScript script = new BearScript(global, bearFX, currentShellPlugin, settings);
 
-                    script.exec(command, true);
+                    Supplier<BearScript.BearScriptParseResult> supplier;
+
+                    if(uiContext.script.endsWith(".groovy")){
+                        supplier = new BearScript.GroovyScriptSupplier(global, command);
+                    } else {
+                        supplier = new BearScript.ParserScriptSupplier(currentShellPlugin, command);
+                    }
+
+                    script.exec(true, supplier);
 
                     return new BearScript.MessageResponse("started script execution");
                 }

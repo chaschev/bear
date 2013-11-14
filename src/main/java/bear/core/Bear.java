@@ -16,7 +16,6 @@
 
 package bear.core;
 
-import bear.cli.Script;
 import bear.context.AbstractContext;
 import bear.context.Fun;
 import bear.context.VarFun;
@@ -27,6 +26,7 @@ import bear.session.DynamicVariable;
 import bear.strategy.DeployStrategyTaskDef;
 import bear.task.TaskDef;
 import bear.vcs.BranchInfoResult;
+import bear.vcs.VCSSession;
 import bear.vcs.VcsCLIPlugin;
 import chaschev.lang.Functions2;
 import chaschev.lang.OpenBean;
@@ -142,12 +142,10 @@ public class Bear extends BearApp<GlobalContext> {
 
     realRevision = strVar("Update revision from vcs").setDynamic(new Fun<String, SessionContext>() {
         public String apply(SessionContext $) {
-            final VcsCLIPlugin.Session vcsCLI = $.var(vcs);
-            final Script<BranchInfoResult> line =
-                vcsCLI.queryRevision($.var(revision), Collections.<String, String>emptyMap())
-                    .timeoutMs(20000);
+            final VCSSession vcsCLI = $.var(vcs);
 
-            BranchInfoResult r = $.sys.run(line, vcsCLI.passwordCallback());
+            BranchInfoResult r = vcsCLI.queryRevision($.var(revision))
+                .timeoutSec(20).run();
 
             return r.revision;
         }
@@ -304,8 +302,8 @@ public class Bear extends BearApp<GlobalContext> {
         return stage;
     }
 
-    public final DynamicVariable<VcsCLIPlugin.Session> vcs = new DynamicVariable<VcsCLIPlugin.Session>("vcs", "VCS adapter").setDynamic(new Fun<VcsCLIPlugin.Session, SessionContext>() {
-        public VcsCLIPlugin.Session apply(SessionContext $) {
+    public final DynamicVariable<VCSSession> vcs = new DynamicVariable<VCSSession>("vcs", "VCS adapter").setDynamic(new Fun<VCSSession, SessionContext>() {
+        public VCSSession apply(SessionContext $) {
             Class<? extends VcsCLIPlugin> vcsCLI = null;
 
             for (Class<? extends Plugin> aClass : global.getPluginClasses()) {
@@ -316,7 +314,7 @@ public class Bear extends BearApp<GlobalContext> {
 
             Preconditions.checkNotNull(vcsCLI, "add a VCS plugin!");
 
-            return (VcsCLIPlugin.Session) global.newPluginSession(vcsCLI, $, $.getCurrentTask());
+            return (VCSSession) global.newPluginSession(vcsCLI, $, $.getCurrentTask());
         }
     });
 

@@ -17,8 +17,9 @@
 package bear.task;
 
 import bear.console.AbstractConsoleCommand;
-import bear.core.SessionContext;
 import bear.context.HavingContext;
+import bear.core.Bear;
+import bear.core.SessionContext;
 import bear.task.exec.TaskExecutionContext;
 import bear.vcs.CommandLineResult;
 
@@ -38,6 +39,9 @@ public abstract class Task<TASK_DEF extends TaskDef> extends HavingContext<Task<
     protected TaskExecutionContext executionContext;
 
     public final String id = SessionContext.randomId();
+
+    protected Bear bear;
+    protected TaskRunner runner;
 
     public Task(Task parent, TASK_DEF definition, SessionContext $) {
         super($);

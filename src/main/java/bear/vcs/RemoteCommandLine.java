@@ -23,7 +23,7 @@ import bear.plugins.sh.SystemSession;
 /**
  * @author Andrey Chaschev chaschev@gmail.com
  */
-public class RemoteCommandLine<T extends CommandLineResult> extends CommandLine<T> {
+public class RemoteCommandLine<T extends CommandLineResult> extends CommandLine<T, Script> {
 
     public RemoteCommandLine(SystemSession sys) {
         super(sys);

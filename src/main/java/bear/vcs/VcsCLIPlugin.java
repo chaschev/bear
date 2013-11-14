@@ -16,19 +16,12 @@
 
 package bear.vcs;
 
-import bear.cli.CommandLine;
-import bear.console.ConsoleCallback;
-import bear.core.SessionContext;
 import bear.core.GlobalContext;
+import bear.core.SessionContext;
 import bear.plugins.Plugin;
-import bear.session.DynamicVariable;
-import bear.plugins.sh.SystemEnvironmentPlugin;
 import bear.session.Variables;
 import bear.task.Task;
 import bear.task.TaskDef;
-import bear.task.TaskResult;
-import bear.task.TaskRunner;
-import bear.cli.Script;
 
 import java.util.Collections;
 import java.util.Map;
@@ -59,82 +52,7 @@ public abstract class VcsCLIPlugin<TASK extends Task, VCS_TASK_DEF extends TaskD
         return Collections.emptyMap();
     }
 
-    public abstract Session newSession(SessionContext $, Task<TaskDef> parent);
-
-    public abstract class Session extends Task<TaskDef> {
-        protected Session(Task<TaskDef> parent, TaskDef def, SessionContext $) {
-            super(parent, def, $);
-        }
-
-        @Override
-        protected TaskResult exec(TaskRunner runner) {
-            throw new UnsupportedOperationException("VCS task cannot be run");
-        }
-
-        public Script checkout(String revision, String destination, Map<String, String> params) {
-            throw new UnsupportedOperationException("todo");
-        }
-
-        public Script sync(String revision, String destination, Map<String, String> params) {
-            throw new UnsupportedOperationException("todo");
-        }
-
-        public Script export(String revision, String destination, Map<String, String> params) {
-            throw new UnsupportedOperationException("todo");
-        }
-
-        public CommandLine diff(String rFrom, String rTo, Map<String, String> params) {
-            throw new UnsupportedOperationException("todo");
-        }
-
-        public Script<BranchInfoResult> queryRevision(String revision) {
-            return queryRevision(revision, emptyParams());
-        }
-
-
-
-        /**
-         * f the given revision represents a "real" revision, this should
-         * simply return the revision value. If it represends a pseudo-revision
-         * (like Subversions "HEAD" identifier), it should yield a string
-         * containing the commands that, when executed will return a string
-         * that this method can then extract the real revision from.
-         */
-        public Script<BranchInfoResult> queryRevision(String revision, Map<String, String> params) {
-            throw new UnsupportedOperationException("todo");
-        }
-
-        public String nextRevision(String r) {
-            return r;
-        }
-
-        public String command() {
-            throw new UnsupportedOperationException("todo VcsCLIContext.command");
-        }
-
-        public CommandLine log(String rFrom, String rTo, Map<String, String> params) {
-            throw new UnsupportedOperationException("todo");
-        }
-
-        public CommandLine ls(String path, Map<String, String> params) {
-            throw new UnsupportedOperationException("todo");
-        }
-
-        public abstract String head();
-
-        public ConsoleCallback passwordCallback() {
-            return SystemEnvironmentPlugin.passwordCallback($.var(bear.vcsPassword));
-        }
-
-        public CommandLine<SvnCLIPlugin.LsResult> ls(String path) {
-            return ls(path, emptyParams());
-        }
-
-
-        public <T> T $(DynamicVariable<T> varName) {
-            return $.var(varName);
-        }
-    }
+    public abstract VCSSession newSession(SessionContext $, Task<TaskDef> parent);
 
     public static class StringResult extends CommandLineResult {
         public String value;

@@ -146,8 +146,8 @@ public class InjectingContext<CONTEXT extends AbstractContext> extends AbstractC
                 if(i>=0){
                     Field contextField = contextFields[i];
 
-                    //don't copy fields like layer
-                    if(contextField.getDeclaringClass() != AbstractContext.class){
+                    if(contextField.getDeclaringClass() != AbstractContext.class   //don't copy fields like layer
+                        && contextField.getType().isAssignableFrom(field.getType())){    // check types
                         setField(field, object, contextField.get(parent), "context field");
                     }
                 }

@@ -16,12 +16,12 @@
 
 package bear.task;
 
-import bear.cli.Script;
 import bear.core.Bear;
-import bear.core.SessionContext;
 import bear.core.GlobalContext;
+import bear.core.SessionContext;
 import bear.plugins.Plugin;
-import bear.vcs.VcsCLIPlugin;
+import bear.vcs.CommandLineResult;
+import bear.vcs.VCSSession;
 import com.google.common.base.Preconditions;
 import org.apache.commons.lang3.time.StopWatch;
 
@@ -189,25 +189,21 @@ public class Tasks {
                     StopWatch sw = new StopWatch();
                     sw.start();
 
-                    final VcsCLIPlugin.Session vcsCLI = $(bear.vcs);
+                    final VCSSession vcsCLI = $(bear.vcs);
 
                     final String destPath = $(bear.vcsBranchLocalPath);
 
-                    final Script line;
+                    CommandLineResult result;
 
                     if (!$.sys.exists(destPath)) {
-                        line = vcsCLI.checkout($(bear.revision), destPath, VcsCLIPlugin.emptyParams());
+                        result = vcsCLI.checkout($(bear.revision), destPath).run();
                     } else {
-                        line = vcsCLI.sync($(bear.revision), destPath, VcsCLIPlugin.emptyParams());
+                        result = vcsCLI.sync($(bear.revision), destPath).run();
                     }
-
-                    line.timeoutMs(600 * 1000);
-
-                    $.sys.run(line, vcsCLI.passwordCallback());
 
                     $.log("done updating in %s", sw);
 
-                    return TaskResult.OK;
+                    return result;
                 }
             };
         }

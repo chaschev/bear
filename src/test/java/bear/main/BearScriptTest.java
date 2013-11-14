@@ -20,7 +20,7 @@ public class BearScriptTest {
             "\n" +
             ":use shell groovy\n" +
             ":set x='lala'\n" +
-            "pwd", new BearScript.ShellRunContext(null), "initial");
+            "pwd", "initial");
 
         List<BearScript.ScriptItem> items = parseResult.scriptItems;
 

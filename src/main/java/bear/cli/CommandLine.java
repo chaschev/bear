@@ -35,7 +35,7 @@ import java.util.Map;
 /**
  * @author Andrey Chaschev chaschev@gmail.com
  */
-public abstract class CommandLine<T extends CommandLineResult> extends AbstractConsoleCommand<T> {
+public abstract class CommandLine<T extends CommandLineResult, SCRIPT extends Script> extends AbstractConsoleCommand<T> {
     public String cd = ".";
 
     public List strings = new ArrayList(4);
@@ -46,7 +46,7 @@ public abstract class CommandLine<T extends CommandLineResult> extends AbstractC
      * Null when used outside of a script.
      */
     @Nullable
-    protected Script script;
+    protected SCRIPT script;
 
     protected SystemSession sys;
 
@@ -54,12 +54,12 @@ public abstract class CommandLine<T extends CommandLineResult> extends AbstractC
         this.sys = sys;
     }
 
-    protected CommandLine(Script script) {
+    protected CommandLine(SCRIPT script) {
         this.script = script;
         this.sys = script.sys;
     }
 
-    public CommandLine a(String... strings) {
+    public CommandLine<T, SCRIPT> a(String... strings) {
         for (String s : strings) {
             if(!StringUtils.isBlank(s)){
                 this.strings.add(s);
@@ -68,7 +68,7 @@ public abstract class CommandLine<T extends CommandLineResult> extends AbstractC
         return this;
     }
 
-    public CommandLine a(List<String> strings) {
+    public CommandLine<T, SCRIPT> a(List<String> strings) {
         for (String s : strings) {
             if(!StringUtils.isBlank(s)){
                 this.strings.add(s);
@@ -77,12 +77,12 @@ public abstract class CommandLine<T extends CommandLineResult> extends AbstractC
         return this;
     }
 
-    public CommandLine addSplit(String s) {
+    public CommandLine<T, SCRIPT> addSplit(String s) {
         Collections.addAll(strings, s.split("\\s+"));
         return this;
     }
 
-    public CommandLine p(Map<String, String> params) {
+    public CommandLine<T, SCRIPT> p(Map<String, String> params) {
         for (Map.Entry<String, String> e : params.entrySet()) {
             strings.add(" --" + e.getKey() + "=" + e.getValue() + " ");
         }
@@ -99,12 +99,12 @@ public abstract class CommandLine<T extends CommandLineResult> extends AbstractC
         return (T) new CommandLineResult(text, Result.OK);
     }
 
-    public CommandLine<T> setParser(Function<String, T> parser) {
+    public CommandLine<T, SCRIPT> setParser(Function<String, T> parser) {
         this.parser = parser;
         return this;
     }
 
-    public CommandLine<T> cd(String cd) {
+    public CommandLine<T, SCRIPT> cd(String cd) {
         this.cd = cd;
         return this;
     }
@@ -118,27 +118,27 @@ public abstract class CommandLine<T extends CommandLineResult> extends AbstractC
         return sb.toString();
     }
 
-    public CommandLine<T> semicolon() {
+    public CommandLine<T, SCRIPT> semicolon() {
         strings.add(new VcsCLIPlugin.CommandLineOperator(";"));
         return this;
     }
 
-    public CommandLine<T> redirectFrom(String path) {
+    public CommandLine<T, SCRIPT> redirectFrom(String path) {
         strings.add(new VcsCLIPlugin.CommandLineOperator("<" + path));
         return this;
     }
 
-    public CommandLine<T> redirectTo(String path) {
+    public CommandLine<T, SCRIPT> redirectTo(String path) {
         strings.add(new VcsCLIPlugin.CommandLineOperator(">" + path));
         return this;
     }
 
 
-    public CommandLine<T> addRaw(String format, String... args) {
+    public CommandLine<T, SCRIPT> addRaw(String format, String... args) {
         return addRaw(format, false, args);
     }
 
-    public CommandLine<T> addRaw(String format, boolean force, String... args) {
+    public CommandLine<T, SCRIPT> addRaw(String format, boolean force, String... args) {
         if(format.contains("rm ") && !force){
             throw new BearException("rm in raw mode is forbidden. Use rmLine(...) or rm(...) to avoid deleting system libs.");
         }
@@ -146,41 +146,41 @@ public abstract class CommandLine<T extends CommandLineResult> extends AbstractC
         return this;
     }
 
-    public CommandLine<T> addRaw(String s) {
+    public CommandLine<T, SCRIPT> addRaw(String s) {
         strings.add(new VcsCLIPlugin.CommandLineOperator(s));
         return this;
     }
 
-    public CommandLine<T> stty() {
+    public CommandLine<T, SCRIPT> stty() {
         strings.add(new VcsCLIPlugin.CommandLineOperator("stty -echo;"));
         return this;
     }
 
-    public CommandLine<T> sudo() {
+    public CommandLine<T, SCRIPT> sudo() {
         strings.add(new VcsCLIPlugin.CommandLineOperator("stty -echo; sudo "));
         return this;
     }
 
-    public CommandLine<T> timeoutMs(int timeoutMs) {
+    public CommandLine<T, SCRIPT> timeoutMs(int timeoutMs) {
         this.timeoutMs = timeoutMs;
 
         return this;
     }
 
-    public CommandLine<T> timeoutSec(int timeoutSec) {
+    public CommandLine<T, SCRIPT> timeoutSec(int timeoutSec) {
         return timeoutMs(1000 * timeoutSec);
     }
 
-    public CommandLine<T> timeoutMin(int timeoutMin) {
+    public CommandLine<T, SCRIPT> timeoutMin(int timeoutMin) {
         return timeoutSec(60 * timeoutMin);
     }
 
-    public CommandLine<T> bash() {
+    public CommandLine<T, SCRIPT> bash() {
         strings.add(new VcsCLIPlugin.CommandLineOperator("bash -c"));
         return this;
     }
 
-    public CommandLine<T> setVar(String k, String v) {
+    public CommandLine<T, SCRIPT> setVar(String k, String v) {
         strings.add(new VcsCLIPlugin.CommandLineOperator("export " + k + "=" + v + "; "));
         return this;
     }
@@ -189,11 +189,11 @@ public abstract class CommandLine<T extends CommandLineResult> extends AbstractC
         return addRaw(" | ");
     }
 
-    public Script build() {
+    public SCRIPT build() {
         return script;
     }
 
-    public void setScript(@Nullable Script script) {
+    public void setScript(@Nullable SCRIPT script) {
         this.script = script;
     }
 

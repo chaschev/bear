@@ -40,6 +40,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -60,7 +61,7 @@ import static org.apache.commons.lang3.StringUtils.substringBefore;
 
 /**
  * Each script runs in a separate thread, because one thread execution must not suspend/fail all others.
- *
+ * <p/>
  * This is why vars are set in sessions. So todo is to implement set global var value. Note - it has completely different semantics, setting it inside a session could lead to an error
  */
 public class BearScript {
@@ -102,7 +103,7 @@ public class BearScript {
             this.startsAtIndex = startsAtIndex;
         }
 
-        public String asOneLineDesc(){
+        public String asOneLineDesc() {
             Optional<String> nonCommandLine = Iterables.tryFind(lines, not(contains(":set")));
 
             String line = nonCommandLine.or(lines.get(0));
@@ -112,7 +113,7 @@ public class BearScript {
     }
 
 
-    public static final class ScriptError{
+    public static final class ScriptError {
         String line;
         int index;
         String comment;
@@ -124,7 +125,7 @@ public class BearScript {
         }
     }
 
-    public class BearScriptExecContext{
+    public class BearScriptExecContext {
         String pluginName;
 
         SessionContext $;
@@ -142,7 +143,7 @@ public class BearScript {
             this.taskDef = taskDef;
         }
 
-        private TaskResult runItem(ShellRunContext shellContext, ScriptItem scriptItem){
+        private TaskResult runItem(ShellRunContext shellContext, ScriptItem scriptItem) {
             Response lastResponse = null;
 
             List<String> filteredLines = new ArrayList<String>(scriptItem.lines.size());
@@ -161,16 +162,16 @@ public class BearScript {
                             line,
                             scriptItem.startsAtIndex + i, "unknown command: " + firstWord));
                     }
-                }else{
+                } else {
                     filteredLines.add(line);
                 }
             }
 
             switchToPlugin(scriptItem.pluginName, shellContext);
 
-            if(!filteredLines.isEmpty()){
+            if (!filteredLines.isEmpty()) {
                 return runWithInterpreter(filteredLines, shellContext, scriptItem);
-            }else {
+            } else {
                 return TaskResult.OK;
             }
         }
@@ -205,7 +206,7 @@ public class BearScript {
                     last = $.runner.runSession(task);
                 } catch (Exception e) {
                     last = new DependencyResult(Result.ERROR).add(e.toString());
-                }finally {
+                } finally {
                     long duration = System.currentTimeMillis() - startedAt;
                     assert phase != null;
                     phase.addArrival($, duration, last);
@@ -217,7 +218,7 @@ public class BearScript {
 
                     shellContext.script = s;
 
-                    if(i == 0){
+                    if (i == 0) {
 //                        bearFX.sendMessageToUI(newShellCommand(substringBefore(s, "\n") + "...", shellContext));
                     }
 
@@ -234,13 +235,13 @@ public class BearScript {
                     try {
                         phase = startNewPhase(shellContext, scriptItem, scriptItem.id + i);
                         last = $.runner.runSession(task);
-                    }finally {
+                    } finally {
                         long duration = System.currentTimeMillis() - startedAt;
 
                         phase.addArrival($, duration, last);
                     }
 
-                    if(!last.ok()){
+                    if (!last.ok()) {
                         errors.add(new ScriptError(s, i + 1, "error during line exec:" + last));
                         return last;
                     }
@@ -269,6 +270,7 @@ public class BearScript {
                 .setId($.getExecutionContext().currentTask.getDefaultValue().id)
                 .setParentId(shellContext.sessionId);
         }
+
         private MessageResponse setVariable(String line) {
             String command = substringAfter(line, " ").trim();
 
@@ -323,7 +325,7 @@ public class BearScript {
         }
     }
 
-    public static class BearScriptPhase{
+    public static class BearScriptPhase {
         final String id;
         final AtomicInteger partiesArrived = new AtomicInteger();
         public final AtomicInteger partiesOk = new AtomicInteger();
@@ -358,7 +360,7 @@ public class BearScript {
             if (result.ok()) {
                 partiesOk.incrementAndGet();
 
-                if(minimalOkDuration.compareAndSet(-1, duration)){
+                if (minimalOkDuration.compareAndSet(-1, duration)) {
                     $.getGlobal().scheduler.schedule(new CatchyCallable<Void>(new Callable<Void>() {
                         @Override
                         public Void call() throws Exception {
@@ -368,17 +370,17 @@ public class BearScript {
                             if (partiesArrived.compareAndSet(partiesCount, -1)) {
                                 alreadyFinished = false;
                                 haveHangUpJobs = false;
-                            }else{
+                            } else {
                                 if (partiesArrived.compareAndSet(-1, -1)) {
                                     haveHangUpJobs = false;
                                     alreadyFinished = true;
-                                }else{
+                                } else {
                                     alreadyFinished = false;
                                     haveHangUpJobs = true;
                                 }
                             }
 
-                            if(!alreadyFinished){
+                            if (!alreadyFinished) {
                                 sendPhaseResults(duration);
                             }
                             return null;
@@ -393,7 +395,7 @@ public class BearScript {
             partiesPending = partiesCount - partiesArrived.get();
             partiesFailed = partiesArrived.get() - partiesOk.get();
 
-            if(partiesArrived.compareAndSet(partiesCount, -1)){
+            if (partiesArrived.compareAndSet(partiesCount, -1)) {
                 sendPhaseResults(duration);
             }
         }
@@ -407,7 +409,7 @@ public class BearScript {
         }
     }
 
-    public static class BearScriptPhases{
+    public static class BearScriptPhases {
         final ConcurrentHashMap<String, BearScriptPhase> phases = new ConcurrentHashMap<String, BearScriptPhase>();
         private final List<SessionContext> $s;
         BearFX bearFX;
@@ -424,13 +426,13 @@ public class BearScript {
         public BearScriptPhase getPhase(String id, ScriptItem scriptItem) {
             BearScriptPhase phase = phases.get(id);
 
-            if(phase != null){
+            if (phase != null) {
                 return phase;
             }
 
-            synchronized (phaseCreationLock){
+            synchronized (phaseCreationLock) {
                 phase = phases.get(id);
-                if(phase == null){
+                if (phase == null) {
                     GroupDivider<SessionContext> divider = new GroupDivider<SessionContext>($s, Stage.SESSION_ID, new Function<SessionContext, String>() {
                         public String apply(SessionContext $) {
                             DynamicVariable<Task> task = $.getExecutionContext().currentTask;
@@ -441,7 +443,8 @@ public class BearScript {
                         public String apply(SessionContext $) {
                             return $.getExecutionContext().phaseText.getDefaultValue().toString();
                         }
-                    });
+                    }
+                    );
 
                     phases.put(id, phase = new BearScriptPhase(id, bearFX, divider, shellContext, scriptItem));
 
@@ -459,7 +462,7 @@ public class BearScript {
         }
     }
 
-    static class ShellRunContext{
+    static class ShellRunContext {
         public final String sessionId = SessionContext.randomId();
         // seen as a task
         protected String phaseId;
@@ -502,25 +505,28 @@ public class BearScript {
             return phaseId;
         }
 
-        public void newTaskId(){
+        public void newTaskId() {
             phaseId = SessionContext.randomId();
         }
     }
 
-    public Response exec(String script, boolean interactive) {
-        if(interactive){
-            global.putConst(bear.internalInteractiveRun, true);
-        }
-
+    public Response exec(boolean interactive, Supplier<BearScriptParseResult> scriptSupplier) {
         final ShellRunContext shellContext = new ShellRunContext(null);
 
         bearFX.sendMessageToUI(new NewSessionConsoleEventToUI("shell", shellContext.sessionId));
 
-        final BearScriptParseResult parseResult = parseScript(script, shellContext, initialPlugin.cmdAnnotation());
+        final BearScriptParseResult parseResult = scriptSupplier.get();
 
-        if(!parseResult.globalErrors.isEmpty()){
+        if (!parseResult.globalErrors.isEmpty()) {
             return new RunResponse(parseResult.globalErrors);
         }
+
+        final List<ScriptItem> scriptItems = parseResult.scriptItems;
+
+        if (interactive) {
+            global.putConst(bear.internalInteractiveRun, true);
+        }
+
 
         Supplier<SingleTaskScript> singleTaskScriptSupplier = Suppliers.ofInstance(new SingleTaskScript(new TaskDef() {
             @Override
@@ -536,7 +542,7 @@ public class BearScript {
                             BearScriptExecContext scriptExecContext =
                                 new BearScriptExecContext(initialPlugin, $, parent, taskDef);
 
-                            for (ScriptItem scriptItem : parseResult.scriptItems) {
+                            for (ScriptItem scriptItem : scriptItems) {
                                 result = scriptExecContext.runItem(shellContext, scriptItem);
 
                                 if (result.nok()) {
@@ -545,8 +551,7 @@ public class BearScript {
                             }
 
                             return result;
-                        }
-                        catch (Exception e){
+                        } catch (Exception e) {
                             result = new ExceptionResult(e);
                             return result;
                         } finally {
@@ -601,8 +606,8 @@ public class BearScript {
             execContext.currentTask.addListener(new DynamicVariable.ChangeListener<Task>() {
                 @Override
                 public void changedValue(DynamicVariable<Task> var, Task oldValue, Task newValue) {
-                    if($.getExecutionContext().phaseId.isUndefined()){
-                       return;
+                    if ($.getExecutionContext().phaseId.isUndefined()) {
+                        return;
                     }
 
                     String phaseId = $.getExecutionContext().phaseId.getDefaultValue();
@@ -661,7 +666,7 @@ public class BearScript {
     }
 
 
-    public static class BearScriptParseResult{
+    public static class BearScriptParseResult {
         List<ScriptItem> scriptItems;
         List<ScriptError> globalErrors;
 
@@ -671,7 +676,7 @@ public class BearScript {
         }
     }
 
-    static BearScriptParseResult parseScript(String script, ShellRunContext shellContext, String initialPluginName) {
+    static BearScriptParseResult parseScript(String script, String initialPluginName) {
         final List<String> currentScript = new ArrayList<String>();
 
         List<ScriptItem> scriptItems = new ArrayList<ScriptItem>();
@@ -698,7 +703,7 @@ public class BearScript {
                     String secondWord = substringBefore(command, " ");
 
                     if ("shell".equals(secondWord)) {
-                        if(!currentScript.isEmpty()){
+                        if (!currentScript.isEmpty()) {
                             scriptItems.add(new ScriptItem(currentPluginName, new ArrayList<String>(currentScript), lineIndex));
 
                             currentScript.clear();
@@ -706,14 +711,13 @@ public class BearScript {
 
                         currentPluginName = substringAfter(command, " ").trim();
                     } else {
-                        ui.error(new TextConsoleEventToUI("shell", "command not supported: <i>" + secondWord + "</i><br>")
-                            .setParentId(shellContext.phaseId));
+                        ui.error(new TextConsoleEventToUI("shell", "command not supported: <i>" + secondWord + "</i><br>"));
 
                         globalErrors.add(new ScriptError(line, lineIndex, "command not supported: " + secondWord));
                     }
 
                     continue;
-                } else{
+                } else {
                     currentScript.add(line);
                 }
 
@@ -723,7 +727,7 @@ public class BearScript {
             currentScript.add(line);
         }
 
-        if(!currentScript.isEmpty()){
+        if (!currentScript.isEmpty()) {
             scriptItems.add(new ScriptItem(currentPluginName, new ArrayList<String>(currentScript), lineIndex));
         }
 
@@ -799,6 +803,42 @@ public class BearScript {
             super("switched to shell '<i>" + pluginName + "</i>'");
             this.pluginName = pluginName;
             this.prompt = prompt;
+        }
+    }
+
+    public static class GroovyScriptSupplier implements Supplier<BearScriptParseResult> {
+
+        private final BearScriptParseResult parseResult;
+
+        public GroovyScriptSupplier(GlobalContext global, String groovyScript) {
+            GroovyShellPlugin groovy = global.getPlugin(GroovyShellPlugin.class);
+
+            this.parseResult = new BearScriptParseResult(
+                Lists.newArrayList(
+                    new ScriptItem(groovy.cmdAnnotation(), Splitter.on("\n").splitToList(groovyScript), 1)
+                ),
+                Collections.<ScriptError>emptyList());
+
+        }
+
+        @Override
+        public BearScriptParseResult get() {
+            return parseResult;
+        }
+    }
+
+    public static class ParserScriptSupplier implements Supplier<BearScriptParseResult> {
+        private final Plugin initialPlugin;
+        private final String script;
+
+        public ParserScriptSupplier(Plugin initialPlugin, String script) {
+            this.initialPlugin = initialPlugin;
+            this.script = script;
+        }
+
+        @Override
+        public BearScriptParseResult get() {
+            return parseScript(script, initialPlugin.cmdAnnotation());
         }
     }
 }

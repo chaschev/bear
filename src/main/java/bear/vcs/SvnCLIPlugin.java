@@ -16,40 +16,23 @@
 
 package bear.vcs;
 
-import bear.cli.CommandLine;
-import bear.cli.Script;
-import bear.core.SessionContext;
-import bear.core.GlobalContext;
-import bear.task.InstallationTaskDef;
-import bear.task.Task;
-import bear.task.TaskDef;
-import bear.task.Dependency;
-import com.google.common.base.Function;
-import com.google.common.collect.Lists;
-import org.apache.commons.lang3.StringUtils;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-
-
 /**
  * @author Andrey Chaschev chaschev@gmail.com
  */
-public class SvnCLIPlugin extends VcsCLIPlugin<Task, TaskDef<?>> {
-    protected SvnCLIPlugin(GlobalContext global, SvnTaskDef taskDef) {
+public class SvnCLIPlugin /*extends VcsCLIPlugin<Task, TaskDef<?>>*/ {
+    /*protected SvnCLIPlugin(GlobalContext global, SvnTaskDef taskDef) {
         super(global, taskDef);
 
         ((SvnTaskDef) taskDefMixin).svn = this;
     }
 
     @Override
-    public SvnCLISession newSession(SessionContext $, Task<TaskDef> parent) {
-        return new SvnCLISession(parent, taskDefMixin, $);
+    public SvnCLIVCSSession newSession(SessionContext $, Task<TaskDef> parent) {
+        return new SvnCLIVCSSession(parent, taskDefMixin, $);
     }
 
-    public class SvnCLISession extends Session {
-        protected SvnCLISession(Task<TaskDef> parent, TaskDef def, SessionContext $) {
+    public class SvnCLIVCSSession extends VCSSession {
+        protected SvnCLIVCSSession(Task<TaskDef> parent, TaskDef def, SessionContext $) {
             super(parent, def, $);
 
             addDependency(new Dependency(taskDefMixin, "SVN", $, parent).addCommands("svn --version"));
@@ -66,16 +49,15 @@ public class SvnCLIPlugin extends VcsCLIPlugin<Task, TaskDef<?>> {
         }
 
         @Override
-        public Script checkout(String revision, String destination, Map<String, String> params) {
-
-            return $.sys.script().line(commandPrefix("checkout", params)
+        public VCSScript<?> checkout(String revision, String destination, Map<String, String> params) {
+            return newVCSScript().line(commandPrefix("checkout", params)
                 .a("-r" + revision,
                     vcsRepository(),
                     destination));
         }
 
         @Override
-        public Script sync(String revision, String destination, Map<String, String> params) {
+        public VCSScript<?> sync(String revision, String destination, Map<String, String> params) {
             return $.sys.script().line(commandPrefix("switch", params)
                 .a("-r" + revision,
                     vcsRepository(),
@@ -83,13 +65,13 @@ public class SvnCLIPlugin extends VcsCLIPlugin<Task, TaskDef<?>> {
         }
 
         @Override
-        public Script<BranchInfoResult> queryRevision(String revision) {
+        public VCSScript<BranchInfoResult> queryRevision(String revision) {
             return queryRevision(revision, emptyParams());
         }
 
         @SuppressWarnings("unchecked")
         @Override
-        public Script<BranchInfoResult> queryRevision(String revision, Map<String, String> params) {
+        public VCSScript<BranchInfoResult> queryRevision(String revision, Map<String, String> params) {
             return $.sys.script().line(commandPrefix("info", params)
                 .a("-r" + revision,
                     vcsRepository())
@@ -106,7 +88,7 @@ public class SvnCLIPlugin extends VcsCLIPlugin<Task, TaskDef<?>> {
         }
 
         @Override
-        public Script export(String revision, String destination, Map<String, String> params) {
+        public VCSScript export(String revision, String destination, Map<String, String> params) {
             return $.sys.script().line(commandPrefix("export", params)
                 .a("-r" + revision,
                     vcsRepository(),
@@ -135,7 +117,7 @@ public class SvnCLIPlugin extends VcsCLIPlugin<Task, TaskDef<?>> {
                 });
         }
 
-        private CommandLine commandPrefix(String svnCmd, Map<String, String> params) {
+        private CommandLine<?> commandPrefix(String svnCmd, Map<String, String> params) {
             return $.newCommandLine()
                 .stty()
                 .a(command(), svnCmd).p(params)
@@ -177,34 +159,13 @@ public class SvnCLIPlugin extends VcsCLIPlugin<Task, TaskDef<?>> {
         return InstallationTaskDef.EMPTY;
     }
 
-    public static final class LsResult extends CommandLineResult {
-        List<String> files;
-
-        public LsResult(String text, List<String> files) {
-            super(text);
-            this.files = files;
-        }
-
-        public List<String> getFiles() {
-            return files;
-        }
-
-        @Override
-        public String toString() {
-            final StringBuilder sb = new StringBuilder("LsResult{");
-            sb.append("files=").append(files);
-            sb.append('}');
-            return sb.toString();
-        }
-    }
-
-    static class SvnTaskDef extends TaskDef<SvnCLISession> {
+    static class SvnTaskDef extends TaskDef<SvnCLIVCSSession> {
         private SvnCLIPlugin svn;
 
 
         @Override
-        public SvnCLISession newSession(SessionContext $, final Task parent) {
+        public SvnCLIVCSSession newSession(SessionContext $, final Task parent) {
             return svn.newSession($, parent);
         }
-    }
+    }*/
 }

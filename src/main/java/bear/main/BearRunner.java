@@ -93,7 +93,8 @@ public class BearRunner {
         }
         if(scriptSupplier != null){
             script = scriptSupplier.get();
-            script.setProperties(bearSettings.getGlobal(), null);
+            bearSettings.getGlobal().wire(script);
+            script.setScriptsDir(null);
         }
         return this;
     }

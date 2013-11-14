@@ -16,10 +16,11 @@
 
 package bear.plugins.groovy;
 
+import bear.context.Cli;
 import bear.core.GlobalContext;
 import bear.core.SessionContext;
 import bear.core.Stage;
-import bear.context.Cli;
+import bear.main.Script;
 import bear.plugins.CommandInterpreter;
 import bear.plugins.PluginShellMode;
 import bear.session.Result;
@@ -28,10 +29,16 @@ import bear.task.TaskDef;
 import bear.task.TaskResult;
 import bear.task.TaskRunner;
 import chaschev.lang.OpenBean;
+import chaschev.util.CatchyRunnable;
+import chaschev.util.Exceptions;
 import groovy.lang.Binding;
+import groovy.lang.GroovyClassLoader;
 import groovy.lang.GroovyShell;
+import org.apache.logging.log4j.LogManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.regex.Pattern;
 
 /**
  * There are two forms of application for this plugin. The first is to 'execute some bear code'. You would typically want to do this to inspect Bear's internals or to run some activity not covered by the console API.
@@ -44,6 +51,8 @@ import org.slf4j.LoggerFactory;
  */
 public class GroovyShellMode extends PluginShellMode<GroovyShellPlugin> implements CommandInterpreter {
     private static final Logger logger = LoggerFactory.getLogger(GroovyShellMode.class);
+    private static final org.apache.logging.log4j.Logger ui = LogManager.getLogger("fx");
+    public static final Pattern SCRIPT_PATTERN = Pattern.compile(".*class.*extends.*Script.*", Pattern.MULTILINE | Pattern.DOTALL);
 
     private final Binding binding;
     private final GroovyShell shell;
@@ -72,19 +81,42 @@ public class GroovyShellMode extends PluginShellMode<GroovyShellPlugin> implemen
         }
     }
 
-    public Task interpret(final String command, SessionContext $, Task parent, final TaskDef taskDef) {
-        return new Task<TaskDef>(parent, taskDef, $) {
+    public Task interpret(final String command, SessionContext $, final Task _parent, final TaskDef taskDef) {
+        return new Task<TaskDef>(_parent, taskDef, $) {
             @Override
-            protected TaskResult exec(TaskRunner runner) {
+            protected TaskResult exec(final TaskRunner runner) {
+                Runnable runnable = null;
                 try {
-                    GroovyShell shell = getShell(runner);
-                    Object result = shell.evaluate(command);
+                    runnable = new CatchyRunnable(new Runnable() {
+                        public void run() {
+                            try {
+                                if(SCRIPT_PATTERN.matcher(command).matches()){
+                                    GroovyClassLoader gcl = new GroovyClassLoader();
+                                    Class clazz = gcl.parseClass(command);
+                                    Object aScript = clazz.newInstance();
+                                    Script script = (Script) aScript;
+                                    script.setParent(_parent);
+                                    $.wire(script);
+                                    script.configure();
+                                    script.global = global;
+                                    script.run();
+                                }else{
+                                    GroovyShell shell = getShell(runner);
+                                    shell.evaluate(command);
+                                }
+                            } catch (Exception e) {
+                                throw Exceptions.runtime(e);
+                            }
+                        }
+                    });
 
-                    return new GroovyResult(result);
+                    runnable.run();
+
+                    return TaskResult.OK;
                 }
                 catch (IllegalStateException e){
                     if(e.getMessage().contains("FX")){
-                        return fxWorkaround();
+                        return fxWorkaround(runnable);
                     }else{
                         logger.warn("", e);
                         return new GroovyResult(e);
@@ -97,16 +129,11 @@ public class GroovyShellMode extends PluginShellMode<GroovyShellPlugin> implemen
                 }
             }
 
-            private GroovyResult fxWorkaround() {
+            private GroovyResult fxWorkaround(Runnable runnable) {
                 GroovyResult result;
 
                 try {
-                    OpenBean.invoke(binding.getVariable("_"), "evaluateInFX", new Runnable() {
-                        @Override
-                        public void run() {
-                            shell.evaluate(command);
-                        }
-                    });
+                    OpenBean.invoke(binding.getVariable("_"), "evaluateInFX", runnable);
                     result = new GroovyResult("sent to FX evaluation");
                 } catch (Exception e1) {
                     logger.warn("", e1);
@@ -135,6 +162,9 @@ public class GroovyShellMode extends PluginShellMode<GroovyShellPlugin> implemen
                     $binding.setVariable("task", this);
                     $binding.setVariable("_command", command);
                 }
+
+                $binding.setVariable("logger", logger);
+                $binding.setVariable("ui", ui);
 
                 return isLocal ? shell : new GroovyShell($binding);
             }

@@ -76,9 +76,8 @@ public abstract class SystemSession extends Task<SystemEnvironmentPlugin.SystemS
         return run(script, null);
     }
 
-    public <T extends CommandLineResult> T run(Script<T> script, ConsoleCallback callback) {
+    public <T extends CommandLineResult> T run(Script<T, ?> script, ConsoleCallback callback) {
         StringBuilder sb = new StringBuilder(1024);
-        Result r = Result.OK;
 
         for (CommandLine line : script.lines) {
             if (script.cd != null && line.cd != null) {
@@ -93,7 +92,7 @@ public abstract class SystemSession extends Task<SystemEnvironmentPlugin.SystemS
         return script.parseResult(sb.toString());
     }
 
-    public <T extends CommandLineResult> T sendCommand(CommandLine<T> commandLine) {
+    public <T extends CommandLineResult> T sendCommand(CommandLine<T, ?> commandLine) {
         return sendCommand(commandLine, null);
     }
 
@@ -113,15 +112,15 @@ public abstract class SystemSession extends Task<SystemEnvironmentPlugin.SystemS
         return newCommandLine(CommandLineResult.class);
     }
 
-    public CommandLine newCommandLine(Script script) {
-        final CommandLine<CommandLineResult> line = newCommandLine(CommandLineResult.class);
+    public CommandLine newCommandLine(Script<?, ?> script) {
+        final CommandLine line = newCommandLine(CommandLineResult.class);
 
         line.setScript(script);
 
         return line;
     }
 
-    public abstract <T extends CommandLineResult> CommandLine<T> newCommandLine(Class<T> aClass);
+    public abstract <T extends CommandLineResult> CommandLine<T, ?> newCommandLine(Class<T> aClass);
 
 
     public String capture(String s) {

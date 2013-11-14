@@ -18,6 +18,7 @@ package bear.vcs;
 
 import bear.cli.CommandLine;
 import bear.cli.Script;
+import bear.cli.StubScript;
 import bear.console.AbstractConsole;
 import bear.console.ConsoleCallback;
 import bear.core.GlobalContext;
@@ -60,12 +61,12 @@ public class GitCLIPlugin extends VcsCLIPlugin<Task, TaskDef<?>> {
     }
 
     @Override
-    public GitCLISession newSession(SessionContext $, Task<TaskDef> parent) {
-        return new GitCLISession(parent, taskDefMixin, $);
+    public GitCLIVCSSession newSession(SessionContext $, Task<TaskDef> parent) {
+        return $.wire(new GitCLIVCSSession(parent, taskDefMixin, $));
     }
 
-    public class GitCLISession extends Session {
-        public GitCLISession(Task<TaskDef> parent, TaskDef def, SessionContext $) {
+    public class GitCLIVCSSession extends VCSSession {
+        public GitCLIVCSSession(Task<TaskDef> parent, TaskDef def, SessionContext $) {
             super(parent, def, $);
 
             addDependency(new Dependency(taskDefMixin, "GIT", $, parent).addCommands("git --version"));
@@ -90,7 +91,7 @@ public class GitCLIPlugin extends VcsCLIPlugin<Task, TaskDef<?>> {
         }
 
         @Override
-        public Script checkout(String revision, String destination, Map<String, String> params) {
+        public VCSScript<?> checkout(String revision, String destination, Map<String, String> params) {
             String git = command();
             String remote = origin();
 
@@ -108,7 +109,7 @@ public class GitCLIPlugin extends VcsCLIPlugin<Task, TaskDef<?>> {
                 addAll(args, "--depth", "" + $(cloneDepth));
             }
 
-            final Script script = $.sys.script();
+            final VCSScript script = new VCSScript($.sys, this);
 
             script
                 .line()
@@ -138,12 +139,11 @@ public class GitCLIPlugin extends VcsCLIPlugin<Task, TaskDef<?>> {
             }
         }
 
-
-        public Script sync(String revision, String destination, Map<String, String> params) {
+        public VCSScript<?> sync(String revision, String destination, Map<String, String> params) {
             String git = command();
             String remote = origin();
 
-            Script script = $.sys.script()
+            VCSScript<?> script = newVCSScript()
                 .cd(destination);
 
             // Use git-config to setup a remote tracking branches. Could use
@@ -176,12 +176,12 @@ public class GitCLIPlugin extends VcsCLIPlugin<Task, TaskDef<?>> {
         }
 
         @Override
-        public Script<BranchInfoResult> queryRevision(String revision) {
+        public VCSScript<? extends BranchInfoResult> queryRevision(String revision) {
             return queryRevision(revision, emptyParams());
         }
 
         @Override
-        public Script<BranchInfoResult> queryRevision(String revision, Map<String, String> params) {
+        public VCSScript<? extends BranchInfoResult> queryRevision(String revision, Map<String, String> params) {
             if (revision.startsWith("origin/")) {
                 throw new IllegalArgumentException(String.format(
                     "Deploying remote branches is not supported.  Specify the remote branch as a local branch for the git repository you're deploying from (ie: '%s' rather than '%s').",
@@ -197,7 +197,7 @@ public class GitCLIPlugin extends VcsCLIPlugin<Task, TaskDef<?>> {
             //this will break the logic a bit
             String newRevision = null;
 
-            final SvnCLIPlugin.LsResult lsResult = $.sys.sendCommand(
+            final LsResult lsResult = $.sys.run(
                 lsRemote(revision).timeoutSec(10), passwordCallback());
 
             for (String s : lsResult.getFiles()) {
@@ -252,51 +252,56 @@ public class GitCLIPlugin extends VcsCLIPlugin<Task, TaskDef<?>> {
         }
 
 
-        private Script.StubScript<BranchInfoResult> newQueryRevisionResult(String revision) {
-            return new Script.StubScript<BranchInfoResult>($.sys, new BranchInfoResult(null, revision, null));
+        private VCSScript<? extends BranchInfoResult> newQueryRevisionResult(String revision) {
+            return new StubScript<BranchInfoResult>($.sys, this, new BranchInfoResult(null, revision, null));
         }
 
         @Override
-        public Script export(String revision, String destination, Map<String, String> params) {
+        public VCSScript<?> export(String revision, String destination, Map<String, String> params) {
             return checkout(revision, destination, emptyParams())
                 .line($.sys.rmLine($.sys.line(), ".", destination + "/.git"));
         }
 
         @Override
-        public CommandLine diff(String rFrom, String rTo, Map<String, String> params) {
+        public VCSScript<?> diff(String rFrom, String rTo, Map<String, String> params) {
             throw new UnsupportedOperationException("todo: diff");
         }
 
         @Override
-        public CommandLine log(String rFrom, String rTo, Map<String, String> params) {
+        public VCSScript<?> log(String rFrom, String rTo, Map<String, String> params) {
             throw new UnsupportedOperationException("todo: log");
         }
 
-        public CommandLine<SvnCLIPlugin.LsResult> ls(String path, Map<String, String> params) {
+        public VCSScript<LsResult> ls(String path, Map<String, String> params) {
+            //readability on top
             //noinspection unchecked
-            return commandPrefix("ls", params)
-                .a(path).setParser(new Function<String, SvnCLIPlugin.LsResult>() {
-                    public SvnCLIPlugin.LsResult apply(String s) {
-                        return new SvnCLIPlugin.LsResult(s, convertLsOutput(s));
-                    }
-                });
+            return newVCSScript(commandPrefix("ls", params, LsResult.class)
+                .a(path)).setParser(new Function<String, LsResult>() {
+                public LsResult apply(String s) {
+                    return new LsResult(s, convertLsOutput(s));
+                }
+            });
         }
 
-        public CommandLine<SvnCLIPlugin.LsResult> lsRemote(String revision) {
+        public VCSScript<LsResult> lsRemote(String revision) {
             //noinspection unchecked
-            return commandPrefix("ls-remote", emptyParams())
-                .a($(bear.repositoryURI), revision).setParser(new Function<String, SvnCLIPlugin.LsResult>() {
-                    public SvnCLIPlugin.LsResult apply(String s) {
-                        return new SvnCLIPlugin.LsResult(s, convertLsOutput(s));
-                    }
-                });
+            return newVCSScript(commandPrefix("ls-remote", emptyParams(), LsResult.class)
+                .a($(bear.repositoryURI), revision)).setParser(new Function<String, LsResult>() {
+                public LsResult apply(String s) {
+                    return new LsResult(s, convertLsOutput(s));
+                }
+            });
         }
 
         private List<String> convertLsOutput(String s) {
             return newArrayList(s.split("\n"));
         }
 
-        private CommandLine commandPrefix(String cmd, Map<String, String> params) {
+        private CommandLine<CommandLineResult, VCSScript<CommandLineResult>> commandPrefix(String cmd, Map<String, String> params) {
+            return commandPrefix(cmd, params, CommandLineResult.class);
+        }
+
+        private <T extends CommandLineResult >CommandLine<T, VCSScript<T>> commandPrefix(String cmd, Map<String, String> params, Class<T> tClass) {
             return $.newCommandLine()
                 .stty()
                 .a(command(), cmd).p(params);
@@ -316,12 +321,12 @@ public class GitCLIPlugin extends VcsCLIPlugin<Task, TaskDef<?>> {
         return !remote.equals("origin");
     }
 
-    static class GitTaskDef extends TaskDef<GitCLISession> {
+    static class GitTaskDef extends TaskDef<GitCLIVCSSession> {
         private GitCLIPlugin git;
 
 
         @Override
-        public GitCLISession newSession(SessionContext $, final Task parent) {
+        public GitCLIVCSSession newSession(SessionContext $, final Task parent) {
             return git.newSession($, parent);
         }
     }

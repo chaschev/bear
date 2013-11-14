@@ -35,13 +35,13 @@ public class ProcessRunner<T extends CommandLineResult> {
     private static final Logger logger = LoggerFactory.getLogger(ProcessRunner.class);
 
     ExecutorService executor;
-    CommandLine<T> line;
+    CommandLine<T, ?> line;
 
     int processTimeoutMs = 60000;
     private ConsoleCallback inputCallback;
 
     public ProcessRunner(AbstractConsoleCommand<T> line, ExecutorService executor) {
-        this.line = (CommandLine<T>) line;
+        this.line = (CommandLine<T, ?>) line;
         this.executor = executor;
     }
 

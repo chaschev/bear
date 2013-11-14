@@ -9,9 +9,3 @@ echo `hostname`
 
 :use shell ssh
 cat /home/andrey/texty
-
-:use shell groovy
-:set groovyShell.sendToHosts=true
-:set bear.interactiveRun=false
-:set bear.autoInstallPlugins=true
-#runner.run(tasks.setup)

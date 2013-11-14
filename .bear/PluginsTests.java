@@ -25,7 +25,7 @@ import org.slf4j.LoggerFactory;
 public class PluginsTests {
     public static final Logger logger = LoggerFactory.getLogger(PluginsTests.class);
 
-    public static class RunSetup{
+    /*public static class RunSetup{
         public static void main(String[] args) throws Exception {
             new BearRunner(
                 new SetupPluginsSettings(GlobalContextFactory.INSTANCE, "/test.properties")
@@ -33,7 +33,7 @@ public class PluginsTests {
                 .shutdownAfterRun(true)
                 .prepareToRun();
         }
-    }
+    }*/
 
     public static class RunDeploy{
         public static void main(String[] args) throws Exception {

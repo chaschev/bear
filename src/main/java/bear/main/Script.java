@@ -16,10 +16,16 @@
 
 package bear.main;
 
+import bear.context.Var;
 import bear.core.Bear;
 import bear.core.CompositeTaskRunContext;
 import bear.core.GlobalContext;
 import bear.core.SessionContext;
+import bear.task.Task;
+import bear.task.TaskRunner;
+import org.apache.logging.log4j.LogManager;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 
@@ -31,19 +37,27 @@ import java.io.File;
  *
  * @author Andrey Chaschev chaschev@gmail.com
  */
-public abstract class Script {
+
+public class Script {
+    protected static final Logger logger = LoggerFactory.getLogger(Script.class);
+    protected static final org.apache.logging.log4j.Logger ui = LogManager.getLogger("fx");
+
+    @Var("bear.scriptsDir")
     public File scriptsDir;
 
     public GlobalContext global;
     public Bear bear;
+    public TaskRunner runner;
+
+    @Var(skipWiring = true)
     public final String id = SessionContext.randomId();
 
-    protected abstract void configure() throws Exception;
+    protected Task parent;
 
-    public Script setProperties(GlobalContext global, File scriptsDir) {
-        this.global = global;
+    public void configure() throws Exception {};
+
+    public Script setScriptsDir(File scriptsDir) {
         this.scriptsDir = scriptsDir;
-        bear = global.bear;
         return this;
     }
 
@@ -51,5 +65,13 @@ public abstract class Script {
         configure();
 
         return global.prepareToRun();
+    }
+
+    public void run(){
+
+    }
+
+    public void setParent(Task parent) {
+        this.parent = parent;
     }
 }

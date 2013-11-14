@@ -1,0 +1,10 @@
+# VCS sample script
+:use shell ssh
+
+pwd
+
+:use shell groovy
+:set groovyShell.sendToHosts=true
+
+logger.info("hi from groovy!");
+logger.info("git: {}", global.getPlugin(bear.vcs.GitCLIPlugin));

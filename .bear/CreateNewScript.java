@@ -6,8 +6,8 @@ import bear.main.Script;
 import bear.session.Address;
 import bear.session.Question;
 import bear.plugins.sh.SystemSession;
-import bear.vcs.SvnCLIPlugin;
-import bear.vcs.VcsCLIPlugin;
+import bear.vcs.LsResult;
+import bear.vcs.VCSSession;
 import com.google.common.base.Function;
 import com.google.common.collect.Lists;
 import org.apache.commons.io.FileUtils;
@@ -94,13 +94,13 @@ public class CreateNewScript extends Script {
     }
 
     private static List<String> remoteVcsLs(Bear bear, SystemSession remoteEnv, SessionContext $, final String dir) {
-        final VcsCLIPlugin.Session vcsCLI = $.var(bear.vcs);
+        final VCSSession vcsCLI = $.var(bear.vcs);
 
-        final CommandLine<SvnCLIPlugin.LsResult> line = vcsCLI.ls($.joinPath(bear.repositoryURI, dir));
+        final CommandLine<LsResult> line = vcsCLI.ls($.joinPath(bear.repositoryURI, dir));
 
         line.timeoutMs(20000);
 
-        final SvnCLIPlugin.LsResult result = remoteEnv.sendCommand(line, vcsCLI.passwordCallback());
+        final LsResult result = remoteEnv.sendCommand(line, vcsCLI.passwordCallback());
 
         return Lists.transform(result.getFiles(), new Function<String, String>() {
             public String apply(String input) {
