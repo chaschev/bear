@@ -1,13 +1,9 @@
-import bear.cli.CommandLine;
 import bear.core.Bear;
 import bear.core.SessionContext;
 import bear.core.Stage;
 import bear.main.Script;
 import bear.session.Address;
 import bear.session.Question;
-import bear.plugins.sh.SystemSession;
-import bear.vcs.LsResult;
-import bear.vcs.VCSSession;
 import com.google.common.base.Function;
 import com.google.common.collect.Lists;
 import org.apache.commons.io.FileUtils;
@@ -93,7 +89,7 @@ public class CreateNewScript extends Script {
         System.out.printf("you may now restart bear to run it%n");
     }
 
-    private static List<String> remoteVcsLs(Bear bear, SystemSession remoteEnv, SessionContext $, final String dir) {
+    /*private static List<String> remoteVcsLs(Bear bear, SystemSession remoteEnv, SessionContext $, final String dir) {
         final VCSSession vcsCLI = $.var(bear.vcs);
 
         final CommandLine<LsResult> line = vcsCLI.ls($.joinPath(bear.repositoryURI, dir));
@@ -107,5 +103,5 @@ public class CreateNewScript extends Script {
                 return dir + "/" + input;
             }
         });
-    }
+    }*/
 }

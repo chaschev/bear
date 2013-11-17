@@ -1,13 +1,31 @@
 top priority:
 
 - (ok) ui: run a command in on a single host from shell
-- ui: check how vcs plugins work through ui
-- ui: check if it's easy to send prompt
+- (ok) ui: check how vcs plugins work through ui
 - (ok) ui: cancel command
-- ui: adapt this theme: https://github.com/onokumus/Bootstrap-Admin-Template
+- make sure any plugin can be run in a distributed fashion
+- add phases for scripts (futures, waitAny, waitNone, waitAll) - exec code in a barrier
+ waitNone - default
+ waitAll - awaitAdvanceInterruptibly(arrive | arriveAndAwaitAdvance)
+ wait(condition($s))
+ waitAny
+ onAdvance - arrived barrier
+- script reference - inlines a groovy script
+- change settings to script which is executed every time
+- no need for deployment strategies
 - ui: stage/roles/hosts selection
 - ui: preload stages, hosts and roles
-
+- ui: adapt this theme: https://github.com/onokumus/Bootstrap-Admin-Template
+- sample app:
+-- mongo plugin
+-- computer demo for 3 hosts/single mysql
+-- computer demo for 3 hosts/mongodb cluster
+-- deploy mysql & test
+-- deploy mongodb & test
+-- run via scripts
+- polish code
+- create unit tests coverage plan
+- ui: check if it's easy to send prompt - ok
 
 - (ok, 2) send messages from plugins via uiLogger (sends to 'ui'), logger (sends to console)
 - (ok, 3) ui: logback messages (output to file, a window to view, monitor errors and display red exclamation mark when there are)
@@ -49,7 +67,7 @@ top priority:
 - think of unit testing
 - test rollback
 - maven installation (via dependencies:get)
-- JRuby console
+- (declined) JRuby console
 - make settings file more readable
 
 utils:

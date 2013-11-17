@@ -108,6 +108,11 @@ public abstract class SystemSession extends Task<SystemEnvironmentPlugin.SystemS
         return new Script(this);
     }
 
+    public Script plainScript(String text){
+        return  new Script(this)
+            .line().stty().addRaw(text).build();
+    }
+
     public CommandLine newCommandLine() {
         return newCommandLine(CommandLineResult.class);
     }

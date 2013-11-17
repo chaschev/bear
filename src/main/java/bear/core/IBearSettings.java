@@ -65,6 +65,7 @@ public abstract class IBearSettings {
 
     public final GlobalContext configure(GlobalContextFactory factory) throws Exception {
         Preconditions.checkArgument(!configured, "already configured");
+
         for (Field field : OpenBean.fieldsOfType(this.getClass(), Plugin.class)) {
             factory.requirePlugins((Class<? extends Plugin<Task, TaskDef<?>>>)field.getType());
         }

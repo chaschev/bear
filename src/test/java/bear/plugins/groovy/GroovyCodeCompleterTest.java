@@ -1,12 +1,18 @@
 package bear.plugins.groovy;
 
+import chaschev.util.Exceptions;
+import com.google.common.util.concurrent.AbstractFuture;
 import groovy.lang.Binding;
 import groovy.lang.GroovyShell;
 import org.fest.assertions.api.Assertions;
 import org.junit.Test;
 
+import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import static bear.plugins.groovy.GroovyCodeCompleter.Token.f;
 import static bear.plugins.groovy.GroovyCodeCompleter.Token.m;
@@ -201,4 +207,33 @@ public class GroovyCodeCompleterTest {
             checkStart("blah-blah " + s + " blah-blah", false);
         }
     }
+
+    public static void main(String[] args) throws InterruptedException, ExecutionException, TimeoutException {
+        final MyFuture<String> future = new MyFuture<String>();
+
+        new Thread(){
+            @Override
+            public void run() {
+                System.out.println("sleeping");
+                try {
+                    Thread.sleep(2000);
+                    System.out.println("setting future");
+                    future.set("bar!");
+                    System.out.println("future set");
+                } catch (InterruptedException e) {
+                    throw Exceptions.runtime(e);
+                }
+            }
+        }.start();
+
+        System.out.println("foo: " + future.get(10, TimeUnit.SECONDS));;
+    }
+
+    private static class MyFuture<V> extends AbstractFuture<V> {
+        @Override
+        public boolean set(@Nullable V value) {
+            return super.set(value);
+        }
+    }
+
 }

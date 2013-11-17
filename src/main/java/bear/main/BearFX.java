@@ -250,7 +250,7 @@ public class BearFX {
         }
     }
 
-    private static void addLog4jAppender(String loggerName, Appender appender, Level level, Filter filter) {
+    public static void addLog4jAppender(String loggerName, Appender appender, Level level, Filter filter) {
         try {
             org.apache.logging.log4j.core.Logger coreLogger
                 = (org.apache.logging.log4j.core.Logger) org.apache.logging.log4j.LogManager.getLogger(loggerName);
@@ -265,24 +265,6 @@ public class BearFX {
                     loggerConfig.addAppender(appender, level, filter);
                 }
             }
-
-//            coreLogger
-//                = (org.apache.logging.log4j.core.Logger) org.apache.logging.log4j.LogManager.getLogger(loggerName);
-//
-//            Logger slf4jLogger = LoggerFactory.getLogger(loggerName);
-//            
-//            
-//
-//            if(slf4jLogger != null){
-//                Field field = slf4jLogger.getClass().getDeclaredField("logger");
-//                field.setAccessible(true);
-//                AbstractLoggerWrapper loggerWrapper = (AbstractLoggerWrapper) field.get(slf4jLogger);
-//
-//                field = loggerWrapper.getClass().getDeclaredField("logger");
-//                field.setAccessible(true);
-//                field.set(loggerWrapper, coreLogger);
-//            }
-
         } catch (Exception e) {
             throw Exceptions.runtime(e);
         }

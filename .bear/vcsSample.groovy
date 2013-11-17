@@ -1,9 +1,9 @@
 import bear.core.SessionContext
 import bear.vcs.GitCLIPlugin
-import bear.vcs.LsResult
+import bear.vcs.LogResult
 
 class VcsSampleScript extends bear.main.Script {
-    GitCLIPlugin git;
+    GitCLIPlugin gitPlugin;
 
     SessionContext _
 
@@ -13,16 +13,17 @@ class VcsSampleScript extends bear.main.Script {
         _.putConst(bear.repositoryURI, 'git@github.com:chaschev/grailstwitter.git')
         _.putConst(bear.vcsBranchName, 'master')
 
-        logger.info("git: {}", git)
-        def session = git.newSession(_, parent)
+        logger.info("git: {}", gitPlugin)
+        def git = gitPlugin.newSession(_, parent)
 
-        logger.info("head: {}", session.head())
+        logger.info("head: {}", git.head())
 
-        final LsResult result = session.lsRemote(_.var(bear.vcsBranchName)).run()
+        final LogResult logResult = git.newPlainScript("git --no-pager log -3 --all --date-order", GitCLIPlugin.LOG_PARSER).run()
 
-        logger.info("lsRemote: {}, {}", result.text, result.files)
+        logger.info("logResult: {}", logResult.entries)
 
+        git.newPlainScript("""git --no-pager diff master~3^~2 --color""").run()
 
-//        runner.run(global.tasks.vcsUpdate);
+        git.newPlainScript("""git branch -r --color""").run()
     }
 }

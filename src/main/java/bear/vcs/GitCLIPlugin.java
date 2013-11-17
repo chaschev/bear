@@ -29,22 +29,43 @@ import bear.task.Dependency;
 import bear.task.InstallationTaskDef;
 import bear.task.Task;
 import bear.task.TaskDef;
+import chaschev.lang.OpenStringBuilder;
 import com.google.common.base.Function;
-import org.apache.commons.lang3.StringUtils;
+import com.google.common.base.Splitter;
+import com.google.common.collect.PeekingIterator;
+import org.joda.time.DateTime;
+import org.joda.time.format.DateTimeFormat;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static chaschev.lang.LangUtils.elvis;
+import static com.google.common.collect.Iterators.peekingIterator;
 import static com.google.common.collect.Lists.newArrayList;
 import static java.util.Collections.addAll;
+import static org.apache.commons.lang3.StringUtils.substringAfter;
+import static org.apache.commons.lang3.StringUtils.substringBefore;
 
 
 /**
  * @author Andrey Chaschev chaschev@gmail.com
  */
 public class GitCLIPlugin extends VcsCLIPlugin<Task, TaskDef<?>> {
+    public static final Function<String, LsResult> LS_PARSER = new Function<String, LsResult>() {
+        public LsResult apply(String s) {
+            return new LsResult(s, convertLsOutput(s));
+        }
+    };
+
+
+
+    public static final Function<String, LogResult> LOG_PARSER = new LogParserFunction();
+    public static final Pattern HASH_REGEX = Pattern.compile("^[0-9a-f]{40}$");
+
+
     public final DynamicVariable<Integer> cloneDepth = Variables.newVar(-1);
     public final DynamicVariable<Boolean>
         enableSubmodules = Variables.newVar(false),
@@ -55,7 +76,7 @@ public class GitCLIPlugin extends VcsCLIPlugin<Task, TaskDef<?>> {
     public GitCLIPlugin(GlobalContext global) {
         super(global, new GitTaskDef());
 
-        ((GitTaskDef)taskDefMixin).git = this;
+        ((GitTaskDef) taskDefMixin).git = this;
 
         remote = Variables.<String>dynamic("remote user").setEqualTo(bear.vcsUsername);
     }
@@ -64,6 +85,44 @@ public class GitCLIPlugin extends VcsCLIPlugin<Task, TaskDef<?>> {
     public GitCLIVCSSession newSession(SessionContext $, Task<TaskDef> parent) {
         return $.wire(new GitCLIVCSSession(parent, taskDefMixin, $));
     }
+
+
+
+    /*
+    Useful Git commands:
+
+        git --no-pager log  --pretty=oneline|fuller --since="1 years 5 months"
+        git --no-pager log -10 --all --date-order  <-- last 10 commits
+        git --no-pager show 39c0b36725  <-- commit id
+        git --no-pager diff master^^
+        git --no-pager diff master~3^~2
+        git [-follow] log  -- application.properties
+
+        git branch -r # list remote branches
+          andrey/HEAD -> andrey/master
+          andrey/master
+        mkdir git-demo
+
+     Work cycle:
+
+        cd git-demo
+        git init
+        git add.
+        git commit -m «initial commit»
+        git branch new-feature
+        git checkout new-feature
+        git add.
+        git commit -m «Done with the new feature»
+        git checkout master
+        git diff HEAD new-feature
+        git merge new-feature
+        git branch -d new-feature
+        git log --since=«1 day»
+
+        Tracking remote branches (http://stackoverflow.com/a/1590791/1851024) = origin
+
+
+     */
 
     public class GitCLIVCSSession extends VCSSession {
         public GitCLIVCSSession(Task<TaskDef> parent, TaskDef def, SessionContext $) {
@@ -170,7 +229,7 @@ public class GitCLIPlugin extends VcsCLIPlugin<Task, TaskDef<?>> {
             // Make sure there's nothing else lying around in the repository (for
             // example, a submodule that has subsequently been removed).
 
-            //todo think in capistrano these commands chain
+            //todo think: in capistrano these commands chain
 
             return script.line().a("git", "clean", verbose()).addSplit("-d -x -f").build();
         }
@@ -194,15 +253,16 @@ public class GitCLIPlugin extends VcsCLIPlugin<Task, TaskDef<?>> {
                 return newQueryRevisionResult(revision);
             }
 
-            //this will break the logic a bit
+            // this will break the logic a bit
+            // queries remote repo to get latest commit revision
+            // same as git --no-pager log -1 --all --date-order for local repo
             String newRevision = null;
 
-            final LsResult lsResult = $.sys.run(
-                lsRemote(revision).timeoutSec(10), passwordCallback());
+            final LsResult lsResult = lsRemote(revision).timeoutSec(10).run();
 
             for (String s : lsResult.getFiles()) {
-                final String rev = StringUtils.substringBefore(s, "\t");
-                final String ref = StringUtils.substringAfter(s, "\t");
+                final String rev = substringBefore(s, "\t");
+                final String ref = substringAfter(s, "\t");
 
                 if (ref.replaceFirst("refs/.*?/", "").trim().equals(revision)) {
                     newRevision = rev;
@@ -276,32 +336,20 @@ public class GitCLIPlugin extends VcsCLIPlugin<Task, TaskDef<?>> {
             //readability on top
             //noinspection unchecked
             return newVCSScript(commandPrefix("ls", params, LsResult.class)
-                .a(path)).setParser(new Function<String, LsResult>() {
-                public LsResult apply(String s) {
-                    return new LsResult(s, convertLsOutput(s));
-                }
-            });
+                .a(path)).setParser(LS_PARSER);
         }
 
         public VCSScript<LsResult> lsRemote(String revision) {
             //noinspection unchecked
             return newVCSScript(commandPrefix("ls-remote", emptyParams(), LsResult.class)
-                .a($(bear.repositoryURI), revision)).setParser(new Function<String, LsResult>() {
-                public LsResult apply(String s) {
-                    return new LsResult(s, convertLsOutput(s));
-                }
-            });
-        }
-
-        private List<String> convertLsOutput(String s) {
-            return newArrayList(s.split("\n"));
+                .a($(bear.repositoryURI), revision)).setParser(LS_PARSER);
         }
 
         private CommandLine<CommandLineResult, VCSScript<CommandLineResult>> commandPrefix(String cmd, Map<String, String> params) {
             return commandPrefix(cmd, params, CommandLineResult.class);
         }
 
-        private <T extends CommandLineResult >CommandLine<T, VCSScript<T>> commandPrefix(String cmd, Map<String, String> params, Class<T> tClass) {
+        private <T extends CommandLineResult> CommandLine<T, VCSScript<T>> commandPrefix(String cmd, Map<String, String> params, Class<T> tClass) {
             return $.newCommandLine()
                 .stty()
                 .a(command(), cmd).p(params);
@@ -314,7 +362,7 @@ public class GitCLIPlugin extends VcsCLIPlugin<Task, TaskDef<?>> {
     }
 
     private static boolean validRevision(String revision) {
-        return revision != null && revision.matches("^[0-9a-f]{40}$");
+        return revision != null && HASH_REGEX.matcher(revision).matches();
     }
 
     private static boolean remoteIsNotOrigin(String remote) {
@@ -328,6 +376,61 @@ public class GitCLIPlugin extends VcsCLIPlugin<Task, TaskDef<?>> {
         @Override
         public GitCLIVCSSession newSession(SessionContext $, final Task parent) {
             return git.newSession($, parent);
+        }
+    }
+
+    private static List<String> convertLsOutput(String s) {
+        return newArrayList(s.split("\n"));
+    }
+
+    private static class LogParserFunction implements Function<String, LogResult> {
+        public LogResult apply(String s) {
+            List<LogResult.LogEntry> entries = new ArrayList<LogResult.LogEntry>();
+
+            OpenStringBuilder comment = new OpenStringBuilder(256);
+
+            for (PeekingIterator<String> it = peekingIterator(Splitter.on("\n").trimResults().split(s).iterator()); it.hasNext(); ) {
+                String line;
+
+                String revision = null;
+
+                for(line = it.next();it.hasNext();line=it.next()){
+                    if(line.startsWith("commit")) {
+                        revision = substringAfter(line, " ").trim();
+                        Matcher matcher = HASH_REGEX.matcher(revision);
+                        if(matcher.matches()){
+                            break;
+                        }
+                    }
+                }
+
+                if(revision == null) break;
+
+                String author = substringAfter(it.next(), "Author: ");
+                DateTime date = DateTime.parse(substringAfter(it.next(), "Date: ").trim(),
+                    DateTimeFormat.forPattern("EEE MMM dd HH:mm:ss yyyy Z"));
+
+                it.next(); //empty line
+
+                comment.setLength(0);
+
+                while (it.hasNext()) {
+                    line = it.peek();
+                    String possibleRevision = substringAfter(line, " ");
+
+                    if (HASH_REGEX.matcher(possibleRevision).matches()) {
+                        break;
+                    }
+
+                    comment.append(it.next()).append("\n");
+                }
+
+                comment.trim();
+
+                entries.add(new LogResult.LogEntry(date, author, comment.toString(), revision));
+            }
+
+            return new LogResult(s, entries);
         }
     }
 }

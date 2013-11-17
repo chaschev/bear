@@ -2,6 +2,7 @@ package bear.vcs;
 
 import bear.cli.Script;
 import bear.plugins.sh.SystemSession;
+import com.google.common.base.Function;
 
 /**
 * @author Andrey Chaschev chaschev@gmail.com
@@ -17,6 +18,11 @@ public class VCSScript<T extends CommandLineResult> extends Script<T, VCSScript<
 
     @Override
     public T run() {
+        return sys.run(this, vcsSession.passwordCallback());
+    }
+
+    public T run(Function<String, T> parser) {
+        setParser(parser);
         return sys.run(this, vcsSession.passwordCallback());
     }
 }

@@ -20,10 +20,7 @@ import bear.core.Bear;
 import bear.core.GlobalContext;
 import bear.core.SessionContext;
 import bear.plugins.Plugin;
-import bear.vcs.CommandLineResult;
-import bear.vcs.VCSSession;
 import com.google.common.base.Preconditions;
-import org.apache.commons.lang3.time.StopWatch;
 
 
 /**
@@ -186,24 +183,11 @@ public class Tasks {
                 protected TaskResult exec(TaskRunner runner) {
                     $.log("updating the project, please wait...");
 
-                    StopWatch sw = new StopWatch();
-                    sw.start();
-
-                    final VCSSession vcsCLI = $(bear.vcs);
-
-                    final String destPath = $(bear.vcsBranchLocalPath);
-
-                    CommandLineResult result;
-
-                    if (!$.sys.exists(destPath)) {
-                        result = vcsCLI.checkout($(bear.revision), destPath).run();
+                    if (!$.sys.exists($(bear.vcsBranchLocalPath))) {
+                        return $(bear.vcs).checkout($(bear.revision), $(bear.vcsBranchLocalPath)).run();
                     } else {
-                        result = vcsCLI.sync($(bear.revision), destPath).run();
+                        return $(bear.vcs).sync($(bear.revision), $(bear.vcsBranchLocalPath)).run();
                     }
-
-                    $.log("done updating in %s", sw);
-
-                    return result;
                 }
             };
         }

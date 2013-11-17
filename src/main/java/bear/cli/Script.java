@@ -117,4 +117,5 @@ public class Script <T extends CommandLineResult, CHILD extends Script>{
 
         return (CHILD) this;
     }
+
 }

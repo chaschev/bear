@@ -1,6 +1,6 @@
 package bear.console;
 
-import chaschev.lang.LangUtils;
+import chaschev.lang.Lists2;
 import com.google.common.base.Function;
 import com.google.common.base.Optional;
 import com.google.common.base.Predicate;
@@ -8,7 +8,9 @@ import com.google.common.base.Predicates;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 import static chaschev.lang.Predicates2.functionAppliedEquals;
 import static com.google.common.base.Predicates.equalTo;
@@ -48,7 +50,7 @@ public class GroupDivider<ENTRY> {
         this.entries = entries;
         this.groupById = groupById;
         convertedEntries = new String[entries.size()];
-        arrivedEntries = LangUtils.newFilledArrayList(entries.size(), null);
+        arrivedEntries = Lists2.newFilledArrayList(entries.size(), null);
         this.entryId = entryId;
         this.entryAsText = entryAsText;
     }

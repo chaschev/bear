@@ -9,6 +9,7 @@ import bear.task.Task;
 import bear.task.TaskDef;
 import bear.task.TaskResult;
 import bear.task.TaskRunner;
+import com.google.common.base.Function;
 
 import java.util.Map;
 
@@ -97,11 +98,20 @@ public abstract class VCSSession extends Task<TaskDef> {
         return $.var(varName);
     }
 
-    protected <R extends CommandLineResult> VCSScript<R> newVCSScript() {
-        return new VCSScript<R>($.sys, this);
+    public  <R extends CommandLineResult> VCSScript<R> newVCSScript() {
+        return new VCSScript<R>($.sys, this).cd($.var(bear.vcsBranchLocalPath));
     }
 
-    protected <R extends CommandLineResult> VCSScript<R> newVCSScript(CommandLine<R, VCSScript<R>> line) {
+    public  <R extends CommandLineResult> VCSScript<R> newVCSScript(CommandLine<R, VCSScript<R>> line) {
         return this.<R>newVCSScript().add(line);
+    }
+
+    public  <R extends CommandLineResult> VCSScript<R> newPlainScript(String command) {
+        return this.<R>newVCSScript().line().stty().addRaw(command).build();
+    }
+
+    public  <R extends CommandLineResult> VCSScript<R> newPlainScript(String command, Function<String, R> parser) {
+        return this.<R>newPlainScript(command)
+            .setParser(parser);
     }
 }
