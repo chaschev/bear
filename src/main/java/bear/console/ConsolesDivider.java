@@ -28,14 +28,14 @@ import java.util.concurrent.TimeUnit;
 /**
  * @author Andrey Chaschev chaschev@gmail.com
  */
-public class CompositeConsoleArrival<ENTRY> extends GroupDivider<ENTRY> {
+public class ConsolesDivider<ENTRY> extends GroupDivider<ENTRY> {
     protected final List<? extends AbstractConsole> consoles;
 
     private final List<ListenableFuture<ENTRY>> futures;
 
     protected Future<EqualityGroups> groups;
 
-    public CompositeConsoleArrival(
+    public ConsolesDivider(
         List<ENTRY> entries, List<ListenableFuture<ENTRY>> futures, List<? extends AbstractConsole> consoles,
         Function<ENTRY, String> entryAsText, Function<ENTRY, String> entryId) {
         super(entries, entryId, entryAsText);

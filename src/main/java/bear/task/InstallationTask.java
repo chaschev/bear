@@ -35,7 +35,7 @@ public abstract class InstallationTask<TASK_DEF extends TaskDef> extends Task<TA
         }
 
         @Override
-        protected TaskResult exec(TaskRunner runner) {
+        protected TaskResult exec(SessionTaskRunner runner) {
             return TaskResult.OK;
         }
     };

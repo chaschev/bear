@@ -158,11 +158,11 @@ public class GroupDivider<ENTRY> {
     }
 
     public static class EqualityGroups {
-        public List<CompositeConsoleArrival.EqualityGroup> groups = new ArrayList<CompositeConsoleArrival.EqualityGroup>();
+        public List<ConsolesDivider.EqualityGroup> groups = new ArrayList<ConsolesDivider.EqualityGroup>();
 
         int size;
 
-        public EqualityGroups(List<CompositeConsoleArrival.EqualityGroup> groups) {
+        public EqualityGroups(List<ConsolesDivider.EqualityGroup> groups) {
             this.groups = groups;
 
             for (EqualityGroup group : groups) {
@@ -170,8 +170,8 @@ public class GroupDivider<ENTRY> {
             }
         }
 
-        public Optional<CompositeConsoleArrival.EqualityGroup> getMajorityGroup() {
-            return Iterables.tryFind(groups, new Predicate<CompositeConsoleArrival.EqualityGroup>() {
+        public Optional<ConsolesDivider.EqualityGroup> getMajorityGroup() {
+            return Iterables.tryFind(groups, new Predicate<ConsolesDivider.EqualityGroup>() {
                 @Override
                 public boolean apply(EqualityGroup input) {
                     return input.size() > size / 2;
@@ -179,12 +179,12 @@ public class GroupDivider<ENTRY> {
             });
         }
 
-        public ArrayList<CompositeConsoleArrival.EqualityGroup> getMinorGroups() {
+        public ArrayList<ConsolesDivider.EqualityGroup> getMinorGroups() {
             return newArrayList(filter(groups, not(equalTo(getMajorityGroup().orNull()))));
         }
     }
 
-    public static class EqualityGroup<ENTRY> implements Comparable<CompositeConsoleArrival.EqualityGroup<?>> {
+    public static class EqualityGroup<ENTRY> implements Comparable<ConsolesDivider.EqualityGroup<?>> {
         public String id;
         public String text;
         public int firstEntry;

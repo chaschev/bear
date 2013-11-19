@@ -14,7 +14,51 @@
  * limitations under the License.
  */
 
-package bear.main;
+package bear.core;
+
+import bear.console.ConsolesDivider;
+import bear.console.GroupDivider;
+import bear.main.BearFX;
+import bear.main.BearRunner2;
+import bear.main.Response;
+import bear.main.event.NewSessionConsoleEventToUI;
+import bear.main.event.PhaseFinishedEventToUI;
+import bear.main.event.RMIEventToUI;
+import bear.main.event.TextConsoleEventToUI;
+import bear.plugins.Plugin;
+import bear.plugins.groovy.GroovyShellPlugin;
+import bear.session.DynamicVariable;
+import bear.task.Task;
+import bear.task.TaskDef;
+import bear.task.TaskResult;
+import chaschev.util.CatchyCallable;
+import com.google.common.base.*;
+import com.google.common.collect.Collections2;
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Lists;
+import groovy.lang.GroovyShell;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.logging.log4j.LogManager;
+import org.reflections.Reflections;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.annotation.Nullable;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
+
+import static chaschev.lang.Predicates2.contains;
+import static com.google.common.base.Predicates.not;
+import static com.google.common.collect.Lists.newArrayList;
+import static org.apache.commons.lang3.StringUtils.substringAfter;
+import static org.apache.commons.lang3.StringUtils.substringBefore;
 
 /**
  * @author Andrey Chaschev chaschev@gmail.com
@@ -25,8 +69,8 @@ package bear.main;
  * <p/>
  * This is why vars are set in sessions. So todo is to implement set global var value. Note - it has completely different semantics, setting it inside a session could lead to an error
  */
-public class BearScript {
-   /* private static final Logger logger = LoggerFactory.getLogger(BearScript.class);
+public class BearScript2 {
+    private static final Logger logger = LoggerFactory.getLogger(BearScript2.class);
     private static final org.apache.logging.log4j.Logger ui = LogManager.getLogger("fx");
 
 //    final DynamicVariable<BearScriptPhase> phaseId = new DynamicVariable<BearScriptPhase>();
@@ -42,7 +86,7 @@ public class BearScript {
 
     private GlobalContextFactory factory = GlobalContextFactory.INSTANCE;
 
-    public BearScript(GlobalContext global, BearFX bearFX, Plugin currentPlugin, IBearSettings settings) {
+    public BearScript2(GlobalContext global, BearFX bearFX, Plugin currentPlugin, IBearSettings settings) {
         Preconditions.checkArgument(settings.isConfigured(), "settings not configured, call settings.configure(factory)");
 
         this.global = global;
@@ -86,156 +130,76 @@ public class BearScript {
         }
     }
 
-    *//**
+    /**
      * Scope: SESSION.
-     *//*
+     */
     public class BearScriptExecContext {
         String pluginName;
 
-        SessionContext $;
-        private final Task parent;
-        private final TaskDef taskDef;
-
         List<ScriptError> errors = new ArrayList<ScriptError>();
-        private Plugin currentPlugin;
 
-        public BearScriptExecContext(Plugin currentPlugin, SessionContext $, Task parent, TaskDef taskDef) {
-            this.currentPlugin = currentPlugin;
+        public BearScriptExecContext(Plugin currentPlugin) {
             pluginName = currentPlugin.cmdAnnotation();
-            this.$ = $;
-            this.parent = parent;
-            this.taskDef = taskDef;
         }
 
-        *//**
+        /**
          * Scope: SESSION
+         *
          * @param shellContext
          * @param scriptItem
          * @return
-         *//*
-        private TaskResult runItem(ShellRunContext shellContext, ScriptItem scriptItem) {
-            Response lastResponse = null;
+         */
+        private TaskDef<Task> convertItemToTask(final ShellSessionContext shellContext, final ScriptItem scriptItem) {
 
-            List<String> filteredLines = new ArrayList<String>(scriptItem.lines.size());
+            final List<String> executableLines = new ArrayList<String>(scriptItem.lines.size());
+            final List<String> directivesLines = new ArrayList<String>();
 
-            List<String> lines = scriptItem.lines;
+            final List<String> lines = scriptItem.lines;
 
-            for (int i = 0; i < lines.size(); i++) {
-                String line = lines.get(i);
+            for (String line : lines) {
                 if (line.startsWith(":")) {
-                    String firstWord = StringUtils.substringBetween(line, ":", " ");
-
-                    if ("set".equals(firstWord)) {
-                        lastResponse = setVariable(line);
-                    } else {
-                        errors.add(new ScriptError(
-                            line,
-                            scriptItem.startsAtIndex + i, "unknown command: " + firstWord));
-                    }
+                    directivesLines.add(line);
                 } else {
-                    filteredLines.add(line);
+                    executableLines.add(line);
                 }
             }
 
-            switchToPlugin(scriptItem.pluginName, shellContext);
+            final Plugin currentPlugin = getPlugin(scriptItem.pluginName, shellContext);
 
-            if (!filteredLines.isEmpty()) {
-                return runWithInterpreter(filteredLines, shellContext, scriptItem);
+            if (!executableLines.isEmpty()) {
+                return new TaskDef<Task>(){
+                    @Override
+                    public Task newSession(SessionContext $, Task parent) {
+                        for (int i = 0; i < directivesLines.size(); i++) {
+                            String line = directivesLines.get(i);
+                            String firstWord = StringUtils.substringBetween(line, ":", " ");
+
+                            if ("set".equals(firstWord)) {
+                                setVariable(line, $);
+                            } else {
+                                errors.add(new ScriptError(
+                                    line,
+                                    scriptItem.startsAtIndex + i, "unknown command: " + firstWord));
+                            }
+                        }
+
+                        if (currentPlugin.getShell().multiLine()) {
+//                            shellContext.name = executableLines.get(0);
+                            String script = Joiner.on("\n").join(executableLines);
+
+                            return currentPlugin.getShell().interpret(script, $, parent, null);
+                        }else{
+                            throw new UnsupportedOperationException("todo copy from an old version");
+                        }
+                    }
+                };
             } else {
-                return TaskResult.OK;
+                return TaskDef.EMPTY;
             }
         }
 
 
-        private TaskResult runWithInterpreter(List<String> lines, final ShellRunContext shellContext, ScriptItem scriptItem) {
-            TaskResult last = TaskResult.OK;
-
-            if (currentPlugin.getShell().multiLine()) {
-                shellContext.script = Joiner.on("\n").join(lines);
-                shellContext.name = lines.get(0);
-//                bearFX.sendMessageToUI(newShellCommand(substringBefore(shellContext.script, "\n"), shellContext));
-//              bearFX.sendMessageToUI(new CommandConsoleEventToUI("shell", substringBefore(shellContext.script, "\n"))
-//                .setParentId(shellContext.taskId));
-
-                Task<?> task = currentPlugin.getShell().interpret(shellContext.script, $, parent, taskDef);
-
-
-//                bearFX.sendMessageToUI(
-//                    new TaskConsoleEventToUI("shell", scriptItem.asOneLineDesc())
-//                        .setId(shellContext.taskId)
-//                       .setParentId(shellContext.sessionId)
-//                );
-
-                long startedAt = System.currentTimeMillis();
-
-                BearScriptPhase phase = null;
-
-                try {
-                    phase = startNewPhase(shellContext, scriptItem, scriptItem.id);
-
-                    last = $.runner.runSession(task);
-                } catch (Exception e) {
-                    last = new DependencyResult(Result.ERROR).add(e.toString());
-                } finally {
-                    long duration = System.currentTimeMillis() - startedAt;
-                    assert phase != null;
-                    phase.addArrival($, duration, last);
-                }
-            } else {
-                last = null;
-                for (int i = 0; i < lines.size(); i++) {
-                    String s = lines.get(i);
-
-                    shellContext.script = s;
-
-                    if (i == 0) {
-//                        bearFX.sendMessageToUI(newShellCommand(substringBefore(s, "\n") + "...", shellContext));
-                    }
-
-//                    bearFX.sendMessageToUI(new CommandConsoleEventToUI("shell", s)
-//                        .setId(SessionContext.randomId())
-//                        .setParentId(shellContext.phaseId));
-
-                    Task<?> task = currentPlugin.getShell().interpret(shellContext.script, $, parent, taskDef);
-
-                    long startedAt = System.currentTimeMillis();
-
-                    BearScriptPhase phase = null;
-
-                    try {
-                        phase = startNewPhase(shellContext, scriptItem, scriptItem.id + i);
-                        last = $.runner.runSession(task);
-                    } finally {
-                        long duration = System.currentTimeMillis() - startedAt;
-
-                        phase.addArrival($, duration, last);
-                    }
-
-                    if (!last.ok()) {
-                        errors.add(new ScriptError(s, i + 1, "error during line exec:" + last));
-                        return last;
-                    }
-                }
-            }
-
-            return last;
-        }
-
-        private BearScriptPhase startNewPhase(ShellRunContext shellContext, ScriptItem scriptItem, String phaseId) {
-            shellContext.phaseId = phaseId;
-            BearScriptPhase phase = shellContext.phases.getPhase(shellContext.phaseId, scriptItem);
-
-            StringBuilder phaseSB = $.getExecutionContext().phaseText.getDefaultValue();
-            phaseSB.setLength(0);
-
-            $.getExecutionContext().phaseText.fireExternalModification();
-            $.getExecutionContext().phaseName = scriptItem.asOneLineDesc();
-            $.getExecutionContext().phaseId.defaultTo(shellContext.phaseId);
-
-            return phase;
-        }
-
-        private MessageResponse setVariable(String line) {
+        private MessageResponse setVariable(String line, SessionContext $) {
             String command = substringAfter(line, " ").trim();
 
             String varName = substringBefore(command, "=");
@@ -252,7 +216,7 @@ public class BearScript {
             return new MessageResponse(String.format("assigned '%s' to '%s'", varName, o));
         }
 
-        private void switchToPlugin(final String pluginName, ShellRunContext shellRunContext) {
+        private Plugin getPlugin(final String pluginName, ShellSessionContext shellSessionContext) {
             Preconditions.checkNotNull(pluginName, "plugin name is null");
 
             List<Class<? extends Plugin>> matchingClasses = newArrayList(Collections2.filter(getPlugins(),
@@ -267,26 +231,21 @@ public class BearScript {
 
             if (matchingClasses.isEmpty()) {
                 bearFX.sendMessageToUI(new TextConsoleEventToUI("shell", "no plugins found for '<i>" + pluginName + "</i>'\n")
-                    .setParentId(shellRunContext.phaseId));
+                    .setParentId(shellSessionContext.phaseId));
                 throw new RuntimeException("no plugins found for '" + pluginName + "'");
             }
 
             if (matchingClasses.size() > 1) {
                 bearFX.sendMessageToUI(new TextConsoleEventToUI("shell", "1+ plugins found for '<i>" + pluginName + "</i>': " + matchingClasses + "\n")
-                    .setParentId(shellRunContext.phaseId));
+                    .setParentId(shellSessionContext.phaseId));
                 throw new RuntimeException("1+ plugins found for '" + pluginName + "': " + pluginName);
             }
 
-            switchToPlugin(matchingClasses.get(0), shellRunContext);
+            return global.getPlugin(matchingClasses.get(0));
+
+//            return new SwitchResponse(currentPlugin.name, "$ " + currentPlugin.getShell().getCommandName());
         }
 
-        private SwitchResponse switchToPlugin(Class<? extends Plugin> aClass, ShellRunContext shellContext) {
-            logger.info("switching to plugin: {}", aClass.getSimpleName());
-
-            this.currentPlugin = global.getPlugin(aClass);
-
-            return new SwitchResponse(currentPlugin.name, "$ " + currentPlugin.getShell().getCommandName());
-        }
     }
 
     public static class BearScriptPhase {
@@ -297,7 +256,7 @@ public class BearScript {
         final AtomicLong minimalOkDuration = new AtomicLong(-1);
 
         BearFX bearFX;
-        private final ShellRunContext shellContext;
+        private final ShellSessionContext shellContext;
         private final ScriptItem scriptItem;
 
         GroupDivider<SessionContext> groupDivider;
@@ -309,7 +268,7 @@ public class BearScript {
         public int partiesPending;
         public int partiesFailed = 0;
 
-        public BearScriptPhase(String id, BearFX bearFX, GroupDivider<SessionContext> groupDivider, ShellRunContext shellContext, ScriptItem scriptItem) {
+        public BearScriptPhase(String id, BearFX bearFX, GroupDivider<SessionContext> groupDivider, ShellSessionContext shellContext, ScriptItem scriptItem) {
             this.id = id;
             this.bearFX = bearFX;
             this.shellContext = shellContext;
@@ -377,9 +336,9 @@ public class BearScript {
         final ConcurrentHashMap<String, BearScriptPhase> phases = new ConcurrentHashMap<String, BearScriptPhase>();
         private final List<SessionContext> $s;
         BearFX bearFX;
-        private final ShellRunContext shellContext;
+        private final ShellSessionContext shellContext;
 
-        public BearScriptPhases(List<SessionContext> $s, BearFX bearFX, ShellRunContext shellContext) {
+        public BearScriptPhases(List<SessionContext> $s, BearFX bearFX, ShellSessionContext shellContext) {
             this.$s = $s;
             this.bearFX = bearFX;
             this.shellContext = shellContext;
@@ -412,11 +371,7 @@ public class BearScript {
 
                     phases.put(id, phase = new BearScriptPhase(id, bearFX, divider, shellContext, scriptItem));
 
-                    bearFX.sendMessageToUI(new TaskConsoleEventToUI("shell", "step " + scriptItem.asOneLineDesc() + "(" + scriptItem.id +
-                        ")", null)
-                        .setId(id)
-                        .setParentId(shellContext.sessionId)
-                    );
+
                 }
             }
 
@@ -426,44 +381,15 @@ public class BearScript {
         }
     }
 
-    static class ShellRunContext {
+    static class ShellSessionContext {
         public final String sessionId = SessionContext.randomId();
         // seen as a task
         protected String phaseId;
 
-        *//**
-         * When <0 the method is synchronous. When =0, there is no timeout.
-         *//*
-        long timeout = -1;
-        TimeUnit unit = null;
-        String name;
-        String script;
-
-        ShellRunContext(BearScriptPhases phases) {
-            this.phases = phases;
+        ShellSessionContext() {
+            ui.info(new NewSessionConsoleEventToUI("shell", sessionId));
         }
 
-        public BearScriptPhases phases;
-
-        public ShellRunContext setTimeout(long timeout) {
-            this.timeout = timeout;
-            return this;
-        }
-
-        public ShellRunContext setUnit(TimeUnit unit) {
-            this.unit = unit;
-            return this;
-        }
-
-        public ShellRunContext setName(String name) {
-            this.name = name;
-            return this;
-        }
-
-        public ShellRunContext setScript(String script) {
-            this.script = script;
-            return this;
-        }
 
         public String getPhaseId() {
             return phaseId;
@@ -474,13 +400,11 @@ public class BearScript {
         }
     }
 
-    *//**
+    /**
      * @param scriptSupplier A supplier for a script, i.e. a parser or a single item (at the moment a groovy script).
-     *//*
+     */
     public Response exec(boolean interactive, Supplier<BearScriptParseResult> scriptSupplier) {
-        final ShellRunContext shellContext = new ShellRunContext(null);
-
-        bearFX.sendMessageToUI(new NewSessionConsoleEventToUI("shell", shellContext.sessionId));
+        final ShellSessionContext shellContext = new ShellSessionContext();
 
         final BearScriptParseResult parseResult = scriptSupplier.get();
 
@@ -496,140 +420,32 @@ public class BearScript {
 
         // this should not be ran as a single task
         // OR this could be ran as a single task
-        Supplier<SingleTaskScript> singleTaskScriptSupplier = Suppliers.ofInstance(new SingleTaskScript(new TaskDef() {
+
+        final BearScriptExecContext scriptExecContext =
+            new BearScriptExecContext(initialPlugin);
+
+        List<TaskDef<Task>> lazyTaskList = Lists.transform(scriptItems, new Function<ScriptItem, TaskDef<Task>>() {
+            @Nullable
             @Override
-            public Task newSession(SessionContext $, Task parent) {
-                final TaskDef taskDef = this;
-
-                return new Task<TaskDef>(parent, taskDef, $) {
-                    @Override
-                    protected TaskResult exec(SessionTaskRunner runner) {
-                        TaskResult result = TaskResult.OK;
-
-                        try {
-                            BearScriptExecContext scriptExecContext = new BearScriptExecContext(initialPlugin, $, parent, taskDef);
-
-                            for (ScriptItem scriptItem : scriptItems) {
-                                result = scriptExecContext.runItem(shellContext, scriptItem);
-
-                                if (result.nok()) {
-                                    break;
-                                }
-                            }
-
-                            return result;
-                        } catch (Exception e) {
-                            result = new ExceptionResult(e);
-                            return result;
-                        } finally {
-                            bearFX.sendMessageToUI(new ScriptFinishedEventToUI($.getName(),
-                                System.currentTimeMillis() - $.getExecutionContext().startedAt.getMillis(), result));
-                        }
-                    }
-                };
+            public TaskDef<Task> apply(ScriptItem scriptItem) {
+                return scriptExecContext.convertItemToTask(shellContext, scriptItem);
             }
-        }));
+        });
 
-        final CompositeTaskRunContext runContext = new BearRunner(settings, singleTaskScriptSupplier, factory)
-            .createRunContext();
+        PreparationResult preparationResult = new BearRunner2(settings, factory).createRunContext();
 
-        global.currentGlobalRunner = runContext;
+        List<SessionContext> $s = preparationResult.getSessions();
 
-        final ConsolesDivider<SessionContext> consoleArrival = runContext.getConsoleArrival();
-
-        List<SessionContext> $s = consoleArrival.getEntries();
-
-        shellContext.phases = new BearScriptPhases($s, bearFX, shellContext);
+        GlobalTaskRunner globalTaskRunner = new GlobalTaskRunner(global, lazyTaskList, $s, shellContext);
 
         //todo this should not be async - this message might be slow
         bearFX.sendMessageToUI(new RMIEventToUI("terminals", "onScriptStart", getHosts($s)));
 
-        for (final SessionContext $ : $s) {
-            final SessionContext.ExecutionContext execContext = $.getExecutionContext();
 
-            bearFX.sendMessageToUI(new NewSessionConsoleEventToUI($.getName(), $.id));
+        globalTaskRunner.startParties(global.localExecutor);
 
-            execContext.textAppended.addListener(new DynamicVariable.ChangeListener<String>() {
-                public void changedValue(DynamicVariable<String> var, String oldValue, String newValue) {
-                    if (StringUtils.isNotEmpty(newValue)) {
-                        bearFX.sendMessageToUI(
-                            new TextConsoleEventToUI($.getName(), newValue)
-                                .setParentId(execContext.currentCommand.getDefaultValue().command.id)
-                        );
-                    }
-                }
-            });
 
-            execContext.currentCommand.addListener(new DynamicVariable.ChangeListener<CommandExecutionEntry>() {
-                @Override
-                public void changedValue(DynamicVariable<CommandExecutionEntry> var, CommandExecutionEntry oldValue, CommandExecutionEntry newValue) {
-                    bearFX.sendMessageToUI(new CommandConsoleEventToUI($.getName(), newValue.toString())
-                        .setId(newValue.command.id)
-                        .setParentId(execContext.currentTask.getDefaultValue().id)
-                    );
-                }
-            });
-
-            execContext.currentTask.addListener(new DynamicVariable.ChangeListener<Task>() {
-                @Override
-                public void changedValue(DynamicVariable<Task> var, Task oldValue, Task newValue) {
-                    if ($.getExecutionContext().phaseId.isUndefined()) {
-                        return;
-                    }
-
-                    String phaseId = $.getExecutionContext().phaseId.getDefaultValue();
-
-                    bearFX.sendMessageToUI(
-                        new TaskConsoleEventToUI($.getName(), $.getExecutionContext().phaseName + " " + phaseId, phaseId)
-                            .setId(newValue.id)
-                            .setParentId($.id)
-                    );
-                }
-            });
-
-            execContext.rootExecutionContext.addListener(new DynamicVariable.ChangeListener<TaskExecutionContext>() {
-                @Override
-                public void changedValue(DynamicVariable<TaskExecutionContext> var, TaskExecutionContext oldValue, TaskExecutionContext newValue) {
-                    if (newValue.isFinished()) {
-                        RootTaskFinishedEventToUI eventToUI = new RootTaskFinishedEventToUI(newValue.taskResult, newValue.getDuration(), $.getName());
-
-                        bearFX.sendMessageToUI(eventToUI);
-                    }
-                }
-            });
-        }
-
-        runContext.stats.addListener(new DynamicVariable.ChangeListener<CompositeTaskRunContext.Stats>() {
-            @Override
-            public void changedValue(DynamicVariable<CompositeTaskRunContext.Stats> var, CompositeTaskRunContext.Stats oldValue, CompositeTaskRunContext.Stats newValue) {
-                bearFX.sendMessageToUI(new GlobalStatusEventToUI(newValue));
-            }
-        });
-
-        runContext.submitTasks();
-
-        runContext.arrivedCount.addListener(new DynamicVariable.ChangeListener<AtomicInteger>() {
-            @Override
-            public void changedValue(DynamicVariable<AtomicInteger> var, AtomicInteger oldValue, AtomicInteger newValue) {
-                if (newValue.get() == runContext.size()) {
-                    logger.info("finally home. removing stage from global scope");
-
-                    global.currentGlobalRunner = null;
-
-//                        global.removeConst(bear.getStage);
-
-                    global.removeConst(bear.internalInteractiveRun);
-
-//                    List<CompositeConsoleArrival.EqualityGroup> groups = runContext.getConsoleArrival().divideIntoGroups();
-
-//                    bearFX.sendMessageToUI(
-//                        new AllTasksFinishedEventToUI(System.currentTimeMillis() - runContext.getStartedAtMs(),
-//                            groups, scriptItem.asOneLineDesc()).setParentId(shellContext.phaseId));
-                }
-            }
-        });
-
-        return new RunResponse(runContext, getHosts(runContext.getConsoleArrival().getEntries()));
+        return new RunResponse(globalTaskRunner, getHosts(preparationResult.getSessions()));
     }
 
 
@@ -720,7 +536,7 @@ public class BearScript {
 
     public static class RunResponse extends Response {
         public List<ScriptError> errors;
-        CompositeTaskRunContext runContext;
+        GlobalTaskRunner runContext;
 
         public RunResponse(List<ScriptError> errors) {
             this.errors = errors;
@@ -738,8 +554,8 @@ public class BearScript {
 
         public List<Host> hosts;
 
-        public RunResponse(CompositeTaskRunContext runContext, List<Host> hosts) {
-            this.runContext = runContext;
+        public RunResponse(GlobalTaskRunner globalTaskRunner, List<Host> hosts) {
+            this.runContext = globalTaskRunner;
             this.hosts = hosts;
         }
     }
@@ -807,5 +623,5 @@ public class BearScript {
         public BearScriptParseResult get() {
             return parseScript(script, initialPlugin.cmdAnnotation());
         }
-    }*/
+    }
 }

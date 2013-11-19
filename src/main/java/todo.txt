@@ -26,6 +26,11 @@ top priority:
 - polish code
 - create unit tests coverage plan
 - ui: check if it's easy to send prompt - ok
+- nice grid textual/ui representation!:
+                  12345678
+pwd           |   ***v****
+tasks.deploy  |   v*v.***v
+db.migration  |   .v..X**.
 
 - (ok, 2) send messages from plugins via uiLogger (sends to 'ui'), logger (sends to console)
 - (ok, 3) ui: logback messages (output to file, a window to view, monitor errors and display red exclamation mark when there are)
@@ -174,3 +179,22 @@ os plugin:
 -- (ok) dependencies
 - (ok) GitHub support
 - (ok) replace Functions with VarFunctions
+
+
+ bearFX.sendMessageToUI(new ScriptFinishedEventToUI($.getName(),
+                                System.currentTimeMillis() - $.getExecutionContext().startedAt.getMillis(), task));
+
+
+private BearScriptPhase startNewPhase(ShellRunContext shellContext, ScriptItem scriptItem, String phaseId) {
+            shellContext.phaseId = phaseId;
+            BearScriptPhase phase = shellContext.phases.getPhase(shellContext.phaseId, scriptItem);
+
+            StringBuilder phaseSB = $.getExecutionContext().phaseText.getDefaultValue();
+            phaseSB.setLength(0);
+
+            $.getExecutionContext().phaseText.fireExternalModification();
+            $.getExecutionContext().phaseName = scriptItem.asOneLineDesc();
+            $.getExecutionContext().phaseId.defaultTo(shellContext.phaseId);
+
+            return phase;
+        }

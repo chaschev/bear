@@ -5,10 +5,10 @@ import bear.console.ConsoleCallback;
 import bear.core.SessionContext;
 import bear.plugins.sh.SystemEnvironmentPlugin;
 import bear.session.DynamicVariable;
+import bear.task.SessionTaskRunner;
 import bear.task.Task;
 import bear.task.TaskDef;
 import bear.task.TaskResult;
-import bear.task.TaskRunner;
 import com.google.common.base.Function;
 
 import java.util.Map;
@@ -22,7 +22,7 @@ public abstract class VCSSession extends Task<TaskDef> {
     }
 
     @Override
-    protected TaskResult exec(TaskRunner runner) {
+    protected TaskResult exec(SessionTaskRunner runner) {
         throw new UnsupportedOperationException("VCS task cannot be run");
     }
 

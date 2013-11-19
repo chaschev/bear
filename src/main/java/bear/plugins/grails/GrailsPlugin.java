@@ -86,7 +86,7 @@ public class GrailsPlugin extends ZippedToolPlugin {
         public ZippedTool newSession(SessionContext $, final Task parent) {
             return new ZippedTool(parent, this, $) {
                 @Override
-                protected DependencyResult exec(TaskRunner runner) {
+                protected DependencyResult exec(SessionTaskRunner runner) {
                     clean();
 
                     download();

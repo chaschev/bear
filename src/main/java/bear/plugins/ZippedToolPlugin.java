@@ -82,7 +82,7 @@ public abstract class ZippedToolPlugin extends Plugin<Task, TaskDef<?>> {
         }
 
         @Override
-        protected DependencyResult exec(TaskRunner runner) {
+        protected DependencyResult exec(SessionTaskRunner runner) {
             throw new UnsupportedOperationException("todo implement!");
         }
 

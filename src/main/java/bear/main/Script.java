@@ -17,12 +17,9 @@
 package bear.main;
 
 import bear.context.Var;
-import bear.core.Bear;
-import bear.core.CompositeTaskRunContext;
-import bear.core.GlobalContext;
-import bear.core.SessionContext;
+import bear.core.*;
+import bear.task.SessionTaskRunner;
 import bear.task.Task;
-import bear.task.TaskRunner;
 import org.apache.logging.log4j.LogManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -47,7 +44,7 @@ public class Script {
 
     public GlobalContext global;
     public Bear bear;
-    public TaskRunner runner;
+    public SessionTaskRunner runner;
 
     @Var(skipWiring = true)
     public final String id = SessionContext.randomId();
@@ -61,10 +58,8 @@ public class Script {
         return this;
     }
 
-    public CompositeTaskRunContext prepareToRun() throws Exception {
+    public void prepareToRun() throws Exception {
         configure();
-
-        return global.prepareToRun();
     }
 
     public void run(){

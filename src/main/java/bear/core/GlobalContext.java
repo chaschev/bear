@@ -25,9 +25,9 @@ import bear.plugins.sh.GenericUnixLocalEnvironmentPlugin;
 import bear.plugins.sh.GenericUnixRemoteEnvironmentPlugin;
 import bear.plugins.sh.SystemSession;
 import bear.session.LocalAddress;
+import bear.task.SessionTaskRunner;
 import bear.task.Task;
 import bear.task.TaskDef;
-import bear.task.TaskRunner;
 import bear.task.Tasks;
 import com.google.common.base.Predicates;
 import com.google.common.collect.Collections2;
@@ -79,7 +79,7 @@ public class GlobalContext extends AppGlobalContext<GlobalContext, Bear> {
 
     public final SessionContext localCtx;
     public final Stage localStage;
-    public CompositeTaskRunContext currentGlobalRunContext;
+    public GlobalTaskRunner currentGlobalRunner;
 
     GlobalContext() {
         super(new Bear());
@@ -96,7 +96,7 @@ public class GlobalContext extends AppGlobalContext<GlobalContext, Bear> {
         plugins.add(PomPlugin.class);
         plugins.build();
 
-        final TaskRunner localRunner = new TaskRunner(null, this);
+        final SessionTaskRunner localRunner = new SessionTaskRunner(null, this);
 
         localCtx = new SessionContext(this, new LocalAddress(), localRunner);
         local = new GenericUnixLocalEnvironmentPlugin(this).newSession(localCtx, null);
@@ -154,12 +154,6 @@ public class GlobalContext extends AppGlobalContext<GlobalContext, Bear> {
 
     public static Tasks tasks() {
         return getInstance().tasks;
-    }
-
-    public CompositeTaskRunContext prepareToRun() {
-        Stage stage = var(bear.getStage);
-        logger.info("running on stage {}...", stage.name);
-        return stage.prepareToRun();
     }
 
     public void addPlugin(Class<? extends Plugin> aClass) {

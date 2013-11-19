@@ -40,7 +40,7 @@ public class Rollback extends Plugin<Task, TaskDef<?>> {
         public Task<TaskDef> newSession(SessionContext $, final Task parent) {
             return new Task<TaskDef>(parent, this, $) {
                 @Override
-                protected TaskResult exec(TaskRunner runner) {
+                protected TaskResult exec(SessionTaskRunner runner) {
                     requirePreviousRelease($);
 
                     Script script = $.sys.script();
@@ -61,7 +61,7 @@ public class Rollback extends Plugin<Task, TaskDef<?>> {
         public Task<TaskDef> newSession(SessionContext $, final Task parent) {
             return new Task<TaskDef>(parent, this, $) {
                 @Override
-                protected TaskResult exec(TaskRunner runner) {
+                protected TaskResult exec(SessionTaskRunner runner) {
                         return $.sys.sendCommand(
                             $.sys.line().sudo().addRaw("if [ `readlink #{%s}` != #{%s} ]; then #{try_sudo} rm -rf #{%s}; fi", true,
                                 $(bear.currentPath), $(bear.releasePath), $(bear.releasePath)));
@@ -76,7 +76,7 @@ public class Rollback extends Plugin<Task, TaskDef<?>> {
         public Task<TaskDef> newSession(SessionContext $, final Task parent) {
             return new Task<TaskDef>(parent, this, $) {
                 @Override
-                protected TaskResult exec(TaskRunner runner) {
+                protected TaskResult exec(SessionTaskRunner runner) {
                     return TaskResult.and(
                         runner.run(pointToPreviousRelease),
                         runner.run(cleanup));
@@ -91,7 +91,7 @@ public class Rollback extends Plugin<Task, TaskDef<?>> {
         public Task<TaskDef> newSession(SessionContext $, final Task parent) {
             return new Task<TaskDef>(parent, this, $) {
                 @Override
-                protected TaskResult exec(TaskRunner runner) {
+                protected TaskResult exec(SessionTaskRunner runner) {
                     return TaskResult.and(
                         runner.run(pointToPreviousRelease),
                         runner.run(global.tasks.restartApp),

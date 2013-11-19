@@ -22,6 +22,7 @@ import bear.core.GlobalContext;
 import bear.core.SessionContext;
 import bear.session.Result;
 import bear.vcs.CommandLineResult;
+import com.google.common.base.Function;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -33,14 +34,15 @@ import java.util.List;
 /**
  * @author Andrey Chaschev chaschev@gmail.com
  */
-public class TaskRunner extends HavingContext<TaskRunner, SessionContext>{
-    private static final Logger logger = LoggerFactory.getLogger(TaskRunner.class);
+public class SessionTaskRunner extends HavingContext<SessionTaskRunner, SessionContext>{
+    private static final Logger logger = LoggerFactory.getLogger(SessionTaskRunner.class);
     LinkedHashSet<TaskDef> tasksExecuted = new LinkedHashSet<TaskDef>();
 
     public final GlobalContext global;
     public final Bear bear;
+    public Function<Task<TaskDef>, Task<TaskDef>> taskPreRun; //a hack
 
-    public TaskRunner(SessionContext $, GlobalContext global) {
+    public SessionTaskRunner(SessionContext $, GlobalContext global) {
         super($);
         this.global = global;
         this.bear = global.bear;
@@ -118,6 +120,10 @@ public class TaskRunner extends HavingContext<TaskRunner, SessionContext>{
                 result = runWithDependencies(taskDef);
             } else {
                 Task<TaskDef> taskSession = taskDef.newSession($, $.getCurrentTask());
+
+                if(taskPreRun != null){
+                    taskSession = taskPreRun.apply(taskSession);
+                }
 
                 result = runSession(taskSession);
             }

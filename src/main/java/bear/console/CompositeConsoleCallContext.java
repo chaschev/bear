@@ -28,8 +28,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class CompositeConsoleCallContext {
     final ProgressMonitor progressMonitor = new ProgressMonitor();
     final List<? extends AbstractConsole> consoles;
-    CompositeConsoleArrival consoleArrival;
-    CompositeConsoleArrival.EqualityGroups equalityGroups;
+    ConsolesDivider consoleArrival;
+    ConsolesDivider.EqualityGroups equalityGroups;
 
     public final DynamicVariable<AtomicInteger> partiesLeft = Variables.dynamic(AtomicInteger.class).defaultTo(new AtomicInteger());
     public final DynamicVariable<AtomicInteger> partiesCount = null;

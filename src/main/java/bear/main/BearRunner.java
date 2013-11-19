@@ -16,7 +16,6 @@
 
 package bear.main;
 
-import bear.console.CompositeConsoleArrival;
 import bear.core.*;
 import chaschev.util.Exceptions;
 import com.google.common.base.Preconditions;
@@ -99,25 +98,26 @@ public class BearRunner {
         return this;
     }
 
-    public CompositeTaskRunContext prepareToRun()  {
+    public CompositeTaskRunContext createRunContext()  {
         try {
             Preconditions.checkArgument(bearSettings.isConfigured(), "settings must be configured. call settings.init() to configure");
             init();
-            runContext = script.prepareToRun();
+            script.prepareToRun();
 
-            return runContext;
+            Stage stage = global.var(global.bear.getStage);
+            return runContext  = stage.createRunContext();
         } catch (Exception e) {
             throw Exceptions.runtime(e);
         }
     }
 
-    public CompositeTaskRunContext run() throws Exception {
+    /*public CompositeTaskRunContext run() throws Exception {
         runContext.submitTasks();
 
         if(shutdownAfterRun){
             if (await) {
                 GlobalContext global = runContext.getGlobal();
-                CompositeConsoleArrival<SessionContext> consoleArrival = runContext.getConsoleArrival();
+                ConsolesDivider<SessionContext> consoleArrival = runContext.getConsoleArrival();
 
                 consoleArrival.await(global.localCtx.var(global.bear.taskTimeoutSec));
             }
@@ -126,7 +126,7 @@ public class BearRunner {
         }
 
         return runContext;
-    }
+    }*/
 
 
     public BearRunner shutdownAfterRun(boolean shutdownAfterRun) {

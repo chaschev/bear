@@ -16,33 +16,16 @@
 
 package bear.core;
 
-import bear.console.CompositeConsoleArrival;
-import bear.context.Cli;
-import bear.plugins.Plugin;
-import bear.plugins.sh.SystemSession;
-import bear.session.DynamicVariable;
-import bear.session.Result;
-import bear.session.Variables;
-import bear.task.*;
-import bear.task.exec.TaskExecutionContext;
-import bear.vcs.CommandLineResult;
-import chaschev.util.Exceptions;
-import com.google.common.util.concurrent.ListenableFuture;
-
-import java.util.List;
-import java.util.concurrent.Callable;
-import java.util.concurrent.atomic.AtomicInteger;
-
 public class CompositeTaskRunContext {
-    private final long startedAtMs = System.currentTimeMillis();
+    /*private final long startedAtMs = System.currentTimeMillis();
     private final GlobalContext global;
     private final TaskDef task;
-    private final CompositeConsoleArrival<SessionContext> consoleArrival;
+    private final ConsolesDivider<SessionContext> consoleArrival;
 
     public final DynamicVariable<Stats> stats;
     public final DynamicVariable<AtomicInteger> arrivedCount = Variables.newVar(new AtomicInteger(0));
 
-    public CompositeTaskRunContext(GlobalContext global, TaskDef task, CompositeConsoleArrival<SessionContext> consoleArrival) {
+    public CompositeTaskRunContext(GlobalContext global, TaskDef task, ConsolesDivider<SessionContext> consoleArrival) {
         this.global = global;
         this.task = task;
         this.consoleArrival = consoleArrival;
@@ -50,7 +33,7 @@ public class CompositeTaskRunContext {
         stats = Variables.dynamic(Stats.class).defaultTo(new Stats(consoleArrival.getArrivedEntries().size(), task));
     }
 
-    public CompositeConsoleArrival<SessionContext> getConsoleArrival() {
+    public ConsolesDivider<SessionContext> getConsoleArrival() {
         return consoleArrival;
     }
 
@@ -193,5 +176,5 @@ public class CompositeTaskRunContext {
 
     public long getStartedAtMs() {
         return startedAtMs;
-    }
+    }*/
 }

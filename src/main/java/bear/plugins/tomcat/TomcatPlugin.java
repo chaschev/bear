@@ -83,7 +83,7 @@ public class TomcatPlugin extends ZippedToolPlugin {
             public Task<TaskDef> newSession(SessionContext $, final Task parent) {
                 return new Task<TaskDef>(parent, this, $) {
                     @Override
-                    protected TaskResult exec(TaskRunner runner) {
+                    protected TaskResult exec(SessionTaskRunner runner) {
                         $.sys.sudo().rm($(warCacheDirs));
                         $.sys.script()
                             .line().addRaw("catalina stop").build()
@@ -110,7 +110,7 @@ public class TomcatPlugin extends ZippedToolPlugin {
         public ZippedTool newSession(SessionContext $, final Task parent) {
             return new ZippedTool(parent, this, $) {
                 @Override
-                protected DependencyResult exec(TaskRunner runner) {
+                protected DependencyResult exec(SessionTaskRunner runner) {
                     clean();
 
                     download();

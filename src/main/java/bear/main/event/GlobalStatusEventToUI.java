@@ -16,15 +16,15 @@
 
 package bear.main.event;
 
-import bear.core.CompositeTaskRunContext;
+import bear.core.GlobalTaskRunner;
 
 /**
  * @author Andrey Chaschev chaschev@gmail.com
  */
 public class GlobalStatusEventToUI extends EventToUI {
-    public CompositeTaskRunContext.Stats stats;
+    public GlobalTaskRunner.Stats stats;
 
-    public GlobalStatusEventToUI(CompositeTaskRunContext.Stats stats) {
+    public GlobalStatusEventToUI(GlobalTaskRunner.Stats stats) {
         super("status", "global");
 
         this.stats = stats;

@@ -41,7 +41,7 @@ public class ComputingGridTest {
             public PhaseCallable<Integer, String> apply(@Nullable Integer input) {
                 return new PhaseCallable<Integer, String>() {
                     @Override
-                    public String call(PhaseParty<Integer> party, int phaseIndex) throws Exception {
+                    public String call(PhaseParty<Integer> party, int phaseIndex, Phase<?, PHASE> phase) throws Exception {
                         return "phase 1, party " + party.column;
                     }
                 };
@@ -51,7 +51,6 @@ public class ComputingGridTest {
         ListenableFuture<List<String>> futureList = sampleGrid(1, 3)
             .addPhase(phase1)
             .startParties(service)
-            .awaitTermination()
             .aggregateSuccessful(phase1);
 
         List<String> strings = futureList.get();
@@ -68,7 +67,7 @@ public class ComputingGridTest {
             public PhaseCallable<Integer, String> apply(@Nullable Integer input) {
                 return new PhaseCallable<Integer, String>() {
                     @Override
-                    public String call(PhaseParty<Integer> party, int phaseIndex) throws Exception {
+                    public String call(PhaseParty<Integer> party, int phaseIndex, Phase<?, PHASE> phase) throws Exception {
                         return party.getName(phaseIndex);
                     }
                 };
@@ -79,7 +78,7 @@ public class ComputingGridTest {
             public PhaseCallable<Integer, String> apply(@Nullable Integer input) {
                 return new PhaseCallable<Integer, String>() {
                     @Override
-                    public String call(PhaseParty<Integer> party, int phaseIndex) throws Exception {
+                    public String call(PhaseParty<Integer> party, int phaseIndex, Phase<?, PHASE> phase) throws Exception {
                         return party.getName(phaseIndex) + ": we all depend on a cell " +
                             party.grid.cell(phase1, 2).getFuture().get(500, TimeUnit.MILLISECONDS);
                     }
@@ -95,6 +94,7 @@ public class ComputingGridTest {
             .get();
 
         System.out.println(strings);
+
         assertThat(strings.get(0)).contains("(1, 0): we all depend on a cell (0, 2)");
         assertThat(strings.get(1)).contains("(1, 1): we all depend on a cell (0, 2)");
         assertThat(strings.get(2)).contains("(1, 2): we all depend on a cell (0, 2)");
@@ -114,7 +114,7 @@ public class ComputingGridTest {
             public PhaseCallable<Integer, String> apply(Integer input) {
                 return new PhaseCallable<Integer, String>() {
                     @Override
-                    public String call(final PhaseParty<Integer> party, final int phaseIndex) throws Exception {
+                    public String call(final PhaseParty<Integer> party, final int phaseIndex, Phase<?, PHASE> phase) throws Exception {
                         if(party.index != 2){
                             Thread.sleep(300);
                         }
@@ -138,7 +138,7 @@ public class ComputingGridTest {
             public PhaseCallable<Integer, String> apply(@Nullable Integer input) {
                 return new PhaseCallable<Integer, String>() {
                     @Override
-                    public String call(PhaseParty<Integer> party, int phaseIndex) throws Exception {
+                    public String call(PhaseParty<Integer> party, int phaseIndex, Phase<?, PHASE> phase) throws Exception {
                         return party.getName(phaseIndex) + ": " + party.grid.cell(phase1, 1).getFuture().get();
                     }
                 };
@@ -191,7 +191,7 @@ public class ComputingGridTest {
             public PhaseCallable<Integer, Phase1Result> apply(Integer input) {
                 return new PhaseCallable<Integer, Phase1Result>() {
                     @Override
-                    public Phase1Result call(final PhaseParty<Integer> party, final int phaseIndex) throws Exception {
+                    public Phase1Result call(final PhaseParty<Integer> party, final int phaseIndex, Phase<?, PHASE> phase) throws Exception {
                         if(party.index != 2){
                             Thread.sleep(300);
                         }
@@ -225,7 +225,7 @@ public class ComputingGridTest {
             public PhaseCallable<Integer, String> apply(@Nullable Integer input) {
                 return new PhaseCallable<Integer, String>() {
                     @Override
-                    public String call(PhaseParty<Integer> party, int phaseIndex) throws Exception {
+                    public String call(PhaseParty<Integer> party, int phaseIndex, Phase<?, PHASE> phase) throws Exception {
                         logger.debug("{}: entered phase2", party.getName(phaseIndex));
 
                         List<ListenableFuture<Phase1Result>> results = party.grid.phaseFutures(phase1);
@@ -331,7 +331,7 @@ public class ComputingGridTest {
             public PhaseCallable<Integer, String> apply(@Nullable Integer input) {
                 return new PhaseCallable<Integer, String>() {
                     @Override
-                    public String call(PhaseParty<Integer> party, int phaseIndex) throws Exception {
+                    public String call(PhaseParty<Integer> party, int phaseIndex, Phase<?, PHASE> phase) throws Exception {
                         if(whoThrows == party.index){
                             throw new RuntimeException(party.index + "");
                         }
@@ -346,7 +346,7 @@ public class ComputingGridTest {
             public PhaseCallable<Integer, String> apply(@Nullable Integer input) {
                 return new PhaseCallable<Integer, String>() {
                     @Override
-                    public String call(PhaseParty<Integer> party, int phaseIndex) throws Exception {
+                    public String call(PhaseParty<Integer> party, int phaseIndex, Phase<?, PHASE> phase) throws Exception {
                         if(allDepend){
                             return party.getName(phaseIndex) + ": we all depend on a cell " +
                                 party.grid.cell(phase1, 2).getFuture().get(500, TimeUnit.MILLISECONDS);

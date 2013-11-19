@@ -166,7 +166,7 @@ public class FXConf extends Cli {
     public Response run(String uiContextS) throws Exception {
         logger.info("running a script with params: {}", uiContextS);
 
-        BearScript.UIContext uiContext = commandInterpreter.mapper.fromJSON(uiContextS, BearScript.UIContext.class);
+        BearScript2.UIContext uiContext = commandInterpreter.mapper.fromJSON(uiContextS, BearScript2.UIContext.class);
 
         File file = compileManager.findScript(uiContext.script);
 
@@ -180,8 +180,8 @@ public class FXConf extends Cli {
     public Response runWithScript(String bearScript, String settingsName) throws Exception {
         IBearSettings settings = newSettings(settingsName);
 
-        return new BearScript(global, bearFX, null, settings).exec(true,
-            new BearScript.ParserScriptSupplier(null, bearScript));
+        return new BearScript2(global, bearFX, null, settings).exec(true,
+            new BearScript2.ParserScriptSupplier(null, bearScript));
     }
 
     public Response interpret(String command, String uiContextS) throws Exception {
@@ -274,6 +274,8 @@ public class FXConf extends Cli {
 
 
         /**
+         * Scope: GLOBAL
+         *
          * : -> system command
          * :help
          * :use shell <plugin>
@@ -283,26 +285,26 @@ public class FXConf extends Cli {
         public Response interpret(final String command, String uiContextS) throws Exception {
             ui.info("interpreting command: '{}', params: {}", StringUtils.substringBefore(command, "\n").trim(), uiContextS);
 
-            final BearScript.UIContext uiContext = mapper.fromJSON(uiContextS, BearScript.UIContext.class);
+            final BearScript2.UIContext uiContext = mapper.fromJSON(uiContextS, BearScript2.UIContext.class);
 
             final IBearSettings settings = newSettings(uiContext.settingsName);
 
-            Callable<BearScript.MessageResponse> execScriptCallable = new Callable<BearScript.MessageResponse>() {
+            Callable<BearScript2.MessageResponse> execScriptCallable = new Callable<BearScript2.MessageResponse>() {
                 @Override
-                public BearScript.MessageResponse call() throws Exception {
-                    final BearScript script = new BearScript(global, bearFX, currentShellPlugin, settings);
+                public BearScript2.MessageResponse call() throws Exception {
+                    final BearScript2 script = new BearScript2(global, bearFX, currentShellPlugin, settings);
 
-                    Supplier<BearScript.BearScriptParseResult> supplier;
+                    Supplier<BearScript2.BearScript2ParseResult> supplier;
 
                     if(uiContext.script.endsWith(".groovy")){
-                        supplier = new BearScript.GroovyScriptSupplier(global, command);
+                        supplier = new BearScript2.GroovyScriptSupplier(global, command);
                     } else {
-                        supplier = new BearScript.ParserScriptSupplier(currentShellPlugin, command);
+                        supplier = new BearScript2.ParserScriptSupplier(currentShellPlugin, command);
                     }
 
                     script.exec(true, supplier);
 
-                    return new BearScript.MessageResponse("started script execution");
+                    return new BearScript2.MessageResponse("started script execution");
                 }
             };
 
@@ -374,14 +376,14 @@ public class FXConf extends Cli {
     }
 
     public void cancelAll(){
-        CompositeTaskRunContext runContext = global.currentGlobalRunContext;
+        GlobalTaskRunner runContext = global.currentGlobalRunner;
 
         if(runContext == null){
             ui.warn(new LogEventToUI("shell", "not running"));
             return;
         }
 
-        List<SessionContext> entries = runContext.getConsoleArrival().getEntries();
+        List<SessionContext> entries = runContext.getSessions();
 
         for (SessionContext $ : entries) {
             if($.isRunning()){
@@ -395,14 +397,14 @@ public class FXConf extends Cli {
     }
 
     public void cancelThread(String name){
-        CompositeTaskRunContext runContext = global.currentGlobalRunContext;
+        GlobalTaskRunner runContext = global.currentGlobalRunner;
 
         if(runContext == null){
             ui.warn(new LogEventToUI("shell", "not running"));
             return;
         }
 
-        SessionContext $ = Iterables.find(runContext.getConsoleArrival().getEntries(), Predicates2.methodEquals("getName", name));
+        SessionContext $ = Iterables.find(runContext.getSessions(), Predicates2.methodEquals("getName", name));
 
         $.terminate();
     }

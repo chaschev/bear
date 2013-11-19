@@ -16,12 +16,16 @@
 
 package bear.core;
 
-import bear.console.CompositeConsoleArrival;
+import bear.main.event.*;
 import bear.plugins.sh.SystemSession;
 import bear.session.Address;
+import bear.session.DynamicVariable;
 import bear.session.SshAddress;
+import bear.task.SessionTaskRunner;
+import bear.task.Task;
 import bear.task.TaskDef;
-import bear.task.TaskRunner;
+import bear.task.exec.CommandExecutionEntry;
+import bear.task.exec.TaskExecutionContext;
 import chaschev.lang.Functions2;
 import chaschev.lang.MutableSupplier;
 import com.google.common.base.Function;
@@ -30,6 +34,7 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.google.common.util.concurrent.ListenableFuture;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -38,6 +43,7 @@ import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.List;
 
+import static bear.core.SessionContext.ui;
 import static com.google.common.base.Functions.forMap;
 import static com.google.common.collect.Collections2.transform;
 import static com.google.common.collect.Iterables.concat;
@@ -71,11 +77,11 @@ public class Stage {
     /**
      * Runs a task from task variable
      */
-    public CompositeTaskRunContext prepareToRun() {
-        return prepareToRunTask(global.localCtx.var(global.bear.task));
+    public CompositeTaskRunContext createRunContext() {
+        return createRunContext(global.localCtx.var(global.bear.task));
     }
 
-    public CompositeTaskRunContext prepareToRunTask(final TaskDef task) {
+    public CompositeTaskRunContext createRunContext(final TaskDef task) {
         Collection<Address> addresses = global.var(global.bear.addressesForStage).apply(this);
 
         final List<ListenableFuture<SessionContext>> futures = new ArrayList<ListenableFuture<SessionContext>>(addresses.size());
@@ -83,38 +89,95 @@ public class Stage {
 
         List<SessionContext> $s = new ArrayList<SessionContext>();
 
-//        public SessionContext newCtx(TaskRunner runner){
-//            $ = new SessionContext(global, this, runner);
-//            runner.set$($);
-//            return $;
-//        }
-
         for (Address address : addresses) {
-            final TaskRunner runner = new TaskRunner(null, global);
+            final SessionTaskRunner runner = new SessionTaskRunner(null, global);
 
             SessionContext $ = new SessionContext(global, address, runner);
 
             $s.add($);
         }
 
-        final CompositeConsoleArrival<SessionContext> consoleArrival = new CompositeConsoleArrival<SessionContext>($s, futures, consoles,
-            new Function<SessionContext, String>() {
-                @Override
-                public String apply(SessionContext $) {
-                    return $.executionContext.text.apply($).toString();
-                }
-            }, SESSION_ID
-        );
-
-        CompositeTaskRunContext taskRunContext = new CompositeTaskRunContext(global, task, consoleArrival);
+       /* CompositeTaskRunContext taskRunContext = new CompositeTaskRunContext(global, task,  $s);
 
         for (SessionContext $ : $s) {
             $.setTaskRunContext(taskRunContext);
-        }
+        }*/
 
-        return taskRunContext;
+        return null;
     }
 
+    //todo move this out of here
+    public PreparationResult prepareToRun2() {
+        Collection<Address> addresses = global.var(global.bear.addressesForStage).apply(this);
+
+        List<SessionContext> $s = new ArrayList<SessionContext>();
+
+        for (Address address : addresses) {
+            final SessionTaskRunner runner = new SessionTaskRunner(null, global);
+
+            SessionContext $ = new SessionContext(global, address, runner);
+
+            $s.add($);
+        }
+
+        for (final SessionContext $ : $s) {
+            final SessionContext.ExecutionContext execContext = $.getExecutionContext();
+
+            ui.info(new NewSessionConsoleEventToUI($.getName(), $.id));
+
+            execContext.textAppended.addListener(new DynamicVariable.ChangeListener<String>() {
+                public void changedValue(DynamicVariable<String> var, String oldValue, String newValue) {
+                    if (StringUtils.isNotEmpty(newValue)) {
+                        ui.info(
+                            new TextConsoleEventToUI($.getName(), newValue)
+                                .setParentId(execContext.currentCommand.getDefaultValue().command.id)
+                        );
+                    }
+                }
+            });
+
+            execContext.currentCommand.addListener(new DynamicVariable.ChangeListener<CommandExecutionEntry>() {
+                @Override
+                public void changedValue(DynamicVariable<CommandExecutionEntry> var, CommandExecutionEntry oldValue, CommandExecutionEntry newValue) {
+                    ui.info(new CommandConsoleEventToUI($.getName(), newValue.toString())
+                        .setId(newValue.command.id)
+                        .setParentId(execContext.currentTask.getDefaultValue().id)
+                    );
+                }
+            });
+
+            execContext.currentTask.addListener(new DynamicVariable.ChangeListener<Task>() {
+                @Override
+                public void changedValue(DynamicVariable<Task> var, Task oldValue, Task newValue) {
+                    if ($.getExecutionContext().phaseId.isUndefined()) {
+                        return;
+                    }
+
+                    String phaseId = $.getExecutionContext().phaseId.getDefaultValue();
+
+                    ui.info(
+                        new TaskConsoleEventToUI($.getName(), $.getExecutionContext().phaseName + " " + phaseId, phaseId)
+                            .setId(newValue.id)
+                            .setParentId($.id)
+                    );
+                }
+            });
+
+            execContext.rootExecutionContext.addListener(new DynamicVariable.ChangeListener<TaskExecutionContext>() {
+                @Override
+                public void changedValue(DynamicVariable<TaskExecutionContext> var, TaskExecutionContext oldValue, TaskExecutionContext newValue) {
+                    if (newValue.isFinished()) {
+                        RootTaskFinishedEventToUI eventToUI = new RootTaskFinishedEventToUI(newValue.taskResult, newValue.getDuration(), $.getName());
+
+                        ui.info(eventToUI);
+                    }
+                }
+            });
+        }
+
+
+        return new PreparationResult($s);
+    }
     void addToStages(Stages stages) {
         this.stages.setInstance(stages).makeFinal();
         this.global = stages.global;

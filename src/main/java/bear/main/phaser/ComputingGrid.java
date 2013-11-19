@@ -1,11 +1,15 @@
 package bear.main.phaser;
 
+import chaschev.lang.Functions2;
 import chaschev.lang.Lists2;
 import chaschev.lang.OpenBean;
 import chaschev.util.CatchyRunnable;
 import chaschev.util.Exceptions;
 import com.google.common.base.Function;
-import com.google.common.collect.*;
+import com.google.common.collect.ArrayTable;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import org.slf4j.LoggerFactory;
@@ -24,7 +28,7 @@ import java.util.concurrent.ExecutorService;
  *
  * @author Andrey Chaschev chaschev@gmail.com
  */
-public class ComputingGrid<C> {
+public class ComputingGrid<C, PHASE> {
     private final int partiesCount;
 
     //todo this should be extracted into a builder
@@ -32,20 +36,23 @@ public class ComputingGrid<C> {
 
 //    List<Phase<?>> phases = new ArrayList<>();
     List<PhaseParty<C>> parties;
-    List<Phase<?>> phases = new ArrayList<Phase<?>>();
+    List<Phase<?, PHASE>> phases ;
 
-    final ArrayTable<Integer, C, GridCell<C, ?>> table;
+    final ArrayTable<PHASE, C, GridCell<C, ?>> table;
+
     private final Map<C, Integer> columnKeyToIndex;
+    private final Map<PHASE, Integer> rowKeyToIndex;
 
 
-    public ComputingGrid(int rows, Iterable<? extends C> columnKeys) {
+    public ComputingGrid(Iterable<? extends Phase<?, PHASE>> phases, Iterable<? extends C> columnKeys) {
         table = ArrayTable.create(
-            ContiguousSet.create(Range.closedOpen(0, rows), DiscreteDomain.integers()),
+            Iterables.transform(phases, Functions2.<Object, PHASE>field("phase")),
             columnKeys);
 
         partiesCount = table.columnKeyList().size();
 
         columnKeyToIndex = (Map<C, Integer>) OpenBean.getFieldValue(table, "columnKeyToIndex");
+        rowKeyToIndex = (Map<PHASE, Integer>) OpenBean.getFieldValue(table, "rowKeyToIndex");
 
         this.parties = new ArrayList<PhaseParty<C>>(partiesCount);
 
@@ -56,22 +63,24 @@ public class ComputingGrid<C> {
             i++;
         }
 
+        phases = Lists.newArrayList(phases);
+
         // this is needed because table is not synced
         // and cells may be referenced from future
-        for (int rowKey= 0;rowKey<rows;rowKey++) {
+        for (Phase<?, PHASE> phase : phases) {
             for (C columnKey : columnKeys) {
-                table.put(rowKey, columnKey, new GridCell());
+                table.put(phase.phase, columnKey, new GridCell());
             }
+
+            addPhase(phase);
         }
     }
 
-    public <V> List<ListenableFuture<V>> phaseFutures(Phase<V> phase) {
+    public <V> List<ListenableFuture<V>> phaseFutures(Phase<V, PHASE> phase) {
         return phaseFutures(phase.rowIndex, null);
     }
 
-    public <V> List<ListenableFuture<V>> phaseFutures(int phase, Class<V> vClass) {
-        final int rowIndex = phaseToRowIndex(phase);
-
+    public <V> List<ListenableFuture<V>> phaseFutures(final int rowIndex, Class<V> vClass) {
         return Lists2.computingList(partiesCount, new Function<Integer, ListenableFuture<V>>() {
             public ListenableFuture<V> apply(Integer colIndex) {
                 return (ListenableFuture<V>) table.at(rowIndex, colIndex).getFuture();
@@ -79,15 +88,15 @@ public class ComputingGrid<C> {
         });
     }
 
-    public Integer phaseToRowIndex(int phase) {
-        return phase;
+    public Integer phaseToRowIndex(PHASE phase) {
+        return rowKeyToIndex.get(phase);
     }
 
     public Integer partyToColumnIndex(C col) {
         return columnKeyToIndex.get(col);
     }
 
-    public <V> ListenableFuture<List<V>> aggregateSuccessful(Phase<V> phase) {
+    public <V> ListenableFuture<List<V>> aggregateSuccessful(Phase<V, PHASE> phase) {
         return Futures.successfulAsList(phaseFutures(phase));
     }
 
@@ -95,18 +104,18 @@ public class ComputingGrid<C> {
         return Futures.successfulAsList(phaseFutures(phase, vClass));
     }
 
-    ComputingGrid<C> awaitTermination(){
+    ComputingGrid<C, PHASE> awaitTermination(){
         try {
 
-            aggregatedPhase(lastPhase(), Object.class).get();
+            aggregatedPhase(phaseToRowIndex(lastPhase()), Object.class).get();
             return this;
         } catch (Exception e) {
             throw Exceptions.runtime(e);
         }
     }
 
-    private Integer lastPhase() {
-        ImmutableList<Integer> row = table.rowKeyList();
+    private PHASE lastPhase() {
+        ImmutableList<PHASE> row = table.rowKeyList();
 
         return row.get(row.size() - 1);
     }
@@ -115,7 +124,7 @@ public class ComputingGrid<C> {
         return table.get(rowKey, columnKey);
     }
 
-    public <V> GridCell<C, V> cell(Phase<V> phase, C columnKey) {
+    public <V> GridCell<C, V> cell(Phase<V, PHASE> phase, C columnKey) {
         return (GridCell<C, V>) table.at(phase.getRowIndex(), partyToColumnIndex(columnKey));
     }
 
@@ -127,7 +136,7 @@ public class ComputingGrid<C> {
         return (GridCell<C, V>) table.at(rowIndex, columnIndex);
     }
 
-    public ComputingGrid<C> startParties(ExecutorService service) {
+    public ComputingGrid<C, PHASE> startParties(ExecutorService service) {
         for (int i = 0; i < partiesCount; i++) {
             final int partyIndex = i;
 
@@ -136,14 +145,15 @@ public class ComputingGrid<C> {
             service.submit(new CatchyRunnable(new Runnable() {
                 @Override
                 public void run() {
-                    for(; party.currentPhaseIndex < table.rowKeyList().size();party.currentPhaseIndex++){
+                    for(; party.currentPhaseIndex < phases.size();party.currentPhaseIndex++){
+                        Phase<?, PHASE> phase = phases.get(party.currentPhaseIndex);
                         GridCell cell = table.at(party.currentPhaseIndex, partyIndex)
                             .started();
 
                         Object result = null;
 
                         try {
-                            result = cell.callable.call(party, party.currentPhaseIndex);
+                            result = cell.callable.call(party, party.currentPhaseIndex, phase);
 
                             cell.getFuture().set(result);
 
@@ -151,7 +161,7 @@ public class ComputingGrid<C> {
                                 cell.whenDone.act(result, party);
                             }
                         } catch (Exception e) {
-                            GridException gridException = new GridException(e, phases.get(party.currentPhaseIndex), party);
+                            GridException gridException = new GridException(e, phase, party);
                             party.setException(gridException);
                             LoggerFactory.getLogger("log").warn(e.toString(), gridException);
 
@@ -167,7 +177,7 @@ public class ComputingGrid<C> {
         return this;
     }
 
-    public <V> ComputingGrid<C> addPhase(Phase<V> phase) {
+    public <V> ComputingGrid<C, PHASE> addPhase(Phase<V, PHASE> phase) {
         ImmutableList<C> list = table.columnKeyList();
         int rowIndex = phases.size();
 
@@ -182,13 +192,6 @@ public class ComputingGrid<C> {
         phases.add(phase);
 
         return this;
-    }
-
-    public <V> ComputingGrid<C> addPhase(int phase, Function<Integer, PhaseCallable<C, V>> factory) {
-        Phase<V> _phase = new Phase<V>(phase + "", factory);
-
-
-        return addPhase(_phase);
     }
 
     public <V> SettableFuture<V> previousResult(PhaseParty<C> party, int phaseIndex, Class<V> aClass) {

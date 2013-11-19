@@ -24,10 +24,10 @@ import bear.main.Script;
 import bear.plugins.CommandInterpreter;
 import bear.plugins.PluginShellMode;
 import bear.session.Result;
+import bear.task.SessionTaskRunner;
 import bear.task.Task;
 import bear.task.TaskDef;
 import bear.task.TaskResult;
-import bear.task.TaskRunner;
 import chaschev.lang.OpenBean;
 import chaschev.util.CatchyRunnable;
 import chaschev.util.Exceptions;
@@ -84,7 +84,7 @@ public class GroovyShellMode extends PluginShellMode<GroovyShellPlugin> implemen
     public Task interpret(final String command, SessionContext $, final Task _parent, final TaskDef taskDef) {
         return new Task<TaskDef>(_parent, taskDef, $) {
             @Override
-            protected TaskResult exec(final TaskRunner runner) {
+            protected TaskResult exec(final SessionTaskRunner runner) {
                 Runnable runnable = null;
                 try {
                     runnable = new CatchyRunnable(new Runnable() {
@@ -142,7 +142,7 @@ public class GroovyShellMode extends PluginShellMode<GroovyShellPlugin> implemen
                 return result;
             }
 
-            private GroovyShell getShell(TaskRunner runner) {
+            private GroovyShell getShell(SessionTaskRunner runner) {
                 boolean isLocal = !$(plugin.sendToHosts);
 
                 Binding $binding;

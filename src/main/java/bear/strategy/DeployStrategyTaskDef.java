@@ -19,10 +19,10 @@ package bear.strategy;
 import bear.core.*;
 import bear.session.BearVariables;
 import bear.session.Result;
+import bear.task.SessionTaskRunner;
 import bear.task.Task;
 import bear.task.TaskDef;
 import bear.task.TaskResult;
-import bear.task.TaskRunner;
 import bear.vcs.CommandLineResult;
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
@@ -179,7 +179,7 @@ public abstract class DeployStrategyTaskDef extends TaskDef<Task> {
         }
 
         @Override
-        protected final TaskResult exec(TaskRunner runner) {
+        protected final TaskResult exec(SessionTaskRunner runner) {
             try {
                 Preconditions.checkNotNull(prepareRemoteDataBarrier, "prepareRemoteDataBarrier is null");
                 Preconditions.checkNotNull(updateRemoteFilesBarrier, "updateRemoteFilesBarrier is null");

@@ -19,7 +19,11 @@ package bear.task;
 import bear.console.AbstractConsoleCommand;
 import bear.context.HavingContext;
 import bear.core.Bear;
+import bear.core.GlobalTaskRunner;
 import bear.core.SessionContext;
+import bear.main.phaser.ComputingGrid;
+import bear.main.phaser.Phase;
+import bear.main.phaser.PhaseParty;
 import bear.task.exec.TaskExecutionContext;
 import bear.vcs.CommandLineResult;
 
@@ -41,7 +45,10 @@ public abstract class Task<TASK_DEF extends TaskDef> extends HavingContext<Task<
     public final String id = SessionContext.randomId();
 
     protected Bear bear;
-    protected TaskRunner runner;
+    protected SessionTaskRunner runner;
+    protected ComputingGrid<SessionContext, TaskDef> grid;
+    public PhaseParty<SessionContext> phaseParty;
+    public Phase<?,GlobalTaskRunner.BearScriptPhase> phase;
 
     public Task(Task parent, TASK_DEF definition, SessionContext $) {
         super($);
@@ -52,7 +59,7 @@ public abstract class Task<TASK_DEF extends TaskDef> extends HavingContext<Task<
         executionContext = new TaskExecutionContext($);
     }
 
-    public TaskResult run(TaskRunner runner){
+    public TaskResult run(SessionTaskRunner runner){
         if(parent != null){
             parent.executionContext.onNewSubTask(this);
         }
@@ -68,11 +75,11 @@ public abstract class Task<TASK_DEF extends TaskDef> extends HavingContext<Task<
         return result;
     }
 
-    protected abstract TaskResult exec(TaskRunner runner) ;
+    protected abstract TaskResult exec(SessionTaskRunner runner) ;
 
     private static final Task<TaskDef> NOP_TASK = new Task<TaskDef>(null, null, null) {
         @Override
-        protected TaskResult exec(TaskRunner runner) {
+        protected TaskResult exec(SessionTaskRunner runner) {
             return TaskResult.OK;
         }
     };
@@ -127,4 +134,9 @@ public abstract class Task<TASK_DEF extends TaskDef> extends HavingContext<Task<
         return executionContext;
     }
 
+    public void init(Phase<?, GlobalTaskRunner.BearScriptPhase> phase, PhaseParty<SessionContext> party, ComputingGrid<SessionContext, ?> grid) {
+        this.phase = phase;
+        this.phaseParty = party;
+        this.grid = (ComputingGrid)party.grid;
+    }
 }

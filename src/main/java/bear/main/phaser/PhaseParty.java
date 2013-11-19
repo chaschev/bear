@@ -13,9 +13,9 @@ public class PhaseParty<COL> {
     GridException exception;
     long finishedAtMs;
 
-    public final ComputingGrid<COL> grid;
+    public final ComputingGrid<COL, ?> grid;
 
-    public PhaseParty(int index, COL column, ComputingGrid<COL> grid) {
+    public PhaseParty(int index, COL column, ComputingGrid<COL, ?> grid) {
         this.index = index;
         this.column = column;
         this.grid = grid;
@@ -40,5 +40,13 @@ public class PhaseParty<COL> {
 
     public String getName(Object phase) {
         return "(" + phase + ", " + index + ")";
+    }
+
+    public COL getColumn() {
+        return column;
+    }
+
+    public void fail() {
+        throw new UnsupportedOperationException("todo PhaseParty.fail");
     }
 }

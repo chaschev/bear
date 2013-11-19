@@ -14,25 +14,20 @@
  * limitations under the License.
  */
 
-package bear.main.event;
-
-import bear.console.ConsolesDivider;
+package bear.core;
 
 import java.util.List;
 
-/**
- * @author Andrey Chaschev chaschev@gmail.com
- */
-public class PhaseFinishedEventToUI extends EventToUI {
-    public long duration;
-    public final List<ConsolesDivider.EqualityGroup> groups;
-    public final String phaseName;
+public class PreparationResult {
+    private final List<SessionContext> $s;
 
-    public PhaseFinishedEventToUI(long duration, List<ConsolesDivider.EqualityGroup> groups, String phaseName) {
-        super("phaseFinished", "phaseFinished");
 
-        this.duration = duration;
-        this.groups = groups;
-        this.phaseName = phaseName;
+    public PreparationResult( List<SessionContext> $s) {
+        this.$s = $s;
+    }
+
+
+    public List<SessionContext> getSessions() {
+        return $s;
     }
 }

@@ -48,7 +48,7 @@ public class Tasks {
         public Task<TaskDef> newSession(SessionContext $, final Task parent) {
             return new Task<TaskDef>(parent, this, $) {
                 @Override
-                protected TaskResult exec(TaskRunner runner) {
+                protected TaskResult exec(SessionTaskRunner runner) {
                     return runner.run(
                         update,
                         restartApp);
@@ -62,7 +62,7 @@ public class Tasks {
         public Task<TaskDef> newSession(SessionContext $, final Task parent) {
             return new Task<TaskDef>(parent, setup, $) {
                 @Override
-                protected TaskResult exec(TaskRunner runner) {
+                protected TaskResult exec(SessionTaskRunner runner) {
                     final String[] dirs = {
                         $(bear.deployTo), $(bear.releasesPath), $(bear.vcsCheckoutPath),
                         $(bear.bearPath),
@@ -110,7 +110,7 @@ public class Tasks {
         public Task<TaskDef> newSession(SessionContext $, final Task parent) {
             return new Task<TaskDef>(parent, update, $) {
                 @Override
-                protected TaskResult exec(TaskRunner runner) {
+                protected TaskResult exec(SessionTaskRunner runner) {
                     return runner.run(new TransactionTaskDef(
                         updateCode,
                         createSymlink
@@ -125,7 +125,7 @@ public class Tasks {
         public Task<TaskDef> newSession(SessionContext $, final Task parent) {
             return new Task<TaskDef>(parent, updateCode, $) {
                 @Override
-                protected TaskResult exec(TaskRunner runner) {
+                protected TaskResult exec(SessionTaskRunner runner) {
                     return TaskResult.and(
                         runner.run($(bear.getStrategy)),
                         runner.run(finalizeTouchCode));
@@ -145,7 +145,7 @@ public class Tasks {
         public Task<TaskDef> newSession(SessionContext $, final Task parent) {
             return new Task<TaskDef>(parent, finalizeTouchCode, $) {
                 @Override
-                protected TaskResult exec(TaskRunner runner) {
+                protected TaskResult exec(SessionTaskRunner runner) {
                     $.sys.chmod("g+w", true, $(bear.getLatestReleasePath));
 
                     return TaskResult.OK;
@@ -159,7 +159,7 @@ public class Tasks {
         public Task<TaskDef> newSession(SessionContext $, final Task parent) {
             return new Task<TaskDef>(parent, createSymlink, $) {
                 @Override
-                protected TaskResult exec(TaskRunner runner) {
+                protected TaskResult exec(SessionTaskRunner runner) {
                     return new TaskResult($.sys.link($(bear.getLatestReleasePath), $(bear.currentPath)));
                 }
 
@@ -180,7 +180,7 @@ public class Tasks {
         public Task<TaskDef> newSession(SessionContext $, final Task parent) {
             return new Task<TaskDef>(parent, vcsUpdate, $) {
                 @Override
-                protected TaskResult exec(TaskRunner runner) {
+                protected TaskResult exec(SessionTaskRunner runner) {
                     $.log("updating the project, please wait...");
 
                     if (!$.sys.exists($(bear.vcsBranchLocalPath))) {

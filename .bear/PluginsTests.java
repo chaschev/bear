@@ -42,7 +42,7 @@ public class PluginsTests {
                     PluginsTests.class.getResourceAsStream("/test.properties")
                 ), new GithubGrailsAppScript(), GlobalContextFactory.INSTANCE)
                 .shutdownAfterRun(true)
-                .prepareToRun();
+                .createRunContext();
         }
     }
 }

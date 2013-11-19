@@ -18,6 +18,7 @@ package bear.core;
 
 import bear.cli.CommandLine;
 import bear.context.AbstractContext;
+import bear.main.event.TaskConsoleEventToUI;
 import bear.plugins.sh.GenericUnixLocalEnvironmentPlugin;
 import bear.plugins.sh.GenericUnixRemoteEnvironmentPlugin;
 import bear.plugins.sh.SystemEnvironmentPlugin;
@@ -26,10 +27,7 @@ import bear.session.Address;
 import bear.session.DynamicVariable;
 import bear.session.SshAddress;
 import bear.session.Variables;
-import bear.task.Task;
-import bear.task.TaskDef;
-import bear.task.TaskResult;
-import bear.task.TaskRunner;
+import bear.task.*;
 import bear.task.exec.CommandExecutionEntry;
 import bear.task.exec.TaskExecutionContext;
 import org.apache.commons.lang3.RandomStringUtils;
@@ -38,9 +36,7 @@ import org.joda.time.DateTime;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
 
-import static bear.session.Variables.dynamic;
-import static bear.session.Variables.newVar;
-import static bear.session.Variables.undefined;
+import static bear.session.Variables.*;
 
 /**
  * @author Andrey Chaschev chaschev@gmail.com
@@ -54,15 +50,17 @@ public class SessionContext extends AbstractContext {
     public GenericUnixLocalEnvironmentPlugin localSysEnv;
     public GenericUnixRemoteEnvironmentPlugin remoteSysEnv;
     public final SystemSession sys;
-    public final TaskRunner runner;
+    public final SessionTaskRunner runner;
     public Bear bear;
     public Address address;
-    protected CompositeTaskRunContext taskRunContext;
-    private static final org.apache.logging.log4j.Logger ui = LogManager.getLogger("fx");
+//    protected CompositeTaskRunContext taskRunContext;
+    public static final org.apache.logging.log4j.Logger ui = LogManager.getLogger("fx");
 
     protected Task<?> currentTask;
 
     protected ExecutionContext executionContext = new ExecutionContext();
+
+    protected GlobalTaskRunner globalTaskRunner;
 
     public final String id = randomId();
     protected Thread thread;
@@ -80,8 +78,32 @@ public class SessionContext extends AbstractContext {
         thread.setName(threadName());
     }
 
-    public void whenSessionComplete() {
+    public void whenPhaseStarts(GlobalTaskRunner.BearScriptPhase phase, BearScript2.ShellSessionContext shellSessionContext){
+        StringBuilder phaseSB = executionContext.phaseText.getDefaultValue();
+        phaseSB.setLength(0);
+        executionContext.phaseText.fireExternalModification();
+
+        executionContext.phaseName = phase.getName();
+        executionContext.phaseId.defaultTo(phase.id);
+
+        ui.info(new TaskConsoleEventToUI("shell", "step " + executionContext.phaseName + "(" + phase.id + ")", null)
+            .setId(id)
+            .setParentId(shellSessionContext.sessionId)
+        );
+    }
+
+    public void whenSessionComplete(GlobalTaskRunner globalTaskRunner) {
         thread = null;
+
+        DynamicVariable<TaskExecutionContext> execCtx = executionContext.rootExecutionContext;
+
+        boolean isOk = execCtx.getDefaultValue().taskResult.ok();
+
+        globalTaskRunner.stats.getDefaultValue().addArrival(isOk);
+        globalTaskRunner.stats.fireExternalModification();
+
+        globalTaskRunner.arrivedCount.getDefaultValue().incrementAndGet();
+        globalTaskRunner.arrivedCount.fireExternalModification();
     }
 
     public void cancel(){
@@ -134,7 +156,7 @@ public class SessionContext extends AbstractContext {
         }
     }
 
-    public SessionContext(GlobalContext global, Address address, TaskRunner runner) {
+    public SessionContext(GlobalContext global, Address address, SessionTaskRunner runner) {
         super(global, address.getName());
 
         ///this can be extracted into newContext(aClass, parent, Object... fields)
@@ -240,7 +262,7 @@ public class SessionContext extends AbstractContext {
         return sys;
     }
 
-    public TaskRunner getRunner() {
+    public SessionTaskRunner getRunner() {
         return runner;
     }
 
@@ -257,11 +279,7 @@ public class SessionContext extends AbstractContext {
         return Variables.concat(this, varsAndStrings);
     }
 
-    void setTaskRunContext(CompositeTaskRunContext taskRunContext) {
-        this.taskRunContext = taskRunContext;
-    }
-
-    public CompositeTaskRunContext getTaskRunContext() {
-        return taskRunContext;
+    public void setGlobalTaskRunner(GlobalTaskRunner globalTaskRunner) {
+        this.globalTaskRunner = globalTaskRunner;
     }
 }

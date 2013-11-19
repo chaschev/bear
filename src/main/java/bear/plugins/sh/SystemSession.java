@@ -27,9 +27,9 @@ import bear.session.Address;
 import bear.session.DynamicVariable;
 import bear.session.Result;
 import bear.task.BearException;
+import bear.task.SessionTaskRunner;
 import bear.task.Task;
 import bear.task.TaskResult;
-import bear.task.TaskRunner;
 import bear.vcs.CommandLineResult;
 import com.google.common.base.Joiner;
 import org.apache.commons.io.FilenameUtils;
@@ -340,7 +340,7 @@ public abstract class SystemSession extends Task<SystemEnvironmentPlugin.SystemS
         return definition.getPlugin().sudo;
     }
 
-    protected TaskResult exec(TaskRunner runner) {
+    protected TaskResult exec(SessionTaskRunner runner) {
         throw new UnsupportedOperationException("todo .exec");
     }
 

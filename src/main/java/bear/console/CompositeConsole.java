@@ -55,11 +55,11 @@ public class CompositeConsole {
     }
 
     public static class Result{
-        Future<CompositeConsoleArrival.EqualityGroups> groups;
+        Future<ConsolesDivider.EqualityGroups> groups;
 
     }
 
-    protected CompositeConsoleArrival sendCommand(final AbstractConsoleCommand command, final ConsoleCallback callback) {
+    protected ConsolesDivider sendCommand(final AbstractConsoleCommand command, final ConsoleCallback callback) {
         final CompositeConsoleCallContext callContext = new CompositeConsoleCallContext(consoles);
 
         final CountDownLatch latch = new CountDownLatch(consoles.size());
@@ -93,7 +93,7 @@ public class CompositeConsole {
             futures.add(fut);
         }
 
-        return new CompositeConsoleArrival(null, futures, consoles, null, null);
+        return new ConsolesDivider(null, futures, consoles, null, null);
     }
 
     public int size() {
