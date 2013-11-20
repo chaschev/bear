@@ -18,7 +18,7 @@ package bear.main;
 
 import bear.main.event.EventToUI;
 import bear.main.event.EventWithId;
-import bear.main.event.NewSessionConsoleEventToUI;
+import bear.main.event.NewPhaseConsoleEventToUI;
 import chaschev.js.Bindings;
 import chaschev.js.ExceptionWrapper;
 import chaschev.json.JacksonMapper;
@@ -205,36 +205,36 @@ public class BearFX {
                     }
                 });
 
-                webEngine.getLoadWorker().stateProperty().addListener(new ChangeListener<Worker.State>() {
-                    @Override
-                    public void changed(ObservableValue<? extends Worker.State> ov, Worker.State t, Worker.State t1) {
-                        logger.debug("[JAVA INIT] setting...");
+    webEngine.getLoadWorker().stateProperty().addListener(new ChangeListener<Worker.State>() {
+        @Override
+        public void changed(ObservableValue<? extends Worker.State> ov, Worker.State t, Worker.State t1) {
+            logger.debug("[JAVA INIT] setting...");
 
-                        if (t1 == Worker.State.SUCCEEDED) {
-                            JSObject window = (JSObject) webEngine.executeScript("window");
+            if (t1 == Worker.State.SUCCEEDED) {
+                JSObject window = (JSObject) webEngine.executeScript("window");
 
-                            window.setMember("bearFX", bearFX);
-                            window.setMember("OpenBean", OpenBean.INSTANCE);
-                            window.setMember("Bindings", bindings);
+                window.setMember("bearFX", bearFX);
+                window.setMember("OpenBean", OpenBean.INSTANCE);
+                window.setMember("Bindings", bindings);
 
-                            logger.debug("[JAVA INIT] calling bindings JS initializer...");
-                            webEngine.executeScript("Java.init(window);");
-                            logger.debug("[JAVA INIT] calling app JS initializer...");
-                            webEngine.executeScript("Java.initApp();");
+                logger.debug("[JAVA INIT] calling bindings JS initializer...");
+                webEngine.executeScript("Java.init(window);");
+                logger.debug("[JAVA INIT] calling app JS initializer...");
+                webEngine.executeScript("Java.initApp();");
 
-                            bearFX.sendMessageToUI(new NewSessionConsoleEventToUI("status", randomId()));
+                bearFX.sendMessageToUI(new NewPhaseConsoleEventToUI("status", randomId()));
 
-                            logger.error("[Loggers Diagnostics]");
-                            LoggerFactory.getLogger(BearFX.class).debug("MUST NOT BE SEEN started the Bear - -1!");
-                            LoggerFactory.getLogger("fx").info("started the Bear - 0!");
-                            LoggerFactory.getLogger("fx").warn("started the Bear - 1!");
-                            LoggerFactory.getLogger("root").warn("started the Bear - 2!");
-                            LoggerFactory.getLogger(BearFX.class).warn("started the Bear - 3!");
-                            LogManager.getLogger(BearFX.class).warn("started the Bear - 4!");
-                            LoggerFactory.getLogger("fx").debug("started the Bear - 5!");
-                        }
-                    }
-                });
+                logger.error("[Loggers Diagnostics]");
+                LoggerFactory.getLogger(BearFX.class).debug("MUST NOT BE SEEN started the Bear - -1!");
+                LoggerFactory.getLogger("fx").info("started the Bear - 0!");
+                LoggerFactory.getLogger("fx").warn("started the Bear - 1!");
+                LoggerFactory.getLogger("root").warn("started the Bear - 2!");
+                LoggerFactory.getLogger(BearFX.class).warn("started the Bear - 3!");
+                LogManager.getLogger(BearFX.class).warn("started the Bear - 4!");
+                LoggerFactory.getLogger("fx").debug("started the Bear - 5!");
+            }
+        }
+    });
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -254,11 +254,17 @@ public class BearFX {
         try {
             org.apache.logging.log4j.core.Logger coreLogger
                 = (org.apache.logging.log4j.core.Logger) org.apache.logging.log4j.LogManager.getLogger(loggerName);
-        LoggerContext context = coreLogger.getContext();
-        org.apache.logging.log4j.core.config.BaseConfiguration configuration
+
+            LoggerContext context = coreLogger.getContext();
+
+            org.apache.logging.log4j.core.config.BaseConfiguration configuration
             = (org.apache.logging.log4j.core.config.BaseConfiguration)context.getConfiguration();
+
+            configuration.addAppender(appender);
+
+            context.updateLoggers(configuration);
             
-            coreLogger.addAppender(appender);
+//            coreLogger.addAppender(appender);
 
             if("root".equals(loggerName)){
                 for (LoggerConfig loggerConfig : configuration.getLoggers().values()) {

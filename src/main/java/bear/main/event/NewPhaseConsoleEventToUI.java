@@ -16,19 +16,27 @@
 
 package bear.main.event;
 
-import bear.task.TaskResult;
-
 /**
  * @author Andrey Chaschev chaschev@gmail.com
  */
-public class ScriptFinishedEventToUI extends ConsoleEventToUI {
-    public long duration;
-    public final TaskResult result;
+public class NewPhaseConsoleEventToUI extends ConsoleEventToUI implements EventWithId {
+    public final String id;
+    public String phaseId;
 
-    public ScriptFinishedEventToUI(String console, long duration, TaskResult result) {
-        super(console, "scriptFinished");
+    public NewPhaseConsoleEventToUI(String console, String id) {
+        super(console, "newPhase");
+        this.id = id;
+    }
 
-        this.duration = duration;
-        this.result = result;
+     public NewPhaseConsoleEventToUI(String console, String id, String phaseId) {
+        super(console, "newPhase");
+        this.id = id;
+        this.phaseId = phaseId;
+    }
+
+
+
+    public String getId() {
+        return id;
     }
 }

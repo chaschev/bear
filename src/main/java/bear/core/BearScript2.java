@@ -21,7 +21,6 @@ import bear.console.GroupDivider;
 import bear.main.BearFX;
 import bear.main.BearRunner2;
 import bear.main.Response;
-import bear.main.event.NewSessionConsoleEventToUI;
 import bear.main.event.PhaseFinishedEventToUI;
 import bear.main.event.RMIEventToUI;
 import bear.main.event.TextConsoleEventToUI;
@@ -57,6 +56,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import static chaschev.lang.Predicates2.contains;
 import static com.google.common.base.Predicates.not;
 import static com.google.common.collect.Lists.newArrayList;
+import static com.google.common.collect.Lists.transform;
 import static org.apache.commons.lang3.StringUtils.substringAfter;
 import static org.apache.commons.lang3.StringUtils.substringBefore;
 
@@ -167,7 +167,7 @@ public class BearScript2 {
             final Plugin currentPlugin = getPlugin(scriptItem.pluginName, shellContext);
 
             if (!executableLines.isEmpty()) {
-                return new TaskDef<Task>(){
+                return new TaskDef<Task>(scriptItem.asOneLineDesc()){
                     @Override
                     public Task newSession(SessionContext $, Task parent) {
                         for (int i = 0; i < directivesLines.size(); i++) {
@@ -387,7 +387,7 @@ public class BearScript2 {
         protected String phaseId;
 
         ShellSessionContext() {
-            ui.info(new NewSessionConsoleEventToUI("shell", sessionId));
+
         }
 
 
@@ -424,26 +424,26 @@ public class BearScript2 {
         final BearScriptExecContext scriptExecContext =
             new BearScriptExecContext(initialPlugin);
 
-        List<TaskDef<Task>> lazyTaskList = Lists.transform(scriptItems, new Function<ScriptItem, TaskDef<Task>>() {
+        List<TaskDef<Task>> taskList;
+
+        taskList = newArrayList(transform(scriptItems, new Function<ScriptItem, TaskDef<Task>>() {
             @Nullable
             @Override
             public TaskDef<Task> apply(ScriptItem scriptItem) {
                 return scriptExecContext.convertItemToTask(shellContext, scriptItem);
             }
-        });
+        }));
 
         PreparationResult preparationResult = new BearRunner2(settings, factory).createRunContext();
 
         List<SessionContext> $s = preparationResult.getSessions();
 
-        GlobalTaskRunner globalTaskRunner = new GlobalTaskRunner(global, lazyTaskList, $s, shellContext);
+        GlobalTaskRunner globalTaskRunner = new GlobalTaskRunner(global, taskList, $s, shellContext);
 
         //todo this should not be async - this message might be slow
         bearFX.sendMessageToUI(new RMIEventToUI("terminals", "onScriptStart", getHosts($s)));
 
-
         globalTaskRunner.startParties(global.localExecutor);
-
 
         return new RunResponse(globalTaskRunner, getHosts(preparationResult.getSessions()));
     }
@@ -518,7 +518,7 @@ public class BearScript2 {
     }
 
     public static List<RunResponse.Host> getHosts(List<SessionContext> $s) {
-        return Lists.transform($s, new Function<SessionContext, RunResponse.Host>() {
+        return transform($s, new Function<SessionContext, RunResponse.Host>() {
             public RunResponse.Host apply(SessionContext $) {
                 return new RunResponse.Host($.sys.getName(), $.sys.getAddress());
             }
@@ -598,7 +598,7 @@ public class BearScript2 {
 
             this.parseResult = new BearScriptParseResult(
                 Lists.newArrayList(
-                    new ScriptItem(groovy.cmdAnnotation(), Splitter.on("\n").splitToList(groovyScript), 1)
+                    new ScriptItem(groovy.cmdAnnotation(), Splitter.on("\n").trimResults().splitToList(groovyScript), 1)
                 ),
                 Collections.<ScriptError>emptyList());
 

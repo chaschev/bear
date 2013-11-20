@@ -62,10 +62,6 @@ public abstract class TaskDef<TASK extends Task> {
         this.name = name;
     }
 
-    protected TaskDef(String name, SessionContext $) {
-        this.name = name;
-    }
-
     public abstract TASK newSession(SessionContext $, final Task parent);
 
     public boolean hasRole(Set<Role> roles) {
@@ -124,6 +120,9 @@ public abstract class TaskDef<TASK extends Task> {
     }
 
     public static final TaskDef EMPTY = new TaskDef() {
+        {
+            name = "EMPTY";
+        }
         @Override
         public Task<TaskDef> newSession(SessionContext $, final Task parent) {
             throw new UnsupportedOperationException();

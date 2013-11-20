@@ -1,4 +1,4 @@
-package bear.main;
+package bear.core;
 
 import org.junit.Test;
 
@@ -12,7 +12,7 @@ import static org.fest.assertions.api.Assertions.assertThat;
 public class BearScriptTest {
     @Test
     public void testParse1(){
-        BearScript.BearScriptParseResult parseResult = BearScript.parseScript("" +
+        BearScript2.BearScriptParseResult parseResult = BearScript2.parseScript("" +
             ":use shell groovyShell\n" +
             ":set x='keke'\n" +
             "abc\n" +
@@ -22,7 +22,7 @@ public class BearScriptTest {
             ":set x='lala'\n" +
             "pwd", "initial");
 
-        List<BearScript.ScriptItem> items = parseResult.scriptItems;
+        List<BearScript2.ScriptItem> items = parseResult.scriptItems;
 
         assertThat(items).hasSize(2);
         assertThat(parseResult.globalErrors).isEmpty();

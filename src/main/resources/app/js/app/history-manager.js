@@ -100,7 +100,7 @@ var FileReferenceHistoryEntry = function(file){
 
     this.file = file;
     this.type = 'file';
-    console.log('FileEntry.<init>, file:', this.file);
+//    console.log('FileEntry.<init>, file:', this.file);
 };
 
 extend(FileReferenceHistoryEntry, AbstractHistoryEntry);

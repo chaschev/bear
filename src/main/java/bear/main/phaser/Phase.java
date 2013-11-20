@@ -4,6 +4,7 @@ import chaschev.lang.Lists2;
 import chaschev.lang.reflect.MethodDesc;
 import com.google.common.base.Function;
 import com.google.common.base.Optional;
+import com.google.common.base.Preconditions;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -27,6 +28,7 @@ public class Phase<V, PHASE> {
     }
 
     public <C> Phase(PHASE phase, Function<Integer, PhaseCallable<C, V, PHASE>> factory) {
+        Preconditions.checkNotNull(phase);
         this.phase = phase;
         this.factory = (Function) factory;
 
@@ -37,10 +39,6 @@ public class Phase<V, PHASE> {
         }
     }
 
-    public <C> Phase(Function<Integer, PhaseCallable<C, V, PHASE>> factory) {
-        this(null, factory);
-    }
-
     public <C> List<? extends PhaseCallable<C, V, PHASE>> getParties(ComputingGrid<C, PHASE> grid) {
         if(factory == null) return (List) parties;
 
@@ -49,10 +47,6 @@ public class Phase<V, PHASE> {
         }
 
         return (List) parties;
-    }
-
-    public int getRowIndex() {
-        return rowIndex;
     }
 
     @Override

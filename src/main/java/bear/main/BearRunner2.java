@@ -50,8 +50,8 @@ public class BearRunner2 {
             }
 
             Stage stage = global.var(global.bear.getStage);
-            PreparationResult preparationResult = stage.prepareToRun2();
-            return preparationResult;
+
+            return stage.prepareToRun2();
         } catch (Exception e) {
             throw Exceptions.runtime(e);
         }

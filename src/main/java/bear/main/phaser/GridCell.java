@@ -5,17 +5,17 @@ import javax.annotation.Nullable;
 /**
 * @author Andrey Chaschev chaschev@gmail.com
 */
-public final class GridCell<COL, V> {
+public final class GridCell<COL, V, PHASE> {
     public long startedAtMs ;
     public long finishedAtMs;
 
     private SettableFuture<V> future;
 
     @Nullable
-    PhaseCallable<COL, V> callable;
+    PhaseCallable<COL, V, PHASE> callable;
 
     @Nullable
-    WhenDone<COL, V> whenDone;
+    WhenDone<COL, V,PHASE> whenDone;
 
     public synchronized SettableFuture<V> getFuture() {
         if(future == null){

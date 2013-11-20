@@ -41,10 +41,10 @@ public class FXAppender extends AbstractAppender{
         String s = new String(getLayout().toByteArray(event));
 
         String threadName = event.getThreadName();
-        bearFX.sendMessageToUI(new LogEventToUI(
-            isSessionAddress(threadName) ? threadName:"status",
-            s, event.getLevel()
-        ));
+        bearFX.sendMessageToUI(
+            new LogEventToUI(isSessionAddress(threadName) ? threadName : "status",
+                s, event.getLevel()
+            ));
     }
 
     //this is a hack

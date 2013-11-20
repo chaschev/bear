@@ -71,7 +71,7 @@ public abstract class DeployStrategyTaskDef extends TaskDef<Task> {
     protected SymlinkRules symlinkRules = new SymlinkRules();
 
     protected DeployStrategyTaskDef(SessionContext $) {
-        super("DeployStrategy", $);
+        super("DeployStrategy");
 
         inject(this, $);
 //        $.wire(this);

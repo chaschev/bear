@@ -294,7 +294,7 @@ public class FXConf extends Cli {
                 public BearScript2.MessageResponse call() throws Exception {
                     final BearScript2 script = new BearScript2(global, bearFX, currentShellPlugin, settings);
 
-                    Supplier<BearScript2.BearScript2ParseResult> supplier;
+                    Supplier<BearScript2.BearScriptParseResult> supplier;
 
                     if(uiContext.script.endsWith(".groovy")){
                         supplier = new BearScript2.GroovyScriptSupplier(global, command);
@@ -308,7 +308,7 @@ public class FXConf extends Cli {
                 }
             };
 
-            if(!"shell".equals(uiContext.shell)){
+            if(!"shell".equals(uiContext.shell) && !"status".equals(uiContext.shell)){
                 return global.withMap(
                     newHashMap(
                         bear.activeHosts, singletonList(uiContext.shell),

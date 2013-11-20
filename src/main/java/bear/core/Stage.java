@@ -123,8 +123,6 @@ public class Stage {
         for (final SessionContext $ : $s) {
             final SessionContext.ExecutionContext execContext = $.getExecutionContext();
 
-            ui.info(new NewSessionConsoleEventToUI($.getName(), $.id));
-
             execContext.textAppended.addListener(new DynamicVariable.ChangeListener<String>() {
                 public void changedValue(DynamicVariable<String> var, String oldValue, String newValue) {
                     if (StringUtils.isNotEmpty(newValue)) {
@@ -155,8 +153,7 @@ public class Stage {
 
                     String phaseId = $.getExecutionContext().phaseId.getDefaultValue();
 
-                    ui.info(
-                        new TaskConsoleEventToUI($.getName(), $.getExecutionContext().phaseName + " " + phaseId, phaseId)
+                    ui.info(new TaskConsoleEventToUI($.getName(), $.getExecutionContext().phaseName + " " + phaseId, phaseId)
                             .setId(newValue.id)
                             .setParentId($.id)
                     );

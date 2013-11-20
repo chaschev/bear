@@ -1,6 +1,7 @@
 package bear.main.phaser;
 
 import com.google.common.base.Function;
+import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.ListenableFuture;
 import org.junit.After;
 import org.junit.Before;
@@ -10,6 +11,7 @@ import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -37,19 +39,19 @@ public class ComputingGridTest {
 
     @Test
     public void sanityTest() throws ExecutionException, InterruptedException {
-        Phase<String> phase1 = new Phase<String>(new Function<Integer, PhaseCallable<Integer, String>>() {
-            public PhaseCallable<Integer, String> apply(@Nullable Integer input) {
-                return new PhaseCallable<Integer, String>() {
+        Phase<String, Integer> phase1 = new Phase<String, Integer>(0, new Function<Integer, PhaseCallable<Integer, String, Integer>>() {
+            public PhaseCallable<Integer, String, Integer> apply(@Nullable Integer input) {
+                return new PhaseCallable<Integer, String, Integer>() {
                     @Override
-                    public String call(PhaseParty<Integer> party, int phaseIndex, Phase<?, PHASE> phase) throws Exception {
+                    public String call(PhaseParty<Integer, Integer> party, int phaseIndex, Phase<?, Integer> phase) throws Exception {
                         return "phase 1, party " + party.column;
                     }
                 };
             }
         });
 
-        ListenableFuture<List<String>> futureList = sampleGrid(1, 3)
-            .addPhase(phase1)
+        ListenableFuture<List<String>> futureList =
+            sampleGrid(phase1, 3)
             .startParties(service)
             .aggregateSuccessful(phase1);
 
@@ -63,22 +65,23 @@ public class ComputingGridTest {
 
     @Test
     public void raiseFlagTest() throws ExecutionException, InterruptedException {
-        final Phase<String> phase1 = new Phase<String>(new Function<Integer, PhaseCallable<Integer, String>>() {
-            public PhaseCallable<Integer, String> apply(@Nullable Integer input) {
-                return new PhaseCallable<Integer, String>() {
+        final Phase<String, Integer> phase1 = new Phase<String, Integer>(0, new Function<Integer, PhaseCallable<Integer, String, Integer>>() {
+            public PhaseCallable<Integer, String, Integer> apply(@Nullable Integer input) {
+                return new PhaseCallable<Integer, String, Integer>() {
                     @Override
-                    public String call(PhaseParty<Integer> party, int phaseIndex, Phase<?, PHASE> phase) throws Exception {
+                    public String call(PhaseParty<Integer, Integer> party, int phaseIndex, Phase<?, Integer> phase) throws Exception {
                         return party.getName(phaseIndex);
                     }
                 };
             }
         });
-        Phase<String> phase2 = new Phase<String>(new Function<Integer, PhaseCallable<Integer, String>>() {
+
+        Phase<String, Integer> phase2 = new Phase<String, Integer>(1, new Function<Integer, PhaseCallable<Integer, String, Integer>>() {
             @Override
-            public PhaseCallable<Integer, String> apply(@Nullable Integer input) {
-                return new PhaseCallable<Integer, String>() {
+            public PhaseCallable<Integer, String, Integer> apply(@Nullable Integer input) {
+                return new PhaseCallable<Integer, String, Integer>() {
                     @Override
-                    public String call(PhaseParty<Integer> party, int phaseIndex, Phase<?, PHASE> phase) throws Exception {
+                    public String call(PhaseParty<Integer, Integer> party, int phaseIndex, Phase<?, Integer> phase) throws Exception {
                         return party.getName(phaseIndex) + ": we all depend on a cell " +
                             party.grid.cell(phase1, 2).getFuture().get(500, TimeUnit.MILLISECONDS);
                     }
@@ -86,9 +89,7 @@ public class ComputingGridTest {
             }
         });
 
-        List<String> strings = sampleGrid(2, 3)
-            .addPhase(phase1)
-            .addPhase(phase2)
+        List<String> strings = sampleGrid(phase1, phase2, 3)
             .startParties(service)
             .aggregateSuccessful(phase2)
             .get();
@@ -110,11 +111,11 @@ public class ComputingGridTest {
 
         final OnceEnteredCallable<String> callable = new OnceEnteredCallable<String>();
 
-        final Phase<String> phase1 = new Phase<String>(new Function<Integer, PhaseCallable<Integer, String>>() {
-            public PhaseCallable<Integer, String> apply(Integer input) {
-                return new PhaseCallable<Integer, String>() {
+        final Phase<String, Integer> phase1 = new Phase<String, Integer>(0, new Function<Integer, PhaseCallable<Integer, String, Integer>>() {
+            public PhaseCallable<Integer, String, Integer> apply(Integer input) {
+                return new PhaseCallable<Integer, String, Integer>() {
                     @Override
-                    public String call(final PhaseParty<Integer> party, final int phaseIndex, Phase<?, PHASE> phase) throws Exception {
+                    public String call(final PhaseParty<Integer, Integer> party, final int phaseIndex, Phase<?, Integer> phase) throws Exception {
                         if(party.index != 2){
                             Thread.sleep(300);
                         }
@@ -134,20 +135,18 @@ public class ComputingGridTest {
             }
         });
 
-        Phase<String> phase2 = new Phase<String>(new Function<Integer, PhaseCallable<Integer, String>>() {
-            public PhaseCallable<Integer, String> apply(@Nullable Integer input) {
-                return new PhaseCallable<Integer, String>() {
+        Phase<String, Integer> phase2 = new Phase<String, Integer>(1, new Function<Integer, PhaseCallable<Integer, String, Integer>>() {
+            public PhaseCallable<Integer, String, Integer> apply(@Nullable Integer input) {
+                return new PhaseCallable<Integer, String, Integer>() {
                     @Override
-                    public String call(PhaseParty<Integer> party, int phaseIndex, Phase<?, PHASE> phase) throws Exception {
+                    public String call(PhaseParty<Integer, Integer> party, int phaseIndex, Phase<?, Integer> phase) throws Exception {
                         return party.getName(phaseIndex) + ": " + party.grid.cell(phase1, 1).getFuture().get();
                     }
                 };
             }
         });
 
-        List<String> list = sampleGrid(2, 3)
-            .addPhase(phase1)
-            .addPhase(phase2)
+        List<String> list = sampleGrid(phase1, phase2, 3)
             .startParties(service)
             .aggregateSuccessful(phase2)
             .get();
@@ -187,11 +186,11 @@ public class ComputingGridTest {
         }
 
         //guy 2 always downloads, but at phase2 they don't know who is the guy and wait for any result
-        final Phase<Phase1Result> phase1 = new Phase<Phase1Result>(new Function<Integer, PhaseCallable<Integer, Phase1Result>>() {
-            public PhaseCallable<Integer, Phase1Result> apply(Integer input) {
-                return new PhaseCallable<Integer, Phase1Result>() {
+        final Phase<Phase1Result, Integer> phase1 = new Phase<Phase1Result, Integer>(0, new Function<Integer, PhaseCallable<Integer, Phase1Result, Integer>>() {
+            public PhaseCallable<Integer, Phase1Result, Integer> apply(Integer input) {
+                return new PhaseCallable<Integer, Phase1Result, Integer>() {
                     @Override
-                    public Phase1Result call(final PhaseParty<Integer> party, final int phaseIndex, Phase<?, PHASE> phase) throws Exception {
+                    public Phase1Result call(final PhaseParty<Integer, Integer> party, final int phaseIndex, Phase<?, Integer> phase) throws Exception {
                         if(party.index != 2){
                             Thread.sleep(300);
                         }
@@ -221,11 +220,11 @@ public class ComputingGridTest {
             }
         });
 
-        final Phase<String> phase2 = new Phase<String>(new Function<Integer, PhaseCallable<Integer, String>>() {
-            public PhaseCallable<Integer, String> apply(@Nullable Integer input) {
-                return new PhaseCallable<Integer, String>() {
+        final Phase<String, Integer> phase2 = new Phase<String, Integer>(1, new Function<Integer, PhaseCallable<Integer, String, Integer>>() {
+            public PhaseCallable<Integer, String, Integer> apply(@Nullable Integer input) {
+                return new PhaseCallable<Integer, String, Integer>() {
                     @Override
-                    public String call(PhaseParty<Integer> party, int phaseIndex, Phase<?, PHASE> phase) throws Exception {
+                    public String call(PhaseParty<Integer, Integer> party, int phaseIndex, Phase<?, Integer> phase) throws Exception {
                         logger.debug("{}: entered phase2", party.getName(phaseIndex));
 
                         List<ListenableFuture<Phase1Result>> results = party.grid.phaseFutures(phase1);
@@ -260,9 +259,10 @@ public class ComputingGridTest {
             }
         });
 
-        List<String> list = sampleGrid(2, 3)
-            .addPhase(phase1)
-            .addPhase(phase2)
+        ArrayList<Phase<?, Integer>> phases = Lists.<Phase<?, Integer>>newArrayList(phase1, phase2);
+        ComputingGrid<Integer, Integer> grid = new ComputingGrid<Integer, Integer>(phases, intArray(3));
+
+        List<String> list = grid
             .startParties(service)
             .aggregateSuccessful(phase2)
             .get();
@@ -291,8 +291,8 @@ public class ComputingGridTest {
         return r;
     }
 
-    private static ComputingGrid<Integer> sampleGrid(int phaseCount, int partiesCount) {
-        return new ComputingGrid<Integer>(phaseCount, intArray(partiesCount));
+    private static ComputingGrid<Integer, Integer> sampleGrid(Collection<? extends Phase<?, Integer>> phases, int partiesCount) {
+        return new ComputingGrid<Integer, Integer>(phases, intArray(partiesCount));
     }
 
     @Test
@@ -327,11 +327,11 @@ public class ComputingGridTest {
     }
 
     private List<String> exceptionExperiment(final boolean allDepend, final int whoThrows) throws InterruptedException, ExecutionException {
-        final Phase<String> phase1 = new Phase<String>(new Function<Integer, PhaseCallable<Integer, String>>() {
-            public PhaseCallable<Integer, String> apply(@Nullable Integer input) {
-                return new PhaseCallable<Integer, String>() {
+        final Phase<String, Integer> phase1 = new Phase<String, Integer>(0, new Function<Integer, PhaseCallable<Integer, String, Integer>>() {
+            public PhaseCallable<Integer, String, Integer> apply(@Nullable Integer input) {
+                return new PhaseCallable<Integer, String, Integer>() {
                     @Override
-                    public String call(PhaseParty<Integer> party, int phaseIndex, Phase<?, PHASE> phase) throws Exception {
+                    public String call(PhaseParty<Integer, Integer> party, int phaseIndex, Phase<?, Integer> phase) throws Exception {
                         if(whoThrows == party.index){
                             throw new RuntimeException(party.index + "");
                         }
@@ -341,12 +341,12 @@ public class ComputingGridTest {
                 };
             }
         });
-        Phase<String> phase2 = new Phase<String>(new Function<Integer, PhaseCallable<Integer, String>>() {
+        Phase<String, Integer> phase2 = new Phase<String, Integer>(1, new Function<Integer, PhaseCallable<Integer, String, Integer>>() {
             @Override
-            public PhaseCallable<Integer, String> apply(@Nullable Integer input) {
-                return new PhaseCallable<Integer, String>() {
+            public PhaseCallable<Integer, String, Integer> apply(@Nullable Integer input) {
+                return new PhaseCallable<Integer, String, Integer>() {
                     @Override
-                    public String call(PhaseParty<Integer> party, int phaseIndex, Phase<?, PHASE> phase) throws Exception {
+                    public String call(PhaseParty<Integer, Integer> party, int phaseIndex, Phase<?, Integer> phase) throws Exception {
                         if(allDepend){
                             return party.getName(phaseIndex) + ": we all depend on a cell " +
                                 party.grid.cell(phase1, 2).getFuture().get(500, TimeUnit.MILLISECONDS);
@@ -358,9 +358,8 @@ public class ComputingGridTest {
             }
         });
 
-        ComputingGrid<Integer> grid = sampleGrid(2, 3)
-            .addPhase(phase1)
-            .addPhase(phase2)
+        ComputingGrid<Integer, Integer> grid =
+            sampleGrid(phase1, phase2, 3)
             .startParties(service);
 
         List<String> list = grid
@@ -378,5 +377,19 @@ public class ComputingGridTest {
         System.out.println(list);
 
         return list;
+    }
+
+    private static ComputingGrid<Integer, Integer> sampleGrid(Phase<String, Integer> phase1,  int partiesCount) {
+        return sampleGrid(phase1, null, partiesCount);
+    }
+
+    private static ComputingGrid<Integer, Integer> sampleGrid(Phase<String, Integer> phase1, Phase<String, Integer> phase2, int partiesCount) {
+        ArrayList<Phase<?, Integer>> phases = Lists.<Phase<?, Integer>>newArrayList(phase1);
+
+        if (phase2 != null){
+            phases.add(phase2);
+        }
+
+        return sampleGrid(phases, partiesCount);
     }
 }

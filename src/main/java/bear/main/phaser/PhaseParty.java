@@ -3,7 +3,7 @@ package bear.main.phaser;
 /**
  * @author Andrey Chaschev chaschev@gmail.com
  */
-public class PhaseParty<COL> {
+public class PhaseParty<COL, PHASE> {
     final int index;
     final COL column;
     int currentPhaseIndex;
@@ -13,9 +13,9 @@ public class PhaseParty<COL> {
     GridException exception;
     long finishedAtMs;
 
-    public final ComputingGrid<COL, ?> grid;
+    public final ComputingGrid<COL, PHASE> grid;
 
-    public PhaseParty(int index, COL column, ComputingGrid<COL, ?> grid) {
+    public PhaseParty(int index, COL column, ComputingGrid<COL, PHASE> grid) {
         this.index = index;
         this.column = column;
         this.grid = grid;
@@ -33,7 +33,8 @@ public class PhaseParty<COL> {
         this.exception = e;
         this.state = PartyState.BROKEN;
 
-        for (int row = e.phase.rowIndex; row < grid.phases.size(); row++) {
+        Integer rowKey = grid.phaseToRowIndex((PHASE) e.phase.getPhase());
+        for (int row = rowKey; row < grid.phases.size(); row++) {
             grid.table.at(row, e.party.index).getFuture().setException(e);
         }
     }

@@ -21,6 +21,7 @@ import bear.core.GlobalContext;
 import bear.core.GlobalContextFactory;
 import bear.main.BearFX;
 import bear.session.DynamicVariable;
+import org.apache.logging.log4j.LogManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -34,7 +35,7 @@ import static bear.session.Variables.*;
  */
 public class Cli extends AppCli<GlobalContext, Bear> {
     public static final Logger logger = LoggerFactory.getLogger(Cli.class);
-    public static final Logger ui = LoggerFactory.getLogger("fx");
+    public static final org.apache.logging.log4j.Logger ui = LogManager.getLogger("fx");
 
     public final DynamicVariable<File> settingsFile = convert(concat(appConfigDir, "/BearSettings.java"), TO_FILE);
     public final DynamicVariable<File> script = undefined();

@@ -72,7 +72,7 @@ app.service('historyManager', ['fileManager', function(fileManager){
             var e = jsonEntries[i];
             var r = null;
 
-            Java.log('loading entry: ', e);
+//            Java.log('loading entry: ', e);
 
             switch(e.type){
                 case 'file':
@@ -392,7 +392,7 @@ app.directive("consoleMessages", ['$timeout', '$compile', '$ekathuwa', 'ansi2htm
                         }
                         $scope.addTask(e.task);
                         break;
-                    case 'session':
+                    case 'newPhase':
                         quicklyInsertSession(e);
                         break;
                     case 'rootTaskFinished':
@@ -400,8 +400,8 @@ app.directive("consoleMessages", ['$timeout', '$compile', '$ekathuwa', 'ansi2htm
                             $scope.terminal.taskCompleted(e);
                         });
                         break;
-                    case 'scriptFinished':
-                        $scope.terminal.scriptCompleted(e);
+                    case 'phasePartyFinished':
+                        $scope.terminal.phaseCompleted(e);
                         break;
                     default:
                         throw "not yet supported subType:" + e.subType;
@@ -599,7 +599,7 @@ Terminal.prototype.taskCompleted = function (event)
     this.lastTaskDuration = event.duration;
 };
 
-Terminal.prototype.scriptCompleted = function (event)
+Terminal.prototype.phaseCompleted = function (event)
 {
     this.state = 'complete';
     this.lastTaskDuration = event.duration;

@@ -1,11 +1,11 @@
 package bear.core;
 
-import bear.console.ConsolesDivider;
 import bear.console.GroupDivider;
 import bear.context.Cli;
-import bear.main.BearFX;
 import bear.main.event.GlobalStatusEventToUI;
-import bear.main.event.PhaseFinishedEventToUI;
+import bear.main.event.NewPhaseConsoleEventToUI;
+import bear.main.event.PhasePartyFinishedEventToUI;
+import bear.main.event.TaskConsoleEventToUI;
 import bear.main.phaser.ComputingGrid;
 import bear.main.phaser.Phase;
 import bear.main.phaser.PhaseCallable;
@@ -16,7 +16,6 @@ import bear.session.Result;
 import bear.session.Variables;
 import bear.task.*;
 import bear.vcs.CommandLineResult;
-import chaschev.util.CatchyCallable;
 import chaschev.util.Exceptions;
 import com.google.common.base.Function;
 import com.google.common.collect.Lists;
@@ -25,10 +24,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
-import java.util.concurrent.Callable;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicLong;
 
 import static bear.core.SessionContext.ui;
 
@@ -51,8 +47,6 @@ public class GlobalTaskRunner {
     public final DynamicVariable<Stats> stats;
     public final DynamicVariable<AtomicInteger> arrivedCount = Variables.newVar(new AtomicInteger(0));
 
-
-
     public GlobalTaskRunner(final GlobalContext global, List<TaskDef<Task>> taskDefs, final List<SessionContext> $s, final BearScript2.ShellSessionContext shellContext) {
         this.global = global;
         this.bear = global.bear;
@@ -60,23 +54,25 @@ public class GlobalTaskRunner {
         this.$s = $s;
 
         stats = Variables.dynamic(Stats.class)
-            .defaultTo(new Stats($s.size(), null));
+            .defaultTo(new Stats($s.size(), TaskDef.EMPTY));
 
 
-        List<Phase<TaskResult, BearScriptPhase>> phaseList = Lists.transform(taskDefs, new Function<TaskDef, Phase<TaskResult, BearScriptPhase>>() {
+        List<Phase<TaskResult, BearScriptPhase>> phaseList = Lists.newArrayList(Lists.transform(taskDefs, new Function<TaskDef, Phase<TaskResult, BearScriptPhase>>() {
             @Override
             public Phase<TaskResult, BearScriptPhase> apply(final TaskDef taskDef) {
-                return new Phase<TaskResult, BearScriptPhase>(new BearScriptPhase(null, createGroupDivider($s)), new Function<Integer, PhaseCallable<SessionContext, TaskResult, BearScriptPhase>>() {
+                return new Phase<TaskResult, BearScriptPhase>(new BearScriptPhase(taskDef, null, createGroupDivider($s)), new Function<Integer, PhaseCallable<SessionContext, TaskResult, BearScriptPhase>>() {
                     @Override
                     public PhaseCallable<SessionContext, TaskResult, BearScriptPhase> apply(Integer partyIndex) {
                         final SessionContext $ = $s.get(partyIndex);
 
                         return new PhaseCallable<SessionContext, TaskResult, BearScriptPhase>() {
                             @Override
-                            public TaskResult call(final PhaseParty<SessionContext> party, int phaseIndex, final Phase<?, BearScriptPhase> phase) throws Exception {
+                            public TaskResult call(final PhaseParty<SessionContext, BearScriptPhase> party, int phaseIndex, final Phase<?, BearScriptPhase> phase) throws Exception {
                                 TaskResult result = TaskResult.OK;
 
                                 try {
+                                    ui.info(new NewPhaseConsoleEventToUI($.getName(), $.id, phase.getPhase().id));
+
                                     $.setThread(Thread.currentThread());
 
                                     $.whenPhaseStarts(phase.getPhase(), shellContext);
@@ -113,27 +109,27 @@ public class GlobalTaskRunner {
 
                                     result = $.runner.run(taskDef);
 
-                                    if(!result.ok()){
+                                    if (!result.ok()) {
                                         throw new PartyResultException(result, party, phase.getName());
                                     }
 
                                     return result;
                                 } catch (PartyResultException e) {
                                     throw e;
-                                }
-                                catch (Throwable e){
+                                } catch (Throwable e) {
                                     Cli.logger.warn("", e);
                                     result = new ExceptionResult(e);
 
                                     $.executionContext.rootExecutionContext.getDefaultValue().taskResult = new CommandLineResult(Result.ERROR, e.toString());
 
                                     throw Exceptions.runtime(e);
-                                }
-                                finally {
+                                } finally {
                                     try {
                                         long duration = System.currentTimeMillis() - phase.getPhase().startedAtMs;
                                         phase.getPhase().addArrival($, duration, result);
                                         $.executionContext.rootExecutionContext.fireExternalModification();
+
+                                        Cli.ui.info(new PhasePartyFinishedEventToUI($.getName(), duration, result));
 
                                         $.whenSessionComplete(GlobalTaskRunner.this);
                                     } catch (Exception e) {
@@ -145,7 +141,7 @@ public class GlobalTaskRunner {
                     }
                 });
             }
-        });
+        }));
 
         stats.addListener(new DynamicVariable.ChangeListener<Stats>() {
             @Override
@@ -156,6 +152,16 @@ public class GlobalTaskRunner {
 
         grid = new ComputingGrid<SessionContext, BearScriptPhase>(phaseList, $s);
 
+        grid.setPhaseEnterListener(new ComputingGrid.PhaseEnterListener<BearScriptPhase, SessionContext>() {
+            @Override
+            public void enter(Phase<?, BearScriptPhase> phase, PhaseParty<SessionContext, BearScriptPhase> party) {
+                ui.info(new NewPhaseConsoleEventToUI("shell", shellContext.sessionId, phase.getPhase().id));
+                ui.info(new TaskConsoleEventToUI("shell", "step " + phase.getName() + "(" + phase.getPhase().id + ")", phase.getPhase().id)
+                     .setId(phase.getPhase().id)
+                    .setParentId(shellContext.sessionId)
+                );
+            }
+        });
     }
 
     private static GroupDivider<SessionContext> createGroupDivider(List<SessionContext> $s) {
@@ -235,92 +241,4 @@ public class GlobalTaskRunner {
         return startedAtMs;
     }
 
-    public static class BearScriptPhase {
-        public final String id = SessionContext.randomId();
-        TaskDef<Task> taskDef;
-        final AtomicInteger partiesArrived = new AtomicInteger();
-        public final AtomicInteger partiesOk = new AtomicInteger();
-
-        final AtomicLong minimalOkDuration = new AtomicLong(-1);
-
-        BearFX bearFX;
-
-        GroupDivider<SessionContext> groupDivider;
-
-        public final long startedAtMs = System.currentTimeMillis();
-
-        final int partiesCount;
-
-        public int partiesPending;
-        public int partiesFailed = 0;
-
-        public BearScriptPhase(BearFX bearFX, GroupDivider<SessionContext> groupDivider) {
-            this.bearFX = bearFX;
-            this.partiesCount = groupDivider.getEntries().size();
-            this.groupDivider = groupDivider;
-        }
-
-        public String getName() {
-            return taskDef.getName();
-        }
-
-        public String getDisplayName() {
-            return taskDef.getDisplayName();
-        }
-
-        public void addArrival(SessionContext $, final long duration, TaskResult result) {
-            groupDivider.addArrival($);
-
-            if (result.ok()) {
-                partiesOk.incrementAndGet();
-
-                if (minimalOkDuration.compareAndSet(-1, duration)) {
-                    $.getGlobal().scheduler.schedule(new CatchyCallable<Void>(new Callable<Void>() {
-                        @Override
-                        public Void call() throws Exception {
-                            boolean haveHangUpJobs;
-                            boolean alreadyFinished;
-
-                            if (partiesArrived.compareAndSet(partiesCount, -1)) {
-                                alreadyFinished = false;
-                                haveHangUpJobs = false;
-                            } else {
-                                if (partiesArrived.compareAndSet(-1, -1)) {
-                                    haveHangUpJobs = false;
-                                    alreadyFinished = true;
-                                } else {
-                                    alreadyFinished = false;
-                                    haveHangUpJobs = true;
-                                }
-                            }
-
-                            if (!alreadyFinished) {
-                                sendPhaseResults(duration);
-                            }
-                            return null;
-                        }
-                    }), duration * 3, TimeUnit.MILLISECONDS);
-                }
-            }
-
-
-            partiesArrived.incrementAndGet();
-
-            partiesPending = partiesCount - partiesArrived.get();
-            partiesFailed = partiesArrived.get() - partiesOk.get();
-
-            if (partiesArrived.compareAndSet(partiesCount, -1)) {
-                sendPhaseResults(duration);
-            }
-        }
-
-        private void sendPhaseResults(long duration) {
-            List<ConsolesDivider.EqualityGroup> groups = groupDivider.divideIntoGroups();
-
-            bearFX.sendMessageToUI(
-                //todo check this name is a one line desc
-                new PhaseFinishedEventToUI(duration, groups, getName())
-                    .setParentId(id));
-        }
-    }
 }

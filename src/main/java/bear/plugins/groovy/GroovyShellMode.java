@@ -82,7 +82,7 @@ public class GroovyShellMode extends PluginShellMode<GroovyShellPlugin> implemen
     }
 
     public Task interpret(final String command, SessionContext $, final Task _parent, final TaskDef taskDef) {
-        return new Task<TaskDef>(_parent, taskDef, $) {
+        Task<TaskDef> task = new Task<TaskDef>(_parent, taskDef, $) {
             @Override
             protected TaskResult exec(final SessionTaskRunner runner) {
                 Runnable runnable = null;
@@ -90,7 +90,7 @@ public class GroovyShellMode extends PluginShellMode<GroovyShellPlugin> implemen
                     runnable = new CatchyRunnable(new Runnable() {
                         public void run() {
                             try {
-                                if(SCRIPT_PATTERN.matcher(command).matches()){
+                                if (SCRIPT_PATTERN.matcher(command).matches()) {
                                     GroovyClassLoader gcl = new GroovyClassLoader();
                                     Class clazz = gcl.parseClass(command);
                                     Object aScript = clazz.newInstance();
@@ -100,7 +100,7 @@ public class GroovyShellMode extends PluginShellMode<GroovyShellPlugin> implemen
                                     script.configure();
                                     script.global = global;
                                     script.run();
-                                }else{
+                                } else {
                                     GroovyShell shell = getShell(runner);
                                     shell.evaluate(command);
                                 }
@@ -113,16 +113,14 @@ public class GroovyShellMode extends PluginShellMode<GroovyShellPlugin> implemen
                     runnable.run();
 
                     return TaskResult.OK;
-                }
-                catch (IllegalStateException e){
-                    if(e.getMessage().contains("FX")){
+                } catch (IllegalStateException e) {
+                    if (e.getMessage().contains("FX")) {
                         return fxWorkaround(runnable);
-                    }else{
+                    } else {
                         logger.warn("", e);
                         return new GroovyResult(e);
                     }
-                }
-                catch (Exception e) {
+                } catch (Exception e) {
                     logger.warn("", e);
 
                     return new GroovyResult(e);
@@ -169,6 +167,7 @@ public class GroovyShellMode extends PluginShellMode<GroovyShellPlugin> implemen
                 return isLocal ? shell : new GroovyShell($binding);
             }
         };
+        return task;
     }
 
     @Override

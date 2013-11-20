@@ -18,7 +18,6 @@ package bear.core;
 
 import bear.cli.CommandLine;
 import bear.context.AbstractContext;
-import bear.main.event.TaskConsoleEventToUI;
 import bear.plugins.sh.GenericUnixLocalEnvironmentPlugin;
 import bear.plugins.sh.GenericUnixRemoteEnvironmentPlugin;
 import bear.plugins.sh.SystemEnvironmentPlugin;
@@ -27,7 +26,10 @@ import bear.session.Address;
 import bear.session.DynamicVariable;
 import bear.session.SshAddress;
 import bear.session.Variables;
-import bear.task.*;
+import bear.task.SessionTaskRunner;
+import bear.task.Task;
+import bear.task.TaskDef;
+import bear.task.TaskResult;
 import bear.task.exec.CommandExecutionEntry;
 import bear.task.exec.TaskExecutionContext;
 import org.apache.commons.lang3.RandomStringUtils;
@@ -78,18 +80,13 @@ public class SessionContext extends AbstractContext {
         thread.setName(threadName());
     }
 
-    public void whenPhaseStarts(GlobalTaskRunner.BearScriptPhase phase, BearScript2.ShellSessionContext shellSessionContext){
+    public void whenPhaseStarts(BearScriptPhase phase, BearScript2.ShellSessionContext shellSessionContext){
         StringBuilder phaseSB = executionContext.phaseText.getDefaultValue();
         phaseSB.setLength(0);
         executionContext.phaseText.fireExternalModification();
 
         executionContext.phaseName = phase.getName();
         executionContext.phaseId.defaultTo(phase.id);
-
-        ui.info(new TaskConsoleEventToUI("shell", "step " + executionContext.phaseName + "(" + phase.id + ")", null)
-            .setId(id)
-            .setParentId(shellSessionContext.sessionId)
-        );
     }
 
     public void whenSessionComplete(GlobalTaskRunner globalTaskRunner) {

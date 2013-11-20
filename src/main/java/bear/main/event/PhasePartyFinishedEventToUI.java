@@ -16,18 +16,19 @@
 
 package bear.main.event;
 
+import bear.task.TaskResult;
+
 /**
  * @author Andrey Chaschev chaschev@gmail.com
  */
-public class NewSessionConsoleEventToUI extends ConsoleEventToUI implements EventWithId {
-    public final String id;
+public class PhasePartyFinishedEventToUI extends ConsoleEventToUI {
+    public long duration;
+    public final TaskResult result;
 
-    public NewSessionConsoleEventToUI(String console, String id) {
-        super(console, "session");
-        this.id = id;
-    }
+    public PhasePartyFinishedEventToUI(String console, long duration, TaskResult result) {
+        super(console, "phasePartyFinished");
 
-    public String getId() {
-        return id;
+        this.duration = duration;
+        this.result = result;
     }
 }

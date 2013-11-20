@@ -9,12 +9,12 @@ import com.google.common.base.Function;
 import com.google.common.collect.ArrayTable;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
-import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
@@ -35,16 +35,17 @@ public class ComputingGrid<C, PHASE> {
 //    private transient int builderPhaseCount;
 
 //    List<Phase<?>> phases = new ArrayList<>();
-    List<PhaseParty<C>> parties;
-    List<Phase<?, PHASE>> phases ;
+    final List<PhaseParty<C, PHASE>> parties;
+    final Collection<? extends Phase<?, PHASE>> phases ;
 
-    final ArrayTable<PHASE, C, GridCell<C, ?>> table;
+    final ArrayTable<PHASE, C, GridCell<C, ?, PHASE>> table;
 
     private final Map<C, Integer> columnKeyToIndex;
     private final Map<PHASE, Integer> rowKeyToIndex;
 
 
-    public ComputingGrid(Iterable<? extends Phase<?, PHASE>> phases, Iterable<? extends C> columnKeys) {
+    public ComputingGrid(Collection<? extends Phase<?, PHASE>> phases, Iterable<? extends C> columnKeys) {
+        this.phases = phases;
         table = ArrayTable.create(
             Iterables.transform(phases, Functions2.<Object, PHASE>field("phase")),
             columnKeys);
@@ -54,30 +55,26 @@ public class ComputingGrid<C, PHASE> {
         columnKeyToIndex = (Map<C, Integer>) OpenBean.getFieldValue(table, "columnKeyToIndex");
         rowKeyToIndex = (Map<PHASE, Integer>) OpenBean.getFieldValue(table, "rowKeyToIndex");
 
-        this.parties = new ArrayList<PhaseParty<C>>(partiesCount);
+        this.parties = new ArrayList<PhaseParty<C, PHASE>>(partiesCount);
 
         int i = 0;
 
         for (C columnKey : columnKeys) {
-            this.parties.add(new PhaseParty<C>(i, columnKey, this));
+            this.parties.add(new PhaseParty<C, PHASE>(i, columnKey, this));
             i++;
         }
 
-        phases = Lists.newArrayList(phases);
+        phaseEntered = new boolean[phases.size()];
 
-        // this is needed because table is not synced
-        // and cells may be referenced from future
+        // can't load these lazily as futures are accessed from outside
+        // will probably need to split out futures for lazy init or get the futures...
         for (Phase<?, PHASE> phase : phases) {
-            for (C columnKey : columnKeys) {
-                table.put(phase.phase, columnKey, new GridCell());
-            }
-
             addPhase(phase);
         }
     }
 
     public <V> List<ListenableFuture<V>> phaseFutures(Phase<V, PHASE> phase) {
-        return phaseFutures(phase.rowIndex, null);
+        return phaseFutures(phaseToRowIndex(phase.phase), null);
     }
 
     public <V> List<ListenableFuture<V>> phaseFutures(final int rowIndex, Class<V> vClass) {
@@ -100,6 +97,7 @@ public class ComputingGrid<C, PHASE> {
         return Futures.successfulAsList(phaseFutures(phase));
     }
 
+
     public <V> ListenableFuture<List<V>> aggregatedPhase(int phase, Class<V> vClass) {
         return Futures.successfulAsList(phaseFutures(phase, vClass));
     }
@@ -120,35 +118,58 @@ public class ComputingGrid<C, PHASE> {
         return row.get(row.size() - 1);
     }
 
-    public <V> GridCell<C, ?> cell(Integer rowKey, C columnKey) {
+    public <V> GridCell<C, ?, PHASE> cell(int rowKey, C columnKey) {
         return table.get(rowKey, columnKey);
     }
 
-    public <V> GridCell<C, V> cell(Phase<V, PHASE> phase, C columnKey) {
-        return (GridCell<C, V>) table.at(phase.getRowIndex(), partyToColumnIndex(columnKey));
+    public <V> GridCell<C, V, PHASE> cell(Phase<V, PHASE> phase, C columnKey) {
+        return (GridCell<C, V, PHASE>) table.at(phaseToRowIndex(phase.phase), partyToColumnIndex(columnKey));
     }
 
     public GridCell cellAt(int rowIndex, int columnIndex) {
         return table.at(rowIndex, columnIndex);
     }
 
-    public <V> GridCell<C, V> cellAt(int rowIndex, int columnIndex, Class<V> vClass) {
-        return (GridCell<C, V>) table.at(rowIndex, columnIndex);
+    public <V> GridCell<C, V, PHASE> cellAt(int rowIndex, int columnIndex, Class<V> vClass) {
+        return (GridCell<C, V, PHASE>) table.at(rowIndex, columnIndex);
+    }
+
+    private final boolean[] phaseEntered;
+
+    public static interface PhaseEnterListener<PHASE, C>{
+        void enter(Phase<?, PHASE> phase, PhaseParty<C, PHASE> party);
+    }
+
+    protected PhaseEnterListener<PHASE, C> phaseEnterListener;
+
+    private void checkPhaseEntered(Phase<?, PHASE> phase, PhaseParty<C, PHASE> party){
+        if(phaseEnterListener == null || phaseEntered[phase.rowIndex]){
+            return;
+        }
+
+        synchronized (phaseEntered){
+            if(phaseEntered[phase.rowIndex]) return;
+
+            phaseEntered[phase.rowIndex] = true;
+        }
+
+        phaseEnterListener.enter(phase, party);
     }
 
     public ComputingGrid<C, PHASE> startParties(ExecutorService service) {
         for (int i = 0; i < partiesCount; i++) {
             final int partyIndex = i;
 
-            final PhaseParty<C> party = parties.get(i);
+            final PhaseParty<C, PHASE> party = parties.get(i);
 
             service.submit(new CatchyRunnable(new Runnable() {
                 @Override
                 public void run() {
-                    for(; party.currentPhaseIndex < phases.size();party.currentPhaseIndex++){
-                        Phase<?, PHASE> phase = phases.get(party.currentPhaseIndex);
+                    for (Phase<?, PHASE> phase : phases) {
                         GridCell cell = table.at(party.currentPhaseIndex, partyIndex)
                             .started();
+
+                        checkPhaseEntered(phase, party);
 
                         Object result = null;
 
@@ -168,6 +189,7 @@ public class ComputingGrid<C, PHASE> {
                             break;
                         } finally {
                             cell.finishedAtMs = System.currentTimeMillis();
+                            party.currentPhaseIndex++;
                         }
                     }
                 }
@@ -177,24 +199,33 @@ public class ComputingGrid<C, PHASE> {
         return this;
     }
 
-    public <V> ComputingGrid<C, PHASE> addPhase(Phase<V, PHASE> phase) {
-        ImmutableList<C> list = table.columnKeyList();
-        int rowIndex = phases.size();
+    private  synchronized <V> void addPhase(Phase<V, PHASE> phase) {
+        Integer rowIndex = phaseToRowIndex(phase.getPhase());
+        if(rowIndex != null && table.at(rowIndex, 0) != null){
+            return;
+        }
 
-        List<? extends PhaseCallable<C, V>> phaseCallables =  (List)phase.getParties(this);
+        for (C columnKey : table.columnKeyList()) {
+            table.put(phase.phase, columnKey, new GridCell());
+        }
+
+        ImmutableList<C> list = table.columnKeyList();
+
+        List<? extends PhaseCallable<C, V, PHASE>> phaseCallables =  (List)phase.getParties(this);
 
         phase.rowIndex = rowIndex;
 
         for (int i = 0; i < list.size(); i++) {
             table.at(rowIndex, i).callable = (PhaseCallable) phaseCallables.get(i);
         }
-
-        phases.add(phase);
-
-        return this;
     }
 
-    public <V> SettableFuture<V> previousResult(PhaseParty<C> party, int phaseIndex, Class<V> aClass) {
+    public <V> SettableFuture<V> previousResult(PhaseParty<C, PHASE> party, int phaseIndex, Class<V> aClass) {
         return (SettableFuture<V>) table.at(phaseIndex - 1, partyToColumnIndex(party.column)).getFuture();
+    }
+
+    public ComputingGrid<C, PHASE> setPhaseEnterListener(PhaseEnterListener<PHASE, C> phaseEnterListener) {
+        this.phaseEnterListener = phaseEnterListener;
+        return this;
     }
 }
