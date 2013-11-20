@@ -1,13 +1,13 @@
 package bear.main.phaser;
 
 import chaschev.util.Exceptions;
+import com.google.common.util.concurrent.ListenableFuture;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Random;
 import java.util.concurrent.Callable;
-import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.fest.assertions.api.Assertions.assertThat;
@@ -54,7 +54,7 @@ public class OnceEnteredCallableTest {
                     try {
                         Thread.sleep(sleep[finalI]);
 
-                        Future<String> fut = callable.runOnce(new Callable<String>() {
+                        ListenableFuture<String> fut = callable.runOnce(new Callable<String>() {
                             @Override
                             public String call() throws Exception {
                                 theGuy[0] = finalI;

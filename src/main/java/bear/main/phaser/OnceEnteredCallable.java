@@ -1,9 +1,9 @@
 package bear.main.phaser;
 
+import com.google.common.util.concurrent.ListenableFuture;
 import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.Callable;
-import java.util.concurrent.Future;
 import java.util.concurrent.locks.ReentrantLock;
 
 /**
@@ -26,7 +26,7 @@ public class OnceEnteredCallable<T> {
     public OnceEnteredCallable() {
     }
 
-    public Future<T> runOnce(Callable<T> callable) {
+    public ListenableFuture<T> runOnce(Callable<T> callable) {
         if(lock.tryLock()){
             owner = Thread.currentThread();
 
