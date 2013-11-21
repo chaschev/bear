@@ -1,0 +1,18 @@
+:use shell groovy {"name": "testCaptures"}
+
+import bear.console.ConsoleCallback
+
+def callback = {console, buffer, wholeText -> println "HEY!! ${buffer}"} as ConsoleCallback
+
+println "HEY-STEP 0!!"
+def pwd = sys.capture("pwd", callback)
+println "expected pwd: '${pwd}'"
+
+for(int i = 0;i<2000;i++){
+    println "HEY-STEP ${i+1}!!"
+    def s = sys.capture("pwd", callback)
+
+    if(!pwd.equals(s)){
+        throw new RuntimeException("expecting '${pwd}', found: '${s}', step: ${i + 1}");
+    }
+}

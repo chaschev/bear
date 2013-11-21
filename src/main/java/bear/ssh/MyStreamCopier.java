@@ -17,13 +17,15 @@
 package bear.ssh;
 
 import bear.session.Result;
+import chaschev.lang.OpenBean;
 import chaschev.util.CatchyCallable;
+import chaschev.util.Exceptions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.lang.reflect.Field;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
@@ -32,10 +34,22 @@ public class MyStreamCopier {
 
     private long periodMs;
     private int periodNano;
+    //this field is wrong, but left is something breaks
     private volatile boolean finished;
+//    private long finishAtMs = -1;
 
     public boolean isStdErr;
     private long count;
+    private volatile long finishAtMs;
+    private Field eofField;
+
+    public void triggerCopy() {
+        try {
+            nonBlockingCopy();
+        } catch (Exception e) {
+            throw Exceptions.runtime(e);
+        }
+    }
 
     public interface Listener {
         void reportProgress(long transferred, byte[] buf, int read)
@@ -60,15 +74,11 @@ public class MyStreamCopier {
     private boolean keepFlushing = true;
     private final long length = -1;
 
-    public MyStreamCopier(InputStream in, OutputStream out) {
-        this.in = in;
-        this.out = out;
-    }
-
     public MyStreamCopier(InputStream in, OutputStream out, boolean stdErr) {
         this.in = in;
         this.out = out;
         isStdErr = stdErr;
+        eofField = OpenBean.getField(in, "eof").get();
     }
 
     public MyStreamCopier bufSize(int bufSize) {
@@ -94,13 +104,20 @@ public class MyStreamCopier {
         return this;
     }
 
-    public Future<Result> spawn(ExecutorService service) {
+    public Future<Result> spawn(ExecutorService service, final long finishAtMs) {
+        this.finishAtMs = finishAtMs;
         return service.submit(new CatchyCallable<Result>(new Callable<Result>() {
             @Override
             public Result call() {
-                while (!stopFlag) {
+                while (!stopFlag && !Thread.currentThread().isInterrupted()) {
                     try {
-                        nonBlockingCopy();
+                        if(nonBlockingCopy() == -1) {
+                            break;
+                        }
+
+                        if(MyStreamCopier.this.finishAtMs != -1 && MyStreamCopier.this.finishAtMs < System.currentTimeMillis()){
+                            break;
+                        }
 
                         listener.reportProgress(count, null, -1);
 
@@ -111,6 +128,29 @@ public class MyStreamCopier {
                         log.error("", e);
                         return Result.ERROR;
                     }
+                }
+
+                try {
+                    nonBlockingCopy();
+
+                    // try one more time as it's buggy
+                    // they asked us to stop but did not interrupt, let's have one more chance
+                    //todo remove this
+/*
+                    if(stopFlag){
+                        try {
+                            Thread.sleep(periodMs, periodNano);
+                        } catch (InterruptedException e) {
+                            //they are interrupting our attempt to wait
+                            //we cancel and try to instantly copy...
+                            nonBlockingCopy();
+                        }
+                    }
+*/
+                } catch (Exception e) {
+                    log.error("", e);
+
+                    return Result.ERROR;
                 }
 
                 finished = true;
@@ -126,18 +166,25 @@ public class MyStreamCopier {
         int read;
         int avaliable;
 
-        while ((avaliable = in.available()) > 0 && (read = in.read(buf, 0, Math.min(avaliable, buf.length))) != -1){
+        //(avaliable = in.available()) > 0
+        while ((read = in.read(buf)) != -1){
+//            LoggerFactory.getLogger("log").trace("nonBlockingCopy: {}", read);
             if(read > 0){
                 count = write(buf, count, read);
+            }else{
+                break;
             }
         }
+
+        LoggerFactory.getLogger("log").trace("nonBlockingCopy: {}", read);
 
         if (!keepFlushing){
             out.flush();
         }
 
-        if (length != -1 && read == -1)
-            throw new IOException("Encountered EOF, could not transfer " + length + " bytes");
+//        if(count == 0 && (Boolean)eofField.get(in)){
+//            System.out.println("let's inspect buffer....:" + ((ByteArrayOutputStream)out).toString());
+//        }
 
         return count;
     }
@@ -171,5 +218,9 @@ public class MyStreamCopier {
 
     public boolean isFinished() {
         return finished;
+    }
+
+    public void setFinishAtMs(long finishAtMs) {
+        this.finishAtMs = finishAtMs;
     }
 }

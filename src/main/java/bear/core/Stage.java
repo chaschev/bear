@@ -16,14 +16,15 @@
 
 package bear.core;
 
-import bear.main.event.*;
-import bear.plugins.sh.SystemSession;
+import bear.main.event.CommandConsoleEventToUI;
+import bear.main.event.RootTaskFinishedEventToUI;
+import bear.main.event.TaskConsoleEventToUI;
+import bear.main.event.TextConsoleEventToUI;
 import bear.session.Address;
 import bear.session.DynamicVariable;
 import bear.session.SshAddress;
 import bear.task.SessionTaskRunner;
 import bear.task.Task;
-import bear.task.TaskDef;
 import bear.task.exec.CommandExecutionEntry;
 import bear.task.exec.TaskExecutionContext;
 import chaschev.lang.Functions2;
@@ -33,7 +34,6 @@ import com.google.common.base.Predicates;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
-import com.google.common.util.concurrent.ListenableFuture;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -72,38 +72,6 @@ public class Stage {
 
     public Stage(String name) {
         this.name = name;
-    }
-
-    /**
-     * Runs a task from task variable
-     */
-    public CompositeTaskRunContext createRunContext() {
-        return createRunContext(global.localCtx.var(global.bear.task));
-    }
-
-    public CompositeTaskRunContext createRunContext(final TaskDef task) {
-        Collection<Address> addresses = global.var(global.bear.addressesForStage).apply(this);
-
-        final List<ListenableFuture<SessionContext>> futures = new ArrayList<ListenableFuture<SessionContext>>(addresses.size());
-        final List<SystemSession> consoles = new ArrayList<SystemSession>(addresses.size());
-
-        List<SessionContext> $s = new ArrayList<SessionContext>();
-
-        for (Address address : addresses) {
-            final SessionTaskRunner runner = new SessionTaskRunner(null, global);
-
-            SessionContext $ = new SessionContext(global, address, runner);
-
-            $s.add($);
-        }
-
-       /* CompositeTaskRunContext taskRunContext = new CompositeTaskRunContext(global, task,  $s);
-
-        for (SessionContext $ : $s) {
-            $.setTaskRunContext(taskRunContext);
-        }*/
-
-        return null;
     }
 
     //todo move this out of here

@@ -297,7 +297,7 @@ public class FXConf extends Cli {
                     Supplier<BearScript2.BearScriptParseResult> supplier;
 
                     if(uiContext.script.endsWith(".groovy")){
-                        supplier = new BearScript2.GroovyScriptSupplier(global, command);
+                        supplier = new BearScript2.GroovyScriptSupplier(global, command, Optional.fromNullable(uiContext.script));
                     } else {
                         supplier = new BearScript2.ParserScriptSupplier(currentShellPlugin, command);
                     }

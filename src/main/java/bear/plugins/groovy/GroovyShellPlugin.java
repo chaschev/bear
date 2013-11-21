@@ -32,7 +32,7 @@ import bear.task.TaskDef;
 
 @Shell("groovy")
 public class GroovyShellPlugin extends Plugin {
-    public final DynamicVariable<Boolean> sendToHosts = Variables.newVar(Boolean.FALSE);
+    public final DynamicVariable<Boolean> sendToHosts = Variables.newVar(Boolean.TRUE);
 
     public GroovyShellPlugin(GlobalContext global) {
         super(global);

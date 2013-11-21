@@ -17,15 +17,23 @@
 package bear.task;
 
 import bear.session.Result;
+import com.google.common.base.Optional;
 
 /**
  * @author Andrey Chaschev chaschev@gmail.com
  */
 public class TaskResult {
     public Result result;
+    public final Optional<Throwable> exception;
 
     public TaskResult(Result result) {
         this.result = result;
+        exception = Optional.absent();
+    }
+
+    public TaskResult(Throwable e) {
+        this.result = Result.ERROR;
+        exception = Optional.of(e);
     }
 
     public static final TaskResult OK = new TaskResult(Result.OK);

@@ -125,7 +125,7 @@ public abstract class TaskDef<TASK extends Task> {
         }
         @Override
         public Task<TaskDef> newSession(SessionContext $, final Task parent) {
-            throw new UnsupportedOperationException();
+            return Task.nop();
         }
     };
 

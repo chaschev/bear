@@ -27,6 +27,7 @@ public class MarkedBuffer {
     byte[] bytes;
     int startPosition = 0;
     int interimPosition = 0;
+    int length;
 
     Map<String, Integer> marks = new HashMap<String, Integer>();
 
@@ -35,33 +36,34 @@ public class MarkedBuffer {
     }
 
     public void markStart() {
-        startPosition = bytes.length;
+        startPosition = length;
     }
 
     public void markInterim() {
-        interimPosition = bytes.length;
+        interimPosition = length;
     }
 
     void setBytes(byte[] bytes) {
         this.bytes = bytes;
     }
 
-    public void progress(byte[] bytes) {
+    public void progress(byte[] bytes, int length) {
         this.bytes = bytes;
+        this.length = length;
     }
 
     public String interimText() {
         if(bytes == null) return "";
-        return new String(bytes, interimPosition, bytes.length - interimPosition);
+        return new String(bytes, interimPosition, length - interimPosition);
     }
 
     public String wholeText() {
         if(bytes == null) return "";
-        return new String(bytes, startPosition, bytes.length - startPosition);
+        return new String(bytes, startPosition, length - startPosition);
     }
 
     public void putMark(String name) {
-        marks.put(name, bytes.length);
+        marks.put(name, length);
     }
 
     public String subText(String mark1, String mark2) {

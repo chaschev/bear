@@ -31,11 +31,15 @@ import bear.task.Task;
 import bear.task.TaskDef;
 import bear.task.TaskResult;
 import chaschev.util.CatchyCallable;
+import chaschev.util.Exceptions;
 import com.google.common.base.*;
 import com.google.common.collect.Collections2;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
+import com.google.common.io.Resources;
 import groovy.lang.GroovyShell;
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.reflections.Reflections;
@@ -43,10 +47,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.List;
+import java.io.File;
+import java.io.IOException;
+import java.net.URL;
+import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
@@ -54,6 +58,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 import static chaschev.lang.Predicates2.contains;
+import static com.google.common.base.Optional.of;
+import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Predicates.not;
 import static com.google.common.collect.Lists.newArrayList;
 import static com.google.common.collect.Lists.transform;
@@ -73,6 +79,8 @@ public class BearScript2 {
     private static final Logger logger = LoggerFactory.getLogger(BearScript2.class);
     private static final org.apache.logging.log4j.Logger ui = LogManager.getLogger("fx");
 
+    public static final Splitter LINE_SPLITTER = Splitter.on("\n").trimResults();
+
 //    final DynamicVariable<BearScriptPhase> phaseId = new DynamicVariable<BearScriptPhase>();
 
     final GlobalContext global;
@@ -87,7 +95,7 @@ public class BearScript2 {
     private GlobalContextFactory factory = GlobalContextFactory.INSTANCE;
 
     public BearScript2(GlobalContext global, BearFX bearFX, Plugin currentPlugin, IBearSettings settings) {
-        Preconditions.checkArgument(settings.isConfigured(), "settings not configured, call settings.configure(factory)");
+        checkArgument(settings.isConfigured(), "settings not configured, call settings.configure(factory)");
 
         this.global = global;
         this.bearFX = bearFX;
@@ -97,15 +105,34 @@ public class BearScript2 {
     }
 
     static class ScriptItem {
-        final String id = SessionContext.randomId();
+        Optional<String> scriptName;
         int startsAtIndex;
         String pluginName;
-        List<String> lines;
+        final List<String> lines;
 
-        ScriptItem(String pluginName, List<String> lines, int startsAtIndex) {
+        ScriptItem(Optional<String> scriptName, String pluginName, int startsAtIndex) {
+            this.scriptName = scriptName;
+            this.pluginName = pluginName;
+            this.startsAtIndex = startsAtIndex;
+            lines = new ArrayList<String>();
+        }
+
+        ScriptItem(Optional<String> scriptName, String pluginName, List<String> lines, int startsAtIndex) {
+            if (scriptName.isPresent()) {
+                String s = scriptName.get();
+                if(s.indexOf('/') !=-1 || s.indexOf('\\') != -1){
+                    scriptName = of(FilenameUtils.getName(s));
+                }
+            }
+
+            this.scriptName = scriptName;
             this.pluginName = pluginName;
             this.lines = lines;
             this.startsAtIndex = startsAtIndex;
+        }
+
+        String getScriptName() {
+            return scriptName.or(asOneLineDesc());
         }
 
         public String asOneLineDesc() {
@@ -114,6 +141,10 @@ public class BearScript2 {
             String line = nonCommandLine.or(lines.get(0));
 
             return pluginName + ": " + line;
+        }
+
+        public boolean isEmpty() {
+            return lines.isEmpty();
         }
     }
 
@@ -167,7 +198,7 @@ public class BearScript2 {
             final Plugin currentPlugin = getPlugin(scriptItem.pluginName, shellContext);
 
             if (!executableLines.isEmpty()) {
-                return new TaskDef<Task>(scriptItem.asOneLineDesc()){
+                return new TaskDef<Task>(scriptItem.getScriptName()){
                     @Override
                     public Task newSession(SessionContext $, Task parent) {
                         for (int i = 0; i < directivesLines.size(); i++) {
@@ -459,19 +490,36 @@ public class BearScript2 {
         }
     }
 
+
+    static class BearScriptDirective {
+        final String directive;
+        final String[] words;
+        final Map<String, String> params;
+        final Optional<String> name;
+
+        BearScriptDirective(String directive, Optional<String> name, String[] words, Map<String, String> params) {
+            this.directive = directive;
+            this.name = name;
+            this.words = words;
+            this.params = params;
+        }
+    }
+
+    static final DirectiveParser directiveParser = new DirectiveParser();
+
     static BearScriptParseResult parseScript(String script, String initialPluginName) {
-        final List<String> currentScript = new ArrayList<String>();
+//        final List<String> currentScript = new ArrayList<String>();
 
         List<ScriptItem> scriptItems = new ArrayList<ScriptItem>();
         List<ScriptError> globalErrors = new ArrayList<ScriptError>();
 
-        Splitter splitter = Splitter.on("\n").trimResults();
-
-        String currentPluginName = initialPluginName;
+//        String currentPluginName = initialPluginName;
 
         int lineIndex = 1;
 
-        for (Iterator<String> iterator = splitter.split(script).iterator(); iterator.hasNext(); lineIndex++) {
+        ScriptItem currentScriptItem = new ScriptItem(Optional.<String>absent(), initialPluginName, lineIndex);
+
+        for (Iterator<String> iterator = LINE_SPLITTER.split(script).iterator(); iterator.hasNext(); lineIndex++) {
             String line = iterator.next();
 
             if (line.startsWith("#")) {
@@ -479,42 +527,87 @@ public class BearScript2 {
             }
 
             if (line.startsWith(":")) {
-                String firstWord = StringUtils.substringBetween(line, ":", " ");
 
-                if ("use".equals(firstWord)) {
-                    String command = substringAfter(line, " ").trim();
-                    String secondWord = substringBefore(command, " ");
+                BearScriptDirective directive = directiveParser.parse(line);
 
-                    if ("shell".equals(secondWord)) {
-                        if (!currentScript.isEmpty()) {
-                            scriptItems.add(new ScriptItem(currentPluginName, new ArrayList<String>(currentScript), lineIndex));
+                if (":use".equals(directive.directive)) {
+                    String command = directive.words[0];
+                    String pluginName = directive.words[1];
 
-                            currentScript.clear();
+                    if ("shell".equals(command)) {
+                        if (!currentScriptItem.isEmpty()) {
+                            scriptItems.add(currentScriptItem);
                         }
 
-                        currentPluginName = substringAfter(command, " ").trim();
+                        currentScriptItem = new ScriptItem(directive.name, pluginName, lineIndex);
                     } else {
-                        ui.error(new TextConsoleEventToUI("shell", "command not supported: <i>" + secondWord + "</i><br>"));
+                        ui.error(new TextConsoleEventToUI("shell", "command not supported: <i>" + command + "</i><br>"));
 
-                        globalErrors.add(new ScriptError(line, lineIndex, "command not supported: " + secondWord));
+                        globalErrors.add(new ScriptError(line, lineIndex, "command not supported: " + command));
                     }
 
                     continue;
+                } else
+                if(":ref".equals(directive.directive)){
+                    scriptItems.add(scriptItemFromFileReference(directive));
                 } else {
-                    currentScript.add(line);
+                    currentScriptItem.lines.add(line);
                 }
 
                 continue;
             }
 
-            currentScript.add(line);
+            currentScriptItem.lines.add(line);
         }
 
-        if (!currentScript.isEmpty()) {
-            scriptItems.add(new ScriptItem(currentPluginName, new ArrayList<String>(currentScript), lineIndex));
+        if (!currentScriptItem.isEmpty()) {
+            scriptItems.add(currentScriptItem);
         }
 
         return new BearScriptParseResult(scriptItems, globalErrors);
+    }
+
+    static ScriptItem scriptItemFromFileReference(BearScriptDirective directive) {
+        checkArgument(!directive.params.isEmpty(), "you need to provide params for script reference");
+
+        try {
+            String plugin = directive.params.get("plugin");
+
+            String scriptString = null;
+            String scriptName = null;
+
+            Map<String, String> params = directive.params;
+
+            if(params.containsKey("url")){
+                String urlString = params.get("url");
+                URL url = new URL(urlString);
+                scriptString = Resources.asCharSource(url, Charsets.UTF_8).read();
+                scriptName = FilenameUtils.getName(urlString);
+            }else
+            if(params.containsKey("file")){
+                File file = new File(params.get("file"));
+
+                scriptString = FileUtils.readFileToString(file);
+                scriptName = file.getName();
+            }
+
+
+            if(params.containsKey("name")){
+                scriptName = params.get("name");
+            }
+
+            if(plugin == null){
+                plugin = FilenameUtils.getExtension(scriptName);
+
+                checkArgument(!Strings.isNullOrEmpty(plugin), "could not detect plugin from filename: %s. please provide", scriptName);
+            }
+
+            checkArgument(!Strings.isNullOrEmpty(scriptName), "could detect not script name. please provide");
+
+            return new ScriptItem(Optional.of(scriptName), plugin, LINE_SPLITTER.splitToList(scriptString), 0);
+        } catch (IOException e) {
+            throw Exceptions.runtime(e);
+        }
     }
 
     public static List<RunResponse.Host> getHosts(List<SessionContext> $s) {
@@ -593,12 +686,12 @@ public class BearScript2 {
 
         private final BearScriptParseResult parseResult;
 
-        public GroovyScriptSupplier(GlobalContext global, String groovyScript) {
+        public GroovyScriptSupplier(GlobalContext global, String groovyScript, Optional<String> scriptName) {
             GroovyShellPlugin groovy = global.getPlugin(GroovyShellPlugin.class);
 
             this.parseResult = new BearScriptParseResult(
                 Lists.newArrayList(
-                    new ScriptItem(groovy.cmdAnnotation(), Splitter.on("\n").trimResults().splitToList(groovyScript), 1)
+                    new ScriptItem(scriptName, groovy.cmdAnnotation(), LINE_SPLITTER.splitToList(groovyScript), 1)
                 ),
                 Collections.<ScriptError>emptyList());
 

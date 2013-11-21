@@ -94,7 +94,7 @@ public class GlobalTaskRunner {
                                         }
 
                                         if (r.nok()) {
-                                            throw new PartyResultException(r, party, phase.getName());
+                                            throw PartyResultException.create(r, party, phase.getName());
                                         }
                                     }
 
@@ -110,7 +110,7 @@ public class GlobalTaskRunner {
                                     result = $.runner.run(taskDef);
 
                                     if (!result.ok()) {
-                                        throw new PartyResultException(result, party, phase.getName());
+                                        throw PartyResultException.create(result, party, phase.getName());
                                     }
 
                                     return result;
@@ -118,7 +118,8 @@ public class GlobalTaskRunner {
                                     throw e;
                                 } catch (Throwable e) {
                                     Cli.logger.warn("", e);
-                                    result = new ExceptionResult(e);
+                                    final Throwable e1 = e;
+                                    result = new TaskResult(e1);
 
                                     $.executionContext.rootExecutionContext.getDefaultValue().taskResult = new CommandLineResult(Result.ERROR, e.toString());
 

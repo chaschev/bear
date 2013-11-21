@@ -18,6 +18,7 @@ package bear.core;
 
 import bear.ssh.MyStreamCopier;
 import chaschev.util.Exceptions;
+import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -29,10 +30,14 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static java.util.concurrent.TimeUnit.NANOSECONDS;
+
 /**
  * @author Andrey Chaschev chaschev@gmail.com
  */
 public abstract class AbstractConsole extends bear.console.AbstractConsole.Terminal {
+
     public static abstract class Listener {
         protected AbstractConsole console;
 
@@ -55,7 +60,6 @@ public abstract class AbstractConsole extends bear.console.AbstractConsole.Termi
         listener.console = this;
     }
 
-
     public void println(String s) {
         print(s + "\n");
     }
@@ -73,8 +77,18 @@ public abstract class AbstractConsole extends bear.console.AbstractConsole.Termi
         return addInputStream(is, false);
     }
 
+    public static final class OpenBAOS extends ByteArrayOutputStream{
+        public byte[] getBuffer(){
+            return buf;
+        }
+
+        public int getLength(){
+            return count;
+        }
+    }
+
     public AbstractConsole addInputStream(InputStream is, boolean stdErr) {
-        final ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        final OpenBAOS baos = new OpenBAOS();
         final MyStreamCopier copier = new MyStreamCopier(is, baos, stdErr);
         final MarkedBuffer buffer = new MarkedBuffer(stdErr);
 
@@ -84,13 +98,15 @@ public abstract class AbstractConsole extends bear.console.AbstractConsole.Termi
         copier.listener(new MyStreamCopier.Listener() {
             @Override
             public void reportProgress(long transferred, byte[] buf, int read) throws Exception {
-                if (buf == null) {
-                    buffer.progress(baos.toByteArray());
-
-                    listener.textAdded(buffer.interimText(), buffer);
-
-                    buffer.markInterim();
+                synchronized (baos){
+                    buffer.progress(baos.getBuffer(), baos.getLength());
                 }
+
+                LoggerFactory.getLogger("log").trace("appended to buffer: {}", buffer.interimText());
+
+                listener.textAdded(buffer.interimText(), buffer);
+
+                buffer.markInterim();
             }
         });
 
@@ -110,21 +126,33 @@ public abstract class AbstractConsole extends bear.console.AbstractConsole.Termi
     }
 
     public boolean awaitStreamCopiers(long duration, TimeUnit unit) {
-        long period = duration / 9;
+        long periodNs = NANOSECONDS.convert(duration, unit) / 9;
 
-        if (period == 0) {
-            period = 1;
+        if (periodNs == 0) {
+            periodNs = 1;
         }
 
-        long sleepMs = unit.toMillis(period);
-        long sleepNano = unit.toNanos(period) - 1000000 * sleepMs;
+        long sleepMs = MILLISECONDS.convert(periodNs, NANOSECONDS);
+        long sleepNano = periodNs - NANOSECONDS.convert(sleepMs, MILLISECONDS);
 
         final long durationMs = unit.toMillis(duration);
 
         long startedAt = System.currentTimeMillis();
 
+        for (MyStreamCopier copier : copiers) {
+            copier.setFinishAtMs(startedAt + durationMs);
+        }
+
         while (true) {
             try {
+                for (MyStreamCopier copier : copiers) {
+                    copier.triggerCopy();
+                }
+
+                final long now = System.currentTimeMillis();
+
+                long timeElapsedMs = now - startedAt;
+
                 boolean allFinished = true;
 
                 for (MyStreamCopier copier : copiers) {
@@ -138,9 +166,7 @@ public abstract class AbstractConsole extends bear.console.AbstractConsole.Termi
                     return true;
                 }
 
-                final long now = System.currentTimeMillis();
-
-                if (now - startedAt > durationMs) {
+                if (timeElapsedMs > durationMs) {
                     return false;
                 }
 
@@ -164,9 +190,18 @@ public abstract class AbstractConsole extends bear.console.AbstractConsole.Termi
         return this;
     }
 
+
     public AbstractConsole spawn(ExecutorService service) {
         for (MyStreamCopier copier : copiers) {
-            futures.add(copier.spawn(service));
+            futures.add(copier.spawn(service, -1));
+        }
+
+        return this;
+    }
+
+    public AbstractConsole spawn(ExecutorService service, int timeout, TimeUnit unit) {
+        for (MyStreamCopier copier : copiers) {
+            futures.add(copier.spawn(service, System.currentTimeMillis() + unit.toMillis(timeout)));
         }
 
         return this;

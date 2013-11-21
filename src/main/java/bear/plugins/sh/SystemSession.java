@@ -132,6 +132,10 @@ public abstract class SystemSession extends Task<SystemEnvironmentPlugin.SystemS
         return sendCommand(line().addRaw(s)).text;
     }
 
+    public String capture(String s, ConsoleCallback callback) {
+        return sendCommand(line().addRaw(s), callback).text;
+    }
+
     public CommandLine rmLine(CommandLine line, String... paths){
         return rmLine(null, line, paths);
     }

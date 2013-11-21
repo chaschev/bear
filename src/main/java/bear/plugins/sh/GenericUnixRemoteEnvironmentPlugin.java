@@ -28,6 +28,7 @@ import bear.vcs.CommandLineResult;
 import bear.vcs.RemoteCommandLine;
 import chaschev.util.CatchyCallable;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
 import net.schmizz.sshj.SSHClient;
 import net.schmizz.sshj.common.IOUtils;
@@ -125,15 +126,15 @@ public class GenericUnixRemoteEnvironmentPlugin extends SystemEnvironmentPlugin 
                     @Override
                     public void act(final Session session, final Session.Shell shell) throws Exception {
 
-                        final Session.Command exec = session.exec(command.asText());
+                        final Session.Command execSshCommand = session.exec(command.asText());
 
-                        final RemoteConsole remoteConsole = (RemoteConsole) new RemoteConsole(exec, new AbstractConsole.Listener() {
+                        final RemoteConsole remoteConsole = (RemoteConsole) new RemoteConsole(execSshCommand, new AbstractConsole.Listener() {
                             @Override
                             public void textAdded(String textAdded, MarkedBuffer buffer) throws Exception {
                                 $.logOutput(textAdded);
                                 System.out.print(textAdded);
 
-                                if (StringUtils.isBlank(textAdded)) {
+                                if (Strings.isNullOrEmpty(textAdded)) {
                                     return;
                                 }
 
@@ -143,8 +144,7 @@ public class GenericUnixRemoteEnvironmentPlugin extends SystemEnvironmentPlugin 
 
                                 if (userCallback != null) {
                                     try {
-                                        userCallback.progress(console, textAdded,
-                                            buffer.wholeText());
+                                        userCallback.progress(console, textAdded, buffer.wholeText());
                                     } catch (Exception e) {
                                         logger.error("", e);
                                     }
@@ -158,14 +158,22 @@ public class GenericUnixRemoteEnvironmentPlugin extends SystemEnvironmentPlugin 
                             }
                         })
                             .bufSize(session.getRemoteMaxPacketSize())
-                            .spawn(global.localExecutor);
+                            .spawn(global.localExecutor, (int) getTimeout(command), TimeUnit.MILLISECONDS);
 
-                        exec.join((int) getTimeout(command), TimeUnit.MILLISECONDS);
+//                        Stopwatch sw = Stopwatch.createStarted();
+                        execSshCommand.join((int) getTimeout(command), TimeUnit.MILLISECONDS);
 
-                        remoteConsole.stopStreamCopiers();
-                        remoteConsole.awaitStreamCopiers(5, TimeUnit.MILLISECONDS);
+//                        logger.debug("join timing: {}", sw.elapsed(TimeUnit.MILLISECONDS));
+                        
+                        if(!remoteConsole.awaitStreamCopiers(20, TimeUnit.MILLISECONDS)){
+//                            logger.debug("WAAARN, NOT ALL FINISHED!!!");
+                            remoteConsole.stopStreamCopiers();
+//                            logger.debug("stopStreamCopiers timing: {}", sw.elapsed(TimeUnit.MILLISECONDS));
+                        }
 
-                        exitStatus[0] = exec.getExitStatus();
+//                        logger.debug("awaitStreamCopiers timing: {}", sw.elapsed(TimeUnit.MILLISECONDS));
+
+                        exitStatus[0] = execSshCommand.getExitStatus();
 
                         if (exitStatus[0] == 0) {
                             result[0] = Result.OK;
@@ -182,6 +190,8 @@ public class GenericUnixRemoteEnvironmentPlugin extends SystemEnvironmentPlugin 
                 sshSession.withSession(withSession);
 
                 final T t = ((CommandLine<T, ?>)command).parseResult(withSession.text);
+
+                System.out.println("WITH_TEXT!!!! '" + withSession.text+"'");
 
                 t.result = result[0];
 

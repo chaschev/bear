@@ -4,20 +4,16 @@
         <Console name="Console" target="SYSTEM_OUT">
             <PatternLayout pattern="%d{HH:mm:ss.SSS} [%thread{10}] %-5level %c{1.} - %msg%n"/>
         </Console>
-        <File name="File" fileName=".bear/logs/bear.log">
-
+        <File name="File" fileName=".bear/logs/bear.log" append="false" >
+            <PatternLayout pattern="%d{HH:mm:ss.SSS} [%thread{10}] %-5level %c{1.} - %msg%n"/>
         </File>
     </Appenders>
     <Loggers>
-        <Logger name="net.schmizz" level="error">
-            <AppenderRef ref="Console"/>
+        <Logger name="net.schmizz" level="warn">
+            <AppenderRef ref="File"/>
         </Logger>
 
-        <Logger name="net.schmizz" level="error">
-            <AppenderRef ref="Console"/>
-        </Logger>
-
-        <Logger name="bear.main.BearScript">
+        <Logger name="bear.core.BearScript2">
             <AppenderRef ref="Console"/>
             <AppenderRef ref="File" />
         </Logger>

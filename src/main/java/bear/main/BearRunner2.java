@@ -57,25 +57,6 @@ public class BearRunner2 {
         }
     }
 
-   /* public CompositeTaskRunContext run() throws Exception {
-        runContext.submitTasks();
-
-        if(shutdownAfterRun){
-            boolean await = true;
-            if (await) {
-                GlobalContext global = runContext.getGlobal();
-                ConsolesDivider<SessionContext> consoleArrival = runContext.getConsoleArrival();
-
-                consoleArrival.await(global.localCtx.var(global.bear.taskTimeoutSec));
-            }
-
-            global.shutdown();
-        }
-
-        return runContext;
-    }
-*/
-
     public BearRunner2 shutdownAfterRun(boolean shutdownAfterRun) {
         this.shutdownAfterRun = shutdownAfterRun;
         return this;

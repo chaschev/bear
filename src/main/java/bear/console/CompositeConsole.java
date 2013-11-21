@@ -83,7 +83,6 @@ public class CompositeConsole {
                     });
 
                     callContext.consoleArrival.addArrival(finalI, result);
-                    callback.whenDone(result);
                     latch.countDown();
 
                     return result;

@@ -18,7 +18,6 @@ package bear.core;
 
 import bear.context.VariablesLayer;
 import bear.plugins.Plugin;
-import bear.session.SystemEnvironments;
 import bear.task.Task;
 import bear.task.TaskDef;
 import org.slf4j.Logger;
@@ -83,12 +82,12 @@ public class GlobalContextFactory {
         return this;
     }
 
-    public GlobalContext configure(SystemEnvironments system) {
-        configure(global, system);
+    public GlobalContext configure() {
+        configure(global);
         return global;
     }
 
-    protected GlobalContext configure(GlobalContext gc, SystemEnvironments system) {
+    protected GlobalContext configure(GlobalContext gc) {
         logger.warn("warning: global config was not configured");
         return gc;
     }

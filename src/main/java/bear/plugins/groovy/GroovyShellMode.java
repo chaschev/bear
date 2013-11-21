@@ -79,6 +79,23 @@ public class GroovyShellMode extends PluginShellMode<GroovyShellPlugin> implemen
             this.e = e;
             this.object = null;
         }
+
+        @Override
+        public String toString() {
+            final StringBuilder sb = new StringBuilder("GroovyResult{");
+
+            if(e != null){
+                sb.append("e=").append(e.getMessage());
+            }
+
+            if(object != null){
+                sb.append(", object=").append(object);
+            }
+
+            sb.append('}');
+
+            return sb.toString();
+        }
     }
 
     public Task interpret(final String command, SessionContext $, final Task _parent, final TaskDef taskDef) {
@@ -150,6 +167,7 @@ public class GroovyShellMode extends PluginShellMode<GroovyShellPlugin> implemen
                 } else {
                     $binding = new Binding();
                     $binding.setVariable("_", $);
+                    $binding.setVariable("sys", $.sys);
                     $binding.setVariable("parent", parent);
                     $binding.setVariable("bear", bear);
                     $binding.setVariable("global", global);
