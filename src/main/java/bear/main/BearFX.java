@@ -40,6 +40,7 @@ import javafx.scene.web.WebView;
 import javafx.stage.FileChooser;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
+import javafx.stage.StageStyle;
 import netscape.javascript.JSObject;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -162,6 +163,8 @@ public class BearFX {
                 configurator.bearFX = bearFX = new BearFX(this, configurator, properties);
                 this.stage = stage;
 
+                stage.initStyle(StageStyle.UNDECORATED);
+
                 logger.info("creating fx appender...");
 
                 //createFilter("DEBUG", "INFO", null, null)
@@ -171,7 +174,7 @@ public class BearFX {
                         PatternLayout.createLayout("%highlight{%d{HH:mm:ss.S} %-5level %c{1.} - %msg%n}", null, null, null, null), true, bearFX);
 
                 FXAppender fxAppInfo =
-                    new FXAppender("fxAppInfo", ThresholdRangeFilter.createFilter("INFO", "FATAL", null, null),
+                    new FXAppender("fxAppInfo", ThresholdRangeFilter.createFilter("INFO", "OFF", null, null),
                         PatternLayout.createLayout("%highlight{%d{HH:mm:ss.S} %-5level %c{1.} - %msg%n}", null, null, null, null), true, bearFX);
 
 //                FXAppender fxAppInfo =

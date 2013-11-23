@@ -28,7 +28,6 @@ public class PhaseFinishedEventToUI extends EventToUI {
     public final List<ConsolesDivider.EqualityGroup> groups;
     public final String phaseName;
 
-
     public PhaseFinishedEventToUI(long duration, List<ConsolesDivider.EqualityGroup> groups, String phaseName) {
         super("phaseFinished", "phaseFinished");
 

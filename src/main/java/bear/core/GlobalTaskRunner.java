@@ -2,10 +2,7 @@ package bear.core;
 
 import bear.console.GroupDivider;
 import bear.context.Cli;
-import bear.main.event.GlobalStatusEventToUI;
-import bear.main.event.NewPhaseConsoleEventToUI;
-import bear.main.event.PhasePartyFinishedEventToUI;
-import bear.main.event.TaskConsoleEventToUI;
+import bear.main.event.*;
 import bear.main.phaser.ComputingGrid;
 import bear.main.phaser.Phase;
 import bear.main.phaser.PhaseCallable;
@@ -153,14 +150,40 @@ public class GlobalTaskRunner {
 
         grid = new ComputingGrid<SessionContext, BearScriptPhase>(phaseList, $s);
 
-        grid.setPhaseEnterListener(new ComputingGrid.PhaseEnterListener<BearScriptPhase, SessionContext>() {
+        grid.setPhaseEnterListener(new ComputingGrid.PartyListener<BearScriptPhase, SessionContext>() {
             @Override
-            public void enter(Phase<?, BearScriptPhase> phase, PhaseParty<SessionContext, BearScriptPhase> party) {
+            public void handle(Phase<?, BearScriptPhase> phase, PhaseParty<SessionContext, BearScriptPhase> party) {
                 ui.info(new NewPhaseConsoleEventToUI("shell", shellContext.sessionId, phase.getPhase().id));
                 ui.info(new TaskConsoleEventToUI("shell", "step " + phase.getName() + "(" + phase.getPhase().id + ")", phase.getPhase().id)
                      .setId(phase.getPhase().id)
                     .setParentId(shellContext.sessionId)
                 );
+            }
+        });
+
+        grid.setPartyFinishListener(new ComputingGrid.PartyListener<BearScriptPhase, SessionContext>() {
+            @Override
+            public void handle(Phase<?, BearScriptPhase> phase, PhaseParty<SessionContext, BearScriptPhase> party) {
+                String name = phase.getPhase().getName();
+                if(party.failed()){
+                    SessionContext.ui.error(new NoticeEventToUI(
+                        party.getColumn().getName() +
+                            ": Party Failed", "Phase " + name + "(" + party.getException().getCause().toString() + ")"));
+                }else{
+                    SessionContext.ui.fatal(new NoticeEventToUI(
+                        party.getColumn().getName(), "Party Finished"));
+                }
+            }
+        });
+
+        grid.setWhenAllFinished(new ComputingGrid.WhenAllFinished() {
+            @Override
+            public void run(int failedParties, int okParties) {
+                if(failedParties > 0){
+                    SessionContext.ui.error(new NoticeEventToUI("All parties arrived", failedParties + " errors"));
+                }else{
+                    SessionContext.ui.fatal(new NoticeEventToUI("All parties arrived", okParties + " ok!"));
+                }
             }
         });
     }

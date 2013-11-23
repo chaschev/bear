@@ -31,18 +31,29 @@
     <script src="js/stacktrace.js"></script>
     <script src="js/java-bindings.js"></script>
     <script src="js/bootstrap-switch.min.js"></script>
+    <script src="noty/jquery.noty.js"></script>
+    <script src="noty/layouts/bottom.js"></script>
+    <script src="noty/layouts/topRight.js"></script>
+    <script src="noty/themes/default.js"></script>
+    <!--<script src="metis/lib/gritter/js/jquery.gritter.js"></script>-->
 
     <!--<script src="js/perfect-scrollbar.js"></script>
     <script src="js/angular-perfect-scrollbar.js"></script>
 -->
     <!-- 1.2 -->
     <script src='js/firebug-lite-compressed.js'></script>
+    <!--<link rel="stylesheet" type="text/css" href="metis/lib/gritter/css/jquery.gritter.css" />-->
+    <link rel="stylesheet" href="metis/lib/bootstrap/css/bootstrap.css">
+    <link rel="stylesheet" href="metis/css/main.css">
+    <!--<link rel="stylesheet" href="metis/lib/Font-Awesome/css/font-awesome.css">-->
+    <link href="http://netdna.bootstrapcdn.com/font-awesome/4.0.1/css/font-awesome.css" rel="stylesheet">
+    <link rel="stylesheet" href="metis/css/theme.css">
 
-    <link rel="stylesheet" href="css/bootstrap.min.css"/>
+
+    <!--<link rel="stylesheet" href="css/bootstrap.min.css"/>-->
     <link rel="stylesheet" href="css/chosen.css"/>
     <link rel="stylesheet" href="css/chosen-bootstrap.css"/>
 
-    <link href="http://netdna.bootstrapcdn.com/font-awesome/4.0.1/css/font-awesome.css" rel="stylesheet">
 
     <link rel="stylesheet" href="css/bootstrap-switch.css">
 
@@ -59,14 +70,19 @@
             /*height: 25px; *//* .push must be the same height as .footer */
         /*}*/
 
-        .status-panel{
-            height: 220px;
+        .wrapper{
+            background-color: #333;
         }
 
-        .status-table-row{
-            height: 48px;
-            max-height: 48px;
+        .box {
+            border: 1px solid #474747;
         }
+
+        .wrapper > div{
+            padding-right: 0px;
+            padding-left: 0px;
+        }
+
 
         .ace_editor {
             height: 120px;
@@ -167,6 +183,19 @@
 
         .consoleMessages{
             vertical-align: bottom;
+        }
+
+        .status-panel{
+            height: 220px;
+        }
+
+        table.status-table{
+            width: 100%;
+        }
+
+        .status-table-row{
+            height: 48px;
+            max-height: 48px;
         }
 
         table.status-table td{
@@ -399,33 +428,40 @@
 <!--</div>-->
 <div class="row wrapper">
     <div class="col-md-2">
-        <div class="panel panel-primary">
-            <div class="panel-heading">
-                <h3 class="panel-title">Status</h3>
-            </div>
-            <div class="panel-body">
-                <ul class="list-group">
-                    <li class="list-group-item">
-                        <span class="badge">{{terminals.stats.partiesCount}}</span>Servers
-                    </li>
-                    <li class="list-group-item">
-                        <span class="badge">{{terminals.stats.partiesPending}}</span>Running
-                    </li>
-                    <li class="list-group-item">
-                        <span class="badge">{{terminals.stats.partiesFailed}}</span> Failed
-                    </li>
-                    <li class="list-group-item">
-                        <span class="badge">{{terminals.stats.partiesArrived}}</span> Completed
-                    </li>
-                </ul>
-            </div>
+        <div class="media user-media">
+            <a class="user-link" href="">
+                <img class="media-object img-thumbnail user-img" alt="User Picture" src="img/crazy_bear_64.png">
+                <!--<span class="label label-danger user-label">16</span>-->
+            </a>
         </div>
 
-        <div class="panel panel-primary">
-            <div class="panel-heading">
-                <h3 class="panel-title">Environment</h3>
-            </div>
-            <div class="panel-body"><br>
+        <div class="box inverse">
+            <header>
+                <div class="icons"><i class="fa fa-th-large"></i></div>
+                <h5>Status</h5>
+            </header>
+            <div id="div-2" class="accordion-body collapse in body">
+            <form class="form-horizontal">
+
+                <div class="well well-small dark">
+                    <ul class="list-unstyled">
+                        <li>Servers <span class="pull-right badge">{{terminals.stats.partiesCount}}</span></li>
+                        <li>Running <span class="pull-right badge">{{terminals.stats.partiesPending}}</span></li>
+                        <li>Failed  <span class="pull-right badge">{{terminals.stats.partiesFailed}}</span></li>
+                        <li>Arrived <span class="pull-right badge">{{terminals.stats.partiesArrived}}</span></li>
+                    </ul>
+                </div>
+
+            </form>
+        </div>
+        </div>
+
+        <div class="box inverse">
+            <header>
+                <div class="icons"><i class="fa fa-desktop"></i></div>
+                <h5>Environment</h5>
+            </header>
+            <div class="accordion-body collapse in body">
                 <div class="input-group input-group-sm">
                     <span class="input-group-addon">Stage</span>
                     <div class="input-group">
@@ -473,13 +509,66 @@
                 </div>
             </div>
         </div>
+        <div class="box inverse">
+            <header>
+                <div class="icons"><i class="fa fa-cogs"></i></div>
+                <h5>Edit script</h5>
+            </header>
+            <div class="accordion-body collapse in body">
+                <form class="form-horizontal">
+
+                    <div class="well well-small dark">
+                        <div class="panel-body" id="FileTabsCtrl" ng-controller="FileTabsCtrl" ng-init="initScripts()">
+                            <div fx-editor-button selected="settingsScript" file-manager="fileManager"></div>
+
+                            <button class="btn btn-success" ng-click="createPom()">Create POM</button>
+                        </div>
+                    </div>
+
+                </form>
+            </div>
+        </div>
+
+        <div class="box inverse">
+            <header>
+                <div class="icons"><i class="fa fa-film"></i></div>
+                <h5>History</h5>
+            </header>
+            <div class="accordion-body collapse in body">
+                <form class="form-horizontal">
+                    <div class="well well-small dark">
+                        <div class="panel-body" ng-controller="HistoryController" ng-init="init()"><br>
+                            <div class="history-scroller">
+                                <ul class="list-group history">
+                                    <li ng-repeat="entry in historyManager.entries" class="list-group-item" ng-click="updateRunScript(entry)">
+                                        <table style="width: 100%">
+                                            <tr>
+                                                <td><span class="history-normal">{{entry.getName(fileManager)}}</span> <br/>
+                                                    <span class="history-small">{{entry.getDesc(fileManager)}}</span></td>
+                                                <td style="width: 5%"><span class="badge">{{entry.getTime() | prettyDuration}}</span></td>
+                                            </tr>
+                                        </table>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                </form>
+            </div>
+        </div>
     </div>
-    <div class="col-md-7">
-        <div class="panel panel-primary">
+    <div class="col-md-10">
+        <header class="head">
+            <div class="main-bar">
+                <h3><i class="fa fa-gamepad"></i> Terminals</h3>
+            </div>
+        </header>
+        <div class="outer"><div class="inner">
             <!--<div class="panel-heading">
                 <h3 class="panel-title">Live Hosts Status</h3>
             </div>-->
-            <div class="panel-body status-panel" >
+            <div class="status-panel" >
                 <table class="status-table table">
                     <tr>
                         <th style="width: 10%">Host</th>
@@ -499,114 +588,59 @@
                     <tr></tr>
                 </table>
             </div>
-        </div>
-        <!--<div class="panel panel-primary">
-            <div class="panel-heading">
-                <h3 class="panel-title">Hosts Log</h3>
-            </div>
-            <div class="panel-body">
-                <pre>
-10:05:34 vm01 Received answer: ... dkfjdkfj
-10:05:34 vm03 Received answer: ... fdfd
-                </pre>
-            </div>
-        </div>-->
-        <div id="consolesPanel" class="panel panel-primary" style="">
-            <div class="panel-body">
-                <div id="ConsoleTabsCtrl" ng-controller="ConsoleTabsCtrl">
-                    <tabset>
-                        <tab ng-repeat="terminal in terminals.terminals"
-                             heading="{{terminal.host.name}}" active="terminal.active">
-                            <div ng-controller="ConsoleTabsChildCtrl" name="{{terminal.host.name}}">
-                                <div class="scroller">
-                                <console-messages>
-                                    <!--<div>{{terminal.host.name}}</div>-->
-                                </console-messages>
-                                </div>
-                                <div><table style="width: 100%">
-                                    <tr>
-                                        <td style="width: 90%">
-                                            <div ng-init="classes='btn btn-success btn-sm';" fx-editor-button selected="runScript" file-manager="fileManager" style="display:inline-block;"></div>
-                                            <button class="btn btn-sm btn-default" style="display: inline-block"><i class="fa fa-refresh" ng-click="refreshRunScript()"></i></button>
-                                        </td>
-                                        <td>
-                                            <div class="input-group input-group-sm">
-                                                <select class="chzn-select" ng-init="shellPlugin='sh'"
-                                                        ng-model="shellPlugin" ng-options="s for s in ['sh', 'groovy']">
-                                                </select>
-
-                                                <!--<input type="text" ng-model="remoteEnv"/>-->
-                                            </div>
-                                        </td>
-                                        <td>
-                                            <div switch="remoteEnv" ng-init="remoteEnv=true">
-                                            </div>
-                                        </td>
-                                    </tr>
-                                    <tr><td colspan="3">
+            <div id="consolesPanel" class="" >
+                <div class="panel-body">
+                    <div id="ConsoleTabsCtrl" ng-controller="ConsoleTabsCtrl">
+                        <tabset>
+                            <tab ng-repeat="terminal in terminals.terminals"
+                                 heading="{{terminal.host.name}}" active="terminal.active">
+                                <div ng-controller="ConsoleTabsChildCtrl" name="{{terminal.host.name}}">
+                                    <div class="scroller">
+                                        <console-messages>
+                                            <!--<div>{{terminal.host.name}}</div>-->
+                                        </console-messages>
+                                    </div>
+                                    <div><table style="width: 100%">
+                                        <tr>
+                                            <td style="width: 90%" colspan="3">
+                                                <div ng-init="classes='btn btn-success btn-sm';" fx-editor-button selected="runScript" file-manager="fileManager" style="display:inline-block;"></div>
+                                                <button class="btn btn-sm btn-default" style="display: inline-block"><i class="fa fa-refresh" ng-click="refreshRunScript()"></i></button>
+                                            </td>
+                                            <!--<td>
+                                                <div class="input-group input-group-sm">
+                                                    <select class="chzn-select" ng-init="shellPlugin='sh'"
+                                                            ng-model="shellPlugin" ng-options="s for s in ['sh', 'groovy']">
+                                                    </select>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <div switch="remoteEnv" ng-init="remoteEnv=true">
+                                                </div>
+                                            </td>-->
+                                        </tr>
+                                        <tr><td colspan="3">
                                             {{runScriptModified}}<div ui-ace="{onLoad: aceLoaded}" modified="runScriptModified"></div>
-                                    </td></tr>
-                                    <tr>
-                                        <td colspan="3">
-                                            <button class="btn btn-success btn-sm" ng-click="sendCommand()">Send
-                                            </button>
-                                        </td>
+                                        </td></tr>
+                                        <tr>
+                                            <td colspan="3">
+                                                <button class="btn btn-success btn-sm" ng-click="sendCommand()">Send
+                                                </button>
+                                            </td>
 
-                                    </tr>
+                                        </tr>
 
-                                </table></div>
+                                    </table></div>
+                                </div>
 
-
-                            </div>
-
-                        </tab>
-                    </tabset>
-                </div>
-            </div>
-
-
-            <!-- /input-group -->
-        </div>
-    </div>
-    <div class="col-md-3" >
-
-        <div class="panel panel-primary">
-            <div class="panel-heading">
-                <h3 class="panel-title">Edit script</h3>
-            </div>
-
-            <div class="panel-body" id="FileTabsCtrl" ng-controller="FileTabsCtrl" ng-init="initScripts()">
-<!--
-                settingsScript={dir: '.bear', filename: 'SetupPluginsSettings.java'};
-                runScript={dir: '.bear', filename: 'SetupPluginsScript.java'};
--->
-                <div fx-editor-button selected="settingsScript" file-manager="fileManager"></div>
-
-                <button class="btn btn-success" ng-click="createPom()">Create POM</button>
-            </div>
-        </div>
-
-        <div class="panel panel-primary">
-            <div class="panel-heading">
-                <h3 class="panel-title">History</h3>
-            </div>
-            <div class="panel-body" ng-controller="HistoryController" ng-init="init()"><br>
-                <div class="history-scroller">
-                    <ul class="list-group history">
-                    <li ng-repeat="entry in historyManager.entries" class="list-group-item" ng-click="updateRunScript(entry)">
-                        <table style="width: 100%">
-                            <tr>
-                                <td><span class="history-normal">{{entry.getName(fileManager)}}</span> <br/>
-                                    <span class="history-small">{{entry.getDesc(fileManager)}}</span></td>
-                                <td style="width: 5%"><span class="badge">{{entry.getTime() | prettyDuration}}</span></td>
-                            </tr>
-                        </table>
-                    </li>
-                </ul>
+                            </tab>
+                        </tabset>
+                    </div>
                 </div>
             </div>
         </div>
+        </div>
     </div>
+
 </div>
 </body>
 </html>

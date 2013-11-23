@@ -1,4 +1,4 @@
-:use shell groovy {"name": "testCaptures"}
+//!:use shell groovy {"name": "testCaptures"}
 
 import bear.console.ConsoleCallback
 
@@ -8,7 +8,7 @@ println "HEY-STEP 0!!"
 def pwd = sys.capture("pwd", callback)
 println "expected pwd: '${pwd}'"
 
-for(int i = 0;i<2000;i++){
+for(int i = 0;i<10;i++){
     println "HEY-STEP ${i+1}!!"
     def s = sys.capture("pwd", callback)
 

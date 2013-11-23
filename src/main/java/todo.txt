@@ -10,20 +10,31 @@ top priority:
  (ok) wait(condition($s))
  (ok) waitAny
  (ok) onAdvance - arrived barrier
-- script reference - inlines a groovy script
+- (ok) script reference - inlines a groovy script
 - change settings to script which is executed every time
 - (ok) no need for deployment strategies
+- (ok) ui: embed noty - add message for POM generation and, run finish and errors during run
+- ui: better history - use command names, avoid duplicates, sort by timestamp
+- (ok) commenting option for the directives: //!:
 - ui: stage/roles/hosts selection
 - ui: preload stages, hosts and roles
 - ui: adapt this theme: https://github.com/onokumus/Bootstrap-Admin-Template
+- (ok) noty for notices
+- autosize for code area ?
 - sample app:
 -- mongo plugin
+- (ok) bug: sendAllFinishedResults sends result only for the whole run
 -- computer demo for 3 hosts/single mysql
 -- computer demo for 3 hosts/mongodb cluster
 -- reference phases from scripts
 -- deploy mysql & test
 -- deploy mongodb & test
 -- run via scripts
+- refactor to be used with simplest builders
+-- separate bearscript from execution
+-- builders may provide settings and scripts
+-- run a simple captures test with builders
+-- mock server replies (inject mocked sys)
 - polish code
 - create unit tests coverage plan
 - ui: check if it's easy to send prompt - ok
@@ -138,6 +149,12 @@ os plugin:
 - check dep is installed
 - configure installation list
 - check/add/remove users
+
+- ideas for distributed plugin
+-- just put it's Task into $ at phase 1
+-- build your project as Maven artifact and deploy it to a remote repo
+-- `mvn install` on remotes
+-- run code with classpath for this artifact
 
 ## History
 

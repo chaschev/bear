@@ -825,6 +825,9 @@ app.controller('BearCtrl', ['fileManager', '$scope', function (fileManager, $sco
                 $scope.$broadcast('message', e);
 
                 break;
+            case 'notice':
+                $scope.showNotice(e);
+                break;
 
             case 'phaseFinished':
                 $scope.$broadcast('phaseFinished', e);
@@ -843,6 +846,35 @@ app.controller('BearCtrl', ['fileManager', '$scope', function (fileManager, $sco
     };
 
     $scope.fileManager = fileManager;
+
+    $scope.showNotice = function(e){
+        var className;
+        //alert - success - error - warning - information - confirmation
+        switch(e.level){
+            case 2:
+                className = 'error';
+                break;
+            case 3:
+                className = 'warning';
+                break;
+            case 4:
+                className = 'information';
+                break;
+            case 1:
+                className = 'success';
+                break;
+            default:
+                className = 'alert';
+                break;
+        }
+
+        var n = noty({
+            layout: e.position || 'topRight',
+            text: "<b>" + e.title+ "</b>: " + e.message,
+            timeout: e.timeout || 10000,
+            type: className
+        });
+    };
 
     $scope.openFileDialog = function (curDir){
         return window.bear.call('conf', 'openFile', curDir);

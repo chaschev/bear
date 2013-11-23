@@ -20,6 +20,7 @@ import bear.context.Cli;
 import bear.context.Fun;
 import bear.core.*;
 import bear.main.event.LogEventToUI;
+import bear.main.event.NoticeEventToUI;
 import bear.plugins.CommandInterpreter;
 import bear.plugins.Plugin;
 import bear.plugins.PomPlugin;
@@ -228,6 +229,9 @@ public class FXConf extends Cli {
                 bear.getGlobal().getPlugin(PomPlugin.class).generate(),
                 Files.newWriterSupplier(file, Charsets.UTF_8)
             );
+
+            ui.info(new NoticeEventToUI("Create POM",
+                "POM has been created in " + file.getAbsolutePath()));
         } catch (IOException e) {
             throw Exceptions.runtime(e);
         }

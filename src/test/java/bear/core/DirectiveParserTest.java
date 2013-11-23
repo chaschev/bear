@@ -28,6 +28,8 @@ public class DirectiveParserTest {
         assertThat(p(":ref {}").words).isEmpty();
         assertThat(p(":ref {\"file\": \"c:/blah blah\"}").params).contains(entry("file", "c:/blah blah"));
         assertThat(p(":ref {\"url\": \"c:/blah blah\"}").params).contains(entry("url", "c:/blah blah"));
+
+        assertThat(p("//!:use plugin groovy {\"name\":\"Bob\"}").params).contains(entry("name", "Bob"));
     }
 
     private static BearScript2.BearScriptDirective p(String line) {

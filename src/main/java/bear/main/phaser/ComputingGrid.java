@@ -18,6 +18,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Elegant sweep strategy: add listener for
@@ -136,11 +137,18 @@ public class ComputingGrid<C, PHASE> {
 
     private final boolean[] phaseEntered;
 
-    public static interface PhaseEnterListener<PHASE, C>{
-        void enter(Phase<?, PHASE> phase, PhaseParty<C, PHASE> party);
+    public static interface PartyListener<PHASE, C>{
+        void handle(Phase<?, PHASE> phase, PhaseParty<C, PHASE> party);
     }
 
-    protected PhaseEnterListener<PHASE, C> phaseEnterListener;
+    public static interface WhenAllFinished{
+        void run(int failedParties, int okParties);
+    }
+
+    protected PartyListener<PHASE, C> phaseEnterListener;
+    protected PartyListener<PHASE, C> partyFinishListener;
+
+    protected WhenAllFinished whenAllFinished;
 
     private void checkPhaseEntered(Phase<?, PHASE> phase, PhaseParty<C, PHASE> party){
         if(phaseEnterListener == null || phaseEntered[phase.rowIndex]){
@@ -153,10 +161,12 @@ public class ComputingGrid<C, PHASE> {
             phaseEntered[phase.rowIndex] = true;
         }
 
-        phaseEnterListener.enter(phase, party);
+        phaseEnterListener.handle(phase, party);
     }
 
     public ComputingGrid<C, PHASE> startParties(ExecutorService service) {
+        final AtomicInteger partiesArrived = new AtomicInteger();
+        final AtomicInteger partiesFailed = new AtomicInteger();
         for (int i = 0; i < partiesCount; i++) {
             final int partyIndex = i;
 
@@ -165,31 +175,48 @@ public class ComputingGrid<C, PHASE> {
             service.submit(new CatchyRunnable(new Runnable() {
                 @Override
                 public void run() {
-                    for (Phase<?, PHASE> phase : phases) {
-                        GridCell cell = table.at(party.currentPhaseIndex, partyIndex)
-                            .started();
+                    Phase<?, PHASE> lastPhase = null;
+                    try {
+                        for (Phase<?, PHASE> phase : phases) {
+                            lastPhase = phase;
 
-                        checkPhaseEntered(phase, party);
+                            GridCell cell = table.at(party.currentPhaseIndex, partyIndex)
+                                .started();
 
-                        Object result = null;
+                            checkPhaseEntered(phase, party);
 
-                        try {
-                            result = cell.callable.call(party, party.currentPhaseIndex, phase);
+                            Object result = null;
 
-                            cell.getFuture().set(result);
+                            try {
+                                result = cell.callable.call(party, party.currentPhaseIndex, phase);
+                                party.lastResult = result;
 
-                            if (cell.whenDone != null) {
-                                cell.whenDone.act(result, party);
+                                cell.getFuture().set(result);
+
+                                if (cell.whenDone != null) {
+                                    cell.whenDone.act(result, party);
+                                }
+                            } catch (Exception e) {
+                                GridException gridException = new GridException(e, phase, party);
+                                party.setException(gridException);
+                                partiesFailed.incrementAndGet();
+                                LoggerFactory.getLogger("log").warn(e.toString(), gridException);
+
+                                break;
+                            } finally {
+                                cell.finishedAtMs = System.currentTimeMillis();
+                                party.currentPhaseIndex++;
                             }
-                        } catch (Exception e) {
-                            GridException gridException = new GridException(e, phase, party);
-                            party.setException(gridException);
-                            LoggerFactory.getLogger("log").warn(e.toString(), gridException);
+                        }
+                    } finally {
+                        partiesArrived.incrementAndGet();
 
-                            break;
-                        } finally {
-                            cell.finishedAtMs = System.currentTimeMillis();
-                            party.currentPhaseIndex++;
+                        if(whenAllFinished != null && partiesArrived.get() == partiesCount){
+                            whenAllFinished.run(partiesFailed.get(), partiesCount);
+                        }
+
+                        if(partyFinishListener != null){
+                            partyFinishListener.handle(lastPhase, party);
                         }
                     }
                 }
@@ -224,8 +251,17 @@ public class ComputingGrid<C, PHASE> {
         return (SettableFuture<V>) table.at(phaseIndex - 1, partyToColumnIndex(party.column)).getFuture();
     }
 
-    public ComputingGrid<C, PHASE> setPhaseEnterListener(PhaseEnterListener<PHASE, C> phaseEnterListener) {
-        this.phaseEnterListener = phaseEnterListener;
+    public ComputingGrid<C, PHASE> setPhaseEnterListener(PartyListener<PHASE, C> partyListener) {
+        this.phaseEnterListener = partyListener;
         return this;
+    }
+
+    public ComputingGrid<C, PHASE> setPartyFinishListener(PartyListener<PHASE, C> partyFinishListener) {
+        this.partyFinishListener = partyFinishListener;
+        return this;
+    }
+
+    public void setWhenAllFinished(WhenAllFinished whenAllFinished) {
+        this.whenAllFinished = whenAllFinished;
     }
 }

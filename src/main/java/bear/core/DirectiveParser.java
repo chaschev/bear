@@ -26,6 +26,10 @@ class DirectiveParser {
 
         String directive = tokenizer.nextToken();
 
+        if(directive.startsWith("//!")){
+            directive = directive.substring("//!".length());
+        }
+
         Integer wordCount = rules.get(directive);
 
         int wordArrayLength = 1;

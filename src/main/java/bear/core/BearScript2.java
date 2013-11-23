@@ -21,12 +21,10 @@ import bear.console.GroupDivider;
 import bear.main.BearFX;
 import bear.main.BearRunner2;
 import bear.main.Response;
-import bear.main.event.PhaseFinishedEventToUI;
 import bear.main.event.RMIEventToUI;
 import bear.main.event.TextConsoleEventToUI;
 import bear.plugins.Plugin;
 import bear.plugins.groovy.GroovyShellPlugin;
-import bear.session.DynamicVariable;
 import bear.task.Task;
 import bear.task.TaskDef;
 import bear.task.TaskResult;
@@ -52,7 +50,6 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.*;
 import java.util.concurrent.Callable;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
@@ -74,6 +71,7 @@ import static org.apache.commons.lang3.StringUtils.substringBefore;
  * Each script runs in a separate thread, because one thread execution must not suspend/fail all others.
  * <p/>
  * This is why vars are set in sessions. So todo is to implement set global var value. Note - it has completely different semantics, setting it inside a session could lead to an error
+ * todo move shellContext and other to run context, separate BearScript parsing from executing
  */
 public class BearScript2 {
     private static final Logger logger = LoggerFactory.getLogger(BearScript2.class);
@@ -195,12 +193,14 @@ public class BearScript2 {
                 }
             }
 
-            final Plugin currentPlugin = getPlugin(scriptItem.pluginName, shellContext);
+
 
             if (!executableLines.isEmpty()) {
                 return new TaskDef<Task>(scriptItem.getScriptName()){
                     @Override
                     public Task newSession(SessionContext $, Task parent) {
+                        final Plugin currentPlugin = getPlugin(scriptItem.pluginName, shellContext);
+
                         for (int i = 0; i < directivesLines.size(); i++) {
                             String line = directivesLines.get(i);
                             String firstWord = StringUtils.substringBetween(line, ":", " ");
@@ -292,7 +292,7 @@ public class BearScript2 {
 
         GroupDivider<SessionContext> groupDivider;
 
-        public final long startedAtMs = System.currentTimeMillis();
+//        public final long startedAtMs = System.currentTimeMillis();
 
         final int partiesCount;
 
@@ -357,58 +357,7 @@ public class BearScript2 {
         private void sendPhaseResults(long duration) {
             List<ConsolesDivider.EqualityGroup> groups = groupDivider.divideIntoGroups();
 
-            bearFX.sendMessageToUI(
-                new PhaseFinishedEventToUI(duration, groups, scriptItem.asOneLineDesc())
-                    .setParentId(id));
-        }
-    }
 
-    public static class BearScriptPhases {
-        final ConcurrentHashMap<String, BearScriptPhase> phases = new ConcurrentHashMap<String, BearScriptPhase>();
-        private final List<SessionContext> $s;
-        BearFX bearFX;
-        private final ShellSessionContext shellContext;
-
-        public BearScriptPhases(List<SessionContext> $s, BearFX bearFX, ShellSessionContext shellContext) {
-            this.$s = $s;
-            this.bearFX = bearFX;
-            this.shellContext = shellContext;
-        }
-
-        final Object phaseCreationLock = new Object();
-
-        public BearScriptPhase getPhase(String id, ScriptItem scriptItem) {
-            BearScriptPhase phase = phases.get(id);
-
-            if (phase != null) {
-                return phase;
-            }
-
-            synchronized (phaseCreationLock) {
-                phase = phases.get(id);
-                if (phase == null) {
-                    GroupDivider<SessionContext> divider = new GroupDivider<SessionContext>($s, Stage.SESSION_ID, new Function<SessionContext, String>() {
-                        public String apply(SessionContext $) {
-                            DynamicVariable<Task> task = $.getExecutionContext().currentTask;
-                            return task.isUndefined() ? null : task.getDefaultValue().id;
-                        }
-                    }, new Function<SessionContext, String>() {
-                        @Override
-                        public String apply(SessionContext $) {
-                            return $.getExecutionContext().phaseText.getDefaultValue().toString();
-                        }
-                    }
-                    );
-
-                    phases.put(id, phase = new BearScriptPhase(id, bearFX, divider, shellContext, scriptItem));
-
-
-                }
-            }
-
-            Preconditions.checkNotNull(phase, "result is null!");
-
-            return phase;
         }
     }
 
@@ -526,7 +475,7 @@ public class BearScript2 {
                 continue;
             }
 
-            if (line.startsWith(":")) {
+            if (line.startsWith(":") || line.startsWith("//!:")) {
 
                 BearScriptDirective directive = directiveParser.parse(line);
 

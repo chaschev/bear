@@ -52,7 +52,7 @@ public class BearScriptPhase {
         return taskDef.getDisplayName();
     }
 
-    public void addArrival(SessionContext $, final long duration, TaskResult result) {
+    public void addArrival(final SessionContext $, final long duration, TaskResult result) {
         groupDivider.addArrival($);
 
         if (result.ok()) {
@@ -79,7 +79,7 @@ public class BearScriptPhase {
                         }
 
                         if (!alreadyFinished) {
-                            sendPhaseResults(duration);
+                            sendAllFinishedResults($, duration);
                         }
                         return null;
                     }
@@ -94,15 +94,14 @@ public class BearScriptPhase {
         partiesFailed = partiesArrived.get() - partiesOk.get();
 
         if (partiesArrived.compareAndSet(partiesCount, -1)) {
-            sendPhaseResults(duration);
+            sendAllFinishedResults($, duration);
         }
     }
 
-    private void sendPhaseResults(long duration) {
+    private void sendAllFinishedResults(SessionContext $, long duration) {
         List<ConsolesDivider.EqualityGroup> groups = groupDivider.divideIntoGroups();
 
         SessionContext.ui.info(
-            //todo check this name is a one line desc
             new PhaseFinishedEventToUI(duration, groups, getName())
                 .setParentId(id));
     }

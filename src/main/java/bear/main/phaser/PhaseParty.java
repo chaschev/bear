@@ -12,6 +12,7 @@ public class PhaseParty<COL, PHASE> {
 
     GridException exception;
     long finishedAtMs;
+    Object lastResult;
 
     public final ComputingGrid<COL, PHASE> grid;
 
@@ -21,7 +22,7 @@ public class PhaseParty<COL, PHASE> {
         this.grid = grid;
     }
 
-    public Exception getException() {
+    public GridException getException() {
         return exception;
     }
 
@@ -49,5 +50,9 @@ public class PhaseParty<COL, PHASE> {
 
     public void fail() {
         throw new UnsupportedOperationException("todo PhaseParty.fail");
+    }
+
+    public boolean failed(){
+        return exception != null;
     }
 }
