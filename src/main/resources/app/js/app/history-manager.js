@@ -34,9 +34,22 @@ AbstractHistoryEntry.prototype.dup = function(){
     throw "not implemented!";
 };
 
-function removeComment(s){
+function extractName(s){
     if(s[0] == '#'){
         s = s.substring(1).trim();
+    }
+
+    if(s.substring(0, 3) == '//!'){
+        s = s.substring(3).trim();
+    }
+
+    if(s.indexOf('use shell') != -1){
+        if(s.indexOf('"name":') != -1){
+            try {
+                s = JSON.parse(s.substring(s.indexOf('{'))).name;
+            } catch (e) {
+            }
+        }
     }
 
     if(s.length > 50){
@@ -63,8 +76,8 @@ AbstractHistoryEntry.prototype._initNameAndDesc = function (text) {
     var secondLine = text.indexOf('\n', firstLine + 1);
     if (secondLine == -1) secondLine = text.length;
 
-    this.name = removeComment(text.substring(0, firstLine));
-    this.desc = firstLine + 1 < secondLine ? removeComment(text.substring(firstLine + 1, secondLine)) : '';
+    this.name = extractName(text.substring(0, firstLine));
+    this.desc = firstLine + 1 < secondLine ? extractName(text.substring(firstLine + 1, secondLine)) : '';
 };
 
 AbstractHistoryEntry.prototype.computeText = function(fileManager){
@@ -107,6 +120,9 @@ extend(FileReferenceHistoryEntry, AbstractHistoryEntry);
 
 FileReferenceHistoryEntry.prototype.computeText = function(fileManager){
     console.log('FileEntry.computeText, file:', this.file, fileManager);
+    if(!fileManager){
+        console.log("CRAAAAAAAAAP!!!!, fileManager is null");
+    }
 
     return fileManager.readFileByPath(this.file);
 };

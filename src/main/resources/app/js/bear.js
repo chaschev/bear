@@ -51,43 +51,59 @@ app.service('fileManager', [function () {
         if(i == -1) i = path.lastIndexOf('/');
         return path.substr(i + 1);
     }
-
 }]);
 
 app.service('historyManager', ['fileManager', function(fileManager){
     this.entries = [];
 
-    this.loadEntries = function(){
-        this.historyFilePath = JSON.parse(window.bear.jsonCall('conf', 'getPropertyAsFile', 'bear-fx.history')).path;
-        this.fileManager = fileManager;
+    this.loadEntries = function () {
+        try {
+            this.historyFilePath = JSON.parse(window.bear.jsonCall('conf', 'getPropertyAsFile', 'bear-fx.history')).path;
+            this.fileManager = fileManager;
 
-        console.log("this.historyFilePath: " , this.historyFilePath);
+            if (!fileManager) {
+                console.warn("ERROR: fileManager not wired!!");
+            }
 
-        var json = fileManager.readFileByPath(this.historyFilePath);
-        if(!json || json.length === 0) return;
+            console.log("!this.historyFilePath: ", this.historyFilePath);
 
-        var jsonEntries = JSON.parse(json);
+            var json = fileManager.readFileByPath(this.historyFilePath);
 
-        for (var i = 0; i < jsonEntries.length; i++) {
-            var e = jsonEntries[i];
-            var r = null;
+            if (!json || json.length === 0) {
+                console.log("found no history entries (case #1)");
+                return;
+            }
+
+            var jsonEntries = JSON.parse(json);
+
+            if (jsonEntries.length == 0) {
+                console.log("found no history entries (case #2)");
+                return;
+            }
+
+            for (var i = 0; i < jsonEntries.length; i++) {
+                var e = jsonEntries[i];
+                var r = null;
 
 //            Java.log('loading entry: ', e);
 
-            switch(e.type){
-                case 'file':
-                    r = new FileReferenceHistoryEntry(e.file);
-                    break;
-                case 'script':
-                    r = new ScriptHistoryEntry(e.text);
-                    break;
-                default:
-                    throw "Unknown type: " + e.type;
+                switch (e.type) {
+                    case 'file':
+                        r = new FileReferenceHistoryEntry(e.file);
+                        break;
+                    case 'script':
+                        r = new ScriptHistoryEntry(e.text);
+                        break;
+                    default:
+                        throw "Unknown type: " + e.type;
+                }
+
+                r.time = e.time;
+
+                this.entries.push(r);
             }
-
-            r.time = e.time;
-
-            this.entries.push(r);
+        } catch (e) {
+            Java.log("loadEntries, exception:", e);
         }
     };
 
@@ -108,14 +124,60 @@ app.service('historyManager', ['fileManager', function(fileManager){
         fileManager.writeFileByPath(this.historyFilePath, JSON.stringify(arrayToSave));
     };
 
-    this.addFileRef = function(file){
-        this.entries.unshift(new FileReferenceHistoryEntry(file));
+    this.clear = function () {
+        console.log("clearing entries");
+        this.entries = [];
         this.saveEntries();
     };
 
+    this.addNewEntry = function (entry) {
+        try {
+            var text = entry.getText(this.fileManager);
+
+            var index = -1;
+
+            console.log('this.addNewEntry', this.fileManager);
+
+            for (var i = 0; i < this.entries.length; i++) {
+                var e = this.entries[i];
+                if (e.getText(this.fileManager) === text) {
+                    index = i;
+                    break;
+                }
+            }
+
+            if (index != -1) {
+                entry = this.entries[index];
+                entry.time = new Date().getTime();
+                this.entries.splice(index, 1);
+            }
+
+            console.log('before unshift', this.entries);
+            this.entries.unshift(entry);
+            console.log('after unshift', this.entries);
+            this.saveEntries();
+        } catch (e) {
+            console.log('[ERROR] addNewEntry, exception!!!', e);
+        }
+    };
+
+    this.remove = function(e){
+        var index = this.entries.indexOf(e);
+        if(index != -1){
+            this.entries.splice(index, 1);
+            this.saveEntries();
+        }
+    };
+
+    this.addFileRef = function(file){
+        console.log("adding file:" + file);
+        var entry = new FileReferenceHistoryEntry(file);
+
+        this.addNewEntry(entry);
+    };
+
     this.addScript = function(script){
-        this.entries.unshift(new ScriptHistoryEntry(script));
-        this.saveEntries();
+        this.addNewEntry(new ScriptHistoryEntry(script));
     };
 }]);
 
@@ -131,9 +193,14 @@ app.controller('HistoryController', ['historyManager', '$scope', function(histor
         }
     };
 
+    $scope.clear = function(){
+        historyManager.clear();
+    };
+
     $scope.updateRunScript = function(entry){
-        console.log('updateRunScript', entry, entry.getText());
-        $scope.$parent.$broadcast("setActiveEditorValue", entry.getText());
+        var text = entry.getText();
+        console.log('updateRunScript', entry, text);
+        $scope.$parent.$broadcast("setActiveEditorValue", text);
 //        $scope.editor.setValue();
     };
 }]);
@@ -1064,9 +1131,10 @@ app.controller('ConsoleTabsChildCtrl', ['$scope', '$q', '$timeout', 'historyMana
         Java.log('interpret response:', response);
 
         if($scope.runScriptModified){
+            console.log("adding file script:", commandText);
             historyManager.addScript(commandText);
         } else{
-            console.log($scope.runScript, $scope);
+            console.log("adding file ref:", $scope.runScript);
             historyManager.addFileRef($scope.runScript.path);
         }
 

@@ -83,6 +83,10 @@
             padding-left: 0px;
         }
 
+        header > button{
+            margin-top: 8px;
+            margin-right: 12px;
+        }
 
         .ace_editor {
             height: 120px;
@@ -518,7 +522,7 @@
                 <form class="form-horizontal">
 
                     <div class="well well-small dark">
-                        <div class="panel-body" id="FileTabsCtrl" ng-controller="FileTabsCtrl" ng-init="initScripts()">
+                        <div id="FileTabsCtrl" ng-controller="FileTabsCtrl" ng-init="initScripts()">
                             <div fx-editor-button selected="settingsScript" file-manager="fileManager"></div>
 
                             <button class="btn btn-success" ng-click="createPom()">Create POM</button>
@@ -529,28 +533,28 @@
             </div>
         </div>
 
-        <div class="box inverse">
+        <div class="box inverse" ng-controller="HistoryController" ng-init="init()">
             <header>
                 <div class="icons"><i class="fa fa-film"></i></div>
                 <h5>History</h5>
+                <button ng-click="clear()" class="btn btn-xs pull-right"><i class="fa fa-trash-o"></i></button>
             </header>
             <div class="accordion-body collapse in body">
                 <form class="form-horizontal">
                     <div class="well well-small dark">
-                        <div class="panel-body" ng-controller="HistoryController" ng-init="init()"><br>
-                            <div class="history-scroller">
-                                <ul class="list-group history">
-                                    <li ng-repeat="entry in historyManager.entries" class="list-group-item" ng-click="updateRunScript(entry)">
-                                        <table style="width: 100%">
-                                            <tr>
-                                                <td><span class="history-normal">{{entry.getName(fileManager)}}</span> <br/>
-                                                    <span class="history-small">{{entry.getDesc(fileManager)}}</span></td>
-                                                <td style="width: 5%"><span class="badge">{{entry.getTime() | prettyDuration}}</span></td>
-                                            </tr>
-                                        </table>
-                                    </li>
-                                </ul>
-                            </div>
+                        <div class="history-scroller">
+                            <ul class="list-group history">
+                                <li ng-repeat="entry in historyManager.entries" class="list-group-item" ng-click="updateRunScript(entry)">
+                                    <table style="width: 100%">
+                                        <tr>
+                                            <td><span class="history-normal">{{entry.getName(fileManager)}}</span> <br/>
+                                                <span class="history-small">{{entry.getDesc(fileManager)}}</span></td>
+                                            <td style="width: 5%"><span class="badge">{{entry.getTime() | prettyDuration}}</span></td>
+                                            <td style="width: 5%"><button ng-click="historyManager.remove(entry)" class="btn btn-xs btn-default pull-right"><i class="fa fa-trash-o"></i></button></td>
+                                        </tr>
+                                    </table>
+                                </li>
+                            </ul>
                         </div>
                     </div>
 

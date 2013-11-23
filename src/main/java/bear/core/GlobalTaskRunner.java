@@ -182,7 +182,7 @@ public class GlobalTaskRunner {
                 if(failedParties > 0){
                     SessionContext.ui.error(new NoticeEventToUI("All parties arrived", failedParties + " errors"));
                 }else{
-                    SessionContext.ui.fatal(new NoticeEventToUI("All parties arrived", okParties + " ok!"));
+                    SessionContext.ui.fatal(new NoticeEventToUI("All parties arrived.", null));
                 }
             }
         });

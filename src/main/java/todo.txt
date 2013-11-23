@@ -14,7 +14,7 @@ top priority:
 - change settings to script which is executed every time
 - (ok) no need for deployment strategies
 - (ok) ui: embed noty - add message for POM generation and, run finish and errors during run
-- ui: better history - use command names, avoid duplicates, sort by timestamp
+- ui: better history - use command names, avoid duplicates, sort by timestamp, clear history, trash for items.
 - (ok) commenting option for the directives: //!:
 - ui: stage/roles/hosts selection
 - ui: preload stages, hosts and roles
