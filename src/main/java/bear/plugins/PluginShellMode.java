@@ -32,6 +32,10 @@ public abstract class PluginShellMode<T extends Plugin> implements CommandInterp
     protected GlobalContext global;
     protected Bear bear;
 
+    protected PluginShellMode(T plugin) {
+        this(plugin, plugin.cmdAnnotation());
+    }
+
     protected PluginShellMode(T plugin, String commandName) {
         this.plugin = plugin;
         this.commandName = commandName;

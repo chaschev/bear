@@ -17,6 +17,7 @@
 package bear.cli;
 
 import bear.console.ConsoleCallback;
+import bear.core.SessionContext;
 import bear.session.Result;
 import bear.plugins.sh.SystemSession;
 import bear.vcs.CommandLineResult;
@@ -88,14 +89,14 @@ public class Script <T extends CommandLineResult, CHILD extends Script>{
         return (CHILD) this;
     }
 
-    public T parseResult(String text) {
+    public T parseResult(String text, SessionContext $) {
         if (parser != null) {
             final T obj = parser.apply(text);
             obj.text = text;
             return obj;
         }
 
-        return (T) new CommandLineResult(text, Result.OK);
+        return (T) new CommandLineResult(text, Result.OK).validate($);
     }
 
     public CHILD timeoutMin(int min) {

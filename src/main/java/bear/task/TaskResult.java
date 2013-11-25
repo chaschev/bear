@@ -17,6 +17,7 @@
 package bear.task;
 
 import bear.session.Result;
+import chaschev.util.Exceptions;
 import com.google.common.base.Optional;
 
 /**
@@ -24,7 +25,7 @@ import com.google.common.base.Optional;
  */
 public class TaskResult {
     public Result result;
-    public final Optional<Throwable> exception;
+    public Optional<? extends Throwable> exception;
 
     public TaskResult(Result result) {
         this.result = result;
@@ -64,5 +65,15 @@ public class TaskResult {
         return sb.toString();
     }
 
+    public TaskResult throwIfError() {
+        if(!ok()){
+        if(exception.isPresent()){
+            throw Exceptions.runtime(exception.get());
+        }
 
+        throw new RuntimeException(String.valueOf(result));
+        }
+
+        return this;
+    }
 }

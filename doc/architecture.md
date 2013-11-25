@@ -1,10 +1,20 @@
 ### Plugin
 
-- have dependencies
+Plugin is normally a container, or an "organizational unit" - a collection of tasks and dependencies.
+
+- has dependencies
+- can be injected
+- his vars are named properly
 - plugin deps: another plugin, system dep (session scope)
-- may have configuration (i.e. VCS credentials, SSH address)
-- can be dep injected (i.e. each Plugin session uses SSH plugin session for this host by: invoking newSession on the injected SSHTaskDef)
-- can be a transitive dependency (configurable dep checks for transitive deps)
+- can be a dependency (configurable dep checks for transitive deps)
+
+### Task & TaskDef
+
+TaskDef is a factory of Tasks. Task is a session to run on a host. It is associated with a `SessionContext $`.
+
+TaskDef normally, but not necessary corresponds to a row in a ComputingGrid. (There can be a case when TaskDef is used to create a single Task).
+
+Task is 99% cases created in a TaskDef and corresponds to a cell of a ComputingGrid. Task can be a shell command, a shell script, a groovy script, installation task, deployment task, etc.
 
 Plugin initialization:
 

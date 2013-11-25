@@ -23,10 +23,6 @@ public class BearException extends RuntimeException {
     public BearException() {
     }
 
-    public BearException(DependencyResult result) {
-        super(result.toString());
-    }
-
     public BearException(String message) {
         super(message);
     }

@@ -81,7 +81,7 @@ public class GlobalTaskRunner {
                                             r.join(plugin.checkPluginDependencies());
 
                                             if (!taskDef.isSetupTask()) {
-                                                Dependency dependency = plugin.getInstall().newSession($, $.currentTask)
+                                                Dependency dependency = plugin.getInstall().createNewSession($, $.currentTask)
                                                     .asInstalledDependency();
 
                                                 result = $.runner.runSession(dependency);
@@ -118,7 +118,7 @@ public class GlobalTaskRunner {
                                     final Throwable e1 = e;
                                     result = new TaskResult(e1);
 
-                                    $.executionContext.rootExecutionContext.getDefaultValue().taskResult = new CommandLineResult(Result.ERROR, e.toString());
+                                    $.executionContext.rootExecutionContext.getDefaultValue().taskResult = new CommandLineResult(e.toString(), Result.ERROR);
 
                                     throw Exceptions.runtime(e);
                                 } finally {

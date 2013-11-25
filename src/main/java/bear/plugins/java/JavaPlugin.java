@@ -24,6 +24,7 @@ import bear.session.DynamicVariable;
 import bear.session.Variables;
 import bear.task.*;
 import org.apache.commons.lang3.StringUtils;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 
@@ -80,11 +81,13 @@ public class JavaPlugin extends ZippedToolPlugin {
     public JavaPlugin(GlobalContext global) {
         super(global);
 
+        LoggerFactory.getLogger("log").warn("JavaPlugin initialized");
+
 //        version.defaultTo("1.7.0_40");
         toolname.defaultTo("jdk");
         version.desc("version return by java, i.e. 1.7.0_40");
+        toolDistrName.setEqualTo(version);
         versionName.desc("distribution file name with extension, i.e jdk-7u40-linux-x64");
-        toolDistrName.setEqualTo(versionName);
         distrFilename.setEqualTo(Variables.concat(versionName, ".gz"));
 
         localDistrPath = BearVariables.joinPath(myDirPath, distrFilename);

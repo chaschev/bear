@@ -54,7 +54,7 @@ public class TransactionTaskDef extends TaskDef {
                     result = runner.runMany(tasks);
                 } catch (Exception e) {
                     logger.warn("", e);
-                    result = new CommandLineResult(Result.ERROR, e.toString());
+                    result = new CommandLineResult(e.toString(), Result.ERROR);
                 }
 
                 if (result.nok()) {

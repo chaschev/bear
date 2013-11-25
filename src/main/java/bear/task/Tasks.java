@@ -66,7 +66,7 @@ public class Tasks {
                     final String[] dirs = {
                         $(bear.deployTo), $(bear.releasesPath), $(bear.vcsCheckoutPath),
                         $(bear.bearPath),
-                        $(bear.sharedPath), $(bear.projectSharedPath),
+                        $(bear.sharedPath), $(bear.tempDirPath), $(bear.projectSharedPath),
                         $(bear.appLogsPath)
                     };
 
@@ -82,9 +82,9 @@ public class Tasks {
                         $.sys.sudo().chown(appUser + "." + appUser, true, $(bear.appLogsPath));
                     }
 
-                    if ($(bear.verifyPlugins)) {
+                    if ($(bear.autoInstallPlugins) || $(bear.verifyPlugins)) {
                         for (Plugin<Task, ? extends TaskDef> plugin : global.getGlobalPlugins()) {
-                            if (plugin.getInstall().newSession($, parent).asInstalledDependency().checkDeps().nok()) {
+                            if (plugin.getInstall().createNewSession($, parent).asInstalledDependency().checkDeps().nok()) {
                                 if ($(bear.autoInstallPlugins)) {
                                     $.log("plugin %s was not installed. installing it...", plugin);
                                     TaskResult run = runner.run(plugin.getInstall());

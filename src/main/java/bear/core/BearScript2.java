@@ -18,13 +18,16 @@ package bear.core;
 
 import bear.console.ConsolesDivider;
 import bear.console.GroupDivider;
+import bear.context.AbstractContext;
 import bear.main.BearFX;
 import bear.main.BearRunner2;
 import bear.main.Response;
 import bear.main.event.RMIEventToUI;
 import bear.main.event.TextConsoleEventToUI;
+import bear.main.phaser.OnceEnteredCallable;
 import bear.plugins.Plugin;
 import bear.plugins.groovy.GroovyShellPlugin;
+import bear.task.SessionTaskRunner;
 import bear.task.Task;
 import bear.task.TaskDef;
 import bear.task.TaskResult;
@@ -55,6 +58,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 import static chaschev.lang.Predicates2.contains;
+import static chaschev.lang.Predicates2.fieldEquals;
+import static com.google.common.base.Optional.absent;
 import static com.google.common.base.Optional.of;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Predicates.not;
@@ -102,11 +107,90 @@ public class BearScript2 {
         this.bear = global.bear;
     }
 
+    static class ScriptSetVariable{
+        final String name;
+        final Object value;
+        final String groovyExpression;
+        final boolean global;
+        final boolean remove;
+        final boolean needsSave;
+
+        public ScriptSetVariable(String name, BearScriptDirective d) {
+            this.name = name;
+            value = d.params.get("value");
+            groovyExpression = d.getString("groovy");
+            global = d.getBoolean("global");
+            needsSave = d.getBoolean("save");
+            remove = d.getBoolean("remove");
+        }
+
+        ScriptSetVariable(String name, Object value, String groovyExpression, boolean global, boolean remove, boolean needsSave) {
+            this.name = name;
+            this.value = value;
+            this.groovyExpression = groovyExpression;
+            this.global = global;
+            this.remove = remove;
+            this.needsSave = needsSave;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+
+            ScriptSetVariable that = (ScriptSetVariable) o;
+
+            if (global != that.global) return false;
+            if (needsSave != that.needsSave) return false;
+            if (groovyExpression != null ? !groovyExpression.equals(that.groovyExpression) : that.groovyExpression != null)
+                return false;
+            if (!name.equals(that.name)) return false;
+            if (value != null ? !value.equals(that.value) : that.value != null) return false;
+
+            return true;
+        }
+
+        @Override
+        public int hashCode() {
+            int result = name.hashCode();
+            result = 31 * result + (value != null ? value.hashCode() : 0);
+            result = 31 * result + (groovyExpression != null ? groovyExpression.hashCode() : 0);
+            result = 31 * result + (global ? 1 : 0);
+            result = 31 * result + (needsSave ? 1 : 0);
+            return result;
+        }
+
+        @Override
+        public String toString() {
+            final StringBuilder sb = new StringBuilder("ScriptSetVariable{");
+            sb.append("name='").append(name).append('\'');
+            if(value!=null) sb.append(", value='").append(value).append('\'');
+            if(groovyExpression != null) sb.append(", groovyExpression='").append(groovyExpression).append('\'');
+            sb.append(", global=").append(global);
+            sb.append('}');
+            return sb.toString();
+        }
+    }
+
+    private static Boolean getBoolean(Object x) {
+        return x == null ? false : (Boolean) x;
+    }
+
     static class ScriptItem {
+        public static final Predicate<ScriptSetVariable> IS_GLOBAL = fieldEquals("global", Boolean.TRUE);
+
         Optional<String> scriptName;
         int startsAtIndex;
         String pluginName;
         final List<String> lines;
+
+        Optional<HashMap<String, ScriptSetVariable>> variables = absent();
+
+        /**
+         * For groovy global means that item will be wrapped into RunOnce and
+         * executed with a GlobalContext.
+         */
+        public boolean global;
 
         ScriptItem(Optional<String> scriptName, String pluginName, int startsAtIndex) {
             this.scriptName = scriptName;
@@ -143,6 +227,46 @@ public class BearScript2 {
 
         public boolean isEmpty() {
             return lines.isEmpty();
+        }
+
+        public ScriptItem addVariable(String name, BearScriptDirective directive) {
+
+            if(!variables.isPresent()){
+                variables = of(new HashMap<String, ScriptSetVariable>());
+            }
+
+            variables.get().put(name, new ScriptSetVariable(name, directive));
+
+            return this;
+        }
+
+        public void assignVariables(SessionContext $) {
+            assignVars($, not(IS_GLOBAL));
+        }
+
+        public void assignVariables(GlobalContext $) {
+            assignVars($, IS_GLOBAL);
+        }
+
+        private void assignVars(AbstractContext $, Predicate<ScriptSetVariable> filter) {
+            if(variables.isPresent()){
+                for (Map.Entry<String, ScriptSetVariable> e : variables.get().entrySet()) {
+                    ScriptSetVariable var = e.getValue();
+
+                    if(var.remove){
+                        $.removeConst(var.name);
+                        continue;
+                    }
+
+                    if(!filter.apply(var)) continue;
+
+                    if(var.value != null){
+                        $.putConst(e.getKey(), var.value);
+                    }else{
+                        throw new UnsupportedOperationException("groovy expressions in var directives are not yet supported!");
+                    }
+                }
+            }
         }
     }
 
@@ -193,35 +317,41 @@ public class BearScript2 {
                 }
             }
 
-
+            scriptItem.assignVariables(global);
 
             if (!executableLines.isEmpty()) {
                 return new TaskDef<Task>(scriptItem.getScriptName()){
                     @Override
                     public Task newSession(SessionContext $, Task parent) {
+                        scriptItem.assignVariables($);
+
                         final Plugin currentPlugin = getPlugin(scriptItem.pluginName, shellContext);
 
                         for (int i = 0; i < directivesLines.size(); i++) {
                             String line = directivesLines.get(i);
                             String firstWord = StringUtils.substringBetween(line, ":", " ");
 
-                            if ("set".equals(firstWord)) {
-                                setVariable(line, $);
-                            } else {
-                                errors.add(new ScriptError(
-                                    line,
-                                    scriptItem.startsAtIndex + i, "unknown command: " + firstWord));
-                            }
+                            errors.add(new ScriptError(
+                                line,
+                                scriptItem.startsAtIndex + i, "unknown command: " + firstWord));
                         }
 
+                        final Task<?> task;
                         if (currentPlugin.getShell().multiLine()) {
 //                            shellContext.name = executableLines.get(0);
                             String script = Joiner.on("\n").join(executableLines);
 
-                            return currentPlugin.getShell().interpret(script, $, parent, null);
+                            task = currentPlugin.getShell().interpret(script, $, parent, null);
+
                         }else{
                             throw new UnsupportedOperationException("todo copy from an old version");
                         }
+
+                        if(scriptItem.global){
+                            return wrapIntoGlobalTask($, parent, task);
+                        }
+
+                        return task;
                     }
                 };
             } else {
@@ -277,6 +407,27 @@ public class BearScript2 {
 //            return new SwitchResponse(currentPlugin.name, "$ " + currentPlugin.getShell().getCommandName());
         }
 
+    }
+
+    public static Task<TaskDef> wrapIntoGlobalTask(final SessionContext $, final Task parent, final Task<?> task) {
+        return new Task<TaskDef>(parent, null, $) {
+
+            final OnceEnteredCallable<TaskResult> onceEnteredCallable = new OnceEnteredCallable<TaskResult>();
+
+            @Override
+            protected TaskResult exec(final SessionTaskRunner runner) {
+                try {
+                    return onceEnteredCallable.runOnce(new Callable<TaskResult>() {
+                        @Override
+                        public TaskResult call() throws Exception {
+                            return runner.runSession(task);
+                        }
+                    }).get();
+                } catch (Exception e) {
+                    throw Exceptions.runtime(e);
+                }
+            }
+        };
     }
 
     public static class BearScriptPhase {
@@ -443,14 +594,22 @@ public class BearScript2 {
     static class BearScriptDirective {
         final String directive;
         final String[] words;
-        final Map<String, String> params;
+        final Map<String, Object> params;
         final Optional<String> name;
 
-        BearScriptDirective(String directive, Optional<String> name, String[] words, Map<String, String> params) {
+        BearScriptDirective(String directive, Optional<String> name, String[] words, Map<String, Object> params) {
             this.directive = directive;
             this.name = name;
             this.words = words;
             this.params = params;
+        }
+
+        public String getString(String key) {
+            return (String) params.get(key);
+        }
+
+        public boolean getBoolean(String key) {
+            return params == null ? false : BearScript2.getBoolean(params.get(key));
         }
     }
 
@@ -479,6 +638,9 @@ public class BearScript2 {
 
                 BearScriptDirective directive = directiveParser.parse(line);
 
+                if(":set".equals(directive.directive)){
+                    currentScriptItem.addVariable(directive.words[0], directive);
+                }else
                 if (":use".equals(directive.directive)) {
                     String command = directive.words[0];
                     String pluginName = directive.words[1];
@@ -489,6 +651,8 @@ public class BearScript2 {
                         }
 
                         currentScriptItem = new ScriptItem(directive.name, pluginName, lineIndex);
+
+                        currentScriptItem.global = directive.getBoolean("global");
                     } else {
                         ui.error(new TextConsoleEventToUI("shell", "command not supported: <i>" + command + "</i><br>"));
 
@@ -520,21 +684,21 @@ public class BearScript2 {
         checkArgument(!directive.params.isEmpty(), "you need to provide params for script reference");
 
         try {
-            String plugin = directive.params.get("plugin");
+            String plugin = directive.getString("plugin");
 
             String scriptString = null;
             String scriptName = null;
 
-            Map<String, String> params = directive.params;
+            Map<String, Object> params = directive.params;
 
             if(params.containsKey("url")){
-                String urlString = params.get("url");
+                String urlString = directive.getString("url");
                 URL url = new URL(urlString);
                 scriptString = Resources.asCharSource(url, Charsets.UTF_8).read();
                 scriptName = FilenameUtils.getName(urlString);
             }else
             if(params.containsKey("file")){
-                File file = new File(params.get("file"));
+                File file = new File(directive.getString("file"));
 
                 scriptString = FileUtils.readFileToString(file);
                 scriptName = file.getName();
@@ -542,7 +706,7 @@ public class BearScript2 {
 
 
             if(params.containsKey("name")){
-                scriptName = params.get("name");
+                scriptName = directive.getString("name");
             }
 
             if(plugin == null){

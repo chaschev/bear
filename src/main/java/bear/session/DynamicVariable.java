@@ -250,7 +250,7 @@ public class DynamicVariable<T> implements Nameable<T> {
     public DynamicVariable<T> setEqualTo(final DynamicVariable<T> variable) {
         setDynamic(new Fun<T, AbstractContext>() {
             public T apply(AbstractContext $) {
-                return variable.apply($);
+                return $.var(variable);
             }
         });
         return this;

@@ -19,7 +19,7 @@ package bear.task;
 /**
  * @author Andrey Chaschev chaschev@gmail.com
  */
-public class DependencyException extends RuntimeException {
+public class DependencyException extends BearException {
     protected DependencyResult result;
 
     public DependencyException() {

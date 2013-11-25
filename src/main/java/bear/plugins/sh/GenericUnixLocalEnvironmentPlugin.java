@@ -172,7 +172,7 @@ public class GenericUnixLocalEnvironmentPlugin extends SystemEnvironmentPlugin {
                     return (T) new CommandLineResult(r.text, Result.ERROR);
                 }
 
-                final T t = ((CommandLine<T, ?>)command).parseResult(r.text);
+                final T t = ((CommandLine<T, ?>)command).parseResult($, r.text);
 
                 t.result = Result.OK;
 
@@ -212,6 +212,11 @@ public class GenericUnixLocalEnvironmentPlugin extends SystemEnvironmentPlugin {
             @Override
             public Result writeString(String path, String s) {
                 throw new UnsupportedOperationException("todo GenericUnixLocalEnvironment.writeString");
+            }
+
+            @Override
+            public Result writeStringAs(String path, String s, boolean sudo, String user, String permissions) {
+                throw new UnsupportedOperationException("todo .writeStringAs");
             }
 
             @Override

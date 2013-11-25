@@ -47,6 +47,8 @@ public class Cli extends AppCli<GlobalContext, Bear> {
 
     public BearFX bearFX;
 
+
+
     public Cli(GlobalContext global, String... args) {
         super(global, args);
 

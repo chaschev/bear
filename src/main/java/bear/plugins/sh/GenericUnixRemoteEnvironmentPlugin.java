@@ -17,6 +17,7 @@
 package bear.plugins.sh;
 
 import bear.cli.CommandLine;
+import bear.cli.Script;
 import bear.console.AbstractConsoleCommand;
 import bear.console.ConsoleCallback;
 import bear.core.*;
@@ -99,7 +100,7 @@ public class GenericUnixRemoteEnvironmentPlugin extends SystemEnvironmentPlugin 
                 address = $.address;
             }
 
-            public void connect() {
+            public void checkConnection() {
                 if (sshSession == null) {
                     sshSession = new SshSession((SshAddress) address, global);
                 }
@@ -112,9 +113,7 @@ public class GenericUnixRemoteEnvironmentPlugin extends SystemEnvironmentPlugin 
 
                 Preconditions.checkArgument(command instanceof CommandLine<?, ?>);
 
-                if (sshSession == null) {
-                    connect();
-                }
+                checkConnection();
 
                 final int[] exitStatus = {0};
 
@@ -189,11 +188,11 @@ public class GenericUnixRemoteEnvironmentPlugin extends SystemEnvironmentPlugin 
 
                 sshSession.withSession(withSession);
 
-                final T t = ((CommandLine<T, ?>)command).parseResult(withSession.text);
+                final T t = ((CommandLine<T, ?>)command).parseResult($, withSession.text);
 
-                System.out.println("WITH_TEXT!!!! '" + withSession.text+"'");
+//                System.out.println("WITH_TEXT!!!! '" + withSession.text+"'");
 
-                t.result = result[0];
+                t.result = Result.and(result[0]);
 
                 return t;
 
@@ -273,6 +272,8 @@ public class GenericUnixRemoteEnvironmentPlugin extends SystemEnvironmentPlugin 
             @Override
             public Result upload(String dest, File... files) {
                 logger.info("uploading {} files to {}", files.length, dest);
+
+                checkConnection();
 
                 final SCPFileTransfer transfer = sshSession.getSsh().newSCPFileTransfer();
 
@@ -360,11 +361,50 @@ public class GenericUnixRemoteEnvironmentPlugin extends SystemEnvironmentPlugin 
             @Override
             public Result writeString(String path, String s) {
                 try {
-                    final File tempFile = File.createTempFile("cap4j", "upload");
+                    final File tempFile = File.createTempFile("bear", "upload");
                     FileUtils.writeStringToFile(tempFile, s, IOUtils.UTF8.name());
                     upload(path, tempFile);
                     tempFile.delete();
                     return Result.OK;
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+
+            @Override
+            public Result writeStringAs(String path, String s, boolean sudo, String user, String permissions) {
+                try {
+                    final File tempFile = File.createTempFile("bear", "upload");
+                    FileUtils.writeStringToFile(tempFile, s, IOUtils.UTF8.name());
+                    String remoteTempPath = tempFile.getName();
+
+                    upload(remoteTempPath, tempFile);
+
+                    tempFile.delete();
+
+                    Script script = script();
+
+                    CommandLine line = script.line();
+
+                    if(sudo){
+                        line.sudo();
+                    }else{
+                        line.stty();
+                    }
+
+                    line.a("mv", remoteTempPath, path);
+
+                    if(user != null){
+                        line.addRaw(" && chown " + user +" ").a(path);
+                    }
+
+                    if(permissions != null){
+                        line.addRaw(" && chmod " + permissions +" ").a(path);
+                    }
+
+                    CommandLineResult run = run(script, println($.var(bear.sshPassword)));
+
+                    return run.result;
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
@@ -429,8 +469,6 @@ public class GenericUnixRemoteEnvironmentPlugin extends SystemEnvironmentPlugin 
             }
         };
     }
-
-
 
     public static class SshSession {
         private SSHClient ssh;

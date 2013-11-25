@@ -187,7 +187,7 @@ public class Dependency extends Task<TaskDef> {
             }
         }
 
-        if (result.messages == null) {
+        if (!result.messages.isPresent()) {
             return result;
         }
 

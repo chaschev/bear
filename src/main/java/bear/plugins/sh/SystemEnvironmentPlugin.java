@@ -21,7 +21,6 @@ import bear.console.ConsoleCallback;
 import bear.core.GlobalContext;
 import bear.core.SessionContext;
 import bear.plugins.Plugin;
-import bear.session.Version;
 import bear.task.InstallationTask;
 import bear.task.InstallationTaskDef;
 import bear.task.Task;
@@ -40,10 +39,6 @@ public abstract class SystemEnvironmentPlugin extends Plugin<SystemSession, Syst
     private int defaultTimeout = 5000;
     private int singleTimeout = -1;
 
-    public static enum UnixFlavour {
-        CENTOS, UBUNTU
-    }
-
     public enum CopyCommandType {
         COPY, LINK, MOVE
     }
@@ -54,12 +49,17 @@ public abstract class SystemEnvironmentPlugin extends Plugin<SystemSession, Syst
         this.name = name;
     }
 
-    public static ConsoleCallback passwordCallback(final String password) {
+    public static ConsoleCallback sshPassword(final SessionContext $) {
+        String pass = $.var($.bear.sshPassword);
+        return println(pass);
+    }
+
+    public static ConsoleCallback println(final String s) {
         return new ConsoleCallback() {
             @Override
             public void progress(AbstractConsole.Terminal console, String buffer, String wholeText) {
                 if(buffer.contains("password")){
-                    console.println(password);
+                    console.println(s);
                 }
             }
         };
@@ -107,33 +107,11 @@ public abstract class SystemEnvironmentPlugin extends Plugin<SystemSession, Syst
     @Override
     public abstract SystemSession newSession(SessionContext $, Task<TaskDef> parent);
 
-    public static class PackageInfo {
-        String name;
-        String desc;
-        final Version version;
-
-        public PackageInfo(String name, Version version) {
-            this.name = name;
-            this.version = version;
-        }
-
-        public PackageInfo(String name) {
-            this.name = name;
-            version = Version.ANY;
-        }
-
-        public String getCompleteName() {
-            return name + ((version == null || version.isAny()) ? "" : "-" + version);
-        }
-
-        @Override
-        public String toString() {
-            return getCompleteName();
-        }
-    }
-
     public static abstract class PackageManager {
         public abstract CommandLineResult installPackage(PackageInfo pi);
+        public abstract CommandLineResult installPackage(String s);
+
+        public abstract String command();
     }
 
     public static class SystemSessionDef extends TaskDef<SystemSession> {

@@ -21,14 +21,14 @@ import bear.core.SessionContext;
 /**
 * @author Andrey Chaschev chaschev@gmail.com
 */
-public abstract class InstallationTask<TASK_DEF extends TaskDef> extends Task<TASK_DEF> {
-    public InstallationTask(TASK_DEF def, SessionContext $, Task<TaskDef> parent) {
+public abstract class InstallationTask<TASK_DEF extends InstallationTaskDef> extends Task<TASK_DEF> {
+    public InstallationTask(Task<TaskDef> parent, TASK_DEF def, SessionContext $) {
         super(parent, def, $);
     }
 
     public abstract Dependency asInstalledDependency();
 
-    private static final InstallationTask<?> NOP_TASK = new InstallationTask<TaskDef>(null, null, null) {
+    private static final InstallationTask<?> NOP_TASK = new InstallationTask<InstallationTaskDef>(null, null, null) {
         @Override
         public Dependency asInstalledDependency() {
             return Dependency.NONE;

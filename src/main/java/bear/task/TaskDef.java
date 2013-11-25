@@ -62,7 +62,13 @@ public abstract class TaskDef<TASK extends Task> {
         this.name = name;
     }
 
-    public abstract TASK newSession(SessionContext $, final Task parent);
+    public TASK createNewSession(SessionContext $, final Task parent){
+        TASK task = newSession($, parent);
+
+        return $.wire(task);
+    }
+
+    protected abstract TASK newSession(SessionContext $, final Task parent);
 
     public boolean hasRole(Set<Role> roles) {
         return !Sets.intersection(this.roles, roles).isEmpty();

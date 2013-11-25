@@ -24,6 +24,7 @@ import bear.session.Address;
 import bear.session.BearVariables;
 import bear.session.DynamicVariable;
 import bear.strategy.DeployStrategyTaskDef;
+import bear.task.BearException;
 import bear.task.TaskDef;
 import bear.vcs.BranchInfoResult;
 import bear.vcs.VCSSession;
@@ -36,13 +37,18 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
 import com.google.common.collect.Collections2;
 import com.google.common.collect.Iterables;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
 
 import java.io.File;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.TimeZone;
+import java.util.regex.Pattern;
 
 import static bear.session.Variables.*;
 
@@ -126,7 +132,8 @@ public class Bear extends BearApp<GlobalContext> {
     deployTo = BearVariables.joinPath(applicationsPath, name).desc("Current release dir"),
 
     currentDirName = strVar("Current release dir").defaultTo("current"),
-        sharedDirName = strVar("").defaultTo("shared"),
+
+    sharedDirName = strVar("").defaultTo("shared"),
 
     releasesDirName = strVar("").defaultTo("releases"),
 
@@ -155,6 +162,7 @@ public class Bear extends BearApp<GlobalContext> {
         currentPath = BearVariables.joinPath(deployTo, currentDirName),
         sharedPath = BearVariables.joinPath(bearPath, sharedDirName),
         projectSharedPath = BearVariables.joinPath(deployTo, sharedDirName),
+        tempDirPath = BearVariables.joinPath(deployTo, "temp"),
 
     releasePath = BearVariables.joinPath(releasesPath, releaseName),
 
@@ -328,5 +336,51 @@ public class Bear extends BearApp<GlobalContext> {
 
     public final DynamicVariable<DeployStrategyTaskDef> getStrategy = dynamic(DeployStrategyTaskDef.class).desc("Deployment strategy: how app files copied and built").memoize(true);
 
+    public class FileNameGenerator{
+        final SessionContext $;
 
+        protected FileNameGenerator(SessionContext $) {
+            this.$ = $;
+        }
+
+        public String getName(String prefix, String suffix){
+            return prefix + RandomStringUtils.randomAlphanumeric(10) + suffix;
+        }
+
+        public String getTempPath(String prefix, String suffix){
+            return $.joinPath($.var(tempDirPath), getName(prefix, suffix));
+        }
+    }
+
+    public final DynamicVariable<FileNameGenerator> randomFilePath = dynamic(new Fun<FileNameGenerator, SessionContext>() {
+        @Override
+        public FileNameGenerator apply(SessionContext $) {return new FileNameGenerator($);}
+    });
+
+    public final DynamicVariable<Predicate<String>> pathValidator = dynamic(new Fun<Predicate<String>, AbstractContext>() {
+        @Override
+        public Predicate<String> apply(AbstractContext $) {return DEFAULT_VALIDATOR;}
+    });
+
+    private static final Pattern BASH_COMMAND_NOT_FOUND = Pattern.compile("bash:\\s+.*command not found", Pattern.MULTILINE | Pattern.DOTALL);
+
+    public static final class ValidationException extends BearException{
+        public ValidationException() {
+        }
+
+        public ValidationException(String message) {
+            super(message);
+        }
+    }
+
+    private static final Predicate<String> DEFAULT_VALIDATOR = new Predicate<String>() {
+        @Override
+        public boolean apply(String input) {
+            if(BASH_COMMAND_NOT_FOUND.matcher(input).find()){
+                throw new ValidationException("bash: command not found");
+            }
+
+            return true;
+        }
+    };
 }

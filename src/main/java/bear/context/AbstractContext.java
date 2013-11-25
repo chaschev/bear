@@ -239,6 +239,10 @@ public abstract class AbstractContext {
         return this;
     }
 
+    public AbstractContext convertAndPutConst(String name, String value) {
+        return convertAndPutConst(name, value, getGlobal().variableRegistry.getType(name));
+    }
+
     public AbstractContext convertAndPutConst(String name, String value, Class<?> type) {
         Function<String, ?> converter;
 

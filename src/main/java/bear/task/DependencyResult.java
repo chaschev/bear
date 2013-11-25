@@ -17,16 +17,19 @@
 package bear.task;
 
 import bear.session.Result;
+import com.google.common.base.Optional;
 
+import javax.annotation.Nonnull;
 import java.util.ArrayList;
-import java.util.List;
 
 /**
 * @author Andrey Chaschev chaschev@gmail.com
 */
 public class DependencyResult extends TaskResult {
     public String name;
-    public List<String> messages;
+
+    @Nonnull
+    public Optional<ArrayList<String>> messages = Optional.absent();
 
     public DependencyResult(String name) {
         super(Result.OK);
@@ -38,46 +41,55 @@ public class DependencyResult extends TaskResult {
     }
 
     public DependencyResult add(String message) {
-        initMessages();
-
         if(name != null){
             message = "[" + name + "]: " + message;
         }
 
-        messages.add(message);
+        createIfNotPresent();
+
+        messages.get().add(message);
 
         result = Result.ERROR;
 
         return this;
     }
 
-    private void initMessages() {
-        if(messages == null) messages = new ArrayList<String>();
+    private void createIfNotPresent() {
+        if(!messages.isPresent()) messages = Optional.of(new ArrayList<String>());
     }
 
     @Override
     public String toString() {
-        final StringBuilder sb = new StringBuilder(messages.size() * 64);
+        if(!messages.isPresent()){
+            return "0 errors";
+        }
 
-        for (String message : messages) {
+        final StringBuilder sb = new StringBuilder(messages.get().size() * 64);
+
+        for (String message : messages.get()) {
             sb.append(message).append("\n");
         }
 
-        return sb.append("\n").append(messages.size()).append(" errors found").toString();
+        return sb.append("\n").append(messages.get().size()).append(" errors found").toString();
     }
 
     public void join(DependencyResult other) {
-        initMessages();
+        createIfNotPresent();
 
-        if(other.messages != null){
-            messages.addAll(other.messages);
+        if(other.messages.isPresent()){
+            messages.get().addAll(other.messages.get());
         }
 
         updateResult();
     }
 
     public DependencyResult updateResult(){
-        result = (messages == null || messages.isEmpty()) ? Result.OK : Result.ERROR;
+        result = messages.isPresent() && !messages.get().isEmpty()? Result.ERROR : Result.OK;
+
+        if(result.nok() && !exception.isPresent()){
+            exception = Optional.of(new DependencyException(this));
+        }
+
         return this;
     }
 

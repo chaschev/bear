@@ -26,30 +26,39 @@ import bear.core.SessionContext;
 import bear.session.Address;
 import bear.session.DynamicVariable;
 import bear.session.Result;
+import bear.session.Versions;
 import bear.task.BearException;
 import bear.task.SessionTaskRunner;
 import bear.task.Task;
 import bear.task.TaskResult;
 import bear.vcs.CommandLineResult;
+import chaschev.lang.Predicates2;
+import chaschev.util.Exceptions;
 import com.google.common.base.Joiner;
+import com.google.common.base.Splitter;
+import com.google.common.collect.Iterables;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.eclipse.aether.version.InvalidVersionSpecificationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
 import java.io.File;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
 * @author Andrey Chaschev chaschev@gmail.com
 */
 public abstract class SystemSession extends Task<SystemEnvironmentPlugin.SystemSessionDef> implements AbstractConsole {
     private static final Logger logger = LoggerFactory.getLogger(SystemSession.class);
-    
+    public static final Splitter LINE_SPLITTER = Splitter.on("\n").trimResults();
+
     protected Address address;
 
-    protected SystemEnvironmentPlugin.UnixFlavour unixFlavour;
+    protected OSInfo osInfo;
 
     SystemSession(Task parent, SystemEnvironmentPlugin.SystemSessionDef definition, SessionContext $) {
         super(parent, definition, $);
@@ -68,6 +77,8 @@ public abstract class SystemSession extends Task<SystemEnvironmentPlugin.SystemS
         T result = sendCommandImpl(command, userCallback);
 
         $.getCurrentTask().onCommandExecutionEnd(command, result);
+
+//        result.validate($);
 
         return result;
     }
@@ -89,7 +100,7 @@ public abstract class SystemSession extends Task<SystemEnvironmentPlugin.SystemS
             sb.append(result.text);
         }
 
-        return script.parseResult(sb.toString());
+        return script.parseResult(sb.toString(), $);
     }
 
     public <T extends CommandLineResult> T sendCommand(CommandLine<T, ?> commandLine) {
@@ -108,9 +119,21 @@ public abstract class SystemSession extends Task<SystemEnvironmentPlugin.SystemS
         return new Script(this);
     }
 
-    public Script plainScript(String text){
-        return  new Script(this)
-            .line().stty().addRaw(text).build();
+    public Script plainScript(String text) {
+        return plainScript(text, false);
+    }
+
+    public Script plainScript(String text, boolean sudo){
+        CommandLine line = new Script(this)
+            .line();
+
+        if(sudo){
+            line.sudo();
+        }else{
+            line.stty();
+        }
+
+        return line.addRaw(text).build();
     }
 
     public CommandLine newCommandLine() {
@@ -129,11 +152,15 @@ public abstract class SystemSession extends Task<SystemEnvironmentPlugin.SystemS
 
 
     public String capture(String s) {
-        return sendCommand(line().addRaw(s)).text;
+        return sendCommand(line().addRaw(s)).throwIfError().text;
     }
 
     public String capture(String s, ConsoleCallback callback) {
-        return sendCommand(line().addRaw(s), callback).text;
+        return captureResult(s, callback).throwIfError().text;
+    }
+
+    public CommandLineResult captureResult(String s, ConsoleCallback callback) {
+        return sendCommand(line().addRaw(s), callback);
     }
 
     public CommandLine rmLine(CommandLine line, String... paths){
@@ -193,6 +220,7 @@ public abstract class SystemSession extends Task<SystemEnvironmentPlugin.SystemS
     public abstract Result chmod(String octal, boolean recursive, String... files);
 
     public abstract Result writeString(String path, String s);
+    public abstract Result writeStringAs(String path, String s, boolean sudo, String user, String permissions);
 
     public abstract String readString(String path, String _default);
 
@@ -286,57 +314,107 @@ public abstract class SystemSession extends Task<SystemEnvironmentPlugin.SystemS
 
     public abstract boolean isNativeUnix();
 
+    public static class OSInfo{
+        public final UnixFlavour unixFlavour;
+        public final UnixSubFlavour unixSubFlavour;
+        public final org.eclipse.aether.version.Version version;
+
+        public OSInfo(UnixFlavour unixFlavour, UnixSubFlavour unixSubFlavour, org.eclipse.aether.version.Version version) {
+            this.unixFlavour = unixFlavour;
+            this.unixSubFlavour = unixSubFlavour;
+            this.version = version;
+        }
+    }
 
 
-    protected SystemEnvironmentPlugin.UnixFlavour computeUnixFlavour() {
-        final String text = sendCommand(newCommandLine().a("cat", "/etc/issue")).text;
+    protected OSInfo computeUnixFlavour() {
+
+//        versionScheme.parseVersion();
+
+        final String text = capture("cat /etc/issue");
 
         if (text == null) return null;
 
-        if (text.contains("CentOS")) return SystemEnvironmentPlugin.UnixFlavour.CENTOS;
-        if (text.contains("Ubuntu")) return SystemEnvironmentPlugin.UnixFlavour.UBUNTU;
+        UnixFlavour flavour = null;
+        UnixSubFlavour subFlavour = null;
+        org.eclipse.aether.version.Version version = null;
 
-        return null;
-    }
+        if (text.contains("CentOS")) {
+            flavour = UnixFlavour.CENTOS;
+            subFlavour = UnixSubFlavour.CENTOS;
 
-    public SystemEnvironmentPlugin.UnixFlavour getUnixFlavour() {
-        if (unixFlavour == null) {
-            unixFlavour = computeUnixFlavour();
+            String versionLine = Iterables.find(LINE_SPLITTER.split(text), Predicates2.contains("CentOS"));
+            Matcher matcher = Pattern.compile("release\\s+([^\\s]+)").matcher(versionLine);
+
+            if(!matcher.find()){
+                throw new RuntimeException("could not parse OS version: " + versionLine);
+            }
+
+            try {
+                 version = Versions.VERSION_SCHEME.parseVersion(matcher.group(1));
+            } catch (InvalidVersionSpecificationException e) {
+                throw Exceptions.runtime(e);
+            }
+        }else
+        if (text.contains("Ubuntu")) {
+            throw new UnsupportedOperationException("todo support Ubuntu!");
         }
 
-        return unixFlavour;
+        return new OSInfo(flavour, subFlavour, version);
     }
 
+    public OSInfo getOsInfo() {
+        if (osInfo == null) {
+            osInfo = computeUnixFlavour();
+        }
 
+        return osInfo;
+    }
 
     public SystemEnvironmentPlugin.PackageManager getPackageManager() {
-        switch (getUnixFlavour()) {
+        switch (getOsInfo().unixFlavour) {
             case CENTOS:
                 return new SystemEnvironmentPlugin.PackageManager() {
                     @Override
-                    public CommandLineResult installPackage(SystemEnvironmentPlugin.PackageInfo pi) {
-                        final CommandLineResult result = sendCommand(newCommandLine().timeoutMin(5).sudo().a("yum", "install", pi.getCompleteName(), "-y"));
+                    public CommandLineResult installPackage(PackageInfo pi) {
+                        String desc = pi.toString();
+
+                        String packageName = pi.getCompleteName();
+
+                        return installPackage(packageName, desc);
+                    }
+
+                    public CommandLineResult installPackage(String packageName) {
+                        return installPackage(packageName, packageName);
+                    }
+
+                    public CommandLineResult installPackage(String packageName, String desc) {
+                        final CommandLineResult result = sendCommand(
+                            line().timeoutMin(30).sudo().a(command(), "install", packageName, "-y"));
+
                         final String text = result.text;
 
                         if (text.contains("Complete!") ||
-                            text.contains("nothing to do")
-                            ) {
+                            text.contains("nothing to do")) {
                             result.result = Result.OK;
                         } else {
                             result.result = Result.ERROR;
                         }
 
-
                         if (result.result.nok()) {
-                            logger.error("could not install {}", pi);
+                            logger.error("could not install {}", desc);
                         }
 
                         return result;
                     }
+
+                    public String command() {
+                        return "yum";
+                    }
                 };
             case UBUNTU:
             default:
-                throw new UnsupportedOperationException("todo support" + getUnixFlavour() + " !");
+                throw new UnsupportedOperationException("todo support" + getOsInfo() + " !");
         }
     }
 

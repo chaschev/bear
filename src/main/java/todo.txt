@@ -14,15 +14,13 @@ top priority:
 - change settings to script which is executed every time
 - (ok) no need for deployment strategies
 - (ok) ui: embed noty - add message for POM generation and, run finish and errors during run
-- ui: better history - use command names, avoid duplicates, sort by timestamp, clear history, trash for items.
+- (ok) ui: better history - use command names, avoid duplicates, sort by timestamp, clear history, trash for items.
 - (ok) commenting option for the directives: //!:
-- ui: stage/roles/hosts selection
-- ui: preload stages, hosts and roles
-- ui: adapt this theme: https://github.com/onokumus/Bootstrap-Admin-Template
+- (ok) ui: adapt this theme: https://github.com/onokumus/Bootstrap-Admin-Template
 - (ok) noty for notices
 - autosize for code area ?
 - sample app:
--- mongo plugin
+-- (ok) mongo plugin
 - (ok) bug: sendAllFinishedResults sends result only for the whole run
 -- computer demo for 3 hosts/single mysql
 -- computer demo for 3 hosts/mongodb cluster
@@ -31,6 +29,7 @@ top priority:
 -- deploy mongodb & test
 -- run via scripts
 - refactor to be used with simplest builders
+- :ref {"task":"tasks.setup"}
 -- separate bearscript from execution
 -- builders may provide settings and scripts
 -- run a simple captures test with builders
@@ -44,6 +43,10 @@ pwd           |   . ......
 tasks.deploy  |   . X.. ..
 db.migration  |      .  X
 
+- ui: stage/roles/hosts selection
+- ui: preload stages, hosts and roles
+
+
 - (ok, 2) send messages from plugins via uiLogger (sends to 'ui'), logger (sends to console)
 - (ok, 3) ui: logback messages (output to file, a window to view, monitor errors and display red exclamation mark when there are)
 
@@ -51,6 +54,8 @@ db.migration  |      .  X
 - (5) print '$host: capture shell' feature
 - refactor BearScript and message sending (extract an interface from BearFX)
 
+- :use shell groovy {"scope": "global", "name": "mongoTest"} -> will be translated into OnceRunCallable
+- :set hosts=local
 - monitor (external) changes to settings file
 - mongo plugin
 - ruby plugin

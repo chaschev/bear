@@ -199,6 +199,10 @@ public class VariablesLayer extends HavingContext<Variables, AbstractContext> {
          VariablesLayer initialLayer) {
         Preconditions.checkArgument(var != null || varName != null, "they can't both be null!");
 
+//        if(this == initialLayer){
+//            logger.debug("{}: evaluating :{}...", name, varName);
+//        }
+
         final Object thisLayerResult;
 
         //first check if var was overridden in this layer
@@ -222,7 +226,7 @@ public class VariablesLayer extends HavingContext<Variables, AbstractContext> {
                 // there is no fallback, we are in a global scope,
                 // apply variable in the initial context
 
-                // if var is not provided, try to get it's function from re
+                // if var is not provided, try to get it's function from register
                 VariableInfo info = $.getGlobal().variableRegistry.get(varName);
 
                 if(info != null){
@@ -532,5 +536,16 @@ public class VariablesLayer extends HavingContext<Variables, AbstractContext> {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    @Override
+    public String toString() {
+        final StringBuilder sb = new StringBuilder("VariablesLayer{");
+        sb.append("name='").append(name).append('\'');
+        sb.append(", fallbackVariablesLayer=").append(fallbackVariablesLayer.getName());
+        sb.append(", constants=").append(constants.size());
+        sb.append(", variables=").append(variables.size());
+        sb.append('}');
+        return sb.toString();
     }
 }

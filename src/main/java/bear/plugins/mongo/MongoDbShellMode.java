@@ -14,23 +14,23 @@
  * limitations under the License.
  */
 
-package bear.task;
+package bear.plugins.mongo;
 
 import bear.core.SessionContext;
+import bear.plugins.PluginShellMode;
+import bear.task.Task;
+import bear.task.TaskDef;
 
 /**
 * @author Andrey Chaschev chaschev@gmail.com
 */
-public abstract class InstallationTaskDef<TASK extends InstallationTask> extends TaskDef<TASK>{
-    public static final InstallationTaskDef<InstallationTask> EMPTY = new InstallationTaskDef<InstallationTask>() {
-        @Override
-        public InstallationTask newSession(SessionContext $, final Task parent) {
-            return InstallationTask.nop();
-        }
-    };
+class MongoDbShellMode extends PluginShellMode<MongoDbPlugin> {
+    public MongoDbShellMode(MongoDbPlugin plugin) {
+        super(plugin, plugin.cmdAnnotation());
+    }
 
     @Override
-    protected TASK newSession(SessionContext $, Task parent) {
-        throw new UnsupportedOperationException("todo InstallationTaskDef.newSession");
+    public Task<?> interpret(String command, SessionContext $, Task parent, TaskDef taskDef) {
+        return plugin.scriptTask(command, parent, taskDef, $);
     }
 }

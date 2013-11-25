@@ -135,7 +135,12 @@ public class Plugins {
 
             for (Class pluginClass : pluginClasses) {
                 try {
-                    plugins.add(newPluginInstance(pluginClass));
+                    Plugin plugin = globalContext.plugins.pluginMap.get(pluginClass);
+                    if(plugin == null){
+                        plugins.add(newPluginInstance(pluginClass));
+                    }else {
+                        plugins.add(plugin);
+                    }
                 } catch (Exception e1) {
                     throw Exceptions.runtime(e1);
                 }

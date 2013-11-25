@@ -17,8 +17,9 @@ class DirectiveParser {
     static final Mapper mapper = new JacksonMapper();
 
     static final Map<String, Integer> rules = new ImmutableMap.Builder<String, Integer>()
-        .put(":ref", 0)   // means that :use has 2 commands
-        .put(":use", 2)   // means that :use has 2 commands
+        .put(":ref", 0)   // means that :use has 0 arguments
+        .put(":use", 2)   // :use shell(1) groovy(2)
+        .put(":set", 1)   // :set varName(1) {value:xxx}
         .build();
 
     public BearScript2.BearScriptDirective parse(String line){
@@ -50,13 +51,13 @@ class DirectiveParser {
             probableJSONObject = tokenizer.nextToken("").trim();
         }
 
-        Map<String, String> params = null;
+        Map<String, Object> params = null;
 
         if(probableJSONObject != null && probableJSONObject.contains("{")){
-            params = mapper.toStringMap(probableJSONObject);
+            params = mapper.toMap(probableJSONObject);
         }
 
-        Optional<String> name = params == null ? Optional.<String>absent() : fromNullable(params.get("name"));
+        Optional<String> name = params == null ? Optional.<String>absent() : fromNullable((String)params.get("name"));
 
         return new BearScript2.BearScriptDirective(directive, name, words, params);
     }

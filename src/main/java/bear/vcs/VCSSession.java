@@ -86,7 +86,7 @@ public abstract class VCSSession extends Task<TaskDef> {
     public abstract String head();
 
     public ConsoleCallback passwordCallback() {
-        return SystemEnvironmentPlugin.passwordCallback($.var(bear.vcsPassword));
+        return SystemEnvironmentPlugin.println($.var(bear.vcsPassword));
     }
 
     public VCSScript<?> ls(String path) {

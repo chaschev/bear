@@ -119,7 +119,7 @@ public class SessionTaskRunner extends HavingContext<SessionTaskRunner, SessionC
             if (!thisIsMe) {
                 result = runWithDependencies(taskDef);
             } else {
-                Task<TaskDef> taskSession = taskDef.newSession($, $.getCurrentTask());
+                Task<TaskDef> taskSession = taskDef.createNewSession($, $.getCurrentTask());
 
                 if(taskPreRun != null){
                     taskSession = taskPreRun.apply(taskSession);
@@ -129,9 +129,6 @@ public class SessionTaskRunner extends HavingContext<SessionTaskRunner, SessionC
             }
         }
         catch (BearException e){
-            throw e;
-        }
-        catch (DependencyException e){
             throw e;
         }
         catch (Exception e) {
@@ -159,6 +156,6 @@ public class SessionTaskRunner extends HavingContext<SessionTaskRunner, SessionC
     }
 
     public void runRollback(TaskDef task) {
-        task.newSession($, $.getCurrentTask()).onRollback();
+        task.createNewSession($, $.getCurrentTask()).onRollback();
     }
 }

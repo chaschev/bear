@@ -18,18 +18,20 @@ package bear.plugins.mysql;
 
 import bear.console.AbstractConsole;
 import bear.console.ConsoleCallback;
-import bear.core.Bear;
+import bear.context.AbstractContext;
 import bear.context.Fun;
+import bear.core.Bear;
 import bear.core.GlobalContext;
 import bear.core.SessionContext;
-import bear.context.AbstractContext;
 import bear.plugins.Plugin;
-import bear.plugins.sh.SystemEnvironmentPlugin;
+import bear.plugins.sh.PackageInfo;
 import bear.plugins.sh.SystemSession;
 import bear.session.*;
 import bear.task.*;
 import bear.vcs.CommandLineResult;
 import org.apache.commons.lang3.StringUtils;
+import org.eclipse.aether.version.Version;
+import org.eclipse.aether.version.VersionConstraint;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -38,6 +40,7 @@ import java.text.MessageFormat;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static bear.session.Variables.strVar;
 import static bear.task.TaskResult.and;
 
 /**
@@ -47,15 +50,15 @@ public class MySqlPlugin extends Plugin<Task, TaskDef<?>> {
     private static final Logger logger = LoggerFactory.getLogger(MySqlPlugin.class);
 
     public final DynamicVariable<String>
-        version = Variables.strVar().desc("null means ANY").defaultTo(null),
-        adminUser = Variables.strVar().desc("admin user").defaultTo("root"),
-        adminPassword = Variables.strVar().desc("admin password").defaultTo("root"),
-        dbName = Variables.strVar().desc("database name"),
-        user = Variables.strVar().desc("default user for operations").setEqualTo(adminUser),
-        password = Variables.strVar().desc("pw").setEqualTo(adminPassword),
+        version = strVar().desc("null means ANY").defaultTo(null),
+        adminUser = strVar().desc("admin user").defaultTo("root"),
+        adminPassword = strVar().desc("admin password").defaultTo("root"),
+        dbName = strVar().desc("database name"),
+        user = strVar().desc("default user for operations").setEqualTo(adminUser),
+        password = strVar().desc("pw").setEqualTo(adminPassword),
         serverPackage = Variables.newVar("mysql55-server"),
         clientPackage = Variables.newVar("mysql55"),
-        mysqlTempScriptName = Variables.strVar().defaultTo("temp.sql"),
+        mysqlTempScriptName = strVar().defaultTo("temp.sql"),
         mysqlTempScriptPath = Variables.dynamic(new Fun<String, SessionContext>() {
             @Override
             public String apply(SessionContext $) {
@@ -76,10 +79,10 @@ public class MySqlPlugin extends Plugin<Task, TaskDef<?>> {
             }
         });
 
-    public final DynamicVariable<Version> getVersion = Variables.dynamic(new Fun<Version, AbstractContext>() {
+    public final DynamicVariable<VersionConstraint> getVersion = Variables.dynamic(new Fun<VersionConstraint, AbstractContext>() {
         @Override
-        public Version apply(AbstractContext $) {
-            return Version.fromString($.var(version));
+        public VersionConstraint apply(AbstractContext $) {
+            return Versions.newVersionConstraint($.var(version));
         }
     });
 
@@ -89,25 +92,25 @@ public class MySqlPlugin extends Plugin<Task, TaskDef<?>> {
 
     public final InstallationTaskDef setup = new InstallationTaskDef() {
         @Override
-        public Task<TaskDef> newSession(SessionContext $, final Task parent) {
-            return new Task<TaskDef>(parent, this, $) {
+        public InstallationTask<InstallationTaskDef> newSession(SessionContext $, final Task parent) {
+            return new InstallationTask<InstallationTaskDef>(parent, this, $) {
                 @Override
                 protected TaskResult exec(SessionTaskRunner runner) {
-                    final Version version = computeRealClientVersion($.sys);
+                    final Version version = computeInstalledClientVersion($.sys);
 
-                    final boolean installedVersionOk = version != null && $(getVersion).matches(version);
+                    final boolean installedVersionOk = version != null && $(getVersion).containsVersion(version);
 
                     TaskResult r = TaskResult.OK;
 
                     if (!installedVersionOk) {
                         $.sys.sudo().sendCommand($.sys.newCommandLine().sudo().addSplit("rpm -Uvh http://mirror.webtatic.com/yum/el6/latest.rpm"));
-                        r = and(r, $.sys.getPackageManager().installPackage(new SystemEnvironmentPlugin.PackageInfo($(clientPackage))));
+                        r = and(r, $.sys.getPackageManager().installPackage(new PackageInfo($(clientPackage))));
                     }
 
-                    Version serverVersion = computeRealServerVersion(runner);
+                    Version serverVersion = computeInstalledServerVersion(runner);
 
                     if (serverVersion == null) {
-                        r = and(r, $.sys.getPackageManager().installPackage(new SystemEnvironmentPlugin.PackageInfo($(serverPackage))));
+                        r = and(r, $.sys.getPackageManager().installPackage(new PackageInfo($(serverPackage))));
                     }
 
                     $.sys.sudo().sendCommand($.sys.newCommandLine().timeoutSec(30).sudo().addSplit("service mysqld start"));
@@ -131,21 +134,26 @@ public class MySqlPlugin extends Plugin<Task, TaskDef<?>> {
 
                     return r;
                 }
+
+                @Override
+                public Dependency asInstalledDependency() {
+                    return Dependency.NONE; //TODO FIX
+                }
             };
         }
     };
 
-    private Version computeRealServerVersion(SessionTaskRunner runner) {
+    private Version computeInstalledServerVersion(SessionTaskRunner runner) {
         final CommandLineResult r = runScript(runner, "select version();");
 
         if (r.result.nok() || StringUtils.isBlank(r.text)) {
             return null;
         }
 
-        return Version.newVersion(r.text.trim().split("\\s+")[1]);
+        return Versions.newVersion(r.text.trim().split("\\s+")[1]);
     }
 
-    public Version computeRealClientVersion(SystemSession system) {
+    public Version computeInstalledClientVersion(SystemSession system) {
         final CommandLineResult result = system.sendCommand(system.newCommandLine().a("mysql", "--version"));
 
         final String version;
@@ -160,7 +168,7 @@ public class MySqlPlugin extends Plugin<Task, TaskDef<?>> {
             version = null;
         }
 
-        return version == null ? null : Version.newVersion(version);
+        return version == null ? null : Versions.newVersion(version);
     }
 
 

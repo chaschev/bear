@@ -16,8 +16,11 @@
 
 package bear.vcs;
 
+import bear.core.Bear;
+import bear.core.SessionContext;
 import bear.session.Result;
 import bear.task.TaskResult;
+import com.google.common.base.Optional;
 
 /**
  * @author Andrey Chaschev chaschev@gmail.com
@@ -29,10 +32,6 @@ public class CommandLineResult extends TaskResult{
     public CommandLineResult(String text) {
         super((Result)null);
         this.text = text;
-    }
-
-    public CommandLineResult(Result result, String text) {
-        this(text, result);
     }
 
     public CommandLineResult(String text, Result result) {
@@ -49,4 +48,31 @@ public class CommandLineResult extends TaskResult{
         sb.append('}');
         return sb.toString();
     }
+
+    @Override
+    public CommandLineResult throwIfError() {
+        super.throwIfError();
+        return this;
+    }
+
+    public CommandLineResult setException(Throwable e) {
+        result = Result.ERROR;
+        exception = Optional.of(e);
+
+        return this;
+    }
+
+    public CommandLineResult validate(SessionContext $){
+        try {
+            if(result.ok() && text != null){
+                $.var($.bear.pathValidator).apply(text);
+            }
+        } catch (Bear.ValidationException e) {
+            setException(e);
+        }
+
+        return this;
+    }
+
+
 }

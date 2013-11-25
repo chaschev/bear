@@ -1,0 +1,34 @@
+//!:use shell groovy {"name": "run task via Groovy example", "global":true}
+// this is a hack to show how internals work
+// you should use :ref {"task":"tasks.setup"} instead
+//!:set bear.verifyPlugins {"remove":true}
+//!:set bear.autoInstallPlugins {"value":true}
+
+_.runner.run(_.getGlobal().tasks.setup)
+
+//!:use shell groovy {"name": "mongoTest"}
+//:set bear.checkDependencies {"value":false, "global":true}
+//:set bear.verifyPlugins {"value":true, "global":true}
+//!:set mongoDb.dbName {"value":"test"}
+import bear.core.SessionContext
+import bear.plugins.mongo.MongoDbPlugin
+
+def _ = ((SessionContext)_);
+
+//_.runner.run(_.getGlobal().tasks.setup)
+
+def mongo = _.getGlobal().getPlugin(MongoDbPlugin);
+
+mongo.dbName.defaultTo("test")
+
+def script = mongo.runScript(_, """
+printjson(db.adminCommand('listDatabases'));
+db = db.getSiblingDB('test');
+printjson(db.system.users.find());
+""")
+
+ui.info("result: {}", script)
+
+//!:use shell mongo
+
+printjson(db.adminCommand('listDatabases'));

@@ -1,5 +1,6 @@
 package bear.core;
 
+import com.google.common.base.Optional;
 import org.junit.Test;
 
 import static org.fest.assertions.api.Assertions.assertThat;
@@ -21,8 +22,18 @@ public class DirectiveParserTest {
 
         assertThat(p(":use plugin groovy {\"name\":\"Bob\"}").params).contains(entry("name", "Bob"));
 
-        assertThat(p(":set var {\"value\":\"val\"}").params).contains(entry("value", "val"));
-        assertThat(p(":set gvar {\"groovy\":\"expression\"}").params).contains(entry("groovy", "expression"));
+        assertThat(p(":set var1 {\"value\":true, \"global\": true, \"save\":true}").params).contains(entry("value", true));
+
+        BearScript2.BearScriptDirective d1 = p(":set var1 {\"value\":\"val\", \"global\": true, \"save\":true}");
+        BearScript2.BearScriptDirective d2 = p(":set var2 {\"groovy\":\"expression\"}");
+
+        assertThat(d1.params).contains(entry("value", "val"));
+        assertThat(d2.params).contains(entry("groovy", "expression"));
+
+        assertThat(new BearScript2.ScriptItem(Optional.of("var1"), "groovy", 0).addVariable("var1", d1).variables.get().values())
+            .contains(new BearScript2.ScriptSetVariable("var1", "val", null, true, false, true));
+        assertThat(new BearScript2.ScriptItem(Optional.of("var2"), "groovy", 0).addVariable("var2", d2).variables.get().values())
+            .contains(new BearScript2.ScriptSetVariable("var2", null, "expression", false, false, false));
 
         assertThat(p(":ref {}").directive).isEqualTo(":ref");
         assertThat(p(":ref {}").words).isEmpty();

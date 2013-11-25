@@ -72,9 +72,9 @@ public abstract class ZippedToolPlugin extends Plugin<Task, TaskDef<?>> {
 
     }
 
-    protected abstract class ZippedTool extends InstallationTask<TaskDef> {
-        protected ZippedTool(Task<TaskDef> parent, TaskDef def, SessionContext $) {
-            super(def, $, parent);
+    protected abstract class ZippedTool extends InstallationTask<InstallationTaskDef> {
+        protected ZippedTool(Task<TaskDef> parent, InstallationTaskDef def, SessionContext $) {
+            super(parent, def, $);
 
             addDependency(new Dependency(toString(), $).addCommands(
                 "unzip -v | head -n 1",
@@ -105,6 +105,7 @@ public abstract class ZippedToolPlugin extends Plugin<Task, TaskDef<?>> {
                 },
                 String.format("'%s' expected version: %s", $(toolDistrName), $(version))
             ));
+
             return dep;
         }
 
@@ -187,7 +188,7 @@ public abstract class ZippedToolPlugin extends Plugin<Task, TaskDef<?>> {
         }
 
         private ConsoleCallback sshCallback() {
-            return SystemEnvironmentPlugin.passwordCallback($.var(bear.sshPassword));
+            return SystemEnvironmentPlugin.println($.var(bear.sshPassword));
         }
 
         protected void shortCut(String newCommandName, String sourceExecutableName){

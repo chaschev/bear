@@ -171,7 +171,7 @@ public class SessionContext extends AbstractContext {
         // this can be extracted into init
 
         sysDef = ((address instanceof SshAddress) ? remoteSysEnv : localSysEnv).getTaskDef();
-        sys = sysDef.newSession(this, null);
+        sys = sysDef.createNewSession(this, null);
 
         this.setName(address.getName());
 
