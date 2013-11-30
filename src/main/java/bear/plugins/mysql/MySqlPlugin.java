@@ -95,7 +95,7 @@ public class MySqlPlugin extends Plugin<Task, TaskDef<?>> {
         public InstallationTask<InstallationTaskDef> newSession(SessionContext $, final Task parent) {
             return new InstallationTask<InstallationTaskDef>(parent, this, $) {
                 @Override
-                protected TaskResult exec(SessionTaskRunner runner) {
+                protected TaskResult exec(SessionTaskRunner runner, Object input) {
                     final Version version = computeInstalledClientVersion($.sys);
 
                     final boolean installedVersionOk = version != null && $(getVersion).containsVersion(version);
@@ -117,7 +117,7 @@ public class MySqlPlugin extends Plugin<Task, TaskDef<?>> {
 
                     $.sys.sudo().sendCommand($.sys.newCommandLine().sudo().addSplit(MessageFormat.format("mysqladmin -u {0} password", $(adminUser))).addRaw("'" + $(adminPassword) + "'"));
                     $.sys.sudo().sendCommand($.sys.newCommandLine().sudo().addSplit(MessageFormat.format("mysqladmin -u {0} -h {1} password",
-                        $(adminUser), $(bear.sessionHostname))).addRaw("'" + $(adminPassword) + "'"));
+                        $(adminUser), $(getBear().sessionHostname))).addRaw("'" + $(adminPassword) + "'"));
 
                     final String createDatabaseSql = MessageFormat.format(
                         "CREATE DATABASE {0};\n" +
@@ -177,7 +177,7 @@ public class MySqlPlugin extends Plugin<Task, TaskDef<?>> {
         public Task<TaskDef> newSession(SessionContext $, final Task parent) {
             return new Task<TaskDef>(parent, this, $) {
                 @Override
-                protected TaskResult exec(SessionTaskRunner runner) {
+                protected TaskResult exec(SessionTaskRunner runner, Object input) {
                     return runScript(runner, "SELECT User FROM mysql.user;");
                 }
             };
@@ -190,7 +190,7 @@ public class MySqlPlugin extends Plugin<Task, TaskDef<?>> {
         public Task<TaskDef> newSession(SessionContext $, final Task parent) {
             return new Task<TaskDef>(parent, this, $) {
                 @Override
-                protected TaskResult exec(SessionTaskRunner runner) {
+                protected TaskResult exec(SessionTaskRunner runner, Object input) {
                     final String s = Question.freeQuestion("Enter sql to execute: ");
 
                     return runScript(runner, s);
@@ -206,7 +206,7 @@ public class MySqlPlugin extends Plugin<Task, TaskDef<?>> {
         public Task<TaskDef> newSession(SessionContext $, final Task parent) {
             return new Task<TaskDef>(parent, this, $) {
                 @Override
-                protected TaskResult exec(SessionTaskRunner runner) {
+                protected TaskResult exec(SessionTaskRunner runner, Object input) {
                     Question.freeQuestionWithOption("Enter a filename", $(dumpName), dumpName);
 
                     $.sys.mkdirs($(dumpsDirPath));
@@ -230,7 +230,7 @@ public class MySqlPlugin extends Plugin<Task, TaskDef<?>> {
         public Task<TaskDef> newSession(SessionContext $, final Task parent) {
             return new Task<TaskDef>(parent, this, $) {
                 @Override
-                protected TaskResult exec(SessionTaskRunner runner) {
+                protected TaskResult exec(SessionTaskRunner runner, Object input) {
                     runner.run(createDump);
 
                     $.sys.download($(dumpPath));
@@ -246,7 +246,7 @@ public class MySqlPlugin extends Plugin<Task, TaskDef<?>> {
         public Task<TaskDef> newSession(SessionContext $, final Task parent) {
             return new Task<TaskDef>(parent, this, $) {
                 @Override
-                protected TaskResult exec(SessionTaskRunner runner) {
+                protected TaskResult exec(SessionTaskRunner runner, Object input) {
                     Question.freeQuestionWithOption("Enter a filepath", $(dumpName), dumpName);
 
                     return $.sys.sendCommand($.sys.line()

@@ -121,7 +121,7 @@ public class GenericUnixRemoteEnvironmentPlugin extends SystemEnvironmentPlugin 
 
                 //1. it's also blocking
                 //2. add callback
-                final SshSession.WithLowLevelSession withSession = new SshSession.WithLowLevelSession(bear) {
+                final SshSession.WithLowLevelSession withSession = new SshSession.WithLowLevelSession(getBear()) {
                     @Override
                     public void act(final Session session, final Session.Shell shell) throws Exception {
 
@@ -294,6 +294,34 @@ public class GenericUnixRemoteEnvironmentPlugin extends SystemEnvironmentPlugin 
             }
 
             @Override
+            public Result scp(String dest, String[] args, String... paths) {
+                logger.info("uploading {} files to {}", paths.length, dest);
+
+                checkConnection();
+
+                CommandLine line = script()
+                    .timeoutMin(60)
+                    .line()
+                    .stty();
+
+                line.a("scp");
+
+                if(args!=null){
+                    line.a(args);
+                }
+
+                for (String path : paths) {
+                    line.a(path);
+                }
+
+                line.a(dest);
+
+                CommandLineResult run = line.build().run(sshPassword($));
+
+                return run.result;
+            }
+
+            @Override
             public Result mkdirs(final String... dirs) {
                 sendCommand(newCommandLine()
                     .a("mkdir", "-p")
@@ -402,7 +430,7 @@ public class GenericUnixRemoteEnvironmentPlugin extends SystemEnvironmentPlugin 
                         line.addRaw(" && chmod " + permissions +" ").a(path);
                     }
 
-                    CommandLineResult run = run(script, println($.var(bear.sshPassword)));
+                    CommandLineResult run = run(script, println($.var(getBear().sshPassword)));
 
                     return run.result;
                 } catch (IOException e) {

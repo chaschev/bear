@@ -17,6 +17,7 @@
 package bear.core;
 
 import bear.context.AppGlobalContext;
+import bear.plugins.DownloadPlugin;
 import bear.plugins.Plugin;
 import bear.plugins.Plugins;
 import bear.plugins.PomPlugin;
@@ -84,16 +85,14 @@ public class GlobalContext extends AppGlobalContext<GlobalContext, Bear> {
     GlobalContext() {
         super(new Bear());
 
-
-
-//        layer = new VariablesLayer(this, "global layer", null);
-
         logger.info("adding bootstrap plugins...");
 
         plugins.add(GenericUnixRemoteEnvironmentPlugin.class);
         plugins.add(GenericUnixLocalEnvironmentPlugin.class);
         plugins.add(GroovyShellPlugin.class);
         plugins.add(PomPlugin.class);
+        plugins.add(DownloadPlugin.class);
+
         plugins.build();
 
         final SessionTaskRunner localRunner = new SessionTaskRunner(null, this);

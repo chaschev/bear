@@ -20,14 +20,23 @@ import java.util.List;
 
 public class PreparationResult {
     private final List<SessionContext> $s;
+    protected IBearSettings bearSettings;
 
 
-    public PreparationResult( List<SessionContext> $s) {
+    public PreparationResult(List<SessionContext> $s) {
         this.$s = $s;
     }
 
+    public PreparationResult(List<SessionContext> $s, IBearSettings bearSettings) {
+        this.$s = $s;
+        this.bearSettings = bearSettings;
+    }
 
     public List<SessionContext> getSessions() {
         return $s;
+    }
+
+    public IBearSettings getBearSettings() {
+        return bearSettings;
     }
 }

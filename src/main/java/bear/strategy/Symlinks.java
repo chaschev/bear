@@ -22,10 +22,10 @@ import java.util.List;
 /**
  * @author Andrey Chaschev chaschev@gmail.com
  */
-public class SymlinkRules {
+public class Symlinks {
     List<SymlinkEntry> entries = new ArrayList<SymlinkEntry>(4);
 
-    public SymlinkRules add(SymlinkEntry symlinkEntry) {
+    public Symlinks add(SymlinkEntry symlinkEntry) {
         entries.add(symlinkEntry);
         return this;
     }

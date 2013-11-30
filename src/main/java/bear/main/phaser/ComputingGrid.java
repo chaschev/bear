@@ -74,8 +74,12 @@ public class ComputingGrid<C, PHASE> {
         }
     }
 
+    public <V> List<ListenableFuture<V>> phaseFutures(Phase<V, PHASE> phase, int relative) {
+        return phaseFutures(phaseToRowIndex(phase.phase) + relative, null);
+    }
+
     public <V> List<ListenableFuture<V>> phaseFutures(Phase<V, PHASE> phase) {
-        return phaseFutures(phaseToRowIndex(phase.phase), null);
+        return phaseFutures(phase, 0);
     }
 
     public <V> List<ListenableFuture<V>> phaseFutures(final int rowIndex, Class<V> vClass) {
@@ -263,5 +267,13 @@ public class ComputingGrid<C, PHASE> {
 
     public void setWhenAllFinished(WhenAllFinished whenAllFinished) {
         this.whenAllFinished = whenAllFinished;
+    }
+
+    public ImmutableList<PHASE> phases() {
+        return table.rowKeyList();
+    }
+
+    public ImmutableList<C> parties() {
+        return table.columnKeyList();
     }
 }

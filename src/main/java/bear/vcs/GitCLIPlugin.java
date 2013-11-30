@@ -133,7 +133,7 @@ public class GitCLIPlugin extends VcsCLIPlugin<Task, TaskDef<?>> {
 
         @Override
         public String head() {
-            return elvis($(bear.vcsBranchName), "HEAD");
+            return elvis($(getBear().vcsBranchName), "HEAD");
         }
 
         public String origin() {
@@ -146,7 +146,7 @@ public class GitCLIPlugin extends VcsCLIPlugin<Task, TaskDef<?>> {
         }
 
         protected String verbose() {
-            return $.var(bear.verbose) ? "--verbose" : "";
+            return $.var(getBear().verbose) ? "--verbose" : "";
         }
 
         @Override
@@ -156,8 +156,8 @@ public class GitCLIPlugin extends VcsCLIPlugin<Task, TaskDef<?>> {
 
             List<String> args = new ArrayList<String>();
 
-            if ($.isSet(bear.vcsBranchName)) {
-                addAll(args, "-b", $(bear.vcsBranchURI));
+            if ($.isSet(getBear().vcsBranchName)) {
+                addAll(args, "-b", $(getBear().vcsBranchURI));
             }
 
             if (remoteIsNotOrigin(remote)) {
@@ -173,7 +173,7 @@ public class GitCLIPlugin extends VcsCLIPlugin<Task, TaskDef<?>> {
             script
                 .line()
                 .stty().a(git).a("clone", verbose()).a(args)
-                .a($(bear.repositoryURI), destination).build()
+                .a($(getBear().repositoryURI), destination).build()
                 .line()
                 .stty()
                 .cd(destination)
@@ -214,7 +214,7 @@ public class GitCLIPlugin extends VcsCLIPlugin<Task, TaskDef<?>> {
 
             if (remoteIsNotOrigin(remote)) {
                 script
-                    .line().stty().a(git, "config", "remote." + remote + ".url", $(bear.repositoryURI)).build()
+                    .line().stty().a(git, "config", "remote." + remote + ".url", $(getBear().repositoryURI)).build()
                     .line().stty().a(git, "config", "remote." + remote + ".fetch", "+refs/heads/*:refs/remotes/" + remote + "/*").build();
             }
 
@@ -276,7 +276,7 @@ public class GitCLIPlugin extends VcsCLIPlugin<Task, TaskDef<?>> {
             //If sha is not found on remote, try expanding from local repository
 
             newRevision = $.sys.sendCommand(commandPrefix("rev-parse", emptyParams())
-                .cd($(bear.vcsBranchLocalPath))
+                .cd($(getBear().vcsBranchLocalPath))
                 .a("--revs-only", origin() + "/" + revision)
                 .timeoutSec(10), passwordCallback()).text.trim();
 
@@ -285,12 +285,12 @@ public class GitCLIPlugin extends VcsCLIPlugin<Task, TaskDef<?>> {
             }
 
             throw new RuntimeException(String.format(
-                "Unable to resolve revision for '%s' on repository '%s'.", revision, $(bear.repositoryURI)));
+                "Unable to resolve revision for '%s' on repository '%s'.", revision, $(getBear().repositoryURI)));
         }
 
         @Override
         public ConsoleCallback passwordCallback() {
-            final String password = $(bear.vcsPassword);
+            final String password = $(getBear().vcsPassword);
 
             return new ConsoleCallback() {
                 @Override
@@ -342,7 +342,7 @@ public class GitCLIPlugin extends VcsCLIPlugin<Task, TaskDef<?>> {
         public VCSScript<LsResult> lsRemote(String revision) {
             //noinspection unchecked
             return newVCSScript(commandPrefix("ls-remote", emptyParams(), LsResult.class)
-                .a($(bear.repositoryURI), revision)).setParser(LS_PARSER);
+                .a($(getBear().repositoryURI), revision)).setParser(LS_PARSER);
         }
 
         private CommandLine<CommandLineResult, VCSScript<CommandLineResult>> commandPrefix(String cmd, Map<String, String> params) {

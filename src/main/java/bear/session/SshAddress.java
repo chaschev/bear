@@ -86,4 +86,8 @@ public class SshAddress extends Address {
     public int hashCode() {
         return address.hashCode();
     }
+
+    public String toScpString() {
+        return username + "@" + address + ":";
+    }
 }

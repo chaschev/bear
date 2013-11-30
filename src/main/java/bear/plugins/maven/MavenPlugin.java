@@ -54,7 +54,7 @@ public class MavenPlugin extends ZippedToolPlugin {
         public ZippedTool newSession(SessionContext $, final Task parent) {
             return new ZippedTool(parent, this, $) {
                 @Override
-                protected DependencyResult exec(SessionTaskRunner runner) {
+                protected DependencyResult exec(SessionTaskRunner runner, Object input) {
                     clean();
 
                     download();

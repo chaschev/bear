@@ -23,10 +23,7 @@ import bear.console.AbstractConsoleCommand;
 import bear.console.ConsoleCallback;
 import bear.core.Role;
 import bear.core.SessionContext;
-import bear.session.Address;
-import bear.session.DynamicVariable;
-import bear.session.Result;
-import bear.session.Versions;
+import bear.session.*;
 import bear.task.BearException;
 import bear.task.SessionTaskRunner;
 import bear.task.Task;
@@ -259,7 +256,7 @@ public abstract class SystemSession extends Task<SystemEnvironmentPlugin.SystemS
     }
 
     public Set<Role> getRoles() {
-        return definition.getRoles();
+        return getDefinition().getRoles();
     }
 
     public String getName() {
@@ -267,11 +264,11 @@ public abstract class SystemSession extends Task<SystemEnvironmentPlugin.SystemS
     }
 
     public String getDesc() {
-        return definition.description;
+        return getDefinition().description;
     }
 
     public SystemSession sudo() {
-        definition.getPlugin().sudo = true;
+        getDefinition().getPlugin().sudo = true;
         return this;
     }
 
@@ -313,6 +310,25 @@ public abstract class SystemSession extends Task<SystemEnvironmentPlugin.SystemS
     public abstract boolean isUnix();
 
     public abstract boolean isNativeUnix();
+
+    public Result scp(String dest, String... paths) {
+        return scp(dest, null, paths);
+    }
+
+    public abstract Result scp(String dest, String[] args, String... paths);
+
+    public Result scpFrom(SessionContext srcSession, String dest, String[] args, String... paths) {
+        String prefix = ((SshAddress) srcSession.address).toScpString();
+
+        String[] fullPaths = new String[paths.length];
+
+        for (int i = 0; i < paths.length; i++) {
+            String path = paths[i];
+            fullPaths[i] = prefix + path;
+        }
+
+        return scp(dest, args, fullPaths);
+    }
 
     public static class OSInfo{
         public final UnixFlavour unixFlavour;
@@ -419,10 +435,10 @@ public abstract class SystemSession extends Task<SystemEnvironmentPlugin.SystemS
     }
 
     public boolean isSudo() {
-        return definition.getPlugin().sudo;
+        return getDefinition().getPlugin().sudo;
     }
 
-    protected TaskResult exec(SessionTaskRunner runner) {
+    protected TaskResult exec(SessionTaskRunner runner, Object input) {
         throw new UnsupportedOperationException("todo .exec");
     }
 

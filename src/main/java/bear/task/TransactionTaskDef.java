@@ -48,7 +48,7 @@ public class TransactionTaskDef extends TaskDef {
     public Task<TaskDef> newSession(SessionContext $, final Task parent) {
         return new Task<TaskDef>(parent, this, $) {
             @Override
-            protected TaskResult exec(SessionTaskRunner runner) {
+            protected TaskResult exec(SessionTaskRunner runner, Object input) {
                 TaskResult result = null;
                 try {
                     result = runner.runMany(tasks);

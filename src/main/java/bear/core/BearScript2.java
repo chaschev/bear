@@ -16,8 +16,6 @@
 
 package bear.core;
 
-import bear.console.ConsolesDivider;
-import bear.console.GroupDivider;
 import bear.context.AbstractContext;
 import bear.main.BearFX;
 import bear.main.BearRunner2;
@@ -27,11 +25,7 @@ import bear.main.event.TextConsoleEventToUI;
 import bear.main.phaser.OnceEnteredCallable;
 import bear.plugins.Plugin;
 import bear.plugins.groovy.GroovyShellPlugin;
-import bear.task.SessionTaskRunner;
-import bear.task.Task;
-import bear.task.TaskDef;
-import bear.task.TaskResult;
-import chaschev.util.CatchyCallable;
+import bear.task.*;
 import chaschev.util.Exceptions;
 import com.google.common.base.*;
 import com.google.common.collect.Collections2;
@@ -53,9 +47,6 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.*;
 import java.util.concurrent.Callable;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicLong;
 
 import static chaschev.lang.Predicates2.contains;
 import static chaschev.lang.Predicates2.fieldEquals;
@@ -410,106 +401,20 @@ public class BearScript2 {
     }
 
     public static Task<TaskDef> wrapIntoGlobalTask(final SessionContext $, final Task parent, final Task<?> task) {
-        return new Task<TaskDef>(parent, null, $) {
 
+        return new Task<TaskDef>(new TaskContext<TaskDef>(null, parent, $), new TaskCallable() {
             final OnceEnteredCallable<TaskResult> onceEnteredCallable = new OnceEnteredCallable<TaskResult>();
 
             @Override
-            protected TaskResult exec(final SessionTaskRunner runner) {
-                try {
+            public TaskResult call(final SessionContext $, Task taskContext, Object input) throws Exception{
                     return onceEnteredCallable.runOnce(new Callable<TaskResult>() {
                         @Override
                         public TaskResult call() throws Exception {
-                            return runner.runSession(task);
+                            return $.runner.runSession(task);
                         }
                     }).get();
-                } catch (Exception e) {
-                    throw Exceptions.runtime(e);
-                }
             }
-        };
-    }
-
-    public static class BearScriptPhase {
-        final String id;
-        final AtomicInteger partiesArrived = new AtomicInteger();
-        public final AtomicInteger partiesOk = new AtomicInteger();
-
-        final AtomicLong minimalOkDuration = new AtomicLong(-1);
-
-        BearFX bearFX;
-        private final ShellSessionContext shellContext;
-        private final ScriptItem scriptItem;
-
-        GroupDivider<SessionContext> groupDivider;
-
-//        public final long startedAtMs = System.currentTimeMillis();
-
-        final int partiesCount;
-
-        public int partiesPending;
-        public int partiesFailed = 0;
-
-        public BearScriptPhase(String id, BearFX bearFX, GroupDivider<SessionContext> groupDivider, ShellSessionContext shellContext, ScriptItem scriptItem) {
-            this.id = id;
-            this.bearFX = bearFX;
-            this.shellContext = shellContext;
-            this.scriptItem = scriptItem;
-            this.partiesCount = groupDivider.getEntries().size();
-            this.groupDivider = groupDivider;
-        }
-
-        public void addArrival(SessionContext $, final long duration, TaskResult result) {
-            groupDivider.addArrival($);
-
-            if (result.ok()) {
-                partiesOk.incrementAndGet();
-
-                if (minimalOkDuration.compareAndSet(-1, duration)) {
-                    $.getGlobal().scheduler.schedule(new CatchyCallable<Void>(new Callable<Void>() {
-                        @Override
-                        public Void call() throws Exception {
-                            boolean haveHangUpJobs;
-                            boolean alreadyFinished;
-
-                            if (partiesArrived.compareAndSet(partiesCount, -1)) {
-                                alreadyFinished = false;
-                                haveHangUpJobs = false;
-                            } else {
-                                if (partiesArrived.compareAndSet(-1, -1)) {
-                                    haveHangUpJobs = false;
-                                    alreadyFinished = true;
-                                } else {
-                                    alreadyFinished = false;
-                                    haveHangUpJobs = true;
-                                }
-                            }
-
-                            if (!alreadyFinished) {
-                                sendPhaseResults(duration);
-                            }
-                            return null;
-                        }
-                    }), duration * 3, TimeUnit.MILLISECONDS);
-                }
-            }
-
-
-            partiesArrived.incrementAndGet();
-
-            partiesPending = partiesCount - partiesArrived.get();
-            partiesFailed = partiesArrived.get() - partiesOk.get();
-
-            if (partiesArrived.compareAndSet(partiesCount, -1)) {
-                sendPhaseResults(duration);
-            }
-        }
-
-        private void sendPhaseResults(long duration) {
-            List<ConsolesDivider.EqualityGroup> groups = groupDivider.divideIntoGroups();
-
-
-        }
+        });
     }
 
     static class ShellSessionContext {
@@ -569,7 +474,7 @@ public class BearScript2 {
 
         List<SessionContext> $s = preparationResult.getSessions();
 
-        GlobalTaskRunner globalTaskRunner = new GlobalTaskRunner(global, taskList, $s, shellContext);
+        GlobalTaskRunner globalTaskRunner = new GlobalTaskRunner(global, taskList, preparationResult, shellContext);
 
         //todo this should not be async - this message might be slow
         bearFX.sendMessageToUI(new RMIEventToUI("terminals", "onScriptStart", getHosts($s)));

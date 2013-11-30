@@ -68,7 +68,7 @@ public abstract class DeployStrategyTaskDef extends TaskDef<Task> {
     /**
      * Symlink rules.
      */
-    protected SymlinkRules symlinkRules = new SymlinkRules();
+    protected Symlinks symlinks = new Symlinks();
 
     protected DeployStrategyTaskDef(SessionContext $) {
         super("DeployStrategy");
@@ -169,8 +169,8 @@ public abstract class DeployStrategyTaskDef extends TaskDef<Task> {
         return deployZipPath != null;
     }
 
-    public SymlinkRules getSymlinkRules() {
-        return symlinkRules;
+    public Symlinks getSymlinks() {
+        return symlinks;
     }
 
     public class DeployTask extends Task<TaskDef> {
@@ -179,7 +179,7 @@ public abstract class DeployStrategyTaskDef extends TaskDef<Task> {
         }
 
         @Override
-        protected final TaskResult exec(SessionTaskRunner runner) {
+        protected final TaskResult exec(SessionTaskRunner runner, Object input) {
             try {
                 Preconditions.checkNotNull(prepareRemoteDataBarrier, "prepareRemoteDataBarrier is null");
                 Preconditions.checkNotNull(updateRemoteFilesBarrier, "updateRemoteFilesBarrier is null");
@@ -212,21 +212,21 @@ public abstract class DeployStrategyTaskDef extends TaskDef<Task> {
             updateReleasesDirs();
 
             if(isCopyingZip()){
-                $.sys.upload($(bear.releasePath), new File(deployZipPath));
+                $.sys.upload($(getBear().releasePath), new File(deployZipPath));
             }
 
             step_30_copyFilesToHosts();
         }
 
         private void updateReleasesDirs() {
-            $.sys.mkdirs($(bear.releasePath));
-            int keepX = $(bear.keepXReleases);
+            $.sys.mkdirs($(getBear().releasePath));
+            int keepX = $(getBear().keepXReleases);
 
             if(keepX > 0){
-                final Releases releases = $(bear.getReleases);
+                final Releases releases = $(getBear().getReleases);
                 List<String> toDelete = releases.listToDelete(keepX);
 
-                $.sys.rmCd($(bear.releasesPath),
+                $.sys.rmCd($(getBear().releasesPath),
                     toDelete.toArray(new String[toDelete.size()]));
             }
         }
@@ -238,18 +238,18 @@ public abstract class DeployStrategyTaskDef extends TaskDef<Task> {
         private void _step_40_updateRemoteFiles(){
             if(isCopyingZip()){
                 $.sys.unzip(
-                    $.joinPath($(bear.releasePath), "deploy.zip"), null
+                    $.joinPath($(getBear().releasePath), "deploy.zip"), null
                 );
             }
 
             step_40_updateRemoteFiles();
 
-            logger.info("creating {} symlinks...", symlinkRules.entries.size());
+            logger.info("creating {} symlinks...", symlinks.entries.size());
 
-            for (SymlinkEntry entry : symlinkRules.entries) {
+            for (SymlinkEntry entry : symlinks.entries) {
                 String srcPath;
 
-                srcPath = $(BearVariables.joinPath("symlinkSrc", bear.currentPath, entry.sourcePath));
+                srcPath = $(BearVariables.joinPath("symlinkSrc", getBear().currentPath, entry.sourcePath));
 
                 $.sys.link(srcPath, $(entry.destPath), entry.owner);
             }
@@ -258,7 +258,7 @@ public abstract class DeployStrategyTaskDef extends TaskDef<Task> {
         }
 
         protected Result writeRevision(){
-            return $.sys.writeString($.joinPath(bear.releasePath, "REVISION"), $(bear.realRevision));
+            return $.sys.writeString($.joinPath(getBear().releasePath, "REVISION"), $(getBear().realRevision));
         }
     }
 }

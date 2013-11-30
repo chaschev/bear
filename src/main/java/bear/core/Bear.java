@@ -50,6 +50,7 @@ import java.util.List;
 import java.util.TimeZone;
 import java.util.regex.Pattern;
 
+import static bear.session.BearVariables.joinPath;
 import static bear.session.Variables.*;
 
 /**
@@ -63,22 +64,27 @@ public class Bear extends BearApp<GlobalContext> {
 
     }
 
+    public final DynamicVariable<Boolean>
+
+        isNativeUnix = dynamic(new Fun<Boolean, SessionContext>() {
+        public Boolean apply(SessionContext $) {
+            return $.sys.isNativeUnix();
+        }
+    }),
+        isUnix = dynamic(new Fun<Boolean, SessionContext>() {
+            public Boolean apply(SessionContext $) {
+                return $.sys.isUnix();
+            }
+        });
+
     public final DynamicVariable<String>
 
 
-    applicationsPath = strVar("System apps folder").setDynamic(new Fun<String, SessionContext>() {
-        public String apply(SessionContext $) {
-            return $.sys.isNativeUnix() ? "/var/lib" : "c:";
-        }
-    }),
+    applicationsPath = condition(isNativeUnix, newVar("/var/lib"), newVar("c:")),
 
-    bearPath = BearVariables.joinPath(applicationsPath, "bear"),
+    bearPath = joinPath(applicationsPath, "bear"),
 
-    logsPath = strVar("System apps folder").setDynamic(new Fun<String, SessionContext>() {
-        public String apply(SessionContext $) {
-            return $.sys.isNativeUnix() ? "/var/log" : "c:";
-        }
-    }),
+    logsPath = condition(isNativeUnix, newVar("/var/log"), newVar("c:")),
 
     taskName = strVar("A task to run").defaultTo("deploy");
 
@@ -91,7 +97,7 @@ public class Bear extends BearApp<GlobalContext> {
 
     public final DynamicVariable<String>
 
-        appLogsPath = BearVariables.joinPath(logsPath, name),
+        appLogsPath = joinPath(logsPath, name),
         sshUsername = dynamic(new VarFun<String, SessionContext>() {
             @Override
             public String apply(SessionContext $) {
@@ -129,7 +135,7 @@ public class Bear extends BearApp<GlobalContext> {
 
     deployScript = strVar("Script to use").defaultTo("CreateNewScript"),
 
-    deployTo = BearVariables.joinPath(applicationsPath, name).desc("Current release dir"),
+    deployTo = joinPath(applicationsPath, name).desc("Current release dir"),
 
     currentDirName = strVar("Current release dir").defaultTo("current"),
 
@@ -158,21 +164,25 @@ public class Bear extends BearApp<GlobalContext> {
         }
     }),
 
-    releasesPath = BearVariables.joinPath(deployTo, releasesDirName),
-        currentPath = BearVariables.joinPath(deployTo, currentDirName),
-        sharedPath = BearVariables.joinPath(bearPath, sharedDirName),
-        projectSharedPath = BearVariables.joinPath(deployTo, sharedDirName),
-        tempDirPath = BearVariables.joinPath(deployTo, "temp"),
+    releasesPath = joinPath(deployTo, releasesDirName),
+        currentPath = joinPath(deployTo, currentDirName),
+        sharedPath = joinPath(bearPath, sharedDirName),
+        projectSharedPath = joinPath(deployTo, sharedDirName),
+        tempDirPath = joinPath(deployTo, "temp"),
+        toolsDirPath = joinPath(sharedPath, "tools"),
+        downloadDirPath = BearVariables.joinPath(sharedPath, "downloads"),
 
-    releasePath = BearVariables.joinPath(releasesPath, releaseName),
 
-    vcsCheckoutPath = BearVariables.joinPath(projectSharedPath, "vcs"),
+
+    releasePath = joinPath(releasesPath, releaseName),
+
+    vcsCheckoutPath = joinPath(projectSharedPath, "vcs"),
 
     vcsBranchName = dynamic("Relative path of the branch to use"),
 
-    vcsBranchLocalPath = BearVariables.joinPath(vcsCheckoutPath, vcsBranchName),
+    vcsBranchLocalPath = joinPath(vcsCheckoutPath, vcsBranchName),
 
-    vcsBranchURI = BearVariables.joinPath(repositoryURI, vcsBranchName),
+    vcsBranchURI = joinPath(repositoryURI, vcsBranchName),
 
     getLatestReleasePath = dynamic(new Fun<String, SessionContext>() {
         public String apply(SessionContext $) {
@@ -222,16 +232,6 @@ public class Bear extends BearApp<GlobalContext> {
         isRemoteEnv = dynamic(new Fun<Boolean, SessionContext>() {
             public Boolean apply(SessionContext $) {
                 return $.sys.isRemote();
-            }
-        }),
-        isNativeUnix = dynamic(new Fun<Boolean, SessionContext>() {
-            public Boolean apply(SessionContext $) {
-                return $.sys.isNativeUnix();
-            }
-        }),
-        isUnix = dynamic(new Fun<Boolean, SessionContext>() {
-            public Boolean apply(SessionContext $) {
-                return $.sys.isUnix();
             }
         }),
         internalInteractiveRun = newVar(false),

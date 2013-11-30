@@ -19,6 +19,7 @@ package bear.session;
 import bear.context.AbstractContext;
 import bear.context.Fun;
 import bear.context.VarFun;
+import bear.core.SessionContext;
 import com.google.common.base.Function;
 import com.google.common.base.Functions;
 import com.google.common.base.Preconditions;
@@ -174,6 +175,28 @@ public class Variables {
         }
 
         return sb.toString();
+    }
+
+    public static DynamicVariable<String> format(final String s, final Object... varsAndStrings){
+        return dynamic(new Fun<String, SessionContext>() {
+            public String apply(SessionContext $) {
+                Object[] asStrings = new Object[varsAndStrings.length];
+
+                for (int i = 0; i < varsAndStrings.length; i++) {
+                    Object obj = varsAndStrings[i];
+                    if (obj instanceof CharSequence) {
+                        asStrings[i] = obj;
+                    } else if (obj instanceof DynamicVariable) {
+                        DynamicVariable var = (DynamicVariable) obj;
+                        asStrings[i] = $.var(var);
+                    } else {
+                        throw new IllegalStateException(obj + " of class " + obj.getClass().getSimpleName() + " is not supported");
+                    }
+                }
+
+                return String.format(s, asStrings);
+            }
+        });
     }
 
     @Deprecated

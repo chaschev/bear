@@ -45,6 +45,8 @@ db.migration  |      .  X
 
 - ui: stage/roles/hosts selection
 - ui: preload stages, hosts and roles
+- on release_roles :all do
+- TaskDef should hold a Type. So we could reference it as a phase
 
 
 - (ok, 2) send messages from plugins via uiLogger (sends to 'ui'), logger (sends to console)

@@ -22,7 +22,7 @@ public abstract class VCSSession extends Task<TaskDef> {
     }
 
     @Override
-    protected TaskResult exec(SessionTaskRunner runner) {
+    protected TaskResult exec(SessionTaskRunner runner, Object input) {
         throw new UnsupportedOperationException("VCS task cannot be run");
     }
 
@@ -86,7 +86,7 @@ public abstract class VCSSession extends Task<TaskDef> {
     public abstract String head();
 
     public ConsoleCallback passwordCallback() {
-        return SystemEnvironmentPlugin.println($.var(bear.vcsPassword));
+        return SystemEnvironmentPlugin.println($.var(getBear().vcsPassword));
     }
 
     public VCSScript<?> ls(String path) {
@@ -99,7 +99,7 @@ public abstract class VCSSession extends Task<TaskDef> {
     }
 
     public  <R extends CommandLineResult> VCSScript<R> newVCSScript() {
-        return new VCSScript<R>($.sys, this).cd($.var(bear.vcsBranchLocalPath));
+        return new VCSScript<R>($.sys, this).cd($.var(getBear().vcsBranchLocalPath));
     }
 
     public  <R extends CommandLineResult> VCSScript<R> newVCSScript(CommandLine<R, VCSScript<R>> line) {

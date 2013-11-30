@@ -52,8 +52,8 @@ public abstract class ZippedToolPlugin extends Plugin<Task, TaskDef<?>> {
         toolDistrName = Variables.strVar("i.e. apache-tomcat").setEqualTo(toolname),
         versionName = concat(toolDistrName, "-", version).desc("i.e. apache-maven-3.0.5"),
         distrFilename = concat(versionName, ".tar.gz"),
-        homeParentPath = Variables.newVar("/var/lib"),
-        homePath = concat(homeParentPath, "/", toolname).desc("Tool root dir"),
+        homeParentPath = concat("/var/lib/", toolname),
+        homePath = concat(homeParentPath, "/", version).desc("Tool root dir"),
         homeVersionPath = concat(homeParentPath, "/", versionName).desc("i.e. /var/lib/apache-maven-7.0.42"),
         currentVersionPath = concat(homeParentPath, "/", versionName),
 
@@ -64,7 +64,7 @@ public abstract class ZippedToolPlugin extends Plugin<Task, TaskDef<?>> {
 
     public ZippedToolPlugin(GlobalContext global) {
         super(global);
-        myDirPath = concat(bear.sharedPath, "/", toolname).desc("a path in a shared dir, i.e. /var/lib/<app-name>/shared/maven");
+        myDirPath = concat(bear.toolsDirPath, toolname).desc("a path in a shared dir, i.e. /var/lib/<app-name>/shared/maven");
         buildPath = concat(myDirPath, "/build");
     }
 
@@ -82,7 +82,7 @@ public abstract class ZippedToolPlugin extends Plugin<Task, TaskDef<?>> {
         }
 
         @Override
-        protected DependencyResult exec(SessionTaskRunner runner) {
+        protected DependencyResult exec(SessionTaskRunner runner, Object input) {
             throw new UnsupportedOperationException("todo implement!");
         }
 

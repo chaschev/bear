@@ -101,8 +101,9 @@ public class GroovyShellMode extends PluginShellMode<GroovyShellPlugin> implemen
     public Task interpret(final String command, SessionContext $, final Task _parent, final TaskDef taskDef) {
         Task<TaskDef> task = new Task<TaskDef>(_parent, taskDef, $) {
             @Override
-            protected TaskResult exec(final SessionTaskRunner runner) {
+            protected TaskResult exec(final SessionTaskRunner runner, Object input) {
                 Runnable runnable = null;
+                final Task<TaskDef> $this = this;
                 try {
                     runnable = new CatchyRunnable(new Runnable() {
                         public void run() {
@@ -114,6 +115,7 @@ public class GroovyShellMode extends PluginShellMode<GroovyShellPlugin> implemen
                                     Script script = (Script) aScript;
                                     script.setParent(_parent);
                                     $.wire(script);
+                                    script.task = $this;
                                     script.configure();
                                     script.global = global;
                                     script.run();
@@ -168,13 +170,13 @@ public class GroovyShellMode extends PluginShellMode<GroovyShellPlugin> implemen
                     $binding = new Binding();
                     $binding.setVariable("_", $);
                     $binding.setVariable("sys", $.sys);
-                    $binding.setVariable("parent", parent);
+                    $binding.setVariable("parent", getParent());
                     $binding.setVariable("bear", bear);
                     $binding.setVariable("global", global);
                     $binding.setVariable("tasks", global.tasks);
                     $binding.setVariable("taskDef", taskDef);
                     $binding.setVariable("runner", runner);
-                    $binding.setVariable("executionContext", executionContext);
+                    $binding.setVariable("executionContext", getExecutionContext());
                     $binding.setVariable("task", this);
                     $binding.setVariable("_command", command);
                 }

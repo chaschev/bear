@@ -50,6 +50,7 @@ public class Script {
     public final String id = SessionContext.randomId();
 
     protected Task parent;
+    public Task task;
 
     public void configure() throws Exception {};
 

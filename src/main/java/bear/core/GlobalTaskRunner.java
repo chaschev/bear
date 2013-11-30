@@ -32,6 +32,7 @@ public class GlobalTaskRunner {
     private static final Logger logger = LoggerFactory.getLogger(GlobalTaskRunner.class);
 
     private final Bear bear;
+    private final IBearSettings bearSettings;
 
     List<TaskDef<Task>> taskDefs;
     private final List<SessionContext> $s;
@@ -44,11 +45,12 @@ public class GlobalTaskRunner {
     public final DynamicVariable<Stats> stats;
     public final DynamicVariable<AtomicInteger> arrivedCount = Variables.newVar(new AtomicInteger(0));
 
-    public GlobalTaskRunner(final GlobalContext global, List<TaskDef<Task>> taskDefs, final List<SessionContext> $s, final BearScript2.ShellSessionContext shellContext) {
+    public GlobalTaskRunner(final GlobalContext global, List<TaskDef<Task>> taskDefs, final PreparationResult preparationResult, final BearScript2.ShellSessionContext shellContext) {
         this.global = global;
         this.bear = global.bear;
         this.taskDefs = taskDefs;
-        this.$s = $s;
+        this.$s = preparationResult.getSessions();
+        this.bearSettings = preparationResult.bearSettings;
 
         stats = Variables.dynamic(Stats.class)
             .defaultTo(new Stats($s.size(), TaskDef.EMPTY));
@@ -81,7 +83,9 @@ public class GlobalTaskRunner {
                                             r.join(plugin.checkPluginDependencies());
 
                                             if (!taskDef.isSetupTask()) {
-                                                Dependency dependency = plugin.getInstall().createNewSession($, $.currentTask)
+                                                Dependency dependency = plugin.getInstall()
+                                                    .singleTask()
+                                                    .createNewSession($, $.currentTask)
                                                     .asInstalledDependency();
 
                                                 result = $.runner.runSession(dependency);
@@ -98,13 +102,13 @@ public class GlobalTaskRunner {
                                     $.runner.taskPreRun = new Function<Task<TaskDef>, Task<TaskDef>>() {
                                         @Override
                                         public Task<TaskDef> apply(Task<TaskDef> task) {
-                                            task.init(phase, party, party.grid);
+                                            task.init(phase, party, party.grid, GlobalTaskRunner.this);
 
                                             return task;
                                         }
                                     };
 
-                                    result = $.runner.run(taskDef);
+                                    result = $.run(taskDef);
 
                                     if (!result.ok()) {
                                         throw PartyResultException.create(result, party, phase.getName());
@@ -192,7 +196,7 @@ public class GlobalTaskRunner {
         return new GroupDivider<SessionContext>($s, Stage.SESSION_ID, new Function<SessionContext, String>() {
             public String apply(SessionContext $) {
                 DynamicVariable<Task> task = $.getExecutionContext().currentTask;
-                return task.isUndefined() ? null : task.getDefaultValue().id;
+                return task.isUndefined() ? null : task.getDefaultValue().getId();
             }
         }, new Function<SessionContext, String>() {
             @Override
@@ -265,4 +269,7 @@ public class GlobalTaskRunner {
         return startedAtMs;
     }
 
+    public IBearSettings getBearSettings() {
+        return bearSettings;
+    }
 }
