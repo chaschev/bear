@@ -20,6 +20,7 @@ import bear.context.Var;
 import bear.core.*;
 import bear.task.SessionTaskRunner;
 import bear.task.Task;
+import bear.task.TaskResult;
 import org.apache.logging.log4j.LogManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -63,8 +64,8 @@ public class Script {
         configure();
     }
 
-    public void run(){
-
+    public TaskResult run(){
+        return TaskResult.OK;
     }
 
     public void setParent(Task parent) {

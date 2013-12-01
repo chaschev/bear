@@ -4,6 +4,7 @@ import bear.plugins.maven.MavenPlugin;
 import bear.plugins.mongo.MongoDbPlugin;
 import bear.plugins.mysql.MySqlPlugin;
 import bear.plugins.play.PlayPlugin;
+import bear.session.BearVariables;
 import bear.strategy.DeploymentBuilder;
 import bear.task.Task;
 import bear.task.TaskCallable;
@@ -66,14 +67,14 @@ public class SecureSocialDemoSettings extends IBearSettings {
 
         maven.version.set("3.0.5");
 
-//        mongo.version.set("LATEST");
-
         java.versionName.set("jdk-7u40-linux-x64");
         java.version.set("1.7.0_40");
 
         play.version.set("2.2.1");
 
         bear.vcsBranchName.defaultTo("master");
+
+        play.projectPath.setEqualTo(BearVariables.joinPath(bear.vcsBranchLocalPath, "samples/java/db-demo"));
 
         Stages stages = new Stages(global);
 

@@ -7,7 +7,6 @@ import bear.core.SessionContext;
 import bear.main.phaser.ComputingGrid;
 import bear.main.phaser.Phase;
 import bear.main.phaser.PhaseParty;
-import bear.task.exec.TaskExecutionContext;
 
 import javax.annotation.Nullable;
 
@@ -26,6 +25,7 @@ public class TaskContext<TASK_DEF extends TaskDef> {
     Phase<?, BearScriptPhase> phase;
     Bear bear;
     PhaseParty<SessionContext, BearScriptPhase> phaseParty;
+
     TaskExecutionContext executionContext;
     GlobalTaskRunner globalRunner;
 

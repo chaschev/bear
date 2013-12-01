@@ -18,7 +18,6 @@ package bear.session;
 
 import bear.context.AbstractContext;
 import bear.context.Fun;
-import bear.context.VarFun;
 import bear.core.SessionContext;
 import com.google.common.base.Function;
 import com.google.common.base.Functions;
@@ -163,15 +162,8 @@ public class Variables {
     public static String concat(AbstractContext $, Object... varsAndStrings) {
         StringBuilder sb = new StringBuilder(128);
 
-        for (Object obj : varsAndStrings) {
-            if (obj instanceof CharSequence) {
-                sb.append(obj);
-            } else if (obj instanceof DynamicVariable) {
-                DynamicVariable var = (DynamicVariable) obj;
-                sb.append($.var(var));
-            } else {
-                throw new IllegalStateException(obj + " of class " + obj.getClass().getSimpleName() + " is not supported");
-            }
+        for (Object o : resolveVars($, varsAndStrings)) {
+            sb.append(o);
         }
 
         return sb.toString();
@@ -180,42 +172,26 @@ public class Variables {
     public static DynamicVariable<String> format(final String s, final Object... varsAndStrings){
         return dynamic(new Fun<String, SessionContext>() {
             public String apply(SessionContext $) {
-                Object[] asStrings = new Object[varsAndStrings.length];
-
-                for (int i = 0; i < varsAndStrings.length; i++) {
-                    Object obj = varsAndStrings[i];
-                    if (obj instanceof CharSequence) {
-                        asStrings[i] = obj;
-                    } else if (obj instanceof DynamicVariable) {
-                        DynamicVariable var = (DynamicVariable) obj;
-                        asStrings[i] = $.var(var);
-                    } else {
-                        throw new IllegalStateException(obj + " of class " + obj.getClass().getSimpleName() + " is not supported");
-                    }
-                }
-
-                return String.format(s, asStrings);
+                return String.format(s, resolveVars($, varsAndStrings));
             }
         });
     }
 
-    @Deprecated
-    public static <T> DynamicVariable<T> dynamicNotSet() {
-        return dynamicNotSet(null, "");
-    }
+    public static Object[] resolveVars(AbstractContext $, Object... varsAndStrings) {
+        Object[] resolved = new Object[varsAndStrings.length];
 
-    @Deprecated
-    public static <T> DynamicVariable<T> dynamicNotSet(String desc) {
-        return dynamicNotSet(null, desc);
-    }
+        for (int i = 0; i < varsAndStrings.length; i++) {
+            Object obj = varsAndStrings[i];
 
-    @Deprecated
-    public static <T> DynamicVariable<T> dynamicNotSet(final String name, String desc) {
-        return dynamic(name, desc, new VarFun<T, AbstractContext>() {
-            public T apply(AbstractContext $) {
-                throw new VarNotSetException(var);
+            if (obj instanceof DynamicVariable) {
+                DynamicVariable var = (DynamicVariable) obj;
+                resolved[i] = $.var(var);
+            }else{
+                resolved[i] = obj;
             }
-        });
+        }
+
+        return resolved;
     }
 
     public static <T> DynamicVariable<T> newVar(T _default) {

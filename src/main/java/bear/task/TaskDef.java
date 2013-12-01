@@ -68,7 +68,9 @@ public abstract class TaskDef<TASK extends Task> {
 
         TASK task = newSession($, parent);
 
-        return $.wire(task);
+        task.wire($);
+
+        return task;
     }
 
     private List<TASK> createNewSessions(SessionContext $, final Task parent){
@@ -77,7 +79,7 @@ public abstract class TaskDef<TASK extends Task> {
         List<TASK> tasks = newSessions($, parent);
 
         for (TASK task : tasks) {
-            $.wire(task);
+            task.wire($);
         }
 
         return tasks;

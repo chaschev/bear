@@ -14,10 +14,9 @@
  * limitations under the License.
  */
 
-package bear.task.exec;
+package bear.task;
 
 import bear.session.Result;
-import bear.task.TaskResult;
 import org.joda.time.DateTime;
 
 /**

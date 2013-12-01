@@ -2,15 +2,13 @@ import bear.core.IBearSettings
 import bear.core.SessionContext
 import bear.task.Task
 import bear.task.TaskDef
-import bear.vcs.GitCLIPlugin
+import bear.task.TaskResult
 
 class SSDeployDemoScript extends bear.main.Script {
-    GitCLIPlugin gitPlugin;
-
     SessionContext _
 
     @Override
-    void run()
+    TaskResult run()
     {
         _.putConst(bear.repositoryURI, 'git@github.com:chaschev/securesocial.git')
         _.putConst(bear.vcsBranchName, 'master')
@@ -23,7 +21,7 @@ class SSDeployDemoScript extends bear.main.Script {
 
         println "task:" + task
 
-        _.run(task)
+        return _.run(task)
 
 //        logger.info("git: {}", gitPlugin)
 //        def git = gitPlugin.newSession(_, parent)

@@ -23,15 +23,13 @@ import bear.core.SessionContext;
 import bear.plugins.java.JavaPlugin;
 import bear.plugins.sh.SystemEnvironmentPlugin;
 import bear.session.DynamicVariable;
-import bear.session.Variables;
 import bear.task.*;
 import bear.vcs.CommandLineResult;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
 import org.apache.commons.lang3.StringUtils;
 
-import static bear.session.Variables.concat;
-import static bear.session.Variables.dynamic;
+import static bear.session.Variables.*;
 import static chaschev.lang.Predicates2.contains;
 import static com.google.common.base.Predicates.or;
 import static com.google.common.base.Splitter.on;
@@ -49,12 +47,12 @@ public abstract class ZippedToolPlugin extends Plugin<Task, TaskDef<?>> {
     public final DynamicVariable<String>
         version = dynamic("version of the tool, a string which is return by a tool identifying it's version"),
         toolname = dynamic("this will be the name of home folder, i.e. maven, jdk"),
-        toolDistrName = Variables.strVar("i.e. apache-tomcat").setEqualTo(toolname),
+        toolDistrName = strVar("i.e. apache-tomcat").setEqualTo(toolname),
         versionName = concat(toolDistrName, "-", version).desc("i.e. apache-maven-3.0.5"),
         distrFilename = concat(versionName, ".tar.gz"),
-        homeParentPath = concat("/var/lib/", toolname),
+        homeParentPath = concat(bear.toolsInstallDirPath, "/", toolname),
         homePath = concat(homeParentPath, "/", version).desc("Tool root dir"),
-        homeVersionPath = concat(homeParentPath, "/", versionName).desc("i.e. /var/lib/apache-maven-7.0.42"),
+        homeVersionPath = equalTo(homePath),
         currentVersionPath = concat(homeParentPath, "/", versionName),
 
         myDirPath,
@@ -64,7 +62,8 @@ public abstract class ZippedToolPlugin extends Plugin<Task, TaskDef<?>> {
 
     public ZippedToolPlugin(GlobalContext global) {
         super(global);
-        myDirPath = concat(bear.toolsDirPath, toolname).desc("a path in a shared dir, i.e. /var/lib/<app-name>/shared/maven");
+
+        myDirPath = concat(bear.toolsSharedDirPath, "/", toolname).desc("a path in a shared dir, i.e. /var/lib/<app-name>/shared/maven");
         buildPath = concat(myDirPath, "/build");
     }
 

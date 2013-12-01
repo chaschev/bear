@@ -17,6 +17,7 @@
 package bear.task;
 
 import bear.console.AbstractConsoleCommand;
+import bear.context.AbstractContext;
 import bear.context.HavingContext;
 import bear.core.Bear;
 import bear.core.BearScriptPhase;
@@ -25,10 +26,15 @@ import bear.core.SessionContext;
 import bear.main.phaser.ComputingGrid;
 import bear.main.phaser.Phase;
 import bear.main.phaser.PhaseParty;
-import bear.task.exec.TaskExecutionContext;
 import bear.vcs.CommandLineResult;
+import com.google.common.util.concurrent.ListenableFuture;
 
 import javax.annotation.Nullable;
+import java.util.List;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 /**
  * @author Andrey Chaschev chaschev@gmail.com
@@ -46,6 +52,8 @@ public class Task<TASK_DEF extends TaskDef> extends HavingContext<Task<TaskDef>,
         taskContext.me = this;
         this.taskContext = taskContext;
         this.taskCallable = taskCallable;
+
+        setExecutionContext(new TaskExecutionContext($, this));
     }
 
     public Task(Task parent, TaskCallable taskCallable) {
@@ -53,6 +61,8 @@ public class Task<TASK_DEF extends TaskDef> extends HavingContext<Task<TaskDef>,
 
         this.taskContext = parent.taskContext.dup(this, null, parent);
         this.taskCallable = taskCallable;
+
+        setExecutionContext(new TaskExecutionContext($, this));
     }
 
     public Task(Task parent, TASK_DEF definition, SessionContext $) {
@@ -60,15 +70,15 @@ public class Task<TASK_DEF extends TaskDef> extends HavingContext<Task<TaskDef>,
 
         this.taskContext = new TaskContext<TASK_DEF>(this, parent, $, definition);
 
-        setExecutionContext(new TaskExecutionContext($));
+        setExecutionContext(new TaskExecutionContext($, this));
     }
 
-    public TaskResult run(SessionTaskRunner runner, Object input){
-        if(getParent() != null){
-            getParent().getExecutionContext().onNewSubTask(this);
+    public TaskResult run(SessionTaskRunner runner, Object input) {
+        if (getParent() != null) {
+            getParent().getExecutionContext().addNewSubTask(this);
         }
 
-        TaskResult result;
+        TaskResult result = null;
 
         try {
             if (taskCallable == null) {
@@ -78,15 +88,19 @@ public class Task<TASK_DEF extends TaskDef> extends HavingContext<Task<TaskDef>,
             }
         } catch (Exception e) {
             result = new TaskResult(e);
-        }
+        } finally {
+            getExecutionContext().taskResult = result;
 
-        getExecutionContext().taskResult = result;
-
-        if(getParent() != null){
-            getParent().getExecutionContext().onEndSubTask(this, result);
+            if (getParent() != null) {
+                getParent().getExecutionContext().onEndSubTask(this, result);
+            }
         }
 
         return result;
+    }
+
+    ExecutionEntry getExecutionEntry() {
+        return taskContext.executionContext.selfEntry;
     }
 
     protected TaskResult exec(SessionTaskRunner runner, Object input) {
@@ -104,7 +118,7 @@ public class Task<TASK_DEF extends TaskDef> extends HavingContext<Task<TaskDef>,
         return NOP_TASK;
     }
 
-    public Dependencies getDependencies(){
+    public Dependencies getDependencies() {
         return dependencies;
     }
 
@@ -125,7 +139,7 @@ public class Task<TASK_DEF extends TaskDef> extends HavingContext<Task<TaskDef>,
     }
 
     public <T extends CommandLineResult> void onCommandExecutionStart(AbstractConsoleCommand<T> command) {
-        getExecutionContext().onNewCommand(command);
+        getExecutionContext().addNewCommand(command);
     }
 
     public <T extends CommandLineResult> void onCommandExecutionEnd(AbstractConsoleCommand<T> command, T result) {
@@ -142,7 +156,7 @@ public class Task<TASK_DEF extends TaskDef> extends HavingContext<Task<TaskDef>,
         return this;
     }
 
-    public boolean isRootTask(){
+    public boolean isRootTask() {
         return getParent() == null;
     }
 
@@ -155,7 +169,7 @@ public class Task<TASK_DEF extends TaskDef> extends HavingContext<Task<TaskDef>,
         PhaseParty<SessionContext, BearScriptPhase> party, ComputingGrid<SessionContext, ?> grid, GlobalTaskRunner globalTaskRunner) {
         taskContext.phase = phase;
         taskContext.phaseParty = party;
-        taskContext.grid = (ComputingGrid)party.grid;
+        taskContext.grid = (ComputingGrid) party.grid;
         taskContext.globalRunner = globalTaskRunner;
     }
 
@@ -217,5 +231,55 @@ public class Task<TASK_DEF extends TaskDef> extends HavingContext<Task<TaskDef>,
 
     public GlobalTaskRunner getGlobalRunner() {
         return taskContext.globalRunner;
+    }
+
+    public <T> ListenableFuture<T> callOnce(Callable<T> callable) {
+        return getPhase().callOnce(callable);
+    }
+
+    public <T> Phase<T, BearScriptPhase> getRelativePhase(int offset, Class<T> tClass) {
+        return getPhase().getRelativePhase(offset, tClass);
+    }
+
+    public <T> List<ListenableFuture<T>> getRelativeFutures(int offset, Class<T> tClass) {
+        return getGrid().phaseFutures(getPhase().getRowIndex() + offset, tClass);
+    }
+
+    public <T> ListenableFuture<List<T>> aggregateRelatively(int offset, Class<T> tClass) {
+        return getGrid().aggregateSuccessful(getPhase().getRowIndex() + offset, tClass);
+    }
+
+    public void awaitOthers(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
+        aggregateRelatively(-1, Object.class).get(timeout, unit);
+    }
+
+    public static TaskCallable<TaskDef> awaitOthersCallable(final long timeout, final TimeUnit unit) {
+        return new TaskCallable<TaskDef>() {
+            @Override
+            public TaskResult call(SessionContext $, Task<TaskDef> task, Object input) throws Exception {
+                try {
+                    task.awaitOthers(timeout, unit);
+                    return TaskResult.OK;
+                } catch (TimeoutException e) {
+                    throw new RuntimeException("timeout while waiting for parties at task " + task);
+                }
+            }
+        };
+    }
+
+    public Task<TASK_DEF> wire(AbstractContext $) {
+        $.wire(taskContext);
+        return this;
+    }
+
+    @Nullable
+    TaskExecutionEntry getParentEntry(){
+        Task<TaskDef> parent = getParent();
+
+        if(parent != null){
+            return parent.getExecutionContext().getExecutionEntry();
+        }
+
+        return null;
     }
 }

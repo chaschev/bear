@@ -67,7 +67,8 @@ public class Tasks {
                         $(bear.deployTo), $(bear.releasesPath), $(bear.vcsCheckoutPath),
                         $(bear.bearPath),
                         $(bear.sharedPath), $(bear.tempDirPath), $(bear.projectSharedPath),
-                        $(bear.appLogsPath), $(bear.downloadDirPath)
+                        $(bear.appLogsPath), $(bear.downloadDirPath),
+                        $(bear.toolsInstallDirPath)
                     };
 
                     $.sys.sudo().mkdirs(dirs);
@@ -83,7 +84,9 @@ public class Tasks {
                     }
 
                     if ($(bear.autoInstallPlugins) || $(bear.verifyPlugins)) {
-                        for (Plugin<Task, ? extends TaskDef> plugin : global.getGlobalPlugins()) {
+                        Iterable<Plugin> plugins = global.getGlobalPlugins();
+
+                        for (Plugin<Task, ? extends TaskDef> plugin : plugins) {
                             if (plugin.getInstall().singleTask().createNewSession($, getParent()).asInstalledDependency().checkDeps().nok()) {
                                 if ($(bear.autoInstallPlugins)) {
                                     $.log("plugin %s was not installed. installing it...", plugin);
@@ -192,4 +195,19 @@ public class Tasks {
             };
         }
     };
+
+    public static TaskCallable<TaskDef> andThen(final TaskCallable<TaskDef>... callables){
+        return new TaskCallable<TaskDef>() {
+            @Override
+            public TaskResult call(SessionContext $, Task<TaskDef> task, Object input) throws Exception {
+                TaskResult lastResult = null;
+
+                for (TaskCallable<TaskDef> callable : callables) {
+                    lastResult = callable.call($, task, input);
+                }
+
+                return lastResult;
+            }
+        };
+    }
 }

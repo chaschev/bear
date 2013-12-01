@@ -272,22 +272,16 @@ public abstract class SystemSession extends Task<SystemEnvironmentPlugin.SystemS
         return this;
     }
 
-    public DynamicVariable joinPath(final DynamicVariable... vars) {
-        final List<DynamicVariable> fromIterable = Arrays.asList(vars);
-
-        return null;
-    }
-
     public String diskRoot() {
         return isUnix() ? "" : "c:";
     }
 
-    public String joinPath(String... strings) {
-        return joinPath(Arrays.asList(strings));
+    public String joinPath(Object... varsAndObjects) {
+        return Joiner.on(dirSeparator()).join(Variables.resolveVars($, varsAndObjects));
     }
 
-    public String joinPath(Iterable<String> strings) {
-        return Joiner.on(dirSeparator()).join(strings);
+    public String joinPath(Iterable<?> varsAndObjects) {
+        return joinPath(Iterables.toArray(varsAndObjects, Object.class));
     }
 
     public char dirSeparator() {

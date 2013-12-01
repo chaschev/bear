@@ -18,7 +18,6 @@ package bear.cli;
 
 import bear.console.AbstractConsoleCommand;
 import bear.core.SessionContext;
-import bear.session.Result;
 import bear.plugins.sh.SystemSession;
 import bear.task.BearException;
 import bear.vcs.CommandLineResult;
@@ -91,13 +90,7 @@ public abstract class CommandLine<T extends CommandLineResult, SCRIPT extends Sc
     }
 
     public T parseResult(SessionContext $, String text) {
-        if (parser != null) {
-            final T obj = parser.apply(text);
-            obj.text = text;
-            return obj;
-        }
-
-        return (T) new CommandLineResult(text, Result.OK).validate($);
+        return (T) Script.parseWithParser(parser, text, $);
     }
 
     public CommandLine<T, SCRIPT> setParser(Function<String, T> parser) {

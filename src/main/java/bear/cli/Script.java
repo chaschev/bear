@@ -90,13 +90,20 @@ public class Script <T extends CommandLineResult, CHILD extends Script>{
     }
 
     public T parseResult(String text, SessionContext $) {
+        return (T) parseWithParser(parser, text, $);
+    }
+
+    static CommandLineResult parseWithParser(Function<String, ? extends CommandLineResult> parser, String text, SessionContext $) {
+        final CommandLineResult obj;
+
         if (parser != null) {
-            final T obj = parser.apply(text);
+            obj = parser.apply(text);
             obj.text = text;
-            return obj;
+        }else{
+            obj = new CommandLineResult(text, Result.OK);
         }
 
-        return (T) new CommandLineResult(text, Result.OK).validate($);
+        return obj.validate($);
     }
 
     public CHILD timeoutMin(int min) {

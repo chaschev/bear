@@ -60,7 +60,7 @@ public class SessionTaskRunner extends HavingContext<SessionTaskRunner, SessionC
         for (TaskDef task : tasks) {
             final TaskResult result = runWithDependencies(task);
 
-            if (result != TaskResult.OK) {
+            if (!result.ok()) {
                 return result;
             }
         }
@@ -120,7 +120,6 @@ public class SessionTaskRunner extends HavingContext<SessionTaskRunner, SessionC
                 result = runWithDependencies(taskDef);
             } else {
                 List<Task> tasks = taskDef.createNewSessionsAsList($, $.getCurrentTask());
-
 
                 for (Task taskSession : tasks) {
                     if(taskPreRun != null){

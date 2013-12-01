@@ -3,7 +3,6 @@ package bear.plugins;
 import bear.core.Bear;
 import bear.core.GlobalContext;
 import bear.core.SessionContext;
-import bear.main.phaser.OnceEnteredCallable;
 import bear.session.DynamicVariable;
 import bear.session.Result;
 import bear.session.Variables;
@@ -122,15 +121,13 @@ public class DownloadPlugin extends Plugin{
         @Override
         protected Task newSession(SessionContext $, Task parent) {
             return new Task(parent, new TaskCallable<TaskDef>() {
-                final OnceEnteredCallable<PartyWithFileResult> once = new OnceEnteredCallable<PartyWithFileResult>();
-
                 @Override
                 public TaskResult call(final SessionContext $, final Task<TaskDef> task, final Object input) throws Exception {
                     final ImmutableList<SessionContext> parties = task.getGrid().parties();
 
                     final DownloadSupplier downloadSupplier = (DownloadSupplier) input;
 
-                    ListenableFuture<PartyWithFileResult> future = once.runOnce(new Callable<PartyWithFileResult>() {
+                    ListenableFuture<PartyWithFileResult> future = task.callOnce(new Callable<PartyWithFileResult>() {
                         @Override
                         public PartyWithFileResult call() throws Exception {
                             int i;

@@ -14,11 +14,9 @@
  * limitations under the License.
  */
 
-package bear.task.exec;
+package bear.task;
 
 import bear.session.Result;
-import bear.task.Task;
-import bear.task.TaskDef;
 
 /**
 * @author Andrey Chaschev chaschev@gmail.com

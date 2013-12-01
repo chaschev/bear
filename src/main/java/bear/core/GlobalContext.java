@@ -30,9 +30,6 @@ import bear.task.SessionTaskRunner;
 import bear.task.Task;
 import bear.task.TaskDef;
 import bear.task.Tasks;
-import com.google.common.base.Predicates;
-import com.google.common.collect.Collections2;
-import com.google.common.collect.Iterables;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.ListeningScheduledExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
@@ -140,11 +137,11 @@ public class GlobalContext extends AppGlobalContext<GlobalContext, Bear> {
     }
 
     public Collection<Class<? extends Plugin>> getPluginClasses() {
-        return (Collection) Collections2.filter(plugins.pluginMap.keySet(), Predicates.instanceOf(Class.class));
+        return plugins.pluginMap.keySet();
     }
 
-    public Iterable<Plugin> getGlobalPlugins() {
-        return Iterables.filter(plugins.pluginMap.values(), Predicates.notNull());
+    public Collection<Plugin> getGlobalPlugins() {
+        return plugins.pluginMap.values();
     }
 
     public static GlobalContext getInstance() {
@@ -169,4 +166,7 @@ public class GlobalContext extends AppGlobalContext<GlobalContext, Bear> {
         return this;
     }
 
+    public static GlobalContext newForTests(){
+        return new GlobalContext();
+    }
 }

@@ -21,6 +21,7 @@ import bear.context.Fun;
 import bear.core.*;
 import bear.main.event.LogEventToUI;
 import bear.main.event.NoticeEventToUI;
+import bear.main.phaser.SettableFuture;
 import bear.plugins.CommandInterpreter;
 import bear.plugins.Plugin;
 import bear.plugins.PomPlugin;
@@ -55,6 +56,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.Callable;
+import java.util.concurrent.Future;
 
 import static chaschev.lang.Maps2.newHashMap;
 import static com.google.common.collect.Lists.transform;
@@ -205,6 +207,23 @@ public class FXConf extends Cli {
 
     public void evaluateInFX(Runnable runnable) {
         bearFX.bearFXApp.runLater(runnable);
+    }
+
+    public <V> Future<V> evaluateInFX(final Callable<V> callable) {
+        final SettableFuture<V> future = new SettableFuture<V>();
+
+        bearFX.bearFXApp.runLater(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    future.set(callable.call());
+                } catch (Exception e) {
+                    future.setException(e);
+                }
+            }
+        });
+
+        return future;
     }
 
     public FileResponse getPropertyAsFile(String property) {

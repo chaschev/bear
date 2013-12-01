@@ -14,11 +14,10 @@
  * limitations under the License.
  */
 
-package bear.task.exec;
+package bear.task;
 
 import bear.console.AbstractConsoleCommand;
 import bear.session.Result;
-import bear.task.TaskResult;
 import bear.vcs.CommandLineResult;
 
 /**

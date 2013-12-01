@@ -57,7 +57,7 @@ public class JavaCompiler2 extends Compiler {
         final List<File> filesList = compileScripts(sourcesDir);
 
         try {
-            classLoader = new URLClassLoader(new URL[]{buildDir.toURI().toURL()});
+            classLoader = new URLClassLoader(new URL[]{buildDir.toURI().toURL()}, getClass().getClassLoader());
         } catch (MalformedURLException e) {
             throw Exceptions.runtime(e);
         }

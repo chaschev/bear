@@ -5,9 +5,11 @@ import chaschev.lang.reflect.MethodDesc;
 import com.google.common.base.Function;
 import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
+import com.google.common.util.concurrent.ListenableFuture;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.Callable;
 
 import static chaschev.lang.OpenBean.getMethod;
 
@@ -21,6 +23,10 @@ public class Phase<V, PHASE> {
     final List<? extends PhaseCallable<?, V, PHASE>> parties = new ArrayList();
 
     PHASE phase;
+
+    ComputingGrid<?, PHASE> grid;
+
+    OnceEnteredCallable<?> once;
 
     public Phase(List<? extends PhaseCallable<?, V, PHASE>> parties) {
         this.parties.addAll((List)parties);
@@ -64,5 +70,25 @@ public class Phase<V, PHASE> {
 
     public String getName() {
         return name;
+    }
+
+    public synchronized <T> OnceEnteredCallable<T> getOnce(){
+        if (once == null){
+            once = new OnceEnteredCallable<Object>();
+        }
+
+        return (OnceEnteredCallable<T>) once;
+    }
+
+    public <T> ListenableFuture<T> callOnce(Callable<T> callable){
+        return (ListenableFuture<T>) getOnce().runOnce((Callable)callable);
+    }
+
+    public int getRowIndex() {
+        return rowIndex;
+    }
+
+    public <T> Phase<T, PHASE> getRelativePhase(int offset, Class<T> tClass){
+        return (Phase<T, PHASE>) grid.phases.get(rowIndex + offset);
     }
 }

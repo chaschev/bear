@@ -1,12 +1,13 @@
 package bear.strategy;
 
 import bear.core.SessionContext;
-import bear.task.Task;
-import bear.task.TaskCallable;
-import bear.task.TaskDef;
-import bear.task.TaskResult;
+import bear.task.*;
+import com.google.common.base.Preconditions;
 
 import javax.annotation.Nullable;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author Andrey Chaschev chaschev@gmail.com
@@ -18,10 +19,16 @@ public class DeploymentBuilder {
     protected final WaitForPartiesBeforeRestart waitForPartiesBeforeRestart = new WaitForPartiesBeforeRestart();
     protected final StopService stopService = new StopService();
     protected final UpdateLinks updateLinks = new UpdateLinks();
-    protected final WaitForServiceToStop waitForServiceToStop = new WaitForServiceToStop();
+    protected final AwaitServiceToStop awaitServiceToStop = new AwaitServiceToStop();
     protected final StartService startService = new StartService();
-    protected final WaitForServiceToStart waitForServiceToStart = new WaitForServiceToStart();
+    protected final AwaitServiceToStart awaitServiceToStart = new AwaitServiceToStart();
     protected final WhenStarted whenStarted = new WhenStarted();
+
+    protected final DeploymentStep[] deploymentSteps = new DeploymentStep[]{
+        setFilesLocation, checkoutFiles, buildAndCopy, waitForPartiesBeforeRestart,
+        stopService, updateLinks, awaitServiceToStop, startService, awaitServiceToStart,
+        whenStarted
+    };
 
     public abstract class DeploymentStep<SELF extends DeploymentStep> extends TaskDef<Task> {
         @Nullable
@@ -101,6 +108,9 @@ public class DeploymentBuilder {
         boolean waitForParties;
         boolean failIfAnyoneFailed;
 
+        long timeout = 1;
+        TimeUnit timeUnit = TimeUnit.MINUTES;
+
         public StopService $5_StopService() {
             return stopService;
         }
@@ -111,8 +121,8 @@ public class DeploymentBuilder {
             return updateLinks;
         }
 
-        public WaitForServiceToStop $7_WaitForServiceToStop() {
-            return waitForServiceToStop;
+        public AwaitServiceToStop $7_WaitForServiceToStop() {
+            return awaitServiceToStop;
         }
 
         public StartService StartService_8() {
@@ -127,8 +137,8 @@ public class DeploymentBuilder {
     public class UpdateLinks extends DeploymentStep<UpdateLinks> {
         protected Symlinks symlinks = new Symlinks();
 
-        public WaitForServiceToStop $7_WaitForServiceToStop() {
-            return waitForServiceToStop;
+        public AwaitServiceToStop $7_WaitForServiceToStop() {
+            return awaitServiceToStop;
         }
 
         public UpdateLinks addSymlink(SymlinkEntry symlinkEntry) {
@@ -137,7 +147,7 @@ public class DeploymentBuilder {
         }
     }
 
-    public class WaitForServiceToStop extends DeploymentStep<WaitForServiceToStop> {
+    public class AwaitServiceToStop extends DeploymentStep<AwaitServiceToStop> {
         boolean waitAllParties;  // implement later
         boolean doWait;
 
@@ -147,8 +157,8 @@ public class DeploymentBuilder {
     }
 
     public class StartService extends DeploymentStep<StartService> {
-        public WaitForServiceToStart WaitForServiceToStart_9() {
-            return waitForServiceToStart;
+        public AwaitServiceToStart WaitForServiceToStart_9() {
+            return awaitServiceToStart;
         }
 
         public WhenStarted $10_WhenStarted() {
@@ -160,7 +170,7 @@ public class DeploymentBuilder {
         }
     }
 
-    public class WaitForServiceToStart extends DeploymentStep<WaitForServiceToStart> {
+    public class AwaitServiceToStart extends DeploymentStep<AwaitServiceToStart> {
         public WhenStarted $10_WhenStarted() {
             return whenStarted;
         }
@@ -176,8 +186,65 @@ public class DeploymentBuilder {
         }
     }
 
+    //todo each step could provide it's own implementation for the task
     public TaskDef<Task> build(){
-        return null;
+        TaskDef<Task> taskDef = new TaskDef<Task>() {
+            @Override
+            protected List<Task> newSessions(SessionContext $, Task parent) {
+                List<Task> tasks = new ArrayList<Task>();
+
+                for (DeploymentStep<?> deploymentStep : deploymentSteps) {
+                    Task<TaskDef> task;
+
+                    if (deploymentStep instanceof WaitForPartiesBeforeRestart) {
+                        task = waitForParties(parent, deploymentStep);
+                    } else {
+                        TaskCallable callable = deploymentStep.taskCallable;
+
+                        if (deploymentStep instanceof AwaitServiceToStop) {
+                            AwaitServiceToStop step = (AwaitServiceToStop) deploymentStep;
+                            if (step.waitAllParties) {
+                                throw new UnsupportedOperationException("todo - waitAllParties not yet supported!");
+                            }
+                        }
+
+                        task = callable == null ? Task.nop() : new Task<TaskDef>(parent, callable);
+                    }
+
+                    Preconditions.checkNotNull(task, "nop() must be instead on null");
+
+                    tasks.add(task);
+                }
+
+                return tasks;
+            }
+        };
+
+        taskDef.setMultiTask(true);
+
+        return taskDef;
+    }
+
+    private Task<TaskDef> waitForParties(Task parent, DeploymentStep<?> deploymentStep) {
+        Task<TaskDef> task;
+        final WaitForPartiesBeforeRestart step = (WaitForPartiesBeforeRestart) deploymentStep;
+
+        TaskCallable<TaskDef> callable;
+
+        if (step.waitForParties) {
+            TaskCallable<TaskDef> awaitCallable = Task.awaitOthersCallable(step.timeout, step.timeUnit);
+
+            if (deploymentStep.taskCallable == null) {
+                callable = awaitCallable;
+            } else {
+                callable = Tasks.andThen(awaitCallable, deploymentStep.taskCallable);
+            }
+        } else {
+            callable = deploymentStep.taskCallable;
+        }
+
+        task = callable == null ? Task.nop() : new Task<TaskDef>(parent, callable);
+        return task;
     }
 
     public static void main(String[] args) {

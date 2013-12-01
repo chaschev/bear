@@ -83,7 +83,7 @@ public class GitCLIPlugin extends VcsCLIPlugin<Task, TaskDef<?>> {
 
     @Override
     public GitCLIVCSSession newSession(SessionContext $, Task<TaskDef> parent) {
-        return $.wire(new GitCLIVCSSession(parent, taskDefMixin, $));
+        return new GitCLIVCSSession(parent, taskDefMixin, $);
     }
 
 

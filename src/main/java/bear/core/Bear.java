@@ -169,9 +169,9 @@ public class Bear extends BearApp<GlobalContext> {
         sharedPath = joinPath(bearPath, sharedDirName),
         projectSharedPath = joinPath(deployTo, sharedDirName),
         tempDirPath = joinPath(deployTo, "temp"),
-        toolsDirPath = joinPath(sharedPath, "tools"),
+        toolsSharedDirPath = joinPath(sharedPath, "tools"),
         downloadDirPath = BearVariables.joinPath(sharedPath, "downloads"),
-
+        toolsInstallDirPath = newVar("/var/lib/bear/tools"),
 
 
     releasePath = joinPath(releasesPath, releaseName),

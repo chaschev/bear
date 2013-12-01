@@ -198,10 +198,10 @@ app.controller('HistoryController', ['historyManager', '$scope', function(histor
     };
 
     $scope.updateRunScript = function(entry){
-        var text = entry.getText();
-        console.log('updateRunScript', entry, text);
+//        console.log('updateRunScript', entry);
+        var text = entry.getText(historyManager.fileManager);
+        console.log('updateRunScript', text, entry);
         $scope.$parent.$broadcast("setActiveEditorValue", text);
-//        $scope.editor.setValue();
     };
 }]);
 
@@ -982,23 +982,25 @@ app.controller('FileTabsCtrl', ['$scope', '$q', function($scope, $q) {
         window.bear.call('conf', 'createPom');
     };
 
-    //todo remove
-    $scope.runScript = function(){
-        try {
-//            var scope = angular.element('#FileTabsCtrl').scope();
-
-//            Java.log('scope', scope);
-            Java.log('running script', $scope.scripts.selectedFile);
-
-            Java.log('my scope ', $scope, 'parent scope: ', $scope.$parent);
-
-            var hosts = JSON.parse(window.bear.jsonCall('conf', 'run', $scope.runScript.path, $scope.settingsScript.path));
-
-            $scope.terminals.onScriptStart(hosts.hosts);
-        } catch (e) {
-            Java.log(e);
-        }
-    };
+//    //todo remove
+//    $scope.runScript = function(){
+//        try {
+////            var scope = angular.element('#FileTabsCtrl').scope();
+//
+////            Java.log('scope', scope);
+//            Java.log('running script', $scope.scripts.selectedFile);
+//
+//            Java.log('my scope ', $scope, 'parent scope: ', $scope.$parent);
+//
+//            var hosts = JSON.parse(window.bear.jsonCall('conf', 'run',
+//                $scope.runScript.dir + '/' + $scope.runScript.filename,
+//                $scope.settingsScript.path));
+//
+//            $scope.terminals.onScriptStart(hosts.hosts);
+//        } catch (e) {
+//            Java.log(e);
+//        }
+//    };
 
 
     function mapArray(arr){
@@ -1123,7 +1125,7 @@ app.controller('ConsoleTabsChildCtrl', ['$scope', '$q', '$timeout', 'historyMana
         var response = JSON.parse(window.bear.jsonCall('conf', 'interpret',
             commandText,
             JSON.stringify({
-                script: $scope.runScript.path,
+                script: $scope.runScript.dir + '/' + $scope.runScript.filename,
                 settingsName: settingsName,
                 shell: $scope.terminal.name
             })));

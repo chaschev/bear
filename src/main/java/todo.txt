@@ -20,6 +20,7 @@ top priority:
 - (ok) noty for notices
 - autosize for code area ?
 - sample app:
+- quick setup task recipe (i.e. [new empty bear script], :run (rename :ref) {task: 'tasks.setup'}   at the moment its _.runner.run(_.getGlobal().tasks.setup, )
 -- (ok) mongo plugin
 - (ok) bug: sendAllFinishedResults sends result only for the whole run
 -- computer demo for 3 hosts/single mysql
@@ -29,7 +30,8 @@ top priority:
 -- deploy mongodb & test
 -- run via scripts
 - refactor to be used with simplest builders
-- :ref {"task":"tasks.setup"}
+- :run {"task":"tasks.setup"}
+- too many inputs for setting vars (how should I set a var in Groovy/ GroovyScript/bear, what is the file I am in?)
 -- separate bearscript from execution
 -- builders may provide settings and scripts
 -- run a simple captures test with builders

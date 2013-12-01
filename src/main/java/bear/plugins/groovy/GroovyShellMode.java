@@ -29,8 +29,7 @@ import bear.task.Task;
 import bear.task.TaskDef;
 import bear.task.TaskResult;
 import chaschev.lang.OpenBean;
-import chaschev.util.CatchyRunnable;
-import chaschev.util.Exceptions;
+import chaschev.util.CatchyCallable;
 import groovy.lang.Binding;
 import groovy.lang.GroovyClassLoader;
 import groovy.lang.GroovyShell;
@@ -38,6 +37,8 @@ import org.apache.logging.log4j.LogManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.concurrent.Callable;
+import java.util.concurrent.Future;
 import java.util.regex.Pattern;
 
 /**
@@ -102,11 +103,11 @@ public class GroovyShellMode extends PluginShellMode<GroovyShellPlugin> implemen
         Task<TaskDef> task = new Task<TaskDef>(_parent, taskDef, $) {
             @Override
             protected TaskResult exec(final SessionTaskRunner runner, Object input) {
-                Runnable runnable = null;
+                CatchyCallable<TaskResult> callable = null;
                 final Task<TaskDef> $this = this;
                 try {
-                    runnable = new CatchyRunnable(new Runnable() {
-                        public void run() {
+                    callable = new CatchyCallable<TaskResult>(new Callable<TaskResult>() {
+                        public TaskResult call() {
                             try {
                                 if (SCRIPT_PATTERN.matcher(command).matches()) {
                                     GroovyClassLoader gcl = new GroovyClassLoader();
@@ -118,23 +119,23 @@ public class GroovyShellMode extends PluginShellMode<GroovyShellPlugin> implemen
                                     script.task = $this;
                                     script.configure();
                                     script.global = global;
-                                    script.run();
+                                    return script.run();
                                 } else {
                                     GroovyShell shell = getShell(runner);
                                     shell.evaluate(command);
                                 }
-                            } catch (Exception e) {
-                                throw Exceptions.runtime(e);
+                            } catch (Throwable e) {
+                                return new TaskResult(e);
                             }
+
+                            return TaskResult.OK;
                         }
                     });
 
-                    runnable.run();
-
-                    return TaskResult.OK;
+                    return callable.call();
                 } catch (IllegalStateException e) {
                     if (e.getMessage().contains("FX")) {
-                        return fxWorkaround(runnable);
+                        return fxWorkaround(callable);
                     } else {
                         logger.warn("", e);
                         return new GroovyResult(e);
@@ -146,16 +147,17 @@ public class GroovyShellMode extends PluginShellMode<GroovyShellPlugin> implemen
                 }
             }
 
-            private GroovyResult fxWorkaround(Runnable runnable) {
-                GroovyResult result;
+            private TaskResult fxWorkaround(CatchyCallable<TaskResult> callable) {
+                TaskResult result;
 
                 try {
-                    OpenBean.invoke(binding.getVariable("_"), "evaluateInFX", runnable);
-                    result = new GroovyResult("sent to FX evaluation");
+                    Future<TaskResult> fut = (Future<TaskResult>) OpenBean.invoke(binding.getVariable("_"), "evaluateInFX", callable);
+                    result = fut.get();
                 } catch (Exception e1) {
                     logger.warn("", e1);
                     result = new GroovyResult(e1);
                 }
+
                 return result;
             }
 
@@ -187,6 +189,7 @@ public class GroovyShellMode extends PluginShellMode<GroovyShellPlugin> implemen
                 return isLocal ? shell : new GroovyShell($binding);
             }
         };
+
         return task;
     }
 

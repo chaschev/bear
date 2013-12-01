@@ -86,7 +86,7 @@ public class JavaPlugin extends ZippedToolPlugin {
 //        version.defaultTo("1.7.0_40");
         toolname.defaultTo("jdk");
         version.desc("version return by java, i.e. 1.7.0_40");
-        toolDistrName.setEqualTo(version);
+//        toolDistrName.setEqualTo(version);
         versionName.desc("distribution file name with extension, i.e jdk-7u40-linux-x64");
         distrFilename.setEqualTo(Variables.concat(versionName, ".gz"));
 
