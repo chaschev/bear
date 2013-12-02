@@ -52,6 +52,7 @@ import java.util.regex.Pattern;
 
 import static bear.session.BearVariables.joinPath;
 import static bear.session.Variables.*;
+import static bear.session.Variables.condition;
 
 /**
  * @author Andrey Chaschev chaschev@gmail.com
@@ -84,7 +85,7 @@ public class Bear extends BearApp<GlobalContext> {
 
     bearPath = joinPath(applicationsPath, "bear"),
 
-    logsPath = condition(isNativeUnix, newVar("/var/log"), newVar("c:")),
+    sysLogsPath = condition(isNativeUnix, newVar("/var/log"), (DynamicVariable) undefined()),
 
     taskName = strVar("A task to run").defaultTo("deploy");
 
@@ -97,7 +98,6 @@ public class Bear extends BearApp<GlobalContext> {
 
     public final DynamicVariable<String>
 
-        appLogsPath = joinPath(logsPath, name),
         sshUsername = dynamic(new VarFun<String, SessionContext>() {
             @Override
             public String apply(SessionContext $) {
@@ -135,7 +135,8 @@ public class Bear extends BearApp<GlobalContext> {
 
     deployScript = strVar("Script to use").defaultTo("CreateNewScript"),
 
-    deployTo = joinPath(applicationsPath, name).desc("Current release dir"),
+    applicationPath = joinPath(applicationsPath, name).desc("Current release dir"),
+    appLogsPath = condition(isNativeUnix, joinPath(sysLogsPath, name), concat(applicationPath, "log")),
 
     currentDirName = strVar("Current release dir").defaultTo("current"),
 
@@ -164,11 +165,11 @@ public class Bear extends BearApp<GlobalContext> {
         }
     }),
 
-    releasesPath = joinPath(deployTo, releasesDirName),
-        currentPath = joinPath(deployTo, currentDirName),
+    releasesPath = joinPath(applicationPath, releasesDirName),
+        currentPath = joinPath(applicationPath, currentDirName),
         sharedPath = joinPath(bearPath, sharedDirName),
-        projectSharedPath = joinPath(deployTo, sharedDirName),
-        tempDirPath = joinPath(deployTo, "temp"),
+        projectSharedPath = joinPath(applicationPath, sharedDirName),
+        tempDirPath = joinPath(applicationPath, "temp"),
         toolsSharedDirPath = joinPath(sharedPath, "tools"),
         downloadDirPath = BearVariables.joinPath(sharedPath, "downloads"),
         toolsInstallDirPath = newVar("/var/lib/bear/tools"),

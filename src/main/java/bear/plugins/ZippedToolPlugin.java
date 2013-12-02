@@ -171,7 +171,7 @@ public abstract class ZippedToolPlugin extends Plugin<Task, TaskDef<?>> {
 
             script = $.sys.script();
 
-            $.sys.addRmToLine(script.line().sudo(), $(homePath), $(currentVersionPath));
+            $.sys.addRmLine(script.line().sudo(), $(homePath), $(currentVersionPath));
 //            $.sys.addRmToLine(script.line().sudo(), $(homeVersionPath));
 
             script
@@ -193,7 +193,7 @@ public abstract class ZippedToolPlugin extends Plugin<Task, TaskDef<?>> {
         protected void shortCut(String newCommandName, String sourceExecutableName){
             Script script = $.sys.script();
 
-            $.sys.addRmToLine(script.line().sudo(), "/usr/bin/" + newCommandName);
+            $.sys.addRmLine(script.line().sudo(), "/usr/bin/" + newCommandName);
 
             script
                 .line().sudo().addRaw("ln -s %s/%s /usr/bin/%s", $(currentVersionPath), sourceExecutableName, newCommandName).build()

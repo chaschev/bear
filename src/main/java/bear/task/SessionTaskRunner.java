@@ -122,6 +122,8 @@ public class SessionTaskRunner extends HavingContext<SessionTaskRunner, SessionC
                 List<Task> tasks = taskDef.createNewSessionsAsList($, $.getCurrentTask());
 
                 for (Task taskSession : tasks) {
+                    if(taskSession == Task.nop()) continue;
+
                     if(taskPreRun != null){
                         taskSession = taskPreRun.apply(taskSession);
                     }

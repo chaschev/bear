@@ -70,7 +70,7 @@ public class SecureSocialDemoSettings extends IBearSettings {
         java.versionName.set("jdk-7u40-linux-x64");
         java.version.set("1.7.0_40");
 
-        play.version.set("2.2.1");
+        play.version.set("2.2.0");
 
         bear.vcsBranchName.defaultTo("master");
 

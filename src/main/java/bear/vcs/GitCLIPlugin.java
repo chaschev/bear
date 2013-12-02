@@ -42,6 +42,8 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static bear.session.Variables.equalTo;
+import static bear.session.Variables.newVar;
 import static chaschev.lang.LangUtils.elvis;
 import static com.google.common.collect.Iterators.peekingIterator;
 import static com.google.common.collect.Lists.newArrayList;
@@ -66,10 +68,12 @@ public class GitCLIPlugin extends VcsCLIPlugin<Task, TaskDef<?>> {
     public static final Pattern HASH_REGEX = Pattern.compile("^[0-9a-f]{40}$");
 
 
-    public final DynamicVariable<Integer> cloneDepth = Variables.newVar(-1);
+    public final DynamicVariable<Integer> cloneDepth = newVar(-1);
     public final DynamicVariable<Boolean>
-        enableSubmodules = Variables.newVar(false),
-        submodulesRecursive = Variables.newVar(true);
+        enableSubmodules = newVar(false),
+        submodulesRecursive = newVar(true),
+        clean = equalTo(bear.clean)
+    ;
 
     public final DynamicVariable<String> remote;
 
@@ -231,7 +235,11 @@ public class GitCLIPlugin extends VcsCLIPlugin<Task, TaskDef<?>> {
 
             //todo think: in capistrano these commands chain
 
-            return script.line().a("git", "clean", verbose()).addSplit("-d -x -f").build();
+            if($(clean)){
+                script.line().a("git", "clean", verbose()).addSplit("-d -x -f").build();
+            }
+
+            return script;
         }
 
         @Override
@@ -319,7 +327,7 @@ public class GitCLIPlugin extends VcsCLIPlugin<Task, TaskDef<?>> {
         @Override
         public VCSScript<?> export(String revision, String destination, Map<String, String> params) {
             return checkout(revision, destination, emptyParams())
-                .line($.sys.addRmToLine($.sys.line(), ".", destination + "/.git"));
+                .line($.sys.addRmLine($.sys.line(), ".", destination + "/.git"));
         }
 
         @Override

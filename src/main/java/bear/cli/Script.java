@@ -126,4 +126,7 @@ public class Script <T extends CommandLineResult, CHILD extends Script>{
         return (CHILD) this;
     }
 
+    public boolean isDefaultDir() {
+        return cd == null || ".".equals(cd);
+    }
 }

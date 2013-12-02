@@ -12,6 +12,7 @@ class SSDeployDemoScript extends bear.main.Script {
     {
         _.putConst(bear.repositoryURI, 'git@github.com:chaschev/securesocial.git')
         _.putConst(bear.vcsBranchName, 'master')
+        _.putConst(bear.clean, false)
 
         final IBearSettings settings = task.getGlobalRunner().getBearSettings()
 

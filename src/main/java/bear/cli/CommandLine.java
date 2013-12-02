@@ -223,4 +223,8 @@ public abstract class CommandLine<T extends CommandLineResult, SCRIPT extends Sc
 
         return sb.toString();
     }
+
+    public boolean isDefaultDir() {
+        return cd == null || ".".equals(cd);
+    }
 }

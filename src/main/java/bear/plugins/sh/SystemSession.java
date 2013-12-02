@@ -88,7 +88,7 @@ public abstract class SystemSession extends Task<SystemEnvironmentPlugin.SystemS
         StringBuilder sb = new StringBuilder(1024);
 
         for (CommandLine line : script.lines) {
-            if (script.cd != null && line.cd != null) {
+            if (line.isDefaultDir() && !script.isDefaultDir()) {
                 line.cd = script.cd;
             }
 
@@ -160,7 +160,7 @@ public abstract class SystemSession extends Task<SystemEnvironmentPlugin.SystemS
         return sendCommand(line().addRaw(s), callback);
     }
 
-    public CommandLine addRmToLine(CommandLine line, String... paths){
+    public CommandLine addRmLine(CommandLine line, String... paths){
         return rmLine(null, line, paths);
     }
 

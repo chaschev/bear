@@ -64,7 +64,7 @@ public class Tasks {
                 @Override
                 protected TaskResult exec(SessionTaskRunner runner, Object input) {
                     final String[] dirs = {
-                        $(bear.deployTo), $(bear.releasesPath), $(bear.vcsCheckoutPath),
+                        $(bear.applicationPath), $(bear.releasesPath), $(bear.vcsCheckoutPath),
                         $(bear.bearPath),
                         $(bear.sharedPath), $(bear.tempDirPath), $(bear.projectSharedPath),
                         $(bear.appLogsPath), $(bear.downloadDirPath),
