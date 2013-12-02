@@ -61,7 +61,7 @@ public class MavenPlugin extends ZippedToolPlugin {
 
                     extractToHomeDir();
 
-                    shortCut("mvn", "mvn");
+                    shortCut("mvn", "bin/mvn");
 
                     return verify();
                 }

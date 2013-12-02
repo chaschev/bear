@@ -153,4 +153,8 @@ public abstract class Plugin<TASK extends Task, TASK_DEF extends TaskDef<? exten
     public final String cmdAnnotation() {
         return this.getClass().getAnnotation(Shell.class).value();
     }
+
+    public TASK_DEF getTaskDefMixin() {
+        return taskDefMixin;
+    }
 }

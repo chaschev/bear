@@ -121,7 +121,7 @@ public class TomcatPlugin extends ZippedToolPlugin {
 //                    shortCut("tomcatStart", "startup.sh");
 //                    shortCut("tomcatStop", "shutdown.sh");
 //                    shortCut("tomcatVersion", "version.sh");
-                    shortCut("catalina", "catalina.sh");
+                    shortCut("catalina", "bin/catalina.sh");
 
                     DependencyResult result = verify();
 

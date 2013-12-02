@@ -30,7 +30,7 @@ public class CommandLineResult extends TaskResult{
     public int exitCode;
 
     public CommandLineResult(String text) {
-        super((Result)null);
+        super(Result.OK);
         this.text = text;
     }
 

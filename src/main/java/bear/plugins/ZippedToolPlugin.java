@@ -27,7 +27,6 @@ import bear.task.*;
 import bear.vcs.CommandLineResult;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
-import org.apache.commons.lang3.StringUtils;
 
 import static bear.session.Variables.*;
 import static chaschev.lang.Predicates2.contains;
@@ -52,8 +51,8 @@ public abstract class ZippedToolPlugin extends Plugin<Task, TaskDef<?>> {
         distrFilename = concat(versionName, ".tar.gz"),
         homeParentPath = concat(bear.toolsInstallDirPath, "/", toolname),
         homePath = concat(homeParentPath, "/", version).desc("Tool root dir"),
-        homeVersionPath = equalTo(homePath),
-        currentVersionPath = concat(homeParentPath, "/", versionName),
+//        homeVersionPath = equalTo(homePath),
+        currentVersionPath = concat(homeParentPath, "/current"),
 
         myDirPath,
         buildPath,
@@ -166,20 +165,21 @@ public abstract class ZippedToolPlugin extends Plugin<Task, TaskDef<?>> {
                 versionName.defaultTo(toolDirName);
             }
 
-            Preconditions.checkArgument(StringUtils.isNotBlank($(toolname)), "toolname is blank! you could delete /var/lib!");
-            Preconditions.checkArgument(StringUtils.isNotBlank($(versionName)), "versionName is blank! you could delete /var/lib!");
             Preconditions.checkArgument(!"/var/lib/".equals($(homePath)));
-            Preconditions.checkArgument(!"/var/lib/".equals($(homeVersionPath)));
+
+
 
             script = $.sys.script();
 
+            $.sys.addRmToLine(script.line().sudo(), $(homePath), $(currentVersionPath));
+//            $.sys.addRmToLine(script.line().sudo(), $(homeVersionPath));
+
             script
-                .line($.sys.rmLine(script.line().sudo(), $(homePath)))
-                .line($.sys.rmLine(script.line().sudo(), $(homeVersionPath)))
-                .line().sudo().addRaw("mv %s %s", $(buildPath) + "/" + $(versionName), $(homeParentPath)).build()
-                .line().sudo().addRaw("ln -s %s %s", $(currentVersionPath), $(homePath)).build()
-                .line().sudo().addRaw("chmod -R g+r,o+r %s", $(homePath)).build()
-                .line().sudo().addRaw("chmod u+x,g+x,o+x %s/bin/*", $(homePath)).build();
+                .line().sudo().addRaw("mkdir -p %s", $(homePath)).build()
+                .line().sudo().addRaw("mv %s %s", $(buildPath) + "/" + $(versionName) + "/*", $(homePath)).build()
+                .line().sudo().addRaw("ln -s %s %s", $(homePath), $(currentVersionPath)).build()
+                .line().sudo().addRaw("chmod -R g+r,o+r %s", $(homeParentPath)).build()
+                .line().sudo().addRaw("chmod u+x,g+x,o+x %s/bin/*", $(homeParentPath)).build();
 
             script.run(sshCallback());
 
@@ -193,9 +193,10 @@ public abstract class ZippedToolPlugin extends Plugin<Task, TaskDef<?>> {
         protected void shortCut(String newCommandName, String sourceExecutableName){
             Script script = $.sys.script();
 
+            $.sys.addRmToLine(script.line().sudo(), "/usr/bin/" + newCommandName);
+
             script
-                .line($.sys.rmLine(script.line().sudo(), "/usr/bin/" + newCommandName))
-                .line().sudo().addRaw("ln -s %s/bin/%s /usr/bin/%s", $(homePath), sourceExecutableName, newCommandName).build()
+                .line().sudo().addRaw("ln -s %s/%s /usr/bin/%s", $(currentVersionPath), sourceExecutableName, newCommandName).build()
                 .run(sshCallback());
         }
 

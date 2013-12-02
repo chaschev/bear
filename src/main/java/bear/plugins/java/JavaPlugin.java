@@ -19,14 +19,15 @@ package bear.plugins.java;
 import bear.core.GlobalContext;
 import bear.core.SessionContext;
 import bear.plugins.ZippedToolPlugin;
-import bear.session.BearVariables;
 import bear.session.DynamicVariable;
-import bear.session.Variables;
 import bear.task.*;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+
+import static bear.session.BearVariables.joinPath;
+import static bear.session.Variables.concat;
 
 /**
  * @author Andrey Chaschev chaschev@gmail.com
@@ -54,9 +55,9 @@ public class JavaPlugin extends ZippedToolPlugin {
 
                     extractToHomeDir();
 
-                    shortCut("java", "java");
-                    shortCut("javah", "javah");
-                    shortCut("javac", "javac");
+                    shortCut("java", "bin/java");
+                    shortCut("javah", "bin/javah");
+                    shortCut("javac", "bin/javac");
 
                     return verify();
                 }
@@ -83,15 +84,13 @@ public class JavaPlugin extends ZippedToolPlugin {
 
         LoggerFactory.getLogger("log").warn("JavaPlugin initialized");
 
-//        version.defaultTo("1.7.0_40");
         toolname.defaultTo("jdk");
         version.desc("version return by java, i.e. 1.7.0_40");
-//        toolDistrName.setEqualTo(version);
+
         versionName.desc("distribution file name with extension, i.e jdk-7u40-linux-x64");
-        distrFilename.setEqualTo(Variables.concat(versionName, ".gz"));
+        distrFilename.setEqualTo(concat(versionName, ".gz"));
 
-        localDistrPath = BearVariables.joinPath(myDirPath, distrFilename);
-
+        localDistrPath = joinPath(myDirPath, distrFilename);
     }
 
 

@@ -53,7 +53,7 @@ public class PlayPlugin extends ZippedToolPlugin {
 
         toolname.defaultTo("play", true);
         distrFilename.setEqualTo(concat(versionName, ".zip"));
-        distrWwwAddress.setEqualTo(format("http://downloads.typesafe.com/play/%s/%s.zip", version, distrFilename));
+        distrWwwAddress.setEqualTo(format("http://downloads.typesafe.com/play/%s/%s", version, distrFilename));
     }
 
     public static class PlayDistResult extends TaskResult{
@@ -195,14 +195,14 @@ public class PlayPlugin extends ZippedToolPlugin {
 
                 @Override
                 protected String extractVersion(String output) {
-                    return StringUtils.substringAfter(
+                    return StringUtils.substringBetween(
                         output,
-                        "version: ").trim();
+                        "play ", " built").trim();
                 }
 
                 @Override
                 protected String createVersionCommandLine() {
-                    return "play --version";
+                    return "play help";
                 }
             };
         }

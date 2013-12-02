@@ -32,7 +32,7 @@ public class ZippedToolPluginTest {
         assertThat($(zip.distrFilename)).isEqualTo("my-tool-2.0.tar.gz");
         assertThat($(zip.homeParentPath)).isEqualTo("/var/lib/bear/tools/my-tool");
         assertThat($(zip.homePath)).isEqualTo("/var/lib/bear/tools/my-tool/2.0");
-        assertThat($(zip.homeVersionPath)).isEqualTo("/var/lib/bear/tools/my-tool/2.0");
+//        assertThat($(zip.homeVersionPath)).isEqualTo("/var/lib/bear/tools/my-tool/2.0");
     }
 
     private String $(DynamicVariable<String> x) {

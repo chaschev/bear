@@ -160,7 +160,7 @@ public abstract class SystemSession extends Task<SystemEnvironmentPlugin.SystemS
         return sendCommand(line().addRaw(s), callback);
     }
 
-    public CommandLine rmLine(CommandLine line, String... paths){
+    public CommandLine addRmToLine(CommandLine line, String... paths){
         return rmLine(null, line, paths);
     }
 

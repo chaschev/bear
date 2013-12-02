@@ -46,7 +46,7 @@ public class Rollback extends Plugin<Task, TaskDef<?>> {
                     Script script = $.sys.script();
 
                     return script
-                        .line($.sys.rmLine(script.line().sudo(), $(getBear().currentPath)))
+                        .line($.sys.addRmToLine(script.line().sudo(), $(getBear().currentPath)))
                             .line().sudo().addRaw("ln -s %s %s", $(getBear().getPreviousReleasePath), $(getBear().currentPath)).build()
                             .run();
                 }

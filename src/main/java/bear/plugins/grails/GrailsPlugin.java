@@ -67,8 +67,8 @@ public class GrailsPlugin extends ZippedToolPlugin {
 
                     extractToHomeDir();
 
-                    shortCut("grails", "grails");
-                    shortCut("startGrails", "startGrails");
+                    shortCut("grails", "bin/grails");
+                    shortCut("startGrails", "bin/startGrails");
 
                     return verify();
                 }

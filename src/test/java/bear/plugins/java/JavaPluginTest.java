@@ -1,29 +1,24 @@
 package bear.plugins.java;
 
-import bear.core.GlobalContext;
-import bear.core.SessionContext;
-import bear.session.DynamicVariable;
-import bear.session.SshAddress;
-import bear.task.SessionTaskRunner;
+import bear.console.AbstractConsoleCommand;
+import bear.console.ConsoleCallback;
+import bear.vcs.CommandLineResult;
+import com.google.common.base.Joiner;
 import org.junit.Test;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
 
 import static org.fest.assertions.api.Assertions.assertThat;
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.when;
 
 /**
  * @author Andrey Chaschev chaschev@gmail.com
  */
-public class JavaPluginTest {
-    protected GlobalContext g;
-    protected SessionContext sessionContext;
+public class JavaPluginTest extends SessionTest {
     protected final JavaPlugin java;
 
     public JavaPluginTest() {
-        g = GlobalContext.newForTests();
-
-        g.put("bear.sshUsername", "f");
-        g.put("bear.sshPassword", "c");
-
-        sessionContext = new SessionContext(g, new SshAddress("x", "y", "xx"), new SessionTaskRunner(null, g));
         java = new JavaPlugin(g);
     }
 
@@ -37,9 +32,29 @@ public class JavaPluginTest {
         assertThat($(java.homePath)).isEqualTo("/var/lib/bear/tools/jdk/1.7.0_40");
         assertThat($(java.versionName)).isEqualTo("jdk-7u40-linux-x64");
         assertThat($(java.toolDistrName)).isEqualTo("jdk");
+
+        when(sys.sendCommand(any(AbstractConsoleCommand.class), any(ConsoleCallback.class))).thenAnswer(new Answer<Object>() {
+            @Override
+            public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
+                AbstractConsoleCommand command = (AbstractConsoleCommand) invocationOnMock.getArguments()[0];
+
+                commands.add(command);
+
+                String asString = command.toString();
+
+                if (asString.contains("ls -w 1")) {
+                    return new CommandLineResult("jdk1.7.0_40");
+                }
+
+                return new CommandLineResult("foo");
+            }
+        });
+
+
+        $.run(java.getInstall());
+
+        System.out.println("commands: \n" + Joiner.on("\n").join(commands));
+
     }
 
-    private String $(DynamicVariable<String> x) {
-        return sessionContext.var(x);
-    }
 }
