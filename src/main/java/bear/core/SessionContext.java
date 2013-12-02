@@ -18,6 +18,7 @@ package bear.core;
 
 import bear.cli.CommandLine;
 import bear.context.AbstractContext;
+import bear.plugins.Plugin;
 import bear.plugins.sh.GenericUnixLocalEnvironmentPlugin;
 import bear.plugins.sh.GenericUnixRemoteEnvironmentPlugin;
 import bear.plugins.sh.SystemEnvironmentPlugin;
@@ -30,8 +31,8 @@ import bear.task.SessionTaskRunner;
 import bear.task.Task;
 import bear.task.TaskDef;
 import bear.task.TaskResult;
-import bear.task.exec.CommandExecutionEntry;
-import bear.task.exec.TaskExecutionContext;
+import bear.task.CommandExecutionEntry;
+import bear.task.TaskExecutionContext;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.joda.time.DateTime;
@@ -171,7 +172,7 @@ public class SessionContext extends AbstractContext {
         // this can be extracted into init
 
         sysDef = ((address instanceof SshAddress) ? remoteSysEnv : localSysEnv).getTaskDef();
-        sys = sysDef.createNewSession(this, null);
+        sys = sysDef.singleTask().createNewSession(this, null);
 
         this.setName(address.getName());
 
@@ -228,8 +229,8 @@ public class SessionContext extends AbstractContext {
         System.out.printf(new DateTime().toString(TIME_FORMATTER) + " " + level + " " + s, params);
     }
 
-    public TaskResult run(TaskDef task) {
-        return runner.run(task);
+    public TaskResult run(TaskDef... tasks) {
+        return runner.run(tasks);
     }
 
     public Task<?> getCurrentTask() {
@@ -278,5 +279,17 @@ public class SessionContext extends AbstractContext {
 
     public void setGlobalTaskRunner(GlobalTaskRunner globalTaskRunner) {
         this.globalTaskRunner = globalTaskRunner;
+    }
+
+    public <T extends Plugin> T plugin(Class<T> pluginClass) {
+        return getGlobal().getPlugin(pluginClass);
+    }
+
+    public TaskResult runSession(Task<?> taskSession) {
+        return runner.runSession(taskSession);
+    }
+
+    public TaskResult runSession(Task<?> taskSession, Object input) {
+        return runner.runSession(taskSession, input);
     }
 }

@@ -40,14 +40,14 @@ public class Rollback extends Plugin<Task, TaskDef<?>> {
         public Task<TaskDef> newSession(SessionContext $, final Task parent) {
             return new Task<TaskDef>(parent, this, $) {
                 @Override
-                protected TaskResult exec(SessionTaskRunner runner) {
+                protected TaskResult exec(SessionTaskRunner runner, Object input) {
                     requirePreviousRelease($);
 
                     Script script = $.sys.script();
 
                     return script
-                        .line($.sys.rmLine(script.line().sudo(), $(bear.currentPath)))
-                            .line().sudo().addRaw("ln -s %s %s", $(bear.getPreviousReleasePath), $(bear.currentPath)).build()
+                        .line($.sys.addRmLine(script.line().sudo(), $(getBear().currentPath)))
+                            .line().sudo().addRaw("ln -s %s %s", $(getBear().getPreviousReleasePath), $(getBear().currentPath)).build()
                             .run();
                 }
             };
@@ -61,10 +61,10 @@ public class Rollback extends Plugin<Task, TaskDef<?>> {
         public Task<TaskDef> newSession(SessionContext $, final Task parent) {
             return new Task<TaskDef>(parent, this, $) {
                 @Override
-                protected TaskResult exec(SessionTaskRunner runner) {
+                protected TaskResult exec(SessionTaskRunner runner, Object input) {
                         return $.sys.sendCommand(
                             $.sys.line().sudo().addRaw("if [ `readlink #{%s}` != #{%s} ]; then #{try_sudo} rm -rf #{%s}; fi", true,
-                                $(bear.currentPath), $(bear.releasePath), $(bear.releasePath)));
+                                $(getBear().currentPath), $(getBear().releasePath), $(getBear().releasePath)));
                 }
 
             };
@@ -76,7 +76,7 @@ public class Rollback extends Plugin<Task, TaskDef<?>> {
         public Task<TaskDef> newSession(SessionContext $, final Task parent) {
             return new Task<TaskDef>(parent, this, $) {
                 @Override
-                protected TaskResult exec(SessionTaskRunner runner) {
+                protected TaskResult exec(SessionTaskRunner runner, Object input) {
                     return TaskResult.and(
                         runner.run(pointToPreviousRelease),
                         runner.run(cleanup));
@@ -91,7 +91,7 @@ public class Rollback extends Plugin<Task, TaskDef<?>> {
         public Task<TaskDef> newSession(SessionContext $, final Task parent) {
             return new Task<TaskDef>(parent, this, $) {
                 @Override
-                protected TaskResult exec(SessionTaskRunner runner) {
+                protected TaskResult exec(SessionTaskRunner runner, Object input) {
                     return TaskResult.and(
                         runner.run(pointToPreviousRelease),
                         runner.run(global.tasks.restartApp),

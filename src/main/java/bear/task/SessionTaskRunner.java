@@ -60,7 +60,7 @@ public class SessionTaskRunner extends HavingContext<SessionTaskRunner, SessionC
         for (TaskDef task : tasks) {
             final TaskResult result = runWithDependencies(task);
 
-            if (result != TaskResult.OK) {
+            if (!result.ok()) {
                 return result;
             }
         }
@@ -113,19 +113,29 @@ public class SessionTaskRunner extends HavingContext<SessionTaskRunner, SessionC
         return runResult;
     }
 
-    private TaskResult _runSingleTask(TaskDef taskDef, boolean thisIsMe) {
+    private TaskResult _runSingleTask(TaskDef<Task> taskDef, boolean thisIsMe) {
         TaskResult result = TaskResult.OK;
         try {
             if (!thisIsMe) {
                 result = runWithDependencies(taskDef);
             } else {
-                Task<TaskDef> taskSession = taskDef.createNewSession($, $.getCurrentTask());
+                List<Task> tasks = taskDef.createNewSessionsAsList($, $.getCurrentTask());
 
-                if(taskPreRun != null){
-                    taskSession = taskPreRun.apply(taskSession);
+                for (Task taskSession : tasks) {
+                    if(taskSession == Task.nop()) continue;
+
+                    if(taskPreRun != null){
+                        taskSession = taskPreRun.apply(taskSession);
+                    }
+
+                    result = runSession(taskSession);
+
+                    //todo add rollback
+
+                    if(!result.ok()){
+                        return result;
+                    }
                 }
-
-                result = runSession(taskSession);
             }
         }
         catch (BearException e){
@@ -140,7 +150,14 @@ public class SessionTaskRunner extends HavingContext<SessionTaskRunner, SessionC
     }
 
     public TaskResult runSession(Task<?> taskSession) {
+        return runSession(taskSession, null);
+    }
+
+    public TaskResult runSession(Task<?> taskSession, Object input) {
         TaskResult result = TaskResult.OK;
+
+        //todo this line might be needed to be removed if dep checks below use their session
+        $.setCurrentTask(taskSession);
 
         if($(bear.checkDependencies)){
             result = taskSession.getDependencies().check();
@@ -148,14 +165,20 @@ public class SessionTaskRunner extends HavingContext<SessionTaskRunner, SessionC
 
         $.setCurrentTask(taskSession);
 
+
         if(result.ok()){
-            result = taskSession.run(this);
+            result = taskSession.run(this, input);
         }
 
         return result;
     }
 
-    public void runRollback(TaskDef task) {
-        task.createNewSession($, $.getCurrentTask()).onRollback();
+    public void runRollback(TaskDef<Task> taskDef) {
+        logger.warn("ADD ROLLBACK");
+//        for (Task task : taskDef.createNewSessionsAsList($, $.getCurrentTask())) {
+//
+//        }
+//
+//        task.createNewSession($, $.getCurrentTask()).onRollback();
     }
 }

@@ -14,7 +14,6 @@ import com.google.common.util.concurrent.ListenableFuture;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
@@ -37,7 +36,7 @@ public class ComputingGrid<C, PHASE> {
 
 //    List<Phase<?>> phases = new ArrayList<>();
     final List<PhaseParty<C, PHASE>> parties;
-    final Collection<? extends Phase<?, PHASE>> phases ;
+    final List<? extends Phase<?, PHASE>> phases ;
 
     final ArrayTable<PHASE, C, GridCell<C, ?, PHASE>> table;
 
@@ -45,7 +44,7 @@ public class ComputingGrid<C, PHASE> {
     private final Map<PHASE, Integer> rowKeyToIndex;
 
 
-    public ComputingGrid(Collection<? extends Phase<?, PHASE>> phases, Iterable<? extends C> columnKeys) {
+    public ComputingGrid(List<? extends Phase<?, PHASE>> phases, Iterable<? extends C> columnKeys) {
         this.phases = phases;
         table = ArrayTable.create(
             Iterables.transform(phases, Functions2.<Object, PHASE>field("phase")),
@@ -74,8 +73,12 @@ public class ComputingGrid<C, PHASE> {
         }
     }
 
+    public <V> List<ListenableFuture<V>> phaseFutures(Phase<V, PHASE> phase, int relative) {
+        return phaseFutures(phaseToRowIndex(phase.phase) + relative, null);
+    }
+
     public <V> List<ListenableFuture<V>> phaseFutures(Phase<V, PHASE> phase) {
-        return phaseFutures(phaseToRowIndex(phase.phase), null);
+        return phaseFutures(phase, 0);
     }
 
     public <V> List<ListenableFuture<V>> phaseFutures(final int rowIndex, Class<V> vClass) {
@@ -99,14 +102,14 @@ public class ComputingGrid<C, PHASE> {
     }
 
 
-    public <V> ListenableFuture<List<V>> aggregatedPhase(int phase, Class<V> vClass) {
+    public <V> ListenableFuture<List<V>> aggregateSuccessful(int phase, Class<V> vClass) {
         return Futures.successfulAsList(phaseFutures(phase, vClass));
     }
 
     ComputingGrid<C, PHASE> awaitTermination(){
         try {
 
-            aggregatedPhase(phaseToRowIndex(lastPhase()), Object.class).get();
+            aggregateSuccessful(phaseToRowIndex(lastPhase()), Object.class).get();
             return this;
         } catch (Exception e) {
             throw Exceptions.runtime(e);
@@ -263,5 +266,13 @@ public class ComputingGrid<C, PHASE> {
 
     public void setWhenAllFinished(WhenAllFinished whenAllFinished) {
         this.whenAllFinished = whenAllFinished;
+    }
+
+    public ImmutableList<PHASE> phases() {
+        return table.rowKeyList();
+    }
+
+    public ImmutableList<C> parties() {
+        return table.columnKeyList();
     }
 }

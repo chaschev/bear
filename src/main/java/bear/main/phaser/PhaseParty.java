@@ -55,4 +55,8 @@ public class PhaseParty<COL, PHASE> {
     public boolean failed(){
         return exception != null;
     }
+
+    public int getIndex() {
+        return index;
+    }
 }

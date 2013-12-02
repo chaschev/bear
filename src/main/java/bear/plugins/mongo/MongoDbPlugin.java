@@ -66,7 +66,7 @@ public class MongoDbPlugin extends Plugin {
         public InstallationTask<InstallationTaskDef> newSession(SessionContext $, final Task parent) {
             return new InstallationTask<InstallationTaskDef>(parent, setup, $) {
                 @Override
-                protected TaskResult exec(SessionTaskRunner runner) {
+                protected TaskResult exec(SessionTaskRunner runner, Object input) {
                     final Version clientVersion = computeInstalledClientVersion($.sys);
                     final Version serverVersion = computeInstalledServerVersion(runner);
 
@@ -110,7 +110,7 @@ public class MongoDbPlugin extends Plugin {
     public Task<TaskDef> scriptTask(final String script,  Task parent, final TaskDef def, final SessionContext $){
         return new Task<TaskDef>(parent, def, $) {
             @Override
-            protected TaskResult exec(SessionTaskRunner runner) {
+            protected TaskResult exec(SessionTaskRunner runner, Object input) {
                 return runScript($, script);
             }
         };

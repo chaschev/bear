@@ -63,25 +63,20 @@ public class SetupPluginsSettings extends IBearSettings {
         bear.getStrategy.setDynamic(new Fun<DeployStrategyTaskDef, SessionContext>() {
 
             public DeployStrategyTaskDef apply(final SessionContext $) {
-                grails.projectPath.setEqualTo(
-                    bear.vcsBranchLocalPath
-                );
+                grails.projectPath.setEqualTo(bear.vcsBranchLocalPath);
 
-                //todo create a builder for it
-                //todo return task result for each of the steps
-                //todo convert each step to a task? - yes! this will make steps reusable
                 final DeployStrategyTaskDef strategy = new DeployStrategyTaskDef($) {
                     //todo return TaskResult
                     @Override
                     protected void step_40_updateRemoteFiles() {
-                        $.runner.run(global.tasks.vcsUpdate);
+                        $.run(global.tasks.vcsUpdate);
 
                         $.log("building the project...");
 
                         String warPath = $.var(grails.releaseWarPath);
 
                         if (!$.sys.exists(warPath) || !$.var(global.getPlugin(Atocha.class).reuseWar)) {
-                            final TaskResult r = $.runner.run(new GrailsBuilderTask(global));
+                            final TaskResult r = $.run(new GrailsBuilderTask(global));
 
                             if (r.nok()) {
                                 throw new IllegalStateException("failed to build WAR");
@@ -96,7 +91,7 @@ public class SetupPluginsSettings extends IBearSettings {
                 };
 
                 //todo: strategy.addSymlink, 2 DynVariables constructor
-                strategy.getSymlinkRules().add(
+                strategy.getSymlinks().add(
                     new SymlinkEntry("ROOT.war", tomcat.warPath, global.var(bear.appUsername) + "." + global.var(bear.appUsername))
                 );
 

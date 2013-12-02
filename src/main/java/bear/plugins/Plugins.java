@@ -17,8 +17,8 @@
 package bear.plugins;
 
 import bear.context.DependencyInjection;
-import bear.core.SessionContext;
 import bear.core.GlobalContext;
+import bear.core.SessionContext;
 import bear.plugins.graph.DirectedGraph;
 import bear.task.DependencyException;
 import bear.task.DependencyResult;
@@ -44,7 +44,8 @@ import java.util.Map;
 public class Plugins {
     private static final Logger logger = LoggerFactory.getLogger(Plugins.class);
 
-    public final Map<Object, Plugin> pluginMap = new LinkedHashMap<Object, Plugin>();
+    public final Map<Class<? extends Plugin>, Plugin> pluginMap = new LinkedHashMap<Class<? extends Plugin>, Plugin>();
+    public final Map<String, Plugin> shortcutsPluginMap = new LinkedHashMap<String, Plugin>();
 
     private GlobalContext globalContext;
     private PluginBuilder pluginBuilder;
@@ -58,10 +59,16 @@ public class Plugins {
         List<Plugin> plugins = pluginBuilder.build();
 
         for (Plugin plugin : plugins) {
+            for (Plugin p : pluginMap.values()) {
+                if(p.getClass().getSimpleName().equals(plugin.getClass().getSimpleName())){
+                    logger.error("duplicate plugin: {}!!!!", plugin);
+                }
+            }
+
             pluginMap.put(plugin.getClass(), plugin);
 
             if(plugin.getShell()!=null){
-                pluginMap.put(plugin.getShell().getCommandName(), plugin);
+                shortcutsPluginMap.put(plugin.getShell().getCommandName(), plugin);
             }
 
             globalContext.getInjectors().simpleBind(plugin.getClass(), plugin);
@@ -197,7 +204,7 @@ public class Plugins {
     }
 
     public Plugin get(String s){
-        return pluginMap.get(s);
+        return shortcutsPluginMap.get(s);
     }
 
     public Plugin get(Class<? extends Plugin> aClass){
@@ -215,6 +222,8 @@ public class Plugins {
             final T plugin = globalContext.getPlugin(aClass);
 
             Task task = plugin.newSession($, parent);
+
+            task.wire($);
 
             if($.var(globalContext.bear.checkDependencies)){
                 DependencyResult deps = task.getDependencies().check();

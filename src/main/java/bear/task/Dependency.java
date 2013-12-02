@@ -174,7 +174,7 @@ public class Dependency extends Task<TaskDef> {
     }
 
     @Override
-    protected DependencyResult exec(SessionTaskRunner runner) {
+    protected DependencyResult exec(SessionTaskRunner runner, Object input) {
         return checkDeps();
     }
 

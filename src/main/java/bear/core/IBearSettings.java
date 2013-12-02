@@ -67,7 +67,16 @@ public abstract class IBearSettings {
         Preconditions.checkArgument(!configured, "already configured");
 
         for (Field field : OpenBean.fieldsOfType(this.getClass(), Plugin.class)) {
-            factory.requirePlugins((Class<? extends Plugin<Task, TaskDef<?>>>)field.getType());
+            Class<? extends Plugin<Task, TaskDef<?>>> aClass = (Class<? extends Plugin<Task, TaskDef<?>>>) field.getType();
+
+//            try {
+//                //
+//                aClass = (Class) Class.forName(aClass.getName());
+//            } catch (ClassNotFoundException e) {
+//                throw Exceptions.runtime(e);
+//            }
+
+            factory.requirePlugins(aClass);
         }
 
         configureMe(factory);

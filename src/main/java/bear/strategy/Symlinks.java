@@ -14,25 +14,19 @@
  * limitations under the License.
  */
 
-package bear.task.exec;
+package bear.strategy;
 
-import bear.session.Result;
-import bear.task.Task;
-import bear.task.TaskDef;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
-* @author Andrey Chaschev chaschev@gmail.com
-*/
-public class TaskExecutionEntry extends ExecutionEntry {
-    protected Task<? extends TaskDef> task;
+ * @author Andrey Chaschev chaschev@gmail.com
+ */
+public class Symlinks {
+    List<SymlinkEntry> entries = new ArrayList<SymlinkEntry>(4);
 
-    public TaskExecutionEntry(ExecutionEntry parent, Task<? extends TaskDef> task) {
-        super(parent);
-        this.task = task;
-    }
-
-    @Override
-    public Result getResult() {
-        return task.getExecutionContext().taskResult.result;
+    public Symlinks add(SymlinkEntry symlinkEntry) {
+        entries.add(symlinkEntry);
+        return this;
     }
 }

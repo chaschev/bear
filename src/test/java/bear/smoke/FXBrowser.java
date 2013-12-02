@@ -45,9 +45,7 @@ public class FXBrowser {
                 stage.setHeight(600);
                 stage.show();
 
-
-//                webEngine.loadContent(FileUtils.readFileToString(new File("src/test/test.html")));
-                webEngine.load("http://google.com");
+                webEngine.load(getClass().getResource("/bear/smoke/letterSpacing.html").toExternalForm());
 
                 webEngine.setOnAlert(new EventHandler<WebEvent<String>>() {
                     @Override
@@ -55,8 +53,6 @@ public class FXBrowser {
                         System.out.println("alert: " + stringWebEvent.getData());
                     }
                 });
-
-
             } catch (Exception e) {
                 e.printStackTrace();
             }

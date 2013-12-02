@@ -20,8 +20,13 @@ top priority:
 - (ok) noty for notices
 - autosize for code area ?
 - sample app:
+- quick setup task recipe (i.e. [new empty bear script], :run (rename :ref) {task: 'tasks.setup'}   at the moment its _.runner.run(_.getGlobal().tasks.setup, )
 -- (ok) mongo plugin
 - (ok) bug: sendAllFinishedResults sends result only for the whole run
+- upstart plugin (& fix play app)
+- unit test ReleaseManager
+- FileWatcher
+-
 -- computer demo for 3 hosts/single mysql
 -- computer demo for 3 hosts/mongodb cluster
 -- reference phases from scripts
@@ -29,7 +34,8 @@ top priority:
 -- deploy mongodb & test
 -- run via scripts
 - refactor to be used with simplest builders
-- :ref {"task":"tasks.setup"}
+- :run {"task":"tasks.setup"}
+- too many inputs for setting vars (how should I set a var in Groovy/ GroovyScript/bear, what is the file I am in?)
 -- separate bearscript from execution
 -- builders may provide settings and scripts
 -- run a simple captures test with builders
@@ -45,6 +51,8 @@ db.migration  |      .  X
 
 - ui: stage/roles/hosts selection
 - ui: preload stages, hosts and roles
+- on release_roles :all do
+- TaskDef should hold a Type. So we could reference it as a phase
 
 
 - (ok, 2) send messages from plugins via uiLogger (sends to 'ui'), logger (sends to console)

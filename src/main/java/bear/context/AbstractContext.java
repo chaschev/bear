@@ -141,7 +141,6 @@ public abstract class AbstractContext {
         }
 
         throw new IllegalStateException();
-
     }
 
     public void setName(String name) {

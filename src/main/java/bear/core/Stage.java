@@ -25,8 +25,8 @@ import bear.session.DynamicVariable;
 import bear.session.SshAddress;
 import bear.task.SessionTaskRunner;
 import bear.task.Task;
-import bear.task.exec.CommandExecutionEntry;
-import bear.task.exec.TaskExecutionContext;
+import bear.task.CommandExecutionEntry;
+import bear.task.TaskExecutionContext;
 import chaschev.lang.Functions2;
 import chaschev.lang.MutableSupplier;
 import com.google.common.base.Function;
@@ -75,7 +75,7 @@ public class Stage {
     }
 
     //todo move this out of here
-    public PreparationResult prepareToRun2() {
+    public PreparationResult prepareToRun2(IBearSettings bearSettings) {
         Collection<Address> addresses = global.var(global.bear.addressesForStage).apply(this);
 
         List<SessionContext> $s = new ArrayList<SessionContext>();
@@ -107,7 +107,7 @@ public class Stage {
                 public void changedValue(DynamicVariable<CommandExecutionEntry> var, CommandExecutionEntry oldValue, CommandExecutionEntry newValue) {
                     ui.info(new CommandConsoleEventToUI($.getName(), newValue.toString())
                         .setId(newValue.command.id)
-                        .setParentId(execContext.currentTask.getDefaultValue().id)
+                        .setParentId(execContext.currentTask.getDefaultValue().getId())
                     );
                 }
             });
@@ -122,7 +122,7 @@ public class Stage {
                     String phaseId = $.getExecutionContext().phaseId.getDefaultValue();
 
                     ui.info(new TaskConsoleEventToUI($.getName(), $.getExecutionContext().phaseName + " " + phaseId, phaseId)
-                            .setId(newValue.id)
+                            .setId(newValue.getId())
                             .setParentId($.id)
                     );
                 }
@@ -141,7 +141,7 @@ public class Stage {
         }
 
 
-        return new PreparationResult($s);
+        return new PreparationResult($s, bearSettings);
     }
     void addToStages(Stages stages) {
         this.stages.setInstance(stages).makeFinal();

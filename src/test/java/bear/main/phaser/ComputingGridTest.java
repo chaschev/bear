@@ -11,7 +11,6 @@ import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -291,7 +290,7 @@ public class ComputingGridTest {
         return r;
     }
 
-    private static ComputingGrid<Integer, Integer> sampleGrid(Collection<? extends Phase<?, Integer>> phases, int partiesCount) {
+    private static ComputingGrid<Integer, Integer> sampleGrid(List<? extends Phase<?, Integer>> phases, int partiesCount) {
         return new ComputingGrid<Integer, Integer>(phases, intArray(partiesCount));
     }
 

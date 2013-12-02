@@ -16,9 +16,9 @@
 
 package bear.task;
 
-import bear.core.SessionContext;
-import bear.core.Console;
 import bear.core.Role;
+import bear.core.SessionContext;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.Sets;
 
 import java.util.*;
@@ -27,6 +27,7 @@ import java.util.*;
  * @author Andrey Chaschev chaschev@gmail.com
  */
 public abstract class TaskDef<TASK extends Task> {
+    protected boolean multiTask;
 
     String name;
     public String description;
@@ -62,13 +63,73 @@ public abstract class TaskDef<TASK extends Task> {
         this.name = name;
     }
 
-    public TASK createNewSession(SessionContext $, final Task parent){
+    private TASK createNewSession(SessionContext $, final Task parent){
+        Preconditions.checkArgument(!multiTask, "task is not multi");
+
         TASK task = newSession($, parent);
 
-        return $.wire(task);
+        task.wire($);
+
+        return task;
     }
 
-    protected abstract TASK newSession(SessionContext $, final Task parent);
+    private List<TASK> createNewSessions(SessionContext $, final Task parent){
+        Preconditions.checkArgument(multiTask, "task is multi");
+
+        List<TASK> tasks = newSessions($, parent);
+
+        for (TASK task : tasks) {
+            task.wire($);
+        }
+
+        return tasks;
+    }
+
+    protected TASK newSession(SessionContext $, final Task parent){
+        throw new UnsupportedOperationException("todo implement either this or newSessions");
+    }
+
+    protected List<TASK> newSessions(SessionContext $, final Task parent){
+        throw new UnsupportedOperationException("todo implement either this or newSession");
+    }
+
+    public static interface SingleTask<TASK extends Task>{
+        TASK createNewSession(SessionContext $, final Task parent);
+    }
+
+    public static interface MultiTask<TASK extends Task>{
+        List<TASK> createNewSessions(SessionContext $, final Task parent);
+    }
+
+    public List<TASK> createNewSessionsAsList(SessionContext $, final Task parent){
+        if(multiTask){
+            return createNewSessions($, parent);
+        }else{
+            return Collections.singletonList(createNewSession($, parent));
+        }
+    }
+
+    public SingleTask<TASK> singleTask(){
+        Preconditions.checkArgument(!multiTask, "task is not multi");
+
+        return new SingleTask<TASK>() {
+            @Override
+            public TASK createNewSession(SessionContext $, Task parent) {
+                return TaskDef.this.createNewSession($, parent);
+            }
+        };
+    }
+
+    public MultiTask<TASK> multiTask(){
+        Preconditions.checkArgument(multiTask, "task is multi");
+
+        return new MultiTask<TASK>() {
+            @Override
+            public List<TASK> createNewSessions(SessionContext $, Task parent) {
+                return TaskDef.this.createNewSessions($, parent);
+            }
+        };
+    }
 
     public boolean hasRole(Set<Role> roles) {
         return !Sets.intersection(this.roles, roles).isEmpty();
@@ -78,10 +139,6 @@ public abstract class TaskDef<TASK extends Task> {
         Collections.addAll((List) dependsOnTasks, tasks);
 
         return this;
-    }
-
-    protected void defineVars(Console console) {
-
     }
 
     public TaskDef addBeforeTask(TaskDef task) {
@@ -147,4 +204,14 @@ public abstract class TaskDef<TASK extends Task> {
         return getName() +
             (roles.isEmpty() ? "" : " with roles: " + roles);
     }
+
+    public boolean isMultiTask() {
+        return multiTask;
+    }
+
+    public void setMultiTask(boolean multiTask) {
+        this.multiTask = multiTask;
+    }
+
+
 }

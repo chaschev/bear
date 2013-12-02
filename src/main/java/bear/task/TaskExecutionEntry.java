@@ -14,40 +14,23 @@
  * limitations under the License.
  */
 
-package bear.task.exec;
+package bear.task;
 
-import bear.console.AbstractConsoleCommand;
 import bear.session.Result;
-import bear.task.TaskResult;
-import bear.vcs.CommandLineResult;
 
 /**
 * @author Andrey Chaschev chaschev@gmail.com
 */
-public class CommandExecutionEntry extends ExecutionEntry {
-    public AbstractConsoleCommand command;
+public class TaskExecutionEntry extends ExecutionEntry {
+    protected Task<? extends TaskDef> task;
 
-    protected CommandLineResult result;
-
-    public CommandExecutionEntry(ExecutionEntry parent, AbstractConsoleCommand command) {
+    public TaskExecutionEntry(ExecutionEntry parent, Task<? extends TaskDef> task) {
         super(parent);
-        this.command = command;
-    }
-
-    @Override
-    public void onEnd(TaskResult result) {
-        super.onEnd(result);
-
-        this.result = (CommandLineResult) result;
+        this.task = task;
     }
 
     @Override
     public Result getResult() {
-        return result.result;
-    }
-
-    @Override
-    public String toString() {
-        return command.asText(false);
+        return task.getExecutionContext().taskResult.result;
     }
 }

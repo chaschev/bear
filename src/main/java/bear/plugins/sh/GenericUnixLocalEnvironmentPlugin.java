@@ -144,6 +144,11 @@ public class GenericUnixLocalEnvironmentPlugin extends SystemEnvironmentPlugin {
             }
 
             @Override
+            public Result scp(String dest, String[] args, String... paths) {
+                throw new UnsupportedOperationException("todo .scp");
+            }
+
+            @Override
             public boolean isRemote() {
                 return false;
             }

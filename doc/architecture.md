@@ -88,3 +88,15 @@ Remote execution plugin
 - Stages is a self-contained configuration of possible hosts, stages and roles.
 - Role is tag for quick referencing.
 - Effective configuration is a set of hosts.
+
+### Deployment
+
+- set files location (i.e. revision folder, build folder for the current date)
+- checkout files (options - skip, update, export, upload)
+- build and copy files
+- (optional) wait for other parties
+- stop service
+- update links
+- (conditionally) ensure stopped
+- start service
+- wait to start
