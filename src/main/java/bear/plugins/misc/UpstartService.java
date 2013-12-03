@@ -28,4 +28,18 @@ public class UpstartService {
         this.dir = Optional.of(dir);
         return this;
     }
+
+    public static void main(String[] args) {
+
+    }
+
+    public static String[] toSimpleNames(Class... classes){
+        String[] names = new String[classes.length];
+
+        for (int i = 0; i < classes.length; i++) {
+            names[i] = classes[i].getSimpleName();
+        }
+
+        return names;
+    }
 }

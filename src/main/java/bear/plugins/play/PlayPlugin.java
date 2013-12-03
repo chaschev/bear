@@ -18,13 +18,16 @@ package bear.plugins.play;
 
 import bear.cli.CommandLine;
 import bear.cli.Script;
+import bear.console.AbstractConsole;
+import bear.console.ConsoleCallback;
+import bear.console.ConsoleCallbackResult;
+import bear.console.ConsoleCallbackResultType;
 import bear.core.GlobalContext;
 import bear.core.SessionContext;
+import bear.main.event.NoticeEventToUI;
 import bear.plugins.ZippedToolPlugin;
 import bear.plugins.java.JavaPlugin;
-import bear.plugins.misc.UpstartPlugin;
-import bear.plugins.misc.UpstartService;
-import bear.plugins.misc.UpstartServices;
+import bear.plugins.misc.*;
 import bear.plugins.sh.SystemSession;
 import bear.session.DynamicVariable;
 import bear.session.Result;
@@ -36,8 +39,10 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nonnull;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import static bear.session.Variables.*;
 import static com.google.common.base.Predicates.containsPattern;
@@ -50,7 +55,9 @@ import static java.lang.String.format;
  */
 public class PlayPlugin extends ZippedToolPlugin {
     private static final Logger logger = LoggerFactory.getLogger(PlayPlugin.class);
+
     protected UpstartPlugin upstart;
+    protected FileWatchDogPlugin watchDog;
 
     public final DynamicVariable<String>
         projectPath = dynamic("Project root dir"),
@@ -59,11 +66,21 @@ public class PlayPlugin extends ZippedToolPlugin {
         stageTargetPattern = concat(projectPath, "/target/universal/stage/bin"),
         instancePath = concat(bear.applicationPath, "/instances/play-%s"),
         instanceLogsPath = concat(bear.appLogsPath, "/play-%s"),
+        consoleLogPath = concat(instanceLogsPath, "/console"),
         instancePorts = newVar("9000"),
         multiServiceName = concat(bear.name, "_%s"),
         singleServiceName = equalTo(bear.name),
-        groupName = equalTo(bear.name)
-    ;
+        groupName = equalTo(bear.name);
+
+
+    public final DynamicVariable<WatchDogGroup>
+        watchStartDogComposite = newVar(null);
+
+    public final DynamicVariable<Integer>
+        startupTimeoutMs = equalTo(bear.buildTimeoutMs);
+
+    public final DynamicVariable<Boolean>
+        useWatchDog = newVar(true);
 
     public final DynamicVariable<List<String>> portsSplit = split(instancePorts, COMMA_SPLITTER);
 
@@ -151,7 +168,7 @@ public class PlayPlugin extends ZippedToolPlugin {
 //                        .line().addRaw("play compile stage")
 //                        .timeoutForBuild()
 //                        .build()
-                        .run();
+                            .run();
 
                     return result;
                 }
@@ -179,7 +196,7 @@ public class PlayPlugin extends ZippedToolPlugin {
 
                     Script script = new Script($.sys);
 
-                    List<String> ports = $(portsSplit);
+                    final List<String> ports = $(portsSplit);
 
                     boolean single = ports.size() == 1;
 
@@ -188,9 +205,9 @@ public class PlayPlugin extends ZippedToolPlugin {
                     TaskResult r;
 
                     for (String port : ports) {
-                        $.sys.mkdirs(format($(instancePath), port), instanceLogsPath(port));
+                        $.sys.mkdirs(instancePath(port), format($(instanceLogsPath), port));
 
-                        String consolePath = instanceLogsPath(port) + "/console";
+                        String consolePath = consoleLogPath(port);
 
                         script.line().addRaw("exec " + execPath.get() + " -Dhttp.port=" + port + " 2>&1 >" + consolePath).build();
 
@@ -204,17 +221,60 @@ public class PlayPlugin extends ZippedToolPlugin {
                     UpstartServices services = new UpstartServices(
                         single ? Optional.<String>absent() : Optional.of($(groupName)),
                         serviceList
-                        );
+                    );
 
                     r = $.runSession(
                         upstart.create.singleTask().createNewSession($, parent),
                         services);
 
-                    if(!r.ok()) return r;
+                    if (!r.ok()) return r;
+
+                    if ($(useWatchDog)) {
+                        spawnStartWatchDogs(ports);
+                    }
 
                     r = serviceCommand($, "start");
 
                     return r;
+                }
+
+                private void spawnStartWatchDogs(List<String> ports) {
+                    final WatchDogGroup compositeRunnable = new WatchDogGroup(ports.size());
+
+                    for (final String port : ports) {
+                        WatchDogRunnable runnable = new WatchDogRunnable($, watchDog, new WatchDogInput(
+                            consoleLogPath(port), false, new ConsoleCallback() {
+                            @Override
+                            @Nonnull
+                            public ConsoleCallbackResult progress(AbstractConsole.Terminal console, String buffer, String wholeText) {
+                                if (buffer.contains("Listening for HTTP on")) {
+                                    SessionContext.ui.info(new NoticeEventToUI($(bear.fullName), "started play instance on port " + port));
+
+                                    return new ConsoleCallbackResult(ConsoleCallbackResultType.DONE, null);
+                                }
+
+                                return ConsoleCallbackResult.CONTINUE;
+                            }
+                        })
+                            .setTimeoutMs($(startupTimeoutMs))
+                        );
+
+                        compositeRunnable.add(runnable);
+                    }
+
+                    compositeRunnable.startThreads();
+
+                    $.putConst(watchStartDogComposite, compositeRunnable);
+
+
+                    //this should not be needed
+                    $.getGlobal().scheduler.schedule(new Runnable() {
+                        @Override
+                        public void run() {
+                            $.removeConst(watchStartDogComposite);
+                            compositeRunnable.shutdownNow();
+                        }
+                    }, $(startupTimeoutMs), TimeUnit.MILLISECONDS);
                 }
 
 
@@ -222,17 +282,16 @@ public class PlayPlugin extends ZippedToolPlugin {
                     return format($(instancePath), port);
                 }
 
-                private String instanceLogsPath(String port) {
-                    return format($(instanceLogsPath), port);
+                private String consoleLogPath(String port) {
+                    return format($(consoleLogPath), port);
                 }
             };
         }
     };
 
 
-
     private String removeLastSemiColon(String s) {
-        if(s.endsWith(";")){
+        if (s.endsWith(";")) {
             return s.substring(0, s.length() - 1);
         }
 
@@ -258,7 +317,7 @@ public class PlayPlugin extends ZippedToolPlugin {
 
                     CommandLineResult r = serviceCommand($, "stop");
 
-                    if(!r.ok()){
+                    if (!r.ok()) {
                         logger.warn("unable to stop service: {}", r);
                     }
 
@@ -310,4 +369,26 @@ public class PlayPlugin extends ZippedToolPlugin {
     public InstallationTaskDef<? extends InstallationTask> getInstall() {
         return install;
     }
+
+    public final TaskDef<Task> watchStart = new TaskDef<Task>() {
+        @Override
+        protected Task newSession(SessionContext $, final Task parent) {
+            return new Task<TaskDef>(parent, new TaskCallable() {
+                @Override
+                public TaskResult call(SessionContext $, Task task, Object input) throws Exception {
+                    if (!$.var(useWatchDog)) return TaskResult.OK;
+
+                    WatchDogGroup watchDogs = $.var(watchStartDogComposite);
+
+                    //removed due to timeout, this should be very rare if not impossible
+                    if (watchDogs == null) return TaskResult.OK;
+
+                    return TaskResult.of(watchDogs.latch().await($.var(startupTimeoutMs), TimeUnit.MILLISECONDS),
+                        "" + watchDogs.latch().getCount() + " instances did not start in " +
+                            TimeUnit.MILLISECONDS.toSeconds($.var(startupTimeoutMs)) + " seconds");
+                }
+            });
+        }
+    };
+
 }

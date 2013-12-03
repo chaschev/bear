@@ -58,6 +58,12 @@ public class SecureSocialDemoSettings extends IBearSettings {
                 return $.run(play.stageStart);
             }
         })
+        .WaitForServiceToStart_9(new TaskCallable<TaskDef>() {
+            @Override
+            public TaskResult call(SessionContext $, Task<TaskDef> task, Object input) throws Exception {
+                return $.run(play.watchStart);
+            }
+        })
         .done()
         .build();
 

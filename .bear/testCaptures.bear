@@ -1,8 +1,13 @@
 //!:use shell groovy {"name": "testCaptures"}
 
 import bear.console.ConsoleCallback
+import bear.console.ConsoleCallbackResult
 
-def callback = {console, buffer, wholeText -> println "HEY!! ${buffer}"} as ConsoleCallback
+def callback = {console, buffer, wholeText ->
+    println "HEY!! ${buffer}";
+
+    return ConsoleCallbackResult.CONTINUE;
+} as ConsoleCallback
 
 println "HEY-STEP 0!!"
 def pwd = sys.capture("pwd", callback)

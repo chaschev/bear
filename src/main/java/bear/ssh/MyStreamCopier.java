@@ -109,7 +109,13 @@ public class MyStreamCopier {
         return service.submit(new CatchyCallable<Result>(new Callable<Result>() {
             @Override
             public Result call() {
-                while (!stopFlag && !Thread.currentThread().isInterrupted()) {
+                boolean interrupted = false;
+
+                while (!stopFlag) {
+                    interrupted = Thread.currentThread().isInterrupted();
+
+                    if(interrupted) break;
+
                     try {
                         if(nonBlockingCopy() == -1) {
                             break;

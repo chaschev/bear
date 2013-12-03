@@ -76,4 +76,8 @@ public class TaskResult {
 
         return this;
     }
+
+    public static TaskResult of(boolean b, String errorMessage) {
+        return b ? OK : new TaskResult(new Exception(errorMessage));
+    }
 }

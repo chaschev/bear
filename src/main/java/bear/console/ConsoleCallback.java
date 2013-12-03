@@ -16,9 +16,12 @@
 
 package bear.console;
 
+import javax.annotation.Nonnull;
+
 /**
 * @author Andrey Chaschev chaschev@gmail.com
 */
 public interface ConsoleCallback {
-    void progress(AbstractConsole.Terminal console, String buffer, String wholeText);
+    @Nonnull
+    ConsoleCallbackResult progress(AbstractConsole.Terminal console, String buffer, String wholeText);
 }

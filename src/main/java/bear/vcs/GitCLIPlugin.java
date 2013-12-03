@@ -21,6 +21,7 @@ import bear.cli.Script;
 import bear.cli.StubScript;
 import bear.console.AbstractConsole;
 import bear.console.ConsoleCallback;
+import bear.console.ConsoleCallbackResult;
 import bear.core.GlobalContext;
 import bear.core.SessionContext;
 import bear.session.DynamicVariable;
@@ -36,6 +37,7 @@ import com.google.common.collect.PeekingIterator;
 import org.joda.time.DateTime;
 import org.joda.time.format.DateTimeFormat;
 
+import javax.annotation.Nonnull;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -305,7 +307,8 @@ public class GitCLIPlugin extends VcsCLIPlugin<Task, TaskDef<?>> {
 
             return new ConsoleCallback() {
                 @Override
-                public void progress(AbstractConsole.Terminal console, String buffer, String wholeText) {
+                @Nonnull
+                public ConsoleCallbackResult progress(AbstractConsole.Terminal console, String buffer, String wholeText) {
                     if (buffer.matches(".*\\bpassword.*:.*")) {
                         console.println(password);
                     } else if (buffer.contains("(yes/no)")) {
@@ -318,6 +321,8 @@ public class GitCLIPlugin extends VcsCLIPlugin<Task, TaskDef<?>> {
                         // git is asking whether to accept the certificate
                         console.println("t");
                     }
+
+                    return ConsoleCallbackResult.CONTINUE;
                 }
             };
         }

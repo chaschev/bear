@@ -20,8 +20,8 @@ import bear.console.AbstractConsoleCommand;
 import bear.core.SessionContext;
 import bear.plugins.sh.SystemSession;
 import bear.task.BearException;
+import bear.vcs.CommandLineOperator;
 import bear.vcs.CommandLineResult;
-import bear.vcs.VcsCLIPlugin;
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
 import org.apache.commons.lang3.StringUtils;
@@ -113,17 +113,17 @@ public abstract class CommandLine<T extends CommandLineResult, SCRIPT extends Sc
     }
 
     public CommandLine<T, SCRIPT> semicolon() {
-        strings.add(new VcsCLIPlugin.CommandLineOperator(";"));
+        strings.add(new CommandLineOperator(";"));
         return this;
     }
 
     public CommandLine<T, SCRIPT> redirectFrom(String path) {
-        strings.add(new VcsCLIPlugin.CommandLineOperator("<" + path));
+        strings.add(new CommandLineOperator("<" + path));
         return this;
     }
 
     public CommandLine<T, SCRIPT> redirectTo(String path) {
-        strings.add(new VcsCLIPlugin.CommandLineOperator(">" + path));
+        strings.add(new CommandLineOperator(">" + path));
         return this;
     }
 
@@ -136,22 +136,22 @@ public abstract class CommandLine<T extends CommandLineResult, SCRIPT extends Sc
         if(format.contains("rm ") && !force){
             throw new BearException("rm in raw mode is forbidden. Use rmLine(...) or rm(...) to avoid deleting system libs.");
         }
-        strings.add(new VcsCLIPlugin.CommandLineOperator(String.format(format, args)));
+        strings.add(new CommandLineOperator(String.format(format, args)));
         return this;
     }
 
     public CommandLine<T, SCRIPT> addRaw(String s) {
-        strings.add(new VcsCLIPlugin.CommandLineOperator(s));
+        strings.add(new CommandLineOperator(s));
         return this;
     }
 
     public CommandLine<T, SCRIPT> stty() {
-        strings.add(new VcsCLIPlugin.CommandLineOperator("stty -echo;"));
+        strings.add(new CommandLineOperator("stty -echo;"));
         return this;
     }
 
     public CommandLine<T, SCRIPT> sudo() {
-        strings.add(new VcsCLIPlugin.CommandLineOperator("stty -echo; sudo "));
+        strings.add(new CommandLineOperator("stty -echo; sudo "));
         return this;
     }
 
@@ -170,12 +170,12 @@ public abstract class CommandLine<T extends CommandLineResult, SCRIPT extends Sc
     }
 
     public CommandLine<T, SCRIPT> bash() {
-        strings.add(new VcsCLIPlugin.CommandLineOperator("bash -c"));
+        strings.add(new CommandLineOperator("bash -c"));
         return this;
     }
 
     public CommandLine<T, SCRIPT> setVar(String k, String v) {
-        strings.add(new VcsCLIPlugin.CommandLineOperator("export " + k + "=" + v + "; "));
+        strings.add(new CommandLineOperator("export " + k + "=" + v + "; "));
         return this;
     }
 
@@ -207,7 +207,7 @@ public abstract class CommandLine<T extends CommandLineResult, SCRIPT extends Sc
         List strings = line.strings;
 
         for (Object string : strings) {
-            if (string instanceof VcsCLIPlugin.CommandLineOperator) {
+            if (string instanceof CommandLineOperator) {
                 String s = string.toString();
                 if(forExecution || !s.contains("export ")){
                     sb.append(string);
@@ -238,5 +238,15 @@ public abstract class CommandLine<T extends CommandLineResult, SCRIPT extends Sc
 
     public CommandLine<T, SCRIPT> timeoutShort() {
         return timeoutMs(sys.$(sys.getBear().shortTimeoutMs));
+    }
+
+    public CommandLine sudo(boolean sudo){
+        if(sudo) return sudo();
+        return this;
+    }
+
+    public CommandLine sudoOrStty(boolean sudo){
+        if(sudo) return sudo();
+        return stty();
     }
 }

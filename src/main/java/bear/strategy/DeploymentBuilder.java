@@ -157,8 +157,8 @@ public class DeploymentBuilder {
     }
 
     public class StartService extends DeploymentStep<StartService> {
-        public AwaitServiceToStart WaitForServiceToStart_9() {
-            return awaitServiceToStart;
+        public AwaitServiceToStart WaitForServiceToStart_9(TaskCallable<TaskDef> t) {
+            return awaitServiceToStart.setTaskCallable(t);
         }
 
         public WhenStarted $10_WhenStarted() {
@@ -269,7 +269,6 @@ public class DeploymentBuilder {
             .$6_UpdateLinks()
             .$7_WaitForServiceToStop()
             .$8_StartService()
-            .WaitForServiceToStart_9()
             .$10_WhenStarted()
             .done()
             .build();

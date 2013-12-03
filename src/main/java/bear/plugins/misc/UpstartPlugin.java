@@ -19,6 +19,7 @@ import static com.google.common.base.Optional.of;
  * TODO: could be updated by using this example: https://github.com/yyuu/capistrano-upstart/
  *
  * http://stackoverflow.com/questions/4335343/upstart-logging-output-enabled
+ * example: https://gist.github.com/leon/2204773, exec start-stop-daemon --pidfile ${HOME}/RUNNING_PID --chuid $USER:$GROUP --exec ${HOME}/target/universal/stage/bin/${APP} --background --start -- -Dconfig.resource=$CONFIG -Dhttp.port=$PORT -Dhttp.address=$ADDRESS $EXTRA
  */
 
 /**

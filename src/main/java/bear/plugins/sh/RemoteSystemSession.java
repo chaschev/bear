@@ -4,6 +4,8 @@ import bear.cli.CommandLine;
 import bear.cli.Script;
 import bear.console.AbstractConsoleCommand;
 import bear.console.ConsoleCallback;
+import bear.console.ConsoleCallbackResult;
+import bear.console.ConsoleCallbackResultType;
 import bear.core.AbstractConsole;
 import bear.core.GlobalContext;
 import bear.core.MarkedBuffer;
@@ -84,13 +86,15 @@ class RemoteSystemSession extends SystemSession {
                 final Session.Command execSshCommand = session.exec(command.asText());
 
                 final GenericUnixRemoteEnvironmentPlugin.RemoteConsole remoteConsole = (GenericUnixRemoteEnvironmentPlugin.RemoteConsole) new GenericUnixRemoteEnvironmentPlugin.RemoteConsole(execSshCommand, new AbstractConsole.Listener() {
+                    @Nonnull
                     @Override
-                    public void textAdded(String textAdded, MarkedBuffer buffer) throws Exception {
+                    public ConsoleCallbackResult textAdded(String textAdded, MarkedBuffer buffer) throws Exception {
+
                         $.logOutput(textAdded);
                         System.out.print(textAdded);
 
                         if (Strings.isNullOrEmpty(textAdded)) {
-                            return;
+                            return ConsoleCallbackResult.CONTINUE;
                         }
 
                         final String text = buffer.wholeText();
@@ -99,7 +103,18 @@ class RemoteSystemSession extends SystemSession {
 
                         if (userCallback != null) {
                             try {
-                                userCallback.progress(console, textAdded, buffer.wholeText());
+                                ConsoleCallbackResult progress = userCallback.progress(console, textAdded, buffer.wholeText());
+                                switch (progress.type) {
+                                    case CONTINUE:
+                                        break;
+                                    case DONE:
+                                        return progress;
+                                    case EXCEPTION:
+                                        return progress;
+                                    case WARNING:
+                                        logger.warn("warning during console processing: {}", progress.object);
+                                        break;
+                                }
                             } catch (Exception e) {
                                 logger.error("", e);
                             }
@@ -110,20 +125,28 @@ class RemoteSystemSession extends SystemSession {
                                 console.println($.var(bear.sshPassword));
                             }
                         }
+
+                        return new ConsoleCallbackResult(ConsoleCallbackResultType.FINISHED, null);
                     }
                 })
                     .bufSize(session.getRemoteMaxPacketSize())
                     .spawn(global.localExecutor, (int) getTimeout(command), TimeUnit.MILLISECONDS);
 
 //                        Stopwatch sw = Stopwatch.createStarted();
-                execSshCommand.join((int) getTimeout(command), TimeUnit.MILLISECONDS);
+                try {
+                    execSshCommand.join((int) getTimeout(command), TimeUnit.MILLISECONDS);
 
 //                        logger.debug("join timing: {}", sw.elapsed(TimeUnit.MILLISECONDS));
 
-                if(!remoteConsole.awaitStreamCopiers(20, TimeUnit.MILLISECONDS)){
-//                            logger.debug("WAAARN, NOT ALL FINISHED!!!");
-                    remoteConsole.stopStreamCopiers();
-//                            logger.debug("stopStreamCopiers timing: {}", sw.elapsed(TimeUnit.MILLISECONDS));
+                    if(!remoteConsole.awaitStreamCopiers(20, TimeUnit.MILLISECONDS)){
+    //                            logger.debug("WAAARN, NOT ALL FINISHED!!!");
+                        remoteConsole.stopStreamCopiers();
+    //                            logger.debug("stopStreamCopiers timing: {}", sw.elapsed(TimeUnit.MILLISECONDS));
+                    }
+                } finally {
+                    if(!remoteConsole.allFinished()){
+                        remoteConsole.stopStreamCopiers();
+                    }
                 }
 
 //                        logger.debug("awaitStreamCopiers timing: {}", sw.elapsed(TimeUnit.MILLISECONDS));

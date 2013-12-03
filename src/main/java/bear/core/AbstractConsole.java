@@ -16,10 +16,12 @@
 
 package bear.core;
 
+import bear.console.ConsoleCallbackResult;
 import bear.ssh.MyStreamCopier;
 import chaschev.util.Exceptions;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nonnull;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -41,7 +43,8 @@ public abstract class AbstractConsole extends bear.console.AbstractConsole.Termi
     public static abstract class Listener {
         protected AbstractConsole console;
 
-        protected abstract void textAdded(String text, MarkedBuffer buffer) throws Exception;
+        @Nonnull
+        protected abstract ConsoleCallbackResult textAdded(String textAdded, MarkedBuffer buffer) throws Exception;
     }
 
     Listener listener;
@@ -104,7 +107,15 @@ public abstract class AbstractConsole extends bear.console.AbstractConsole.Termi
 
                 LoggerFactory.getLogger("log").trace("appended to buffer: {}", buffer.interimText());
 
-                listener.textAdded(buffer.interimText(), buffer);
+                ConsoleCallbackResult result = listener.textAdded(buffer.interimText(), buffer);
+
+                switch (result.type) {
+                    case DONE:
+                    case EXCEPTION:
+                    case FINISHED:
+                        stopStreamCopiers();
+                        break;
+                }
 
                 buffer.markInterim();
             }
@@ -153,16 +164,7 @@ public abstract class AbstractConsole extends bear.console.AbstractConsole.Termi
 
                 long timeElapsedMs = now - startedAt;
 
-                boolean allFinished = true;
-
-                for (MyStreamCopier copier : copiers) {
-                    if (!copier.isFinished()) {
-                        allFinished = false;
-                        break;
-                    }
-                }
-
-                if (allFinished) {
+                if (allFinished()) {
                     return true;
                 }
 
@@ -175,6 +177,18 @@ public abstract class AbstractConsole extends bear.console.AbstractConsole.Termi
                 throw Exceptions.runtime(e);
             }
         }
+    }
+
+    public boolean allFinished() {
+        boolean allFinished = true;
+
+        for (MyStreamCopier copier : copiers) {
+            if (!copier.isFinished()) {
+                allFinished = false;
+                break;
+            }
+        }
+        return allFinished;
     }
 
     public void setOut(OutputStream out) {

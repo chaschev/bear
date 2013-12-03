@@ -28,6 +28,7 @@ import com.google.common.base.Optional;
 public class CommandLineResult extends TaskResult{
     public transient String text;
     public int exitCode;
+    public Object value;
 
     public CommandLineResult(String text) {
         super(Result.OK);
@@ -74,5 +75,5 @@ public class CommandLineResult extends TaskResult{
         return this;
     }
 
-
+    public static final CommandLineResult OK = new CommandLineResult("OK");
 }

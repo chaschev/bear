@@ -18,6 +18,7 @@ package bear.plugins.mysql;
 
 import bear.console.AbstractConsole;
 import bear.console.ConsoleCallback;
+import bear.console.ConsoleCallbackResult;
 import bear.context.AbstractContext;
 import bear.context.Fun;
 import bear.core.Bear;
@@ -36,6 +37,7 @@ import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nonnull;
 import java.text.MessageFormat;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -276,10 +278,13 @@ public class MySqlPlugin extends Plugin<Task, TaskDef<?>> {
     private static ConsoleCallback mysqlPasswordCallback(final String pw) {
         return new ConsoleCallback(){
             @Override
-            public void progress(AbstractConsole.Terminal console, String buffer, String wholeText) {
+            @Nonnull
+            public ConsoleCallbackResult progress(AbstractConsole.Terminal console, String buffer, String wholeText) {
                 if (buffer.contains("Enter password:")) {
                     console.println(pw);
                 }
+
+                return ConsoleCallbackResult.CONTINUE;
             }
         };
     }

@@ -18,6 +18,7 @@ package bear.plugins.sh;
 
 import bear.console.AbstractConsole;
 import bear.console.ConsoleCallback;
+import bear.console.ConsoleCallbackResult;
 import bear.core.GlobalContext;
 import bear.core.SessionContext;
 import bear.plugins.Plugin;
@@ -28,6 +29,8 @@ import bear.task.TaskDef;
 import bear.vcs.CommandLineResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import javax.annotation.Nonnull;
 
 /**
  * @author Andrey Chaschev chaschev@gmail.com
@@ -56,10 +59,13 @@ public abstract class SystemEnvironmentPlugin extends Plugin<SystemSession, Syst
     public static ConsoleCallback println(final String s) {
         return new ConsoleCallback() {
             @Override
-            public void progress(AbstractConsole.Terminal console, String buffer, String wholeText) {
+            @Nonnull
+            public ConsoleCallbackResult progress(AbstractConsole.Terminal console, String buffer, String wholeText) {
                 if(buffer.contains("password")){
                     console.println(s);
                 }
+
+                return ConsoleCallbackResult.CONTINUE;
             }
         };
     }
