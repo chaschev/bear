@@ -220,7 +220,7 @@ public class GenericUnixLocalEnvironmentPlugin extends SystemEnvironmentPlugin {
             }
 
             @Override
-            public Result writeStringAs(String path, String s, boolean sudo, String user, String permissions) {
+            public Result writeStringAs(WriteStringInput input) {
                 throw new UnsupportedOperationException("todo .writeStringAs");
             }
 

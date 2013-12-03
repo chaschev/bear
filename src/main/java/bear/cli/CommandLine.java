@@ -227,4 +227,16 @@ public abstract class CommandLine<T extends CommandLineResult, SCRIPT extends Sc
     public boolean isDefaultDir() {
         return cd == null || ".".equals(cd);
     }
+
+    public CommandLine<T, SCRIPT> timeoutForInstallation() {
+        return timeoutMs(sys.$(sys.getBear().installationTimeoutMs));
+    }
+
+    public CommandLine<T, SCRIPT> timeoutForBuild() {
+        return timeoutMs(sys.$(sys.getBear().buildTimeoutMs));
+    }
+
+    public CommandLine<T, SCRIPT> timeoutShort() {
+        return timeoutMs(sys.$(sys.getBear().shortTimeoutMs));
+    }
 }

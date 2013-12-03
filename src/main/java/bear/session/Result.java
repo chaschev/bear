@@ -16,6 +16,8 @@
 
 package bear.session;
 
+import bear.task.TaskResult;
+
 /**
  * @author Andrey Chaschev chaschev@gmail.com
  */
@@ -38,5 +40,11 @@ public enum Result {
 
     public boolean nok() {
         return this != OK;
+    }
+
+    public TaskResult toTaskResult(){
+        if(this == OK) return TaskResult.OK;
+
+        return new TaskResult(this);
     }
 }

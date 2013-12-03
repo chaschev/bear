@@ -46,6 +46,8 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static bear.plugins.sh.SystemEnvironmentPlugin.sshPassword;
+
 /**
 * @author Andrey Chaschev chaschev@gmail.com
 */
@@ -149,7 +151,11 @@ public abstract class SystemSession extends Task<SystemEnvironmentPlugin.SystemS
 
 
     public String capture(String s) {
-        return sendCommand(line().addRaw(s)).throwIfError().text;
+        return capture(s, false);
+    }
+
+    public String capture(String s, boolean sudo) {
+        return captureResult(s, sudo).throwIfError().text;
     }
 
     public String capture(String s, ConsoleCallback callback) {
@@ -157,7 +163,28 @@ public abstract class SystemSession extends Task<SystemEnvironmentPlugin.SystemS
     }
 
     public CommandLineResult captureResult(String s, ConsoleCallback callback) {
-        return sendCommand(line().addRaw(s), callback);
+        return captureResult(s, false, callback);
+    }
+
+    public CommandLineResult captureResult(String s) {
+        return captureResult(s, false);
+    }
+
+    public CommandLineResult captureResult(String s, boolean sudo) {
+        return captureResult(s, sudo, sudo ? sshPassword($) : null);
+    }
+
+    protected CommandLineResult captureResult(String s, boolean sudo, ConsoleCallback callback) {
+        CommandLine line = line();
+
+        if(sudo){
+            line.sudo();
+        }else
+        if(callback != null){
+            line.stty();
+        }
+
+        return sendCommand(line.addRaw(s), callback);
     }
 
     public CommandLine addRmLine(CommandLine line, String... paths){
@@ -217,7 +244,8 @@ public abstract class SystemSession extends Task<SystemEnvironmentPlugin.SystemS
     public abstract Result chmod(String octal, boolean recursive, String... files);
 
     public abstract Result writeString(String path, String s);
-    public abstract Result writeStringAs(String path, String s, boolean sudo, String user, String permissions);
+
+    public abstract Result writeStringAs(WriteStringInput input);
 
     public abstract String readString(String path, String _default);
 
@@ -324,15 +352,37 @@ public abstract class SystemSession extends Task<SystemEnvironmentPlugin.SystemS
         return scp(dest, args, fullPaths);
     }
 
+    //TODO this should be temporary and redesigned
+    public static interface OSHelper{
+        String serviceCommand(String service, String command);
+    }
+
     public static class OSInfo{
         public final UnixFlavour unixFlavour;
         public final UnixSubFlavour unixSubFlavour;
         public final org.eclipse.aether.version.Version version;
+        public final OSHelper osHelper;
 
         public OSInfo(UnixFlavour unixFlavour, UnixSubFlavour unixSubFlavour, org.eclipse.aether.version.Version version) {
             this.unixFlavour = unixFlavour;
             this.unixSubFlavour = unixSubFlavour;
             this.version = version;
+
+            switch (unixFlavour){
+                case CENTOS:
+                    osHelper = new OSHelper() {
+                        @Override
+                        public String serviceCommand(String service, String command) {
+                            return "initctl " + command + " " + service;
+                        }
+                    };
+                    break;
+                default: throw new UnsupportedOperationException();
+            }
+        }
+
+        public OSHelper getHelper() {
+            return osHelper;
         }
     }
 
@@ -382,6 +432,8 @@ public abstract class SystemSession extends Task<SystemEnvironmentPlugin.SystemS
     }
 
     public SystemEnvironmentPlugin.PackageManager getPackageManager() {
+
+        //todo move into os info
         switch (getOsInfo().unixFlavour) {
             case CENTOS:
                 return new SystemEnvironmentPlugin.PackageManager() {

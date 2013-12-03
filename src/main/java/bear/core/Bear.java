@@ -52,7 +52,8 @@ import java.util.regex.Pattern;
 
 import static bear.session.BearVariables.joinPath;
 import static bear.session.Variables.*;
-import static bear.session.Variables.condition;
+import static java.util.concurrent.TimeUnit.MINUTES;
+import static java.util.concurrent.TimeUnit.SECONDS;
 
 /**
  * @author Andrey Chaschev chaschev@gmail.com
@@ -245,7 +246,11 @@ public class Bear extends BearApp<GlobalContext> {
 
     public final DynamicVariable<Integer>
         keepXReleases = newVar(5),
-        taskTimeoutSec = newVar(15 * 60)
+        promptTimeoutMs = newVar((int) SECONDS.toMillis(10)),
+        shortTimeoutMs = newVar((int) SECONDS.toMillis(30)),
+        buildTimeoutMs = newVar((int) MINUTES.toMillis(10)),
+        installationTimeoutMs = newVar((int) MINUTES.toMillis(60)),
+        defaultTimeout = equalTo(promptTimeoutMs)
     ;
 
     public final DynamicVariable<Releases> getReleases = new DynamicVariable<Releases>("getReleases", "").setDynamic(new Fun<Releases, SessionContext>() {

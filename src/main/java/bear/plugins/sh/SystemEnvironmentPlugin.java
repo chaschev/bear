@@ -37,7 +37,6 @@ public abstract class SystemEnvironmentPlugin extends Plugin<SystemSession, Syst
 
     protected boolean sudo;
     private int defaultTimeout = 5000;
-    private int singleTimeout = -1;
 
     public enum CopyCommandType {
         COPY, LINK, MOVE
@@ -66,19 +65,7 @@ public abstract class SystemEnvironmentPlugin extends Plugin<SystemSession, Syst
     }
 
     protected int getTimeout() {
-        int r = singleTimeout == -1 ? defaultTimeout : singleTimeout;
-        singleTimeout = -1;
-        return r;
-    }
-
-    public SystemEnvironmentPlugin setDefaultTimeout(int defaultTimeout) {
-        this.defaultTimeout = defaultTimeout;
-        return this;
-    }
-
-    public SystemEnvironmentPlugin setSingleTimeout(int singleTimeout) {
-        this.singleTimeout = singleTimeout;
-        return this;
+        throw new UnsupportedOperationException("remove");
     }
 
     public void connect() {

@@ -104,15 +104,10 @@ public class Plugins {
             List<Class<?>> pluginsToAdd = new ArrayList<Class<?>>();
 
             for (Class<?> pluginClass : plugins) {
-                Field[] fields = OpenBean.getClassDesc(pluginClass).fields;
-
-                for (Field field : fields) {
-                    Class<?> depPluginClass = field.getType();
-
-                    if (!Plugin.class.isAssignableFrom(depPluginClass)) continue;
-
-                    if (!this.pluginClasses.contains(depPluginClass)) {
-                        pluginsToAdd.add(depPluginClass);
+                for (Field field : OpenBean.fieldsOfType(pluginClass, Plugin.class)) {
+                    Class<?> type = field.getType();
+                    if (!pluginClasses.contains(type)) {
+                        pluginsToAdd.add(type);
                     }
                 }
             }
@@ -161,14 +156,16 @@ public class Plugins {
 
                     if(Plugin.class.isAssignableFrom(dependantPluginClass)){
                         Plugin resolvedDep = Iterables.find(plugins, Predicates.instanceOf(dependantPluginClass));
-                        pluginsGraph.addEdge(
-                            plugin, resolvedDep
-                        );
-
                         try {
+                            pluginsGraph.addEdge(plugin, resolvedDep);
+
                             //DI
                             field.set(plugin, resolvedDep);
-                        } catch (IllegalAccessException e) {
+                        }
+                        catch (DirectedGraph.NoSuchNodeException e){
+                            throw new RuntimeException("plugin was not loaded: " + e.node);
+                        }
+                        catch (IllegalAccessException e) {
                             throw Exceptions.runtime(e);
                         }
                     }

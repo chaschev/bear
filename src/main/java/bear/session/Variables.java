@@ -22,19 +22,21 @@ import bear.core.SessionContext;
 import com.google.common.base.Function;
 import com.google.common.base.Functions;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Splitter;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 
 import java.io.File;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
  * @author Andrey Chaschev chaschev@gmail.com
  */
 public class Variables {
-
+    public static final Splitter COMMA_SPLITTER = Splitter.on(",").omitEmptyStrings().trimResults();
 
     public static final Function<String, File> TO_FILE = new Function<String, File>() {
         public File apply(String input) {
@@ -47,6 +49,7 @@ public class Variables {
             return Boolean.valueOf(input);
         }
     };
+    public static final Splitter LINE_SPLITTER = Splitter.on("\n").trimResults();
 
     protected static final Map<Class, Function<String, ?>> CONVERTERS;
 
@@ -167,6 +170,14 @@ public class Variables {
         }
 
         return sb.toString();
+    }
+
+    public static DynamicVariable<List<String>> split(final DynamicVariable<? extends CharSequence> str, final Splitter splitter) {
+        return dynamic(new Fun<List<String>, AbstractContext>() {
+            public List<String> apply(AbstractContext $) {
+                return splitter.splitToList($.var(str));
+            }
+        });
     }
 
     public static DynamicVariable<String> format(final String s, final Object... varsAndStrings){

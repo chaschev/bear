@@ -51,6 +51,15 @@ public final class DirectedGraph<T> implements Iterable<T> {
         return true;
     }
 
+    public static class NoSuchNodeException extends RuntimeException{
+        public final Object node;
+
+        public NoSuchNodeException(Object node) {
+            super("No such node: " + node);
+            this.node = node;
+        }
+    }
+
     /**
      * Given a start node, and a destination, adds an arc from the start node
      * to the destination.  If an arc already exists, this operation is a
@@ -59,14 +68,22 @@ public final class DirectedGraph<T> implements Iterable<T> {
      *
      * @param start The start node.
      * @param dest  The destination node.
-     * @throws NoSuchElementException If either the start or destination nodes
-     *                                do not exist.
      */
     public void addEdge(T start, T dest) {
         /* Confirm both endpoints exist. */
-        if (!graph.containsKey(start) || !graph.containsKey(dest)) {
-            throw new NoSuchElementException("Both nodes must be in the graph.");
+
+        if(!graph.containsKey(start)){
+            addNode(start);
         }
+
+        if(!graph.containsKey(dest)){
+            addNode(dest);
+        }
+//        if (!graph.containsKey(start)) {
+//            throw new NoSuchNodeException(start);
+//        } else if (!graph.containsKey(dest)) {
+//            throw new NoSuchNodeException(dest);
+//        }
 
         /* Add the edge. */
         graph.get(start).add(dest);

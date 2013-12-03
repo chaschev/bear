@@ -217,7 +217,7 @@ class RemoteSystemSession extends SystemSession {
     }
 
     private <T extends CommandLineResult> long getTimeout(AbstractConsoleCommand<T> line) {
-        return line.getTimeoutMs() == 0 ? remotePlugin.getTimeout() : line.getTimeoutMs();
+        return line.getTimeoutMs() == 0 ? $(global.bear.defaultTimeout) : line.getTimeoutMs();
     }
 
     @Override
@@ -356,10 +356,10 @@ class RemoteSystemSession extends SystemSession {
     }
 
     @Override
-    public Result writeStringAs(String path, String s, boolean sudo, String user, String permissions) {
+    public Result writeStringAs(WriteStringInput input) {
         try {
             final File tempFile = File.createTempFile("bear", "upload");
-            FileUtils.writeStringToFile(tempFile, s, IOUtils.UTF8.name());
+            FileUtils.writeStringToFile(tempFile, input.text, IOUtils.UTF8.name());
             String remoteTempPath = tempFile.getName();
 
             upload(remoteTempPath, tempFile);
@@ -370,20 +370,20 @@ class RemoteSystemSession extends SystemSession {
 
             CommandLine line = script.line();
 
-            if(sudo){
+            if(input.sudo){
                 line.sudo();
             }else{
                 line.stty();
             }
 
-            line.a("mv", remoteTempPath, path);
+            line.a("mv", remoteTempPath, input.path);
 
-            if(user != null){
-                line.addRaw(" && chown " + user +" ").a(path);
+            if(input.user.isPresent()){
+                line.addRaw(" && chown " + input.user.get() +" ").a(input.path);
             }
 
-            if(permissions != null){
-                line.addRaw(" && chmod " + permissions +" ").a(path);
+            if(input.permissions.isPresent()){
+                line.addRaw(" && chmod " + input.permissions.get() +" ").a(input.path);
             }
 
             CommandLineResult run = run(script, SystemEnvironmentPlugin.println($.var(getBear().sshPassword)));

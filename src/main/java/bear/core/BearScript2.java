@@ -25,6 +25,7 @@ import bear.main.event.TextConsoleEventToUI;
 import bear.main.phaser.OnceEnteredCallable;
 import bear.plugins.Plugin;
 import bear.plugins.groovy.GroovyShellPlugin;
+import bear.session.Variables;
 import bear.task.*;
 import chaschev.util.Exceptions;
 import com.google.common.base.*;
@@ -73,9 +74,7 @@ public class BearScript2 {
     private static final Logger logger = LoggerFactory.getLogger(BearScript2.class);
     private static final org.apache.logging.log4j.Logger ui = LogManager.getLogger("fx");
 
-    public static final Splitter LINE_SPLITTER = Splitter.on("\n").trimResults();
-
-//    final DynamicVariable<BearScriptPhase> phaseId = new DynamicVariable<BearScriptPhase>();
+    //    final DynamicVariable<BearScriptPhase> phaseId = new DynamicVariable<BearScriptPhase>();
 
     final GlobalContext global;
     final Plugin initialPlugin;
@@ -532,7 +531,7 @@ public class BearScript2 {
 
         ScriptItem currentScriptItem = new ScriptItem(Optional.<String>absent(), initialPluginName, lineIndex);
 
-        for (Iterator<String> iterator = LINE_SPLITTER.split(script).iterator(); iterator.hasNext(); lineIndex++) {
+        for (Iterator<String> iterator = Variables.LINE_SPLITTER.split(script).iterator(); iterator.hasNext(); lineIndex++) {
             String line = iterator.next();
 
             if (line.startsWith("#")) {
@@ -622,7 +621,7 @@ public class BearScript2 {
 
             checkArgument(!Strings.isNullOrEmpty(scriptName), "could detect not script name. please provide");
 
-            return new ScriptItem(Optional.of(scriptName), plugin, LINE_SPLITTER.splitToList(scriptString), 0);
+            return new ScriptItem(Optional.of(scriptName), plugin, Variables.LINE_SPLITTER.splitToList(scriptString), 0);
         } catch (IOException e) {
             throw Exceptions.runtime(e);
         }
@@ -709,7 +708,7 @@ public class BearScript2 {
 
             this.parseResult = new BearScriptParseResult(
                 Lists.newArrayList(
-                    new ScriptItem(scriptName, groovy.cmdAnnotation(), LINE_SPLITTER.splitToList(groovyScript), 1)
+                    new ScriptItem(scriptName, groovy.cmdAnnotation(), Variables.LINE_SPLITTER.splitToList(groovyScript), 1)
                 ),
                 Collections.<ScriptError>emptyList());
 

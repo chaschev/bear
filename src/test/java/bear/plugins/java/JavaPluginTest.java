@@ -54,7 +54,6 @@ public class JavaPluginTest extends SessionTest {
         $.run(java.getInstall());
 
         System.out.println("commands: \n" + Joiner.on("\n").join(commands));
-
     }
 
 }

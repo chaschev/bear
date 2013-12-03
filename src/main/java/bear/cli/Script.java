@@ -18,9 +18,10 @@ package bear.cli;
 
 import bear.console.ConsoleCallback;
 import bear.core.SessionContext;
-import bear.session.Result;
 import bear.plugins.sh.SystemSession;
+import bear.session.Result;
 import bear.vcs.CommandLineResult;
+import chaschev.lang.OpenStringBuilder;
 import com.google.common.base.Function;
 
 import java.util.ArrayList;
@@ -128,5 +129,32 @@ public class Script <T extends CommandLineResult, CHILD extends Script>{
 
     public boolean isDefaultDir() {
         return cd == null || ".".equals(cd);
+    }
+
+    public String asTextScript() {
+        OpenStringBuilder sb = new OpenStringBuilder();
+
+        for (CommandLine<T, CHILD> line : lines) {
+            sb.append(line.asText(true)).trim();
+            if(sb.charAt(sb.length() - 1) != ';') {
+                sb.append(";\n");
+            }else{
+                sb.append('\n');
+            }
+        }
+
+        return sb.trim().toString();
+    }
+
+    public Script timeoutForInstallation() {
+        return timeoutMs(sys.$(sys.getBear().installationTimeoutMs));
+    }
+
+    public Script timeoutForBuild() {
+        return timeoutMs(sys.$(sys.getBear().buildTimeoutMs));
+    }
+
+    public Script timeoutShort() {
+        return timeoutMs(sys.$(sys.getBear().shortTimeoutMs));
     }
 }

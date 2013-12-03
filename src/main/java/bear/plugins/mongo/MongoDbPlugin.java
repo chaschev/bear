@@ -7,6 +7,7 @@ import bear.core.Shell;
 import bear.plugins.Plugin;
 import bear.plugins.sh.SystemSession;
 import bear.plugins.sh.UnixSubFlavour;
+import bear.plugins.sh.WriteStringInput;
 import bear.session.DynamicVariable;
 import bear.session.Result;
 import bear.session.Variables;
@@ -14,6 +15,7 @@ import bear.session.Versions;
 import bear.task.*;
 import bear.vcs.CommandLineResult;
 import com.google.common.base.Function;
+import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableMap;
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.aether.version.Version;
@@ -76,12 +78,12 @@ public class MongoDbPlugin extends Plugin {
                     TaskResult r = TaskResult.OK;
 
                     if (!clientVersionOk || !serverVersionOk) {
-                        $.sys.writeStringAs("/etc/yum.repos.d/mongodb.repo", "" +
+                        $.sys.writeStringAs(new WriteStringInput("/etc/yum.repos.d/mongodb.repo", "" +
                             "[mongodb]\n" +
                             "name=MongoDB Repository\n" +
                             "baseurl=" + $(repo).get($.sys.getOsInfo().unixSubFlavour) + "\n" +
                             "gpgcheck=0\n" +
-                            "enabled=1\n", true, null, null);
+                            "enabled=1\n", true, Optional.<String>absent(), Optional.<String>absent()));
                     }
 
                     if (serverVersion == NOT_INSTALLED) {

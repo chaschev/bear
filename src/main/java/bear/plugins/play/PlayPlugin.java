@@ -18,11 +18,14 @@ package bear.plugins.play;
 
 import bear.cli.CommandLine;
 import bear.cli.Script;
-import bear.core.BearScript2;
 import bear.core.GlobalContext;
 import bear.core.SessionContext;
 import bear.plugins.ZippedToolPlugin;
 import bear.plugins.java.JavaPlugin;
+import bear.plugins.misc.UpstartPlugin;
+import bear.plugins.misc.UpstartService;
+import bear.plugins.misc.UpstartServices;
+import bear.plugins.sh.SystemSession;
 import bear.session.DynamicVariable;
 import bear.session.Result;
 import bear.session.Variables;
@@ -30,6 +33,11 @@ import bear.task.*;
 import bear.vcs.CommandLineResult;
 import com.google.common.base.Optional;
 import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import static bear.session.Variables.*;
 import static com.google.common.base.Predicates.containsPattern;
@@ -41,13 +49,24 @@ import static java.lang.String.format;
  * @author Andrey Chaschev chaschev@gmail.com
  */
 public class PlayPlugin extends ZippedToolPlugin {
+    private static final Logger logger = LoggerFactory.getLogger(PlayPlugin.class);
+    protected UpstartPlugin upstart;
+
     public final DynamicVariable<String>
         projectPath = dynamic("Project root dir"),
         configFile = dynamic("Path to an alternative application.conf"),
         execName = concat("play", condition(bear.isNativeUnix, newVar(""), newVar(".bat")).desc("'play' or 'play.bat'")),
         stageTargetPattern = concat(projectPath, "/target/universal/stage/bin"),
         instancePath = concat(bear.applicationPath, "/instances/play-%s"),
-        instancePorts = newVar("9000");
+        instanceLogsPath = concat(bear.appLogsPath, "/play-%s"),
+        instancePorts = newVar("9000"),
+        multiServiceName = concat(bear.name, "_%s"),
+        singleServiceName = equalTo(bear.name),
+        groupName = equalTo(bear.name)
+    ;
+
+    public final DynamicVariable<List<String>> portsSplit = split(instancePorts, COMMA_SPLITTER);
+
 
     public final DynamicVariable<Boolean>
         clean = Variables.equalTo(bear.clean).desc("clean project before build");
@@ -91,6 +110,7 @@ public class PlayPlugin extends ZippedToolPlugin {
                     line.addRaw("dist");
 
                     CommandLineResult result = line
+                        .timeoutForBuild()
                         .build()
                         .run();
 
@@ -129,7 +149,7 @@ public class PlayPlugin extends ZippedToolPlugin {
                     result =
                         script
 //                        .line().addRaw("play compile stage")
-//                        .timeoutMin(10)
+//                        .timeoutForBuild()
 //                        .build()
                         .run();
 
@@ -141,7 +161,7 @@ public class PlayPlugin extends ZippedToolPlugin {
 
     public final TaskDef<Task> stageStart = new TaskDef<Task>() {
         @Override
-        protected Task newSession(SessionContext $, Task parent) {
+        protected Task newSession(SessionContext $, final Task parent) {
             return new Task<TaskDef>(parent, this, $) {
 
                 @Override
@@ -150,7 +170,7 @@ public class PlayPlugin extends ZippedToolPlugin {
 
                     String capture = $.sys.capture("ls -w 1 " + $(stageTargetPattern) + "/*");
 
-                    Optional<String> execPath = tryFind(BearScript2.LINE_SPLITTER.split(
+                    Optional<String> execPath = tryFind(LINE_SPLITTER.split(
                         capture.trim()), not(containsPattern("\\.bat$")));
 
                     if (!execPath.isPresent()) {
@@ -158,27 +178,52 @@ public class PlayPlugin extends ZippedToolPlugin {
                     }
 
                     Script script = new Script($.sys);
-                    CommandLineResult result;
 
-                    for (String port : $(instancePorts).split(",")) {
-                        $.sys.addRmLine(script.line(), instancePath(port) + "/output");
+                    List<String> ports = $(portsSplit);
 
-                        script
-                            .line().addRaw("mkdir -p %s", instancePath(port)).build()
-                            .line()
-                            .cd(instancePath(port))
-                            .addRaw("nohup " + execPath.get() + " -Dhttp.port="+ port + " &")
-                            .timeoutSec(4)
-                            .build();
+                    boolean single = ports.size() == 1;
+
+                    List<UpstartService> serviceList = new ArrayList<UpstartService>(ports.size());
+
+                    TaskResult r;
+
+                    for (String port : ports) {
+                        $.sys.mkdirs(format($(instancePath), port), instanceLogsPath(port));
+
+                        String consolePath = instanceLogsPath(port) + "/console";
+
+                        script.line().addRaw("exec " + execPath.get() + " -Dhttp.port=" + port + " 2>&1 >" + consolePath).build();
+
+                        serviceList.add(new UpstartService(
+                            single ? $(singleServiceName) : format($(multiServiceName), port),
+                            $(bear.fullName),
+                            removeLastSemiColon(script.asTextScript())
+                        ).cd(instancePath(port)));
                     }
 
-                    result = script.run();
+                    UpstartServices services = new UpstartServices(
+                        single ? Optional.<String>absent() : Optional.of($(groupName)),
+                        serviceList
+                        );
 
-                    return result;
+                    r = $.runSession(
+                        upstart.create.singleTask().createNewSession($, parent),
+                        services);
+
+                    if(!r.ok()) return r;
+
+                    r = serviceCommand($, "start");
+
+                    return r;
                 }
+
 
                 private String instancePath(String port) {
                     return format($(instancePath), port);
+                }
+
+                private String instanceLogsPath(String port) {
+                    return format($(instanceLogsPath), port);
                 }
             };
         }
@@ -186,7 +231,23 @@ public class PlayPlugin extends ZippedToolPlugin {
 
 
 
-    public final TaskDef<Task> stageStop = new TaskDef<Task>() {
+    private String removeLastSemiColon(String s) {
+        if(s.endsWith(";")){
+            return s.substring(0, s.length() - 1);
+        }
+
+        return s;
+    }
+
+    private CommandLineResult serviceCommand(SessionContext $, String command) {
+        boolean isSingle = $.var(portsSplit).size() == 1;
+        SystemSession.OSHelper helper = $.sys.getOsInfo().getHelper();
+
+        return $.sys.captureResult(
+            helper.serviceCommand($.var(isSingle ? singleServiceName : multiServiceName), command), true);
+    }
+
+    public final TaskDef<Task> stop = new TaskDef<Task>() {
         @Override
         protected Task newSession(SessionContext $, Task parent) {
             return new Task<TaskDef>(parent, this, $) {
@@ -195,16 +256,13 @@ public class PlayPlugin extends ZippedToolPlugin {
                 protected TaskResult exec(SessionTaskRunner runner, Object input) {
                     $.log("stopping the app (stage)...");
 
-                    CommandLineResult result;
+                    CommandLineResult r = serviceCommand($, "stop");
 
-                    result = new Script($.sys)
-                        .cd($(projectPath))
-                        .line().addRaw("kill play")
-                        .timeoutSec(10)
-                        .build()
-                        .run();
+                    if(!r.ok()){
+                        logger.warn("unable to stop service: {}", r);
+                    }
 
-                    return result;
+                    return TaskResult.OK;
                 }
             };
         }
@@ -223,7 +281,7 @@ public class PlayPlugin extends ZippedToolPlugin {
 
                     extractToHomeDir();
 
-                    shortCut("play", "play");
+                    shortCut($(execName), $(execName));
 
                     return verify();
                 }

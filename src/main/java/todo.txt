@@ -24,11 +24,12 @@ top priority:
 -- (ok) mongo plugin
 - (ok) bug: sendAllFinishedResults sends result only for the whole run
 - upstart plugin (& fix play app)
-- unit test ReleaseManager
+- ReleaseManager + unit tests, embed release manager into deployment builder
 - FileWatcher
--
--- computer demo for 3 hosts/single mysql
+-- secure social demo for 3 hosts/single mysql
 -- computer demo for 3 hosts/mongodb cluster
+-- node.js demo
+-- grails demo
 -- reference phases from scripts
 -- deploy mysql & test
 -- deploy mongodb & test
@@ -48,6 +49,11 @@ top priority:
 pwd           |   . ......
 tasks.deploy  |   . X.. ..
 db.migration  |      .  X
+
+Node.js:
+
+- tons of examples: https://github.com/petersirka/partial.js
+- how to deploy: http://stackoverflow.com/questions/4681067/how-to-deploy-a-node-js-application
 
 - ui: stage/roles/hosts selection
 - ui: preload stages, hosts and roles

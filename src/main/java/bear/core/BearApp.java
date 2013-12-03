@@ -21,7 +21,8 @@ public class BearApp<GLOBAL extends AppGlobalContext> extends HavingContext<Bear
 //    public final GLOBAL global;
 
     public final DynamicVariable<String>
-        name = undefined("Your app name");
+        name = undefined("Your app short name to use on paths, i.e. ss-demo"),
+        fullName = undefined("Your full app name, i.e. Secure Social Demo");
 
     protected GLOBAL global;
 

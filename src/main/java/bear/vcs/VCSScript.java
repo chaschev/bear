@@ -13,6 +13,7 @@ public class VCSScript<T extends CommandLineResult> extends Script<T, VCSScript<
 
     public VCSScript(SystemSession sys, VCSSession vcsSession) {
         super(sys);
+        timeoutForBuild();
         this.vcsSession = vcsSession;
     }
 

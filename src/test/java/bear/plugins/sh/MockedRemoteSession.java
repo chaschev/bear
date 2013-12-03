@@ -25,4 +25,9 @@ public class MockedRemoteSession extends RemoteSystemSession{
     public <T extends CommandLineResult> T sendCommand(AbstractConsoleCommand<T> command, ConsoleCallback callback) {
         return null;
     }
+
+    @Override
+    public Result writeStringAs(WriteStringInput input) {
+        return null;
+    }
 }

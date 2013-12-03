@@ -49,7 +49,7 @@ public class SecureSocialDemoSettings extends IBearSettings {
         .StopService_5(new TaskCallable<TaskDef>() {
             @Override
             public TaskResult call(SessionContext $, Task<TaskDef> task, Object input) throws Exception {
-                return $.run(play.stageStop);
+                return $.run(play.stop);
             }
         })
         .StartService_8(new TaskCallable<TaskDef>() {

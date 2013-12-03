@@ -222,7 +222,10 @@ public class GitCLIPlugin extends VcsCLIPlugin<Task, TaskDef<?>> {
                     .line().stty().a(git, "config", "remote." + remote + ".fetch", "+refs/heads/*:refs/remotes/" + remote + "/*").build();
             }
 
-            //since we're in a local branch already, just reset to specified revision rather than merge
+            return script
+                .line().stty().a(git, "pull", verbose(), remote).build();
+
+            /*//since we're in a local branch already, just reset to specified revision rather than merge
             script
                 .line().stty().a(git, "fetch", verbose(), remote).build()
                 .line().stty().a(git, "fetch", "--tags", verbose(), remote).build()
@@ -239,7 +242,7 @@ public class GitCLIPlugin extends VcsCLIPlugin<Task, TaskDef<?>> {
                 script.line().a("git", "clean", verbose()).addSplit("-d -x -f").build();
             }
 
-            return script;
+            return script;*/
         }
 
         @Override
