@@ -74,7 +74,7 @@ public class PlayPlugin extends ZippedToolPlugin {
 
 
     public final DynamicVariable<WatchDogGroup>
-        watchStartDogComposite = newVar(null);
+        watchStartDogGroup = newVar(null);
 
     public final DynamicVariable<Integer>
         startupTimeoutMs = equalTo(bear.buildTimeoutMs);
@@ -143,7 +143,7 @@ public class PlayPlugin extends ZippedToolPlugin {
         }
     };
 
-    public final TaskDef<Task> stage = new TaskDef<Task>() {
+    public final TaskDef<Task> build = new TaskDef<Task>() {
         @Override
         protected Task newSession(SessionContext $, Task parent) {
             return new Task<TaskDef>(parent, this, $) {
@@ -176,7 +176,7 @@ public class PlayPlugin extends ZippedToolPlugin {
         }
     };
 
-    public final TaskDef<Task> stageStart = new TaskDef<Task>() {
+    public final TaskDef<Task> start = new TaskDef<Task>() {
         @Override
         protected Task newSession(SessionContext $, final Task parent) {
             return new Task<TaskDef>(parent, this, $) {
@@ -239,7 +239,7 @@ public class PlayPlugin extends ZippedToolPlugin {
                 }
 
                 private void spawnStartWatchDogs(List<String> ports) {
-                    final WatchDogGroup compositeRunnable = new WatchDogGroup(ports.size());
+                    final WatchDogGroup compositeRunnable = new WatchDogGroup(ports.size(), watchStartDogGroup );
 
                     for (final String port : ports) {
                         WatchDogRunnable runnable = new WatchDogRunnable($, watchDog, new WatchDogInput(
@@ -264,14 +264,10 @@ public class PlayPlugin extends ZippedToolPlugin {
 
                     compositeRunnable.startThreads();
 
-                    $.putConst(watchStartDogComposite, compositeRunnable);
-
-
                     //this should not be needed
                     $.getGlobal().scheduler.schedule(new Runnable() {
                         @Override
                         public void run() {
-                            $.removeConst(watchStartDogComposite);
                             compositeRunnable.shutdownNow();
                         }
                     }, $(startupTimeoutMs), TimeUnit.MILLISECONDS);
@@ -315,10 +311,16 @@ public class PlayPlugin extends ZippedToolPlugin {
                 protected TaskResult exec(SessionTaskRunner runner, Object input) {
                     $.log("stopping the app (stage)...");
 
-                    CommandLineResult r = serviceCommand($, "stop");
+                    CommandLineResult r;
 
-                    if (!r.ok()) {
-                        logger.warn("unable to stop service: {}", r);
+                    try {
+                        r = serviceCommand($, "stop");
+
+                        if (!r.ok()) {
+                            logger.warn("unable to stop service: {}", r);
+                        }
+                    } catch (Exception e) {
+                        logger.warn("unable to stop service: ", e);
                     }
 
                     return TaskResult.OK;
@@ -378,7 +380,7 @@ public class PlayPlugin extends ZippedToolPlugin {
                 public TaskResult call(SessionContext $, Task task, Object input) throws Exception {
                     if (!$.var(useWatchDog)) return TaskResult.OK;
 
-                    WatchDogGroup watchDogs = $.var(watchStartDogComposite);
+                    WatchDogGroup watchDogs = $.var(watchStartDogGroup);
 
                     //removed due to timeout, this should be very rare if not impossible
                     if (watchDogs == null) return TaskResult.OK;

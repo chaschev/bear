@@ -36,7 +36,7 @@ public final class LogResult extends CommandLineResult {
     public final List<LogEntry> entries;
 
     public LogResult(String text, List<LogEntry> entries) {
-        super(text);
+        super("logs", text);
         this.entries = entries;
     }
 

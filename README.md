@@ -2,7 +2,37 @@
 
 Bear is a lightweight deployment tool for Java. It's primary task are builds and remote deploys of anything to your hosts. At the moment Tomcat, Grails and Maven are supported. Bear first started as a Capistrano clone, but then grew into a different project.
 
-Bear is in it's early development stages now. If have questions or concerns, feel free to ask them at [my blog](http://chaschev.blogspot.com).
+Bear is in it's early development stages now. Questions, concerns? Just to drop me a line at chaschev@gmail.com.
+
+## Road Map for Release 1.0b1 (for CentOS 6.4)
+
+| Step                                        | State          | 
+| ------------------------------------------- |:--------------:|
+| Git, MongoDB and MySQL plugins              | Finished.      |
+| Install as services (Upstart)               | Finished.      | 
+| Play! Framework single-host deployment      | Finished.      | 
+| Play! Framework three-hosts deployment      | In progress... |
+| Parametrize deployment (use mongo or mysql) |                | 
+| Test deployment rollbacks and db dumps      |                | 
+| Grails/Tomcat demo deployment               |                | 
+| Node.js demo deployment                     |                | 
+| Refactoring, simplifying API                |                | 
+| Unit test coverage                          |                |
+| UI bugfixing                                |                |
+| Installer                                   |                |
+| CLI version                                 |                | 
+| Refactoring, simplifying API                |                | 
+
+
+
+## Road Map for Release 1.0b2 (Ubuntu Server, CentOS 6.4, Cloud)
+
+| Step                                        | State          | 
+| ------------------------------------------- |:--------------:|
+| Support Ubuntu Server                       |                | 
+| Run via a Maven Plugin                      |                |
+| Support JDK 6 for CLI, JDK 7 for GUI        |                | 
+| Deployments to Heroku, AWS                  |                | 
 
 ## Bear deployment script
 
@@ -19,14 +49,12 @@ Below is an a example of a Bear script. Scripts are a work in progress and about
 # lines below will be treated as Groovy expressions
 :use shell groovy
 
-# this will execute expressions on the hosts (vs locally)
-:set groovy.sendToHosts=true
-
 # this is how you invoke tasks. Code completion is supported in the UI.
 # mosts of the tasks are predefined in plugins (i.e. in Grails plugin)
 # task is usually a sequence of shell commands
-runner.runTask(tasks.deploy)
-runner.runTask(tasks.restartApp)
+
+:run {"task": "tasks.deploy"}
+:run {"task": "tasks.restartApp"}
 
 # switch to remote sh mode (distributed)
 :use shell remote
@@ -44,7 +72,37 @@ frame = javax.swing.JFrame("close me!")
 frame.add(javax.swing.JButton("click me!"))
 frame.setSize(200, 100)
 frame.visible = true
+
+# run a mongodb script example
+
+:use shell groovy {"name": "mongoTest"}
+:set mongoDb.dbName {"value":"test"}
+
+import bear.core.SessionContext
+import bear.plugins.mongo.MongoDbPlugin
+
+# this enable code completion in IDE
+def _ = ((SessionContext)_);
+
+def mongo = _.getGlobal().getPlugin(MongoDbPlugin);
+
+mongo.dbName.defaultTo("test")
+
+def r = mongo.runScript(_, """
+db = db.getSiblingDB('test');
+printjson(db.system.users.find());
+""")
+
+ui.info("result: {}", r)
 ```
+
+### Configuration Sample
+
+Configuration is something which is shared between scripts. It defines versions of the tools, dependencies and deployment. I'm attaching this as a screenshot, because lambdas in Java 6 out of IDE are quite verbose.
+
+![Configuration Sample][confSample]
+
+[confSample]: https://raw.github.com/chaschev/bear/master/doc/bear-settings.png
 
 ### Bear UI
 

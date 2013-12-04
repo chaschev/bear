@@ -24,7 +24,7 @@ public class StubScript<T extends CommandLineResult> extends VCSScript<T> {
     }
 
     @Override
-    public T parseResult(String text, SessionContext $) {
+    public T parseResult(String text, SessionContext $, String script) {
         return result;
     }
 }

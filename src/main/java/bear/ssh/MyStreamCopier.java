@@ -20,6 +20,7 @@ import bear.session.Result;
 import chaschev.lang.OpenBean;
 import chaschev.util.CatchyCallable;
 import chaschev.util.Exceptions;
+import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -136,8 +137,11 @@ public class MyStreamCopier {
                     }
                 }
 
+
+
                 try {
                     nonBlockingCopy();
+
 
                     // try one more time as it's buggy
                     // they asked us to stop but did not interrupt, let's have one more chance
@@ -157,6 +161,10 @@ public class MyStreamCopier {
                     log.error("", e);
 
                     return Result.ERROR;
+                } finally {
+                    if(stopFlag || interrupted){
+                        IOUtils.closeQuietly(in);
+                    }
                 }
 
                 finished = true;

@@ -4,7 +4,6 @@ import bear.plugins.maven.MavenPlugin;
 import bear.plugins.mongo.MongoDbPlugin;
 import bear.plugins.mysql.MySqlPlugin;
 import bear.plugins.play.PlayPlugin;
-import bear.session.BearVariables;
 import bear.strategy.DeploymentBuilder;
 import bear.task.Task;
 import bear.task.TaskCallable;
@@ -12,10 +11,15 @@ import bear.task.TaskDef;
 import bear.task.TaskResult;
 import bear.vcs.GitCLIPlugin;
 
+import static bear.session.BearVariables.joinPath;
+import static bear.task.TaskResult.OK;
+
 /**
  * @author Andrey Chaschev chaschev@gmail.com
  */
 public class SecureSocialDemoSettings extends IBearSettings {
+
+    // these are the plugins which are injected
     JavaPlugin java;
     MavenPlugin maven;
     Bear bear;
@@ -29,10 +33,7 @@ public class SecureSocialDemoSettings extends IBearSettings {
         super(factory);
     }
 
-    public SecureSocialDemoSettings(GlobalContextFactory factory, String resource) {
-        super(factory, resource);
-    }
-
+    // this defines the deployment
     public final TaskDef<Task> deployProject = new DeploymentBuilder()
         .CheckoutFiles_2(new TaskCallable<TaskDef>() {
             @Override
@@ -43,19 +44,19 @@ public class SecureSocialDemoSettings extends IBearSettings {
         .BuildAndCopy_3(new TaskCallable<TaskDef>() {
             @Override
             public TaskResult call(SessionContext $, Task<TaskDef> task, Object input) throws Exception {
-                return $.run(play.stage);
+                return $.run(play.build);
             }
         })
         .StopService_5(new TaskCallable<TaskDef>() {
             @Override
             public TaskResult call(SessionContext $, Task<TaskDef> task, Object input) throws Exception {
-                return $.run(play.stop);
+                $.run(play.stop); return OK;
             }
         })
         .StartService_8(new TaskCallable<TaskDef>() {
             @Override
             public TaskResult call(SessionContext $, Task<TaskDef> task, Object input) throws Exception {
-                return $.run(play.stageStart);
+                return $.run(play.start);
             }
         })
         .WaitForServiceToStart_9(new TaskCallable<TaskDef>() {
@@ -80,7 +81,7 @@ public class SecureSocialDemoSettings extends IBearSettings {
 
         bear.vcsBranchName.defaultTo("master");
 
-        play.projectPath.setEqualTo(BearVariables.joinPath(bear.vcsBranchLocalPath, "samples/java/db-demo"));
+        play.projectPath.setEqualTo(joinPath(bear.vcsBranchLocalPath, "samples/java/db-demo"));
 
         Stages stages = new Stages(global);
 

@@ -9,7 +9,7 @@ public final class LsResult extends CommandLineResult {
     List<String> files;
 
     public LsResult(String text, List<String> files) {
-        super(text);
+        super("ls", text);
         this.files = files;
     }
 

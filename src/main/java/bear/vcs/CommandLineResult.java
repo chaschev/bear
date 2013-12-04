@@ -19,31 +19,49 @@ package bear.vcs;
 import bear.core.Bear;
 import bear.core.SessionContext;
 import bear.session.Result;
+import bear.session.Variables;
 import bear.task.TaskResult;
 import com.google.common.base.Optional;
+import org.apache.commons.lang3.StringUtils;
 
 /**
  * @author Andrey Chaschev chaschev@gmail.com
  */
 public class CommandLineResult extends TaskResult{
+    public transient String script;
     public transient String text;
     public int exitCode;
     public Object value;
 
-    public CommandLineResult(String text) {
+    public CommandLineResult(String script, String text) {
         super(Result.OK);
+        this.script = cut(script);
         this.text = text;
     }
 
-    public CommandLineResult(String text, Result result) {
+    private static String cut(String script) {
+        if(script == null) return null;
+
+        try {
+            String next = Variables.LINE_SPLITTER.split(script).iterator().next();
+
+            return StringUtils.substring(next, 0, 80);
+        } catch (Exception e) {
+            return script.trim();
+        }
+    }
+
+    public CommandLineResult(String script, String text, Result result) {
         super(result);
+        this.script = cut(script);
         this.text = text;
     }
 
     @Override
     public String toString() {
         final StringBuilder sb = new StringBuilder("CommandLineResult{");
-        sb.append("result=").append(result);
+        sb.append("result='").append(result).append('\'');
+        sb.append(", script='").append(script).append('\'');
         sb.append(", text='").append(text).append('\'');
         sb.append(", exitCode=").append(exitCode);
         sb.append('}');
@@ -75,5 +93,5 @@ public class CommandLineResult extends TaskResult{
         return this;
     }
 
-    public static final CommandLineResult OK = new CommandLineResult("OK");
+    public static final CommandLineResult OK = new CommandLineResult("default", "OK");
 }

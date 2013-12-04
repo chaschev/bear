@@ -15,19 +15,16 @@ import bear.plugins.mongo.MongoDbPlugin
 
 def _ = ((SessionContext)_);
 
-//_.runner.run(_.getGlobal().tasks.setup)
-
 def mongo = _.getGlobal().getPlugin(MongoDbPlugin);
 
 mongo.dbName.defaultTo("test")
 
-def script = mongo.runScript(_, """
-printjson(db.adminCommand('listDatabases'));
+def r = mongo.runScript(_, """
 db = db.getSiblingDB('test');
 printjson(db.system.users.find());
 """)
 
-ui.info("result: {}", script)
+ui.info("result: {}", r)
 
 //!:use shell mongo
 

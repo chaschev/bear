@@ -82,10 +82,9 @@ class RemoteSystemSession extends SystemSession {
         final GenericUnixRemoteEnvironmentPlugin.SshSession.WithLowLevelSession withSession = new GenericUnixRemoteEnvironmentPlugin.SshSession.WithLowLevelSession(getBear()) {
             @Override
             public void act(final Session session, final Session.Shell shell) throws Exception {
-
                 final Session.Command execSshCommand = session.exec(command.asText());
 
-                final GenericUnixRemoteEnvironmentPlugin.RemoteConsole remoteConsole = (GenericUnixRemoteEnvironmentPlugin.RemoteConsole) new GenericUnixRemoteEnvironmentPlugin.RemoteConsole(execSshCommand, new AbstractConsole.Listener() {
+                final GenericUnixRemoteEnvironmentPlugin.RemoteConsole remoteConsole = (GenericUnixRemoteEnvironmentPlugin.RemoteConsole) new GenericUnixRemoteEnvironmentPlugin.RemoteConsole(session, execSshCommand, new AbstractConsole.Listener() {
                     @Nonnull
                     @Override
                     public ConsoleCallbackResult textAdded(String textAdded, MarkedBuffer buffer) throws Exception {
@@ -151,7 +150,11 @@ class RemoteSystemSession extends SystemSession {
 
 //                        logger.debug("awaitStreamCopiers timing: {}", sw.elapsed(TimeUnit.MILLISECONDS));
 
-                exitStatus[0] = execSshCommand.getExitStatus();
+                Integer code = execSshCommand.getExitStatus();
+
+                // it returns null when connection is closed on our side
+                // connection can be closed in a callback by returning DONE
+                exitStatus[0] = code == null ? 0 : code;
 
                 if (exitStatus[0] == 0) {
                     result[0] = Result.OK;
@@ -171,7 +174,7 @@ class RemoteSystemSession extends SystemSession {
 
 //                System.out.println("WITH_TEXT!!!! '" + withSession.text+"'");
 
-        t.result = Result.and(result[0]);
+        t.setResult(Result.and(result[0]));
 
         return t;
 
@@ -297,7 +300,7 @@ class RemoteSystemSession extends SystemSession {
 
         CommandLineResult run = line.build().run(SystemEnvironmentPlugin.sshPassword($));
 
-        return run.result;
+        return run.getResult();
     }
 
     @Override
@@ -329,7 +332,7 @@ class RemoteSystemSession extends SystemSession {
         }
 
         if (owner == null) {
-            return sendCommand(line).result;
+            return sendCommand(line).getResult();
         } else {
             sudo().sendCommand(line);
         }
@@ -348,7 +351,7 @@ class RemoteSystemSession extends SystemSession {
 
         final CommandLineResult run = sendCommand(line);
 
-        return run.result;
+        return run.getResult();
     }
 
     @Override
@@ -362,7 +365,7 @@ class RemoteSystemSession extends SystemSession {
 
         final CommandLineResult run = sendCommand(line);
 
-        return run.result;
+        return run.getResult();
     }
 
     @Override
@@ -411,7 +414,7 @@ class RemoteSystemSession extends SystemSession {
 
             CommandLineResult run = run(script, SystemEnvironmentPlugin.println($.var(getBear().sshPassword)));
 
-            return run.result;
+            return run.getResult();
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -438,7 +441,7 @@ class RemoteSystemSession extends SystemSession {
 
     @Override
     public Result rmCd(@Nonnull String dir, String... paths) {
-        return sendCommand(rmLine(dir, line(), paths)).result;
+        return sendCommand(rmLine(dir, line(), paths)).getResult();
     }
 
     @Override

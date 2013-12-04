@@ -19,13 +19,11 @@ package bear.core;
 import bear.console.ConsoleCallbackResult;
 import bear.ssh.MyStreamCopier;
 import chaschev.util.Exceptions;
+import org.apache.commons.io.IOUtils;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nonnull;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
@@ -51,6 +49,8 @@ public abstract class AbstractConsole extends bear.console.AbstractConsole.Termi
 
     OutputStream out;
 
+    Closeable shutdownTrigger;
+
     /**
      * There are basically two copiers: for stdout and stderr which copy everything to out.
      */
@@ -58,8 +58,9 @@ public abstract class AbstractConsole extends bear.console.AbstractConsole.Termi
     List<MarkedBuffer> buffers = new ArrayList<MarkedBuffer>();
     List<Future> futures = new ArrayList<Future>();
 
-    protected AbstractConsole(Listener listener) {
+    protected AbstractConsole(Listener listener, Closeable shutdownTrigger) {
         this.listener = listener;
+        this.shutdownTrigger = shutdownTrigger;
         listener.console = this;
     }
 
@@ -113,7 +114,8 @@ public abstract class AbstractConsole extends bear.console.AbstractConsole.Termi
                     case DONE:
                     case EXCEPTION:
                     case FINISHED:
-                        stopStreamCopiers();
+                        stopStreamCopiersGracefully();
+                        IOUtils.closeQuietly(shutdownTrigger);
                         break;
                 }
 
@@ -122,6 +124,12 @@ public abstract class AbstractConsole extends bear.console.AbstractConsole.Termi
         });
 
         return this;
+    }
+
+    public void stopStreamCopiersGracefully() {
+        for (MyStreamCopier copier : copiers) {
+            copier.stop();
+        }
     }
 
     public void stopStreamCopiers() {

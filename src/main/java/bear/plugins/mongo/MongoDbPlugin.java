@@ -166,9 +166,9 @@ public class MongoDbPlugin extends Plugin {
 
     private Version computeInstalledServerVersion(SessionTaskRunner runner) {
         try {
-            final CommandLineResult r = new CommandLineResult("", Result.ERROR);
+            final CommandLineResult r = new CommandLineResult("mongo version", "", Result.ERROR);
 
-            if (r.result.nok() || StringUtils.isBlank(r.text)) {
+            if (r.getResult().nok() || StringUtils.isBlank(r.text)) {
                 return NOT_INSTALLED;
             }
 

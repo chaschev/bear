@@ -43,10 +43,10 @@ public class JavaPluginTest extends SessionTest {
                 String asString = command.toString();
 
                 if (asString.contains("ls -w 1")) {
-                    return new CommandLineResult("jdk1.7.0_40");
+                    return new CommandLineResult("ls", "jdk1.7.0_40");
                 }
 
-                return new CommandLineResult("foo");
+                return new CommandLineResult("foo","foo");
             }
         });
 

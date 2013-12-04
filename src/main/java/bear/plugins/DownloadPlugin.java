@@ -94,7 +94,7 @@ public class DownloadPlugin extends Plugin{
                 throw new Bear.ValidationException("Error during download of " + url +
                     ": " + find(on('\n').split(run.text), errorPredicate));
             }
-            return result.result;
+            return result.getResult();
         }
     }
 

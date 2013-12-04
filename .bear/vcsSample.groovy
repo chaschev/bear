@@ -14,6 +14,7 @@ class VcsSampleScript extends bear.main.Script {
         _.putConst(bear.vcsBranchName, 'master')
 
         logger.info("git: {}", gitPlugin)
+
         def git = gitPlugin.newSession(_, parent)
 
         logger.info("head: {}", git.head())

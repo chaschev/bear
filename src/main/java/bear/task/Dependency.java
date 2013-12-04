@@ -191,7 +191,7 @@ public class Dependency extends Task<TaskDef> {
             return result;
         }
 
-        result.result = Result.ERROR;
+        result.setResult(Result.ERROR);
 
         return result;
     }

@@ -99,7 +99,7 @@ public abstract class SystemSession extends Task<SystemEnvironmentPlugin.SystemS
             sb.append(result.text);
         }
 
-        return script.parseResult(sb.toString(), $);
+        return script.parseResult(sb.toString(), $, script.firstLineAsText());
     }
 
     public <T extends CommandLineResult> T sendCommand(CommandLine<T, ?> commandLine) {
@@ -458,12 +458,12 @@ public abstract class SystemSession extends Task<SystemEnvironmentPlugin.SystemS
 
                         if (text.contains("Complete!") ||
                             text.contains("nothing to do")) {
-                            result.result = Result.OK;
+                            result.setResult(Result.OK);
                         } else {
-                            result.result = Result.ERROR;
+                            result.setResult(Result.ERROR);
                         }
 
-                        if (result.result.nok()) {
+                        if (result.getResult().nok()) {
                             logger.error("could not install {}", desc);
                         }
 

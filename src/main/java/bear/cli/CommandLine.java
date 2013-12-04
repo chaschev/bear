@@ -90,7 +90,7 @@ public abstract class CommandLine<T extends CommandLineResult, SCRIPT extends Sc
     }
 
     public T parseResult(SessionContext $, String text) {
-        return (T) Script.parseWithParser(parser, text, $);
+        return (T) Script.parseWithParser(parser, text, $, asText(false));
     }
 
     public CommandLine<T, SCRIPT> setParser(Function<String, T> parser) {

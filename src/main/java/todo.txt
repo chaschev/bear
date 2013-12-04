@@ -23,9 +23,10 @@ top priority:
 - quick setup task recipe (i.e. [new empty bear script], :run (rename :ref) {task: 'tasks.setup'}   at the moment its _.runner.run(_.getGlobal().tasks.setup, )
 -- (ok) mongo plugin
 - (ok) bug: sendAllFinishedResults sends result only for the whole run
-- upstart plugin (& fix play app)
+- (ok) upstart plugin (& fix play app)
 - ReleaseManager + unit tests, embed release manager into deployment builder
-- FileWatcher
+- ssh tests for servers to test connectivity and response
+- (ok) FileWatcher
 -- secure social demo for 3 hosts/single mysql
 -- computer demo for 3 hosts/mongodb cluster
 -- node.js demo

@@ -90,18 +90,18 @@ public class Script <T extends CommandLineResult, CHILD extends Script>{
         return (CHILD) this;
     }
 
-    public T parseResult(String text, SessionContext $) {
-        return (T) parseWithParser(parser, text, $);
+    public T parseResult(String text, SessionContext $, String script) {
+        return (T) parseWithParser(parser, text, $, script);
     }
 
-    static CommandLineResult parseWithParser(Function<String, ? extends CommandLineResult> parser, String text, SessionContext $) {
+    static CommandLineResult parseWithParser(Function<String, ? extends CommandLineResult> parser, String text, SessionContext $, String script) {
         final CommandLineResult obj;
 
         if (parser != null) {
             obj = parser.apply(text);
             obj.text = text;
         }else{
-            obj = new CommandLineResult(text, Result.OK);
+            obj = new CommandLineResult(script, text, Result.OK);
         }
 
         return obj.validate($);
@@ -129,6 +129,10 @@ public class Script <T extends CommandLineResult, CHILD extends Script>{
 
     public boolean isDefaultDir() {
         return cd == null || ".".equals(cd);
+    }
+
+    public String firstLineAsText(){
+        return lines.isEmpty() ? "<empty>" : lines.get(0).asText(false);
     }
 
     public String asTextScript() {

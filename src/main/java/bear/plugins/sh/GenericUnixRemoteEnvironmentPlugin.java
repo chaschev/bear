@@ -30,6 +30,7 @@ import org.apache.commons.lang3.SystemUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.Closeable;
 import java.io.File;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
@@ -52,15 +53,14 @@ public class GenericUnixRemoteEnvironmentPlugin extends SystemEnvironmentPlugin 
     public static class RemoteConsole extends AbstractConsole {
         Session.Command command;
 
-        public RemoteConsole(Session.Command command, Listener listener) {
-            super(listener);
+        public RemoteConsole(Closeable shutdownTrigger, Session.Command command, Listener listener) {
+            super(listener, shutdownTrigger);
             this.command = command;
 
             super.addInputStream(command.getInputStream());
             super.addInputStream(command.getErrorStream(), true);
             super.setOut(command.getOutputStream());
         }
-
     }
 
     @Override

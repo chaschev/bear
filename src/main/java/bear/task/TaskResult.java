@@ -24,7 +24,7 @@ import com.google.common.base.Optional;
  * @author Andrey Chaschev chaschev@gmail.com
  */
 public class TaskResult {
-    public Result result;
+    protected Result result;
     public Optional<? extends Throwable> exception;
 
     public TaskResult(Result result) {
@@ -79,5 +79,14 @@ public class TaskResult {
 
     public static TaskResult of(boolean b, String errorMessage) {
         return b ? OK : new TaskResult(new Exception(errorMessage));
+    }
+
+    public Result getResult() {
+        return result;
+    }
+
+    public TaskResult setResult(Result result) {
+        this.result = result;
+        return this;
     }
 }

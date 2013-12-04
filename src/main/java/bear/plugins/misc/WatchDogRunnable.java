@@ -14,6 +14,7 @@ public class WatchDogRunnable implements Runnable {
     FileWatchDogPlugin watchDog;
     volatile boolean finished;
     CountDownLatch arrivalLatch;
+    WatchDogGroup group;
 
     public WatchDogRunnable(SessionContext $, FileWatchDogPlugin watchDog, WatchDogInput input) {
         this.$ = $;
@@ -26,8 +27,13 @@ public class WatchDogRunnable implements Runnable {
         try {
             watchDog.watch($, input);
         } finally {
-            arrivalLatch.countDown();
             finished = true;
+
+            arrivalLatch.countDown();
+
+            if(arrivalLatch.getCount() == 0){
+                $.removeConst(group.watchDogGroup);
+            }
         }
     }
 }

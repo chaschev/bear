@@ -174,12 +174,12 @@ public class GenericUnixLocalEnvironmentPlugin extends SystemEnvironmentPlugin {
                     .run();
 
                 if (r.exitCode == -1) {
-                    return (T) new CommandLineResult(r.text, Result.ERROR);
+                    return (T) new CommandLineResult(command.asText(false), r.text, Result.ERROR);
                 }
 
                 final T t = ((CommandLine<T, ?>)command).parseResult($, r.text);
 
-                t.result = Result.OK;
+                t.setResult(Result.OK);
 
                 return t;
             }

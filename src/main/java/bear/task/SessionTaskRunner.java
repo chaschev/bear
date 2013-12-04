@@ -20,8 +20,6 @@ import bear.context.HavingContext;
 import bear.core.Bear;
 import bear.core.GlobalContext;
 import bear.core.SessionContext;
-import bear.session.Result;
-import bear.vcs.CommandLineResult;
 import com.google.common.base.Function;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -137,13 +135,11 @@ public class SessionTaskRunner extends HavingContext<SessionTaskRunner, SessionC
                     }
                 }
             }
-        }
-        catch (BearException e){
+        } catch (BearException e){
             throw e;
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             logger.error("", e);
-            result = new CommandLineResult(e.toString(), Result.ERROR);
+            result = new TaskResult(e);
         }
 
         return result;

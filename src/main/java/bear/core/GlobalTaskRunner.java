@@ -12,7 +12,6 @@ import bear.session.DynamicVariable;
 import bear.session.Result;
 import bear.session.Variables;
 import bear.task.*;
-import bear.vcs.CommandLineResult;
 import chaschev.util.Exceptions;
 import com.google.common.base.Function;
 import com.google.common.collect.Lists;
@@ -119,10 +118,9 @@ public class GlobalTaskRunner {
                                     throw e;
                                 } catch (Throwable e) {
                                     Cli.logger.warn("", e);
-                                    final Throwable e1 = e;
-                                    result = new TaskResult(e1);
+                                    result = new TaskResult(e);
 
-                                    $.executionContext.rootExecutionContext.getDefaultValue().taskResult = new CommandLineResult(e.toString(), Result.ERROR);
+                                    $.executionContext.rootExecutionContext.getDefaultValue().taskResult = result;
 
                                     throw Exceptions.runtime(e);
                                 } finally {

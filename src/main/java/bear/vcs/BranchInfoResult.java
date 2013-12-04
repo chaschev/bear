@@ -25,7 +25,7 @@ public class BranchInfoResult extends CommandLineResult {
     public String date;
 
     public BranchInfoResult(String author, String revision, String date) {
-        super(null);
+        super("branch info", null);
         this.author = author;
         this.revision = revision;
         this.date = date;

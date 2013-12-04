@@ -75,10 +75,10 @@ public class GrailsBuilderTask extends TaskDef {
                 final CommandLineResult clResult = script.run();
 
                 if(clResult.text.contains("Use --stacktrace to see the full trace")){
-                    clResult.result = Result.ERROR;
+                    clResult.setResult(Result.ERROR);
                 }
 
-                return new GrailsBuildResult(clResult.result, $.joinPath(projectPath, warName));
+                return new GrailsBuildResult(clResult.getResult(), $.joinPath(projectPath, warName));
             }
 
             private CommandLine newGrailsCommand(String grailsExecPath) {

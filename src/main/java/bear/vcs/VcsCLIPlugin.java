@@ -53,15 +53,4 @@ public abstract class VcsCLIPlugin<TASK extends Task, VCS_TASK_DEF extends TaskD
     }
 
     public abstract VCSSession newSession(SessionContext $, Task<TaskDef> parent);
-
-    public static class StringResult extends CommandLineResult {
-        public String value;
-
-        public StringResult(String text, String value) {
-            super(text);
-
-            this.value = value;
-        }
-    }
-
 }

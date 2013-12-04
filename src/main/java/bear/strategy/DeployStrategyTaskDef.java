@@ -23,7 +23,6 @@ import bear.task.SessionTaskRunner;
 import bear.task.Task;
 import bear.task.TaskDef;
 import bear.task.TaskResult;
-import bear.vcs.CommandLineResult;
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
@@ -204,7 +203,7 @@ public abstract class DeployStrategyTaskDef extends TaskDef<Task> {
                 return TaskResult.OK;
             } catch (Exception e) {
                 logger.warn("", e);
-                return new CommandLineResult(e.toString(), Result.ERROR);
+                return new TaskResult(e);
             }
         }
 

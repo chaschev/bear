@@ -115,10 +115,14 @@ public class GlobalContext extends AppGlobalContext<GlobalContext, Bear> {
 
     public void shutdown() throws InterruptedException {
         taskExecutor.shutdown();
-        taskExecutor.awaitTermination(10, TimeUnit.SECONDS);
+        if(!taskExecutor.awaitTermination(5, TimeUnit.SECONDS)){
+            taskExecutor.shutdownNow();
+        }
 
         scheduler.shutdown();
-        scheduler.awaitTermination(10, TimeUnit.SECONDS);
+        if(!scheduler.awaitTermination(5, TimeUnit.SECONDS)){
+            taskExecutor.shutdownNow();
+        }
     }
 
     public <T extends Plugin> T getPlugin(Class<T> pluginClass) {

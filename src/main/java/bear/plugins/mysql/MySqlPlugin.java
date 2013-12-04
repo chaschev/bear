@@ -148,7 +148,7 @@ public class MySqlPlugin extends Plugin<Task, TaskDef<?>> {
     private Version computeInstalledServerVersion(SessionTaskRunner runner) {
         final CommandLineResult r = runScript(runner, "select version();");
 
-        if (r.result.nok() || StringUtils.isBlank(r.text)) {
+        if (r.getResult().nok() || StringUtils.isBlank(r.text)) {
             return null;
         }
 

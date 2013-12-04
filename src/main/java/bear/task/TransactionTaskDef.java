@@ -18,8 +18,6 @@ package bear.task;
 
 import bear.core.SessionContext;
 import bear.plugins.sh.GenericUnixRemoteEnvironmentPlugin;
-import bear.vcs.CommandLineResult;
-import bear.session.Result;
 import com.google.common.collect.Lists;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -54,7 +52,7 @@ public class TransactionTaskDef extends TaskDef {
                     result = runner.runMany(tasks);
                 } catch (Exception e) {
                     logger.warn("", e);
-                    result = new CommandLineResult(e.toString(), Result.ERROR);
+                    result = new TaskResult(e);
                 }
 
                 if (result.nok()) {
