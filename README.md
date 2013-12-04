@@ -4,7 +4,7 @@ Bear is a lightweight deployment tool for Java. It's primary task are builds and
 
 Bear is in it's early development stages now. Questions, concerns? Just to drop me a line at chaschev@gmail.com.
 
-## Road Map for Release 1.0b1 (for CentOS 6.4)
+### Road Map for Release 1.0b1 (for CentOS 6.4)
 
 | Step                                        | State          | 
 | ------------------------------------------- |:--------------:|
@@ -12,7 +12,7 @@ Bear is in it's early development stages now. Questions, concerns? Just to drop 
 | Install as services (Upstart)               | Finished.      | 
 | Play! Framework single-host deployment      | Finished.      | 
 | Play! Framework three-hosts deployment      | In progress... |
-| Parametrize deployment (use mongo or mysql) |                | 
+| Parametrize deployment (use mongo or mysql) | In progress... |
 | Test deployment rollbacks and db dumps      |                | 
 | Grails/Tomcat demo deployment               |                | 
 | Node.js demo deployment                     |                | 
@@ -25,7 +25,7 @@ Bear is in it's early development stages now. Questions, concerns? Just to drop 
 
 
 
-## Road Map for Release 1.0b2 (Ubuntu Server, CentOS 6.4, Cloud)
+### Road Map for Release 1.0b2 (+ Ubuntu Server, Cloud)
 
 | Step                                        | State          | 
 | ------------------------------------------- |:--------------:|
@@ -34,15 +34,13 @@ Bear is in it's early development stages now. Questions, concerns? Just to drop 
 | Support JDK 6 for CLI, JDK 7 for GUI        |                | 
 | Deployments to Heroku, AWS                  |                | 
 
-## Bear deployment script
-
-### Bear script
+### Bear Script
 
 Below is an a example of a Bear script. Scripts are a work in progress and about to change.
 
 ```ruby
 
-# this is a preconfigured stage of three machines
+# use a preconfigured stage of three machines
 :set stage='three'
 
 # switch to the groovy shell mode
@@ -81,7 +79,7 @@ frame.visible = true
 import bear.core.SessionContext
 import bear.plugins.mongo.MongoDbPlugin
 
-# this enable code completion in IDE
+# this will enable code completion in IDE
 def _ = ((SessionContext)_);
 
 def mongo = _.getGlobal().getPlugin(MongoDbPlugin);
