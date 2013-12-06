@@ -14,32 +14,23 @@
  * limitations under the License.
  */
 
-package bear.core;
-
-import java.util.Collections;
-import java.util.List;
+package bear.vcs;
 
 /**
  * @author Andrey Chaschev chaschev@gmail.com
  */
-public class Releases {
-    List<String> releases;
+public class BranchInfo extends CommandLineResult {
+    public String author;
+    public String revision;
+    public String date;
 
-    public Releases(List<String> releases) {
-        this.releases = releases;
+    BranchInfo() {
     }
 
-    public String last() {
-        return releases.get(releases.size() - 1);
-    }
-
-    public String previous() {
-        return releases.get(releases.size() - 2);
-    }
-
-    public List<String> listToDelete(int keepX) {
-        if (releases.size() <= keepX) return Collections.emptyList();
-
-        return releases.subList(0, releases.size() - keepX);
+    public BranchInfo(String author, String revision, String date) {
+        super("branch info", null);
+        this.author = author;
+        this.revision = revision;
+        this.date = date;
     }
 }

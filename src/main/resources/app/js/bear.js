@@ -370,7 +370,8 @@ app.directive("consoleMessages", ['$timeout', '$compile', '$ekathuwa', 'ansi2htm
 //                    .replace(/\n/g,'<br>')
 //                ;
 
-                text = ansi2html.toHtml(text);
+                text = ansi2html.toHtml(angular.element('<div/>').text(text).html());
+
 
                 var $span = angular.element('<span timestamp="' + e.timestamp + '"' +
                     (e.level != null ? ' level=' + e.level + '"' : '') +

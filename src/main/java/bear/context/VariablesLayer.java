@@ -16,6 +16,7 @@
 
 package bear.context;
 
+import bear.main.phaser.SettableFuture;
 import bear.session.DynamicVariable;
 import bear.session.Variables;
 import chaschev.lang.OpenBean;
@@ -29,6 +30,7 @@ import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Future;
 
 import static bear.context.Fun.UNDEFINED;
 
@@ -165,15 +167,64 @@ public class VariablesLayer extends HavingContext<Variables, AbstractContext> {
     }
 
     public <T> T get(String varName, T _default) {
-        return (T) getByVarName(null, varName, _default, this);
+        return (T) getByVarName(null, varName, _default, this, false);
     }
 
     public <T> T get(DynamicVariable<T> var) {
+        if(var.memoizeIn() == $.getClass()){
+            return atomicMemoize(var);
+        }
+
         return (T) getNoTemplates(var, UNDEFINED);
     }
 
+    private <T> T atomicMemoize(DynamicVariable<T> var) {
+        SettableFuture<T> future = new SettableFuture<T>();
+        Object o = constants.putIfAbsent(var.name, future);
+        boolean iAmTheOwner = o == null;
+        if(iAmTheOwner){
+            try {
+                T result = (T) getNoTemplates(var, UNDEFINED, true);
+                future.set(result);
+                return result;
+            } catch (Exception e) {
+                future.setException(e);
+                throw Exceptions.runtime(e);
+            }
+
+        }else{
+            try {
+                //todo define memoization timeout
+                return ((Future<T>)o).get();
+            } catch (Exception e) {
+                throw Exceptions.runtime(e);
+            }
+        }
+
+//            throw new IllegalStateException("can't be here");
+    }
+
     public Object getConstant(Object obj) {
-        return constants.get(obj);
+        return getConstant(obj, false);
+    }
+
+    public Object getConstant(Object obj, boolean memoization) {
+        Object o = constants.get(obj);
+
+        if(o instanceof Future){
+            if(memoization){
+                return null;
+            }
+
+            try {
+                //todo define memoization timeout
+                return ((Future)o).get();
+            } catch (Exception e) {
+                throw Exceptions.runtime(e);
+            }
+        }
+
+        return o;
     }
 
     public <T> T get(DynamicVariable<T> var, T _default) {
@@ -181,22 +232,28 @@ public class VariablesLayer extends HavingContext<Variables, AbstractContext> {
     }
 
     protected Object getNoTemplates(DynamicVariable<?> var, Object _default) {
+        return getNoTemplates(var, _default, false);
+    }
+
+    protected Object getNoTemplates(DynamicVariable<?> var, Object _default, boolean memoization) {
         String varName = var.name();
 
-        return getByVarName(var, varName, _default, this);
+        return getByVarName(var, varName, _default, this, memoization);
     }
 
     /**
+     *
      *
      * @param var null, if not
      * @param varName
      * @param _default
      * @param initialLayer
+     * @param memoization
      * @return
      */
     protected Object getByVarName(
         @Nullable DynamicVariable<?> var, @Nullable String varName, Object _default,
-         VariablesLayer initialLayer) {
+        VariablesLayer initialLayer, boolean memoization) {
         Preconditions.checkArgument(var != null || varName != null, "they can't both be null!");
 
 //        if(this == initialLayer){
@@ -207,7 +264,7 @@ public class VariablesLayer extends HavingContext<Variables, AbstractContext> {
 
         //first check if var was overridden in this layer
 
-        Object o = varName == null ? null : constants.get(varName);
+        Object o = varName == null ? null : getConstant(varName, memoization);
 
         if(o != null){
             logger.debug("{}: :{} -> {} (const)", name, varName, o);
@@ -221,13 +278,15 @@ public class VariablesLayer extends HavingContext<Variables, AbstractContext> {
             if (fallbackVariablesLayer != null) {
                 logger.debug("{}: :{}, falling back to {}", name, varName, fallbackVariablesLayer.name);
 
-                return fallbackVariablesLayer.getByVarName(var, varName, UNDEFINED, initialLayer);
+                return fallbackVariablesLayer.getByVarName(var, varName, UNDEFINED, initialLayer, memoization);
             }else{
                 // there is no fallback, we are in a global scope,
                 // apply variable in the initial context
 
                 // if var is not provided, try to get it's function from register
-                VariableInfo info = $.getGlobal().variableRegistry.get(varName);
+                AppGlobalContext global = $.getGlobal();
+
+                VariableInfo info = global == null ? null : global.variableRegistry.get(varName);
 
                 if(info != null){
                     var = info.var;

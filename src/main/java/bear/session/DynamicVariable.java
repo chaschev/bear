@@ -16,10 +16,8 @@
 
 package bear.session;
 
-import bear.context.Fun;
-import bear.context.Nameable;
-import bear.context.VarFun;
-import bear.context.AbstractContext;
+import bear.context.*;
+import com.google.common.base.Preconditions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -52,7 +50,7 @@ public class DynamicVariable<T> implements Nameable<T> {
     //todo: change to object, make UNDEFINED default, throw an error when evaluating
     T defaultValue;
 
-    private boolean memoize;
+    Class<? extends AbstractContext> memoizeIn;
 
     public DynamicVariable(String name, String desc) {
         this.name = name;
@@ -103,15 +101,7 @@ public class DynamicVariable<T> implements Nameable<T> {
         }
 
         if (fun != null) {
-            if (memoize && defaultValue != null) {
-                return defaultValue;
-            }
-
             final T r = ((Fun<T, AbstractContext>)fun).apply($);
-
-            if (memoize) {
-                defaultValue = r;
-            }
 
             if(logger.isTraceEnabled()){
                 logger.trace(":{} (dynamic): {}", $.getName(), name, r);
@@ -148,10 +138,11 @@ public class DynamicVariable<T> implements Nameable<T> {
     }
 
     public DynamicVariable<T> defaultTo(T defaultValue, boolean force) {
+        Preconditions.checkArgument(memoizeIn == null, "memoized vars are dynamic");
+
         if (fun != null) {
             if (force) {
                 fun = null;
-                memoize = false;
             } else {
                 throw new IllegalStateException("use force to override dynamic implementation");
             }
@@ -204,13 +195,6 @@ public class DynamicVariable<T> implements Nameable<T> {
         }
     }
 
-    public DynamicVariable<T> memoize(boolean memoize) {
-//        Preconditions.checkArgument(dynamicImplementation != null, "memoization works with dynamic implementations");
-
-        this.memoize = memoize;
-        return this;
-    }
-
     public DynamicVariable<T> desc(String desc) {
         this.desc = desc;
         return this;
@@ -238,7 +222,7 @@ public class DynamicVariable<T> implements Nameable<T> {
         final StringBuilder sb = new StringBuilder("DynamicVariable{");
         sb.append("name='").append(name).append('\'');
         sb.append(", defaultValue=").append(defaultValue);
-        sb.append(", memoize=").append(memoize);
+        if(memoizeIn !=null) sb.append(", memoizeIn=").append(memoizeIn.getSimpleName());
         sb.append('}');
         return sb.toString();
     }
@@ -277,5 +261,14 @@ public class DynamicVariable<T> implements Nameable<T> {
 
     public final boolean isUndefined(){
         return defaultValue == Fun.UNDEFINED;
+    }
+
+    public Class<? extends AbstractContext> memoizeIn() {
+        return memoizeIn;
+    }
+
+    public DynamicVariable<T> memoizeIn(Class<? extends AbstractContext> memoizeIn) {
+        this.memoizeIn = memoizeIn;
+        return this;
     }
 }

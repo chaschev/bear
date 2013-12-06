@@ -16,8 +16,10 @@
 
 package bear.strategy;
 
-import bear.core.*;
-import bear.session.BearVariables;
+import bear.core.Bear;
+import bear.core.GlobalContext;
+import bear.core.SessionContext;
+import bear.core.Stage;
 import bear.session.Result;
 import bear.task.SessionTaskRunner;
 import bear.task.Task;
@@ -89,7 +91,7 @@ public abstract class DeployStrategyTaskDef extends TaskDef<Task> {
                 global.console().stopRecording();
 
                 logger.info("20: preparing local files");
-                preparedLocalFiles = global.var(bear.getStrategy).step_20_prepareLocalFiles(localCtx);
+//                preparedLocalFiles = global.var(bear.getStrategy).step_20_prepareLocalFiles(localCtx);
 
                 if(preparedLocalFiles.isEmpty()) return;
 
@@ -113,7 +115,7 @@ public abstract class DeployStrategyTaskDef extends TaskDef<Task> {
             public void run() {
                 logger.info("50: remote update is done now");
 
-                global.var(bear.getStrategy).step_50_whenRemoteUpdateFinished(localCtx);
+//                global.var(bear.getStrategy).step_50_whenRemoteUpdateFinished(localCtx);
             }
         });
     }
@@ -208,27 +210,16 @@ public abstract class DeployStrategyTaskDef extends TaskDef<Task> {
         }
 
         private void _step_30_copyFilesToHosts(){
-            updateReleasesDirs();
+//            updateReleasesDirs();
 
             if(isCopyingZip()){
-                $.sys.upload($(getBear().releasePath), new File(deployZipPath));
+//                $.sys.upload($(getBear().releasePath), new File(deployZipPath));
             }
 
             step_30_copyFilesToHosts();
         }
 
-        private void updateReleasesDirs() {
-            $.sys.mkdirs($(getBear().releasePath));
-            int keepX = $(getBear().keepXReleases);
 
-            if(keepX > 0){
-                final Releases releases = $(getBear().getReleases);
-                List<String> toDelete = releases.listToDelete(keepX);
-
-                $.sys.rmCd($(getBear().releasesPath),
-                    toDelete.toArray(new String[toDelete.size()]));
-            }
-        }
 
         protected void step_30_copyFilesToHosts(){
             logger.info("30: skipping customization");
@@ -236,9 +227,9 @@ public abstract class DeployStrategyTaskDef extends TaskDef<Task> {
 
         private void _step_40_updateRemoteFiles(){
             if(isCopyingZip()){
-                $.sys.unzip(
-                    $.joinPath($(getBear().releasePath), "deploy.zip"), null
-                );
+//                $.sys.unzip(
+//                    $.joinPath($(getBear().releasePath), "deploy.zip"), null
+//                );
             }
 
             step_40_updateRemoteFiles();
@@ -248,16 +239,17 @@ public abstract class DeployStrategyTaskDef extends TaskDef<Task> {
             for (SymlinkEntry entry : symlinks.entries) {
                 String srcPath;
 
-                srcPath = $(BearVariables.joinPath("symlinkSrc", getBear().currentPath, entry.sourcePath));
+//                srcPath = $(BearVariables.joinPath("symlinkSrc", getBear().currentReleaseLinkPath, entry.sourcePath));
 
-                $.sys.link(srcPath, $(entry.destPath), entry.owner);
+//                $.sys.link(srcPath, $(entry.destPath), entry.owner);
             }
 
             writeRevision();
         }
 
         protected Result writeRevision(){
-            return $.sys.writeString($.joinPath(getBear().releasePath, "REVISION"), $(getBear().realRevision));
+            return null;
+//            return $.sys.writeString($.joinPath(getBear().releasePath, "REVISION"), $(getBear().realRevision));
         }
     }
 }

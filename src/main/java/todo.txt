@@ -25,6 +25,14 @@ top priority:
 - (ok) bug: sendAllFinishedResults sends result only for the whole run
 - (ok) upstart plugin (& fix play app)
 - ReleaseManager + unit tests, embed release manager into deployment builder
+-- get the last 1 and lastX commit messages for each of the releases
+-- feature: rollback to a label or to a path
+-- each release contains release.json with: date, branch, revision, lastX commit messages
+-- deployment builder -> release manager -> creates a new pending release, builds the app, db migration
+-- when done, builder -> play plugin -> stops the service, builder -> updates the label, then builder -> play -> starts
+-- if it fails to start, then play plugin rolls back the label, deletes pending label and start the old version, reverts migration
+
+- update git plugin for the release
 - ssh tests for servers to test connectivity and response
 - (ok) FileWatcher
 -- secure social demo for 3 hosts/single mysql
@@ -82,6 +90,8 @@ Node.js:
 - ui: (ok, 6) style console messages
 - ui: notify about errors in logs
 
+- look on how Jenkins uses ssh
+
 - ui: green button usability - click edit, edit, if modified at least once, ask 'load?'
 - ui: modified tabs (add *) on new messages arrival
 - ui: draggable tabs, save tab layout
@@ -118,6 +128,7 @@ general testing:
 
 features:
 
+- there can be a single stream copier for the whole upp
 - global task: concise API
 - (ok) possible memory issue: after running two scripts memory jumps to 1.5GB
 - download plugin (wget, viaLocalCache option)

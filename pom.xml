@@ -13,6 +13,7 @@
         <rt.jar.path>${javaHome}/jre/lib/rt.jar</rt.jar.path>
         <jsse.jar.path>${javaHome}/jre/lib/jsse.jar</jsse.jar.path>
         <fx.jar.path>${javaHome}/jre/lib/jfxrt.jar</fx.jar.path>
+        <jackson.version>2.3.0</jackson.version>
     </properties>
 
     <profiles>
@@ -112,7 +113,12 @@
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
-            <version>2.2.2</version>
+            <version>${jackson.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.datatype</groupId>
+            <artifactId>jackson-datatype-joda</artifactId>
+            <version>${jackson.version}</version>
         </dependency>
         <dependency>
             <groupId>org.reflections</groupId>

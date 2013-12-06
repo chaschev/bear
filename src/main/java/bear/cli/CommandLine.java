@@ -184,6 +184,10 @@ public abstract class CommandLine<T extends CommandLineResult, SCRIPT extends Sc
     }
 
     public SCRIPT build() {
+        if(script == null){
+            throw new IllegalStateException("you need to create a script first");
+        }
+
         return script;
     }
 
@@ -206,22 +210,37 @@ public abstract class CommandLine<T extends CommandLineResult, SCRIPT extends Sc
 
         List strings = line.strings;
 
-        for (Object string : strings) {
-            if (string instanceof CommandLineOperator) {
-                String s = string.toString();
+        for (Object o : strings) {
+            if (o instanceof CommandLineOperator) {
+                String s = o.toString();
                 if(forExecution || !s.contains("export ")){
-                    sb.append(string);
+                    sb.append(o);
                 }
             } else {
-                if(forExecution) sb.append('"');
-                sb.append(string);
-                if(forExecution) sb.append('"');
+                if(forExecution) {
+                    sb.append('"');
+                    if(o instanceof String){
+                        // will make: rm "/foo/ba"*"" -> rm "/foo/ba"*
+                        sb.append(extractWildcards((String)o));
+                    }else{
+                        sb.append(o);
+                    }
+                    sb.append('"');
+                }else{
+                    sb.append(o);
+                }
             }
 
             sb.append(" ");
         }
 
         return sb.toString();
+    }
+
+    private String extractWildcards(String s) {
+        s = s.replace("*", "\"*\"");
+
+        return s;
     }
 
     public boolean isDefaultDir() {

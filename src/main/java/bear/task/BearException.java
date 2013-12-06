@@ -27,4 +27,7 @@ public class BearException extends RuntimeException {
         super(message);
     }
 
+    public BearException(String message, Throwable cause) {
+        super(message, cause);
+    }
 }

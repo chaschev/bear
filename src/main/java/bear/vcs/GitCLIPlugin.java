@@ -64,9 +64,7 @@ public class GitCLIPlugin extends VcsCLIPlugin<Task, TaskDef<?>> {
         }
     };
 
-
-
-    public static final Function<String, LogResult> LOG_PARSER = new LogParserFunction();
+    public static final Function<String, VcsLogInfo> LOG_PARSER = new LogParserFunction();
     public static final Pattern HASH_REGEX = Pattern.compile("^[0-9a-f]{40}$");
 
 
@@ -248,12 +246,12 @@ public class GitCLIPlugin extends VcsCLIPlugin<Task, TaskDef<?>> {
         }
 
         @Override
-        public VCSScript<? extends BranchInfoResult> queryRevision(String revision) {
+        public VCSScript<? extends BranchInfo> queryRevision(String revision) {
             return queryRevision(revision, emptyParams());
         }
 
         @Override
-        public VCSScript<? extends BranchInfoResult> queryRevision(String revision, Map<String, String> params) {
+        public VCSScript<? extends BranchInfo> queryRevision(String revision, Map<String, String> params) {
             if (revision.startsWith("origin/")) {
                 throw new IllegalArgumentException(String.format(
                     "Deploying remote branches is not supported.  Specify the remote branch as a local branch for the git repository you're deploying from (ie: '%s' rather than '%s').",
@@ -328,8 +326,8 @@ public class GitCLIPlugin extends VcsCLIPlugin<Task, TaskDef<?>> {
         }
 
 
-        private VCSScript<? extends BranchInfoResult> newQueryRevisionResult(String revision) {
-            return new StubScript<BranchInfoResult>($.sys, this, new BranchInfoResult(null, revision, null));
+        private VCSScript<? extends BranchInfo> newQueryRevisionResult(String revision) {
+            return new StubScript<BranchInfo>($.sys, this, new BranchInfo(null, revision, null));
         }
 
         @Override
@@ -346,6 +344,11 @@ public class GitCLIPlugin extends VcsCLIPlugin<Task, TaskDef<?>> {
         @Override
         public VCSScript<?> log(String rFrom, String rTo, Map<String, String> params) {
             throw new UnsupportedOperationException("todo: log");
+        }
+
+        @Override
+        public VCSScript<VcsLogInfo> logLastN(int n) {
+            return newPlainScript("git --no-pager log -" + n + " --all --date-order", GitCLIPlugin.LOG_PARSER);
         }
 
         public VCSScript<LsResult> ls(String path, Map<String, String> params) {
@@ -399,9 +402,9 @@ public class GitCLIPlugin extends VcsCLIPlugin<Task, TaskDef<?>> {
         return newArrayList(s.split("\n"));
     }
 
-    private static class LogParserFunction implements Function<String, LogResult> {
-        public LogResult apply(String s) {
-            List<LogResult.LogEntry> entries = new ArrayList<LogResult.LogEntry>();
+    private static class LogParserFunction implements Function<String, VcsLogInfo> {
+        public VcsLogInfo apply(String s) {
+            List<VcsLogInfo.LogEntry> entries = new ArrayList<VcsLogInfo.LogEntry>();
 
             OpenStringBuilder comment = new OpenStringBuilder(256);
 
@@ -443,10 +446,10 @@ public class GitCLIPlugin extends VcsCLIPlugin<Task, TaskDef<?>> {
 
                 comment.trim();
 
-                entries.add(new LogResult.LogEntry(date, author, comment.toString(), revision));
+                entries.add(new VcsLogInfo.LogEntry(date, author, comment.toString(), revision));
             }
 
-            return new LogResult(s, entries);
+            return new VcsLogInfo(s, entries);
         }
     }
 }

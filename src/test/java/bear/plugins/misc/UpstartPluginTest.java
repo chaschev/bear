@@ -1,6 +1,6 @@
 package bear.plugins.misc;
 
-import bear.plugins.java.SessionTest;
+import bear.plugins.sh.SessionTest;
 import com.google.common.base.Joiner;
 import com.google.common.base.Optional;
 import com.google.common.collect.Lists;

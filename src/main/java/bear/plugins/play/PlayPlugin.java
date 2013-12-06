@@ -55,17 +55,20 @@ import static java.lang.String.format;
  */
 public class PlayPlugin extends ZippedToolPlugin {
     private static final Logger logger = LoggerFactory.getLogger(PlayPlugin.class);
+    private static final String PENDING_RELEASE = "pendingRelease";
 
     protected UpstartPlugin upstart;
     protected FileWatchDogPlugin watchDog;
+    protected ReleasesPlugin releases;
 
     public final DynamicVariable<String>
         projectPath = dynamic("Project root dir"),
         configFile = dynamic("Path to an alternative application.conf"),
         execName = concat("play", condition(bear.isNativeUnix, newVar(""), newVar(".bat")).desc("'play' or 'play.bat'")),
-        stageTargetPattern = concat(projectPath, "/target/universal/stage/bin"),
-        instancePath = concat(bear.applicationPath, "/instances/play-%s"),
+        stageTarget = concat(projectPath, "/target/universal/stage"),
+        instancePath = newVar(""),
         instanceLogsPath = concat(bear.appLogsPath, "/play-%s"),
+        playAppName = newVar("play-app"),
         consoleLogPath = concat(instanceLogsPath, "/console"),
         instancePorts = newVar("9000"),
         multiServiceName = concat(bear.name, "_%s"),
@@ -94,6 +97,13 @@ public class PlayPlugin extends ZippedToolPlugin {
         toolname.defaultTo("play", true);
         distrFilename.setEqualTo(concat(versionName, ".zip"));
         distrWwwAddress.setEqualTo(Variables.format("http://downloads.typesafe.com/play/%s/%s", version, distrFilename));
+//        pendingAppPath = concat(releases.pendingReleasePath, "play-app");
+    }
+
+    @Override
+    public void initPlugin() {
+        super.initPlugin();
+        instancePath.setEqualTo(concat(releases.currentReleaseLinkPath, "/instances/play-%s"));
     }
 
     public static class PlayDistResult extends TaskResult {
@@ -165,10 +175,23 @@ public class PlayPlugin extends ZippedToolPlugin {
 
                     result =
                         script
-//                        .line().addRaw("play compile stage")
-//                        .timeoutForBuild()
-//                        .build()
+                            .line().addRaw("play compile stage")
+                            .timeoutForBuild()
+                            .build()
                             .run();
+
+                    if (!result.ok()) {
+                        return result;
+                    }
+
+                    Release pendingRelease = $(releases.session).newPendingRelease();
+
+                    $.putConst(PENDING_RELEASE, pendingRelease);
+
+                    String dest = pendingRelease.path + "/" + $(playAppName); //eq to ${pendingRelease.path}/play-app
+
+                    $.sys.mkdirs(dest);
+                    $.sys.captureResult("mv " + $(stageTarget) + "/* " + dest).throwIfError();
 
                     return result;
                 }
@@ -185,14 +208,26 @@ public class PlayPlugin extends ZippedToolPlugin {
                 protected TaskResult exec(SessionTaskRunner runner, Object input) {
                     $.log("starting the app (stage)...");
 
-                    String capture = $.sys.capture("ls -w 1 " + $(stageTargetPattern) + "/*");
+                    Release release;
 
-                    Optional<String> execPath = tryFind(LINE_SPLITTER.split(
-                        capture.trim()), not(containsPattern("\\.bat$")));
+                    {
+                        PendingRelease pendingRelease = (PendingRelease) $.getConstant(PENDING_RELEASE);
 
-                    if (!execPath.isPresent()) {
-                        throw new RuntimeException("could not find a jar, dir content: " + capture);
+                        if (pendingRelease != null) {
+                            release = pendingRelease.activate();
+                        } else {
+                            // a case of standalone start
+                            Optional<Release> releaseOptional = $(releases.session).getCurrentRelease();
+
+                            if (!releaseOptional.isPresent()) {
+                                throw new IllegalStateException("there is no release set!");
+                            }
+
+                            release = releaseOptional.get();
+                        }
                     }
+
+                    Optional<String> execPath = getExecPath(release);
 
                     Script script = new Script($.sys);
 
@@ -235,11 +270,26 @@ public class PlayPlugin extends ZippedToolPlugin {
 
                     r = serviceCommand($, "start");
 
+                    printCurrentReleases($);
+
                     return r;
                 }
 
+                private Optional<String> getExecPath(Release release) {
+                    String capture = $.sys.capture("ls -w 1 " + release.path + "/" + $(playAppName) + "/bin/*");
+
+                    Optional<String> execPath = tryFind(LINE_SPLITTER.split(
+                        capture.trim()), not(containsPattern("\\.bat$")));
+
+                    if (!execPath.isPresent()) {
+                        throw new RuntimeException("could not find a jar, dir content: " + capture);
+                    }
+
+                    return execPath;
+                }
+
                 private void spawnStartWatchDogs(List<String> ports) {
-                    final WatchDogGroup compositeRunnable = new WatchDogGroup(ports.size(), watchStartDogGroup );
+                    final WatchDogGroup watchDogGroup = new WatchDogGroup(ports.size(), watchStartDogGroup);
 
                     for (final String port : ports) {
                         WatchDogRunnable runnable = new WatchDogRunnable($, watchDog, new WatchDogInput(
@@ -248,7 +298,8 @@ public class PlayPlugin extends ZippedToolPlugin {
                             @Nonnull
                             public ConsoleCallbackResult progress(AbstractConsole.Terminal console, String buffer, String wholeText) {
                                 if (buffer.contains("Listening for HTTP on")) {
-                                    SessionContext.ui.info(new NoticeEventToUI($(bear.fullName), "started play instance on port " + port));
+                                    SessionContext.ui.info(new NoticeEventToUI($(bear.fullName),
+                                        "started play instance on port " + port + ", release " + $(releases.session).getCurrentRelease().get().name()));
 
                                     return new ConsoleCallbackResult(ConsoleCallbackResultType.DONE, null);
                                 }
@@ -259,18 +310,12 @@ public class PlayPlugin extends ZippedToolPlugin {
                             .setTimeoutMs($(startupTimeoutMs))
                         );
 
-                        compositeRunnable.add(runnable);
+                        watchDogGroup.add(runnable);
                     }
 
-                    compositeRunnable.startThreads();
+                    watchDogGroup.startThreads();
 
-                    //this should not be needed
-                    $.getGlobal().scheduler.schedule(new Runnable() {
-                        @Override
-                        public void run() {
-                            compositeRunnable.shutdownNow();
-                        }
-                    }, $(startupTimeoutMs), TimeUnit.MILLISECONDS);
+                    watchDogGroup.scheduleForcedShutdown($.getGlobal().scheduler, $(startupTimeoutMs), TimeUnit.MILLISECONDS);
                 }
 
 
@@ -330,6 +375,37 @@ public class PlayPlugin extends ZippedToolPlugin {
     };
 
 
+    public final TaskDef<Task> watchStart = new TaskDef<Task>() {
+        @Override
+        protected Task newSession(SessionContext $, final Task parent) {
+            return new Task<TaskDef>(parent, new TaskCallable() {
+                @Override
+                public TaskResult call(SessionContext $, Task task, Object input) throws Exception {
+                    TaskResult r;
+                    if (!$.var(useWatchDog)) {
+                        r = TaskResult.OK;
+                    } else {
+
+                        WatchDogGroup watchDogs = $.var(watchStartDogGroup);
+
+
+                        r = TaskResult.of(watchDogs.latch().await($.var(startupTimeoutMs), TimeUnit.MILLISECONDS),
+                            "" + watchDogs.latch().getCount() + " instances did not start in " +
+                                TimeUnit.MILLISECONDS.toSeconds($.var(startupTimeoutMs)) + " seconds");
+                    }
+
+                    printCurrentReleases($);
+
+                    return r;
+                }
+            });
+        }
+    };
+
+    private void printCurrentReleases(SessionContext $) {
+        logger.info("current releases:\n{}", $.var(releases.session).show());
+    }
+
     public final InstallationTaskDef<ZippedTool> install = new ZippedToolTaskDef<ZippedTool>() {
         @Override
         public ZippedTool newSession(SessionContext $, final Task parent) {
@@ -371,26 +447,5 @@ public class PlayPlugin extends ZippedToolPlugin {
     public InstallationTaskDef<? extends InstallationTask> getInstall() {
         return install;
     }
-
-    public final TaskDef<Task> watchStart = new TaskDef<Task>() {
-        @Override
-        protected Task newSession(SessionContext $, final Task parent) {
-            return new Task<TaskDef>(parent, new TaskCallable() {
-                @Override
-                public TaskResult call(SessionContext $, Task task, Object input) throws Exception {
-                    if (!$.var(useWatchDog)) return TaskResult.OK;
-
-                    WatchDogGroup watchDogs = $.var(watchStartDogGroup);
-
-                    //removed due to timeout, this should be very rare if not impossible
-                    if (watchDogs == null) return TaskResult.OK;
-
-                    return TaskResult.of(watchDogs.latch().await($.var(startupTimeoutMs), TimeUnit.MILLISECONDS),
-                        "" + watchDogs.latch().getCount() + " instances did not start in " +
-                            TimeUnit.MILLISECONDS.toSeconds($.var(startupTimeoutMs)) + " seconds");
-                }
-            });
-        }
-    };
 
 }

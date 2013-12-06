@@ -25,7 +25,7 @@ import com.google.common.base.Optional;
  */
 public class TaskResult {
     protected Result result;
-    public Optional<? extends Throwable> exception;
+    public transient Optional<? extends Throwable> exception;
 
     public TaskResult(Result result) {
         this.result = result;
@@ -66,12 +66,12 @@ public class TaskResult {
     }
 
     public TaskResult throwIfError() {
-        if(!ok()){
-        if(exception.isPresent()){
-            throw Exceptions.runtime(exception.get());
-        }
+        if (!ok()) {
+            if (exception.isPresent()) {
+                throw Exceptions.runtime(exception.get());
+            }
 
-        throw new RuntimeException(String.valueOf(result));
+            throw new RuntimeException(toString());
         }
 
         return this;

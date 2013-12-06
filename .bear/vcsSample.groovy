@@ -1,6 +1,6 @@
 import bear.core.SessionContext
 import bear.vcs.GitCLIPlugin
-import bear.vcs.LogResult
+import bear.vcs.VcsLogInfo
 
 class VcsSampleScript extends bear.main.Script {
     GitCLIPlugin gitPlugin;
@@ -19,7 +19,7 @@ class VcsSampleScript extends bear.main.Script {
 
         logger.info("head: {}", git.head())
 
-        final LogResult logResult = git.newPlainScript("git --no-pager log -3 --all --date-order", GitCLIPlugin.LOG_PARSER).run()
+        final VcsLogInfo logResult = git.newPlainScript("git --no-pager log -3 --all --date-order", GitCLIPlugin.LOG_PARSER).run()
 
         logger.info("logResult: {}", logResult.entries)
 

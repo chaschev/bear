@@ -16,10 +16,8 @@
 
 package bear.task;
 
-import bear.core.SessionContext;
 import bear.core.GlobalContext;
 import bear.plugins.Plugin;
-import bear.cli.Script;
 
 /**
  * @author Andrey Chaschev chaschev@gmail.com
@@ -34,77 +32,77 @@ public class Rollback extends Plugin<Task, TaskDef<?>> {
         return InstallationTaskDef.EMPTY;
     }
 
-    public final TaskDef pointToPreviousRelease = new TaskDef() {
+//    public final TaskDef pointToPreviousRelease = new TaskDef() {
+//
+//        @Override
+//        public Task<TaskDef> newSession(SessionContext $, final Task parent) {
+//            return new Task<TaskDef>(parent, this, $) {
+//                @Override
+//                protected TaskResult exec(SessionTaskRunner runner, Object input) {
+//                    requirePreviousRelease($);
+//
+//                    Script script = $.sys.script();
+//
+//                    return script
+//                        .line($.sys.addRmLine(script.line().sudo(), $(getBear().currentReleaseLinkPath)))
+//                            .line().sudo().addRaw("ln -s %s %s", $(getBear().getPreviousReleasePath), $(getBear().currentReleaseLinkPath)).build()
+//                            .run();
+//                }
+//            };
+//        }
+//    }.desc("[internal] Points the current symlink at the previous release.\n" +
+//        "      This is called by the rollback sequence, and should rarely (if\n" +
+//        "      ever) need to be called directly.");
 
-        @Override
-        public Task<TaskDef> newSession(SessionContext $, final Task parent) {
-            return new Task<TaskDef>(parent, this, $) {
-                @Override
-                protected TaskResult exec(SessionTaskRunner runner, Object input) {
-                    requirePreviousRelease($);
+//    public final TaskDef cleanup = new TaskDef() {
+//        @Override
+//        public Task<TaskDef> newSession(SessionContext $, final Task parent) {
+//            return new Task<TaskDef>(parent, this, $) {
+//                @Override
+//                protected TaskResult exec(SessionTaskRunner runner, Object input) {
+//                        return $.sys.sendCommand(
+//                            $.sys.line().sudo().addRaw("if [ `readlink #{%s}` != #{%s} ]; then #{try_sudo} rm -rf #{%s}; fi", true,
+//                                $(getBear().currentReleaseLinkPath), $(getBear().releasePath), $(getBear().releasePath)));
+//                }
+//
+//            };
+//        }
+//    };
 
-                    Script script = $.sys.script();
+//    public final TaskDef code = new TaskDef() {
+//        @Override
+//        public Task<TaskDef> newSession(SessionContext $, final Task parent) {
+//            return new Task<TaskDef>(parent, this, $) {
+//                @Override
+//                protected TaskResult exec(SessionTaskRunner runner, Object input) {
+//                    return TaskResult.and(
+//                        runner.run(pointToPreviousRelease),
+//                        runner.run(cleanup));
+//                }
+//
+//            };
+//        }
+//    };
 
-                    return script
-                        .line($.sys.addRmLine(script.line().sudo(), $(getBear().currentPath)))
-                            .line().sudo().addRaw("ln -s %s %s", $(getBear().getPreviousReleasePath), $(getBear().currentPath)).build()
-                            .run();
-                }
-            };
-        }
-    }.desc("[internal] Points the current symlink at the previous release.\n" +
-        "      This is called by the rollback sequence, and should rarely (if\n" +
-        "      ever) need to be called directly.");
-
-    public final TaskDef cleanup = new TaskDef() {
-        @Override
-        public Task<TaskDef> newSession(SessionContext $, final Task parent) {
-            return new Task<TaskDef>(parent, this, $) {
-                @Override
-                protected TaskResult exec(SessionTaskRunner runner, Object input) {
-                        return $.sys.sendCommand(
-                            $.sys.line().sudo().addRaw("if [ `readlink #{%s}` != #{%s} ]; then #{try_sudo} rm -rf #{%s}; fi", true,
-                                $(getBear().currentPath), $(getBear().releasePath), $(getBear().releasePath)));
-                }
-
-            };
-        }
-    };
-
-    public final TaskDef code = new TaskDef() {
-        @Override
-        public Task<TaskDef> newSession(SessionContext $, final Task parent) {
-            return new Task<TaskDef>(parent, this, $) {
-                @Override
-                protected TaskResult exec(SessionTaskRunner runner, Object input) {
-                    return TaskResult.and(
-                        runner.run(pointToPreviousRelease),
-                        runner.run(cleanup));
-                }
-
-            };
-        }
-    };
-
-    public final TaskDef $default = new TaskDef() {
-        @Override
-        public Task<TaskDef> newSession(SessionContext $, final Task parent) {
-            return new Task<TaskDef>(parent, this, $) {
-                @Override
-                protected TaskResult exec(SessionTaskRunner runner, Object input) {
-                    return TaskResult.and(
-                        runner.run(pointToPreviousRelease),
-                        runner.run(global.tasks.restartApp),
-                        runner.run(cleanup));
-                }
-            };
-        }
-    };
+//    public final TaskDef $default = new TaskDef() {
+//        @Override
+//        public Task<TaskDef> newSession(SessionContext $, final Task parent) {
+//            return new Task<TaskDef>(parent, this, $) {
+//                @Override
+//                protected TaskResult exec(SessionTaskRunner runner, Object input) {
+//                    return TaskResult.and(
+//                        runner.run(pointToPreviousRelease),
+//                        runner.run(global.tasks.restartApp),
+//                        runner.run(cleanup));
+//                }
+//            };
+//        }
+//    };
 
 
-    private void requirePreviousRelease(SessionContext $) {
-        if ($.var(bear.getPreviousReleasePath) != null) {
-            throw new RuntimeException("could not rollback the code because there is no prior release");
-        }
-    }
+//    private void requirePreviousRelease(SessionContext $) {
+//        if ($.var(bear.getPreviousReleasePath) != null) {
+//            throw new RuntimeException("could not rollback the code because there is no prior release");
+//        }
+//    }
 }

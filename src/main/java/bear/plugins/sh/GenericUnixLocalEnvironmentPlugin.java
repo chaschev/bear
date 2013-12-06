@@ -159,8 +159,8 @@ public class GenericUnixLocalEnvironmentPlugin extends SystemEnvironmentPlugin {
             }
 
             @Override
-            public Result download(List<String> paths, DownloadMethod method, File destParentDir) {
-                return Result.ERROR;
+            public DownloadResult download(List<String> paths, DownloadMethod method, File destParentDir) {
+                throw new UnsupportedOperationException("not supported?");
             }
 
             @Override

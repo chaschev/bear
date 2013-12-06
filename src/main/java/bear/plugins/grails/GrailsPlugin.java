@@ -20,6 +20,7 @@ import bear.core.GlobalContext;
 import bear.core.SessionContext;
 import bear.plugins.ZippedToolPlugin;
 import bear.plugins.java.JavaPlugin;
+import bear.plugins.misc.ReleasesPlugin;
 import bear.session.DynamicVariable;
 import bear.session.Variables;
 import bear.task.*;
@@ -32,6 +33,8 @@ import static bear.session.Variables.*;
  * @author Andrey Chaschev chaschev@gmail.com
  */
 public class GrailsPlugin extends ZippedToolPlugin {
+    ReleasesPlugin releases;
+
     public final DynamicVariable<String>
         grailsBin = joinPath(homePath, "bin"),
         projectPath = dynamic("Project root dir"),
@@ -39,8 +42,7 @@ public class GrailsPlugin extends ZippedToolPlugin {
         grailsExecPath = condition(isSet(homePath), joinPath(grailsBin, grailsExecName), grailsExecName),
         warName = newVar("ROOT.war").desc("i.e. ROOT.war"),
         projectWarPath = joinPath(projectPath, warName),
-        releaseWarPath = condition(bear.isRemoteEnv, joinPath(bear.releasePath, warName), projectWarPath)
-    ;
+        releaseWarPath;
 
     public final DynamicVariable<Boolean>
         clean = Variables.equalTo(bear.clean).desc("clean project before build")
@@ -52,6 +54,7 @@ public class GrailsPlugin extends ZippedToolPlugin {
         toolname.defaultTo("grails", true);
         distrFilename.setEqualTo(concat(versionName, ".zip"));
         distrWwwAddress.setEqualTo(format("http://dist.springframework.org.s3.amazonaws.com/release/GRAILS/%s", distrFilename));
+        releaseWarPath = condition(bear.isRemoteEnv, joinPath(releases.releasePath, warName), projectWarPath);
     }
 
 

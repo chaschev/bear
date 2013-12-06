@@ -33,6 +33,10 @@ public class CommandLineResult extends TaskResult{
     public int exitCode;
     public Object value;
 
+    CommandLineResult() {
+        super(Result.OK);
+    }
+
     public CommandLineResult(String script, String text) {
         super(Result.OK);
         this.script = cut(script);

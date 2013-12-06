@@ -80,8 +80,8 @@ public abstract class AbstractContext {
         return var(layer.getVariable(var));
     }
 
-    public <T> T var(DynamicVariable<T> varName) {
-        return layer.get(varName);
+    public <T> T var(DynamicVariable<T> var) {
+        return layer.get(var);
     }
 
     public <T> T var(DynamicVariable<T> varName, T _default) {

@@ -50,7 +50,7 @@ public abstract class VCSSession extends Task<TaskDef> {
         throw new UnsupportedOperationException("todo");
     }
 
-    public VCSScript<? extends BranchInfoResult> queryRevision(String revision) {
+    public VCSScript<? extends BranchInfo> queryRevision(String revision) {
         return queryRevision(revision, VcsCLIPlugin.emptyParams());
     }
 
@@ -63,7 +63,7 @@ public abstract class VCSSession extends Task<TaskDef> {
      * containing the commands that, when executed will return a string
      * that this method can then extract the real revision from.
      */
-    public VCSScript<? extends BranchInfoResult> queryRevision(String revision, Map<String, String> params) {
+    public VCSScript<? extends BranchInfo> queryRevision(String revision, Map<String, String> params) {
         throw new UnsupportedOperationException("todo");
     }
 
@@ -110,8 +110,12 @@ public abstract class VCSSession extends Task<TaskDef> {
         return this.<R>newVCSScript().line().stty().addRaw(command).build();
     }
 
+
+
     public  <R extends CommandLineResult> VCSScript<R> newPlainScript(String command, Function<String, R> parser) {
         return this.<R>newPlainScript(command)
             .setParser(parser);
     }
+
+    public abstract VCSScript<VcsLogInfo> logLastN(int n);
 }

@@ -5,21 +5,24 @@ import bear.cli.Script;
 import bear.console.AbstractConsoleCommand;
 import bear.console.ConsoleCallback;
 import bear.console.ConsoleCallbackResult;
-import bear.console.ConsoleCallbackResultType;
 import bear.core.AbstractConsole;
 import bear.core.GlobalContext;
 import bear.core.MarkedBuffer;
 import bear.core.SessionContext;
 import bear.session.Result;
 import bear.session.SshAddress;
+import bear.session.Variables;
+import bear.task.BearException;
 import bear.task.Task;
 import bear.vcs.CommandLineResult;
 import bear.vcs.RemoteCommandLine;
+import chaschev.util.Exceptions;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Stopwatch;
 import com.google.common.base.Strings;
-import com.google.common.collect.Lists;
 import net.schmizz.sshj.common.IOUtils;
 import net.schmizz.sshj.connection.channel.direct.Session;
+import net.schmizz.sshj.sftp.SFTPClient;
 import net.schmizz.sshj.xfer.FileSystemFile;
 import net.schmizz.sshj.xfer.scp.SCPFileTransfer;
 import org.apache.commons.io.FileUtils;
@@ -32,6 +35,7 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -125,17 +129,19 @@ class RemoteSystemSession extends SystemSession {
                             }
                         }
 
-                        return new ConsoleCallbackResult(ConsoleCallbackResultType.FINISHED, null);
+                        return ConsoleCallbackResult.CONTINUE;
                     }
                 })
                     .bufSize(session.getRemoteMaxPacketSize())
                     .spawn(global.localExecutor, (int) getTimeout(command), TimeUnit.MILLISECONDS);
 
-//                        Stopwatch sw = Stopwatch.createStarted();
+                Stopwatch sw = Stopwatch.createStarted();
                 try {
                     execSshCommand.join((int) getTimeout(command), TimeUnit.MILLISECONDS);
 
-//                        logger.debug("join timing: {}", sw.elapsed(TimeUnit.MILLISECONDS));
+                    if(logger.isDebugEnabled()){
+                        logger.debug("join timing: {} ms, cmd: {}", sw.elapsed(TimeUnit.MILLISECONDS), command.asText(false));
+                    }
 
                     if(!remoteConsole.awaitStreamCopiers(20, TimeUnit.MILLISECONDS)){
     //                            logger.debug("WAAARN, NOT ALL FINISHED!!!");
@@ -151,6 +157,10 @@ class RemoteSystemSession extends SystemSession {
 //                        logger.debug("awaitStreamCopiers timing: {}", sw.elapsed(TimeUnit.MILLISECONDS));
 
                 Integer code = execSshCommand.getExitStatus();
+
+                if(code == null){
+                    logger.info("command has been preliminarily stopped (null code for {})", command.asText(false));
+                }
 
                 // it returns null when connection is closed on our side
                 // connection can be closed in a callback by returning DONE
@@ -184,15 +194,15 @@ class RemoteSystemSession extends SystemSession {
     public List<String> ls(String path) {
         final CommandLineResult r = sendCommand(newCommandLine().a("ls", "-w", "1", path));
 
-        final String[] lines = r.text.split("[\r\n]+");
+        List<String> lines = Variables.LINE_SPLITTER.splitToList(r.text);
 
-        if (lines.length == 1 &&
-            (lines[0].contains("ls: cannot access") ||
-                lines[0].contains("such file or directory"))) {
+        if (lines.size() == 1 &&
+            (lines.get(0).contains("ls: cannot access") ||
+                lines.get(0).contains("such file or directory"))) {
             return Collections.emptyList();
         }
 
-        return Lists.newArrayList(lines);
+        return lines;
     }
 
     @Override
@@ -318,16 +328,16 @@ class RemoteSystemSession extends SystemSession {
 
         switch (type) {
             case COPY:
-                line.a("cp", "-R", src, dest);
+                line.addRaw("cp ").a("-R", src, dest);
                 break;
             case LINK:
-                line.a("rm", dest);
+                line.addRaw("rm ").a(dest);
                 line.semicolon();
                 line.sudo();
-                line.a("ln", "-s", src, dest);
+                line.addRaw("ln -s").a(src, dest);
                 break;
             case MOVE:
-                line.a("mv", src, dest);
+                line.addRaw("mv ").a(src, dest);
                 break;
         }
 
@@ -422,7 +432,23 @@ class RemoteSystemSession extends SystemSession {
 
     @Override
     public String readString(String path, String _default) {
-        throw new UnsupportedOperationException("todo GenericUnixRemoteEnvironment.readString");
+        DownloadResult downloadResult = download(Collections.singletonList(path), new File(global.localCtx.var(getBear().tempDirPath)));
+
+        if(!downloadResult.ok()){
+            if(_default == null){
+                throw downloadResult.exception.isPresent() ?
+                    new BearException("unable to download: " + path, downloadResult.exception.get()) :
+                    new BearException("unable to download: " + path);
+            }else{
+                return _default;
+            }
+        }
+
+        try {
+            return FileUtils.readFileToString(downloadResult.files.get(0));
+        } catch (IOException e) {
+            throw Exceptions.runtime(e);
+        }
     }
 
     @Override
@@ -436,7 +462,7 @@ class RemoteSystemSession extends SystemSession {
 
     @Override
     public String readLink(String path) {
-        throw new UnsupportedOperationException("todo GenericUnixRemoteEnvironment.readLink");
+        return script().line().a("readlink", path).build().run().throwIfError().text.trim();
     }
 
     @Override
@@ -458,23 +484,54 @@ class RemoteSystemSession extends SystemSession {
     }
 
     @Override
-    public Result download(List<String> paths, SystemEnvironmentPlugin.DownloadMethod method, File destParentDir) {
+    public DownloadResult download(List<String> paths, SystemEnvironmentPlugin.DownloadMethod method, File destParentDir) {
         logger.info("downloading {} files to {} from {}", paths.size(),
             destParentDir.getAbsolutePath(), remotePlugin.name);
 
-        final SCPFileTransfer transfer = sshSession.getSsh().newSCPFileTransfer();
+        if(!destParentDir.exists()){
+            if(!destParentDir.mkdirs()){
+                throw new BearException("unable to create dir: " + destParentDir);
+            }
+        }
+
+        checkConnection();
 
         try {
+            SFTPClient sftpClient = sshSession.getSsh().newSFTPClient();
+            List<File> files = new ArrayList<File>(paths.size());
+
             for (String path : paths) {
                 final File destFile = new File(destParentDir, FilenameUtils.getName(path));
 
                 logger.info("transferring {} to {}", path, destFile.getAbsolutePath());
-                transfer.download(path, new FileSystemFile(destFile));
+
+                sftpClient.get(path, new FileSystemFile(destFile));
+
+                files.add(destFile);
             }
 
-            return Result.OK;
+            return new DownloadResult(files);
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            return new DownloadResult(e);
         }
+
+//        final SCPFileTransfer transfer = sshSession.getSsh().newSCPFileTransfer();
+//
+//        try {
+//            List<File> files = new ArrayList<File>(paths.size());
+//
+//            for (String path : paths) {
+//                final File destFile = new File(destParentDir, FilenameUtils.getName(path));
+//
+//                logger.info("transferring {} to {}", path, destFile.getAbsolutePath());
+//                transfer.download(path, new FileSystemFile(destFile));
+//
+//                files.add(destFile);
+//            }
+//
+//            return new DownloadResult(files);
+//        } catch (IOException e) {
+//            return new DownloadResult(e);
+//        }
     }
 }

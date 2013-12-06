@@ -10,7 +10,6 @@ import bear.plugins.sh.UnixSubFlavour;
 import bear.plugins.sh.WriteStringInput;
 import bear.session.DynamicVariable;
 import bear.session.Result;
-import bear.session.Variables;
 import bear.session.Versions;
 import bear.task.*;
 import bear.vcs.CommandLineResult;
@@ -37,13 +36,13 @@ import static bear.task.TaskResult.and;
 @Shell("mongo")
 public class MongoDbPlugin extends Plugin {
     public final DynamicVariable<String>
-        version = strVar(),
-        dbHost = strVar().desc("database host").defaultTo("localhost"),
-        dbPort = strVar().desc("database port").defaultTo("27017"),
+        version = undefined(),
+        dbHost = newVar("localhost").desc("database host"),
+        dbPort = newVar("27017").desc("database port"),
         dbName = strVar().desc("database name"),
         connectionString = concat(dbHost, ":", dbPort, "/", dbName),
-        serverPackage = Variables.newVar("mongo-10gen-server"),
-        clientPackage = Variables.newVar("mongo-10gen");
+        serverPackage = newVar("mongo-10gen-server"),
+        clientPackage = newVar("mongo-10gen");
 
     public final DynamicVariable<VersionConstraint> versionConstraint = condition(isSet(version), convert(version, new Function<String, VersionConstraint>() {
         public VersionConstraint apply(String input) {

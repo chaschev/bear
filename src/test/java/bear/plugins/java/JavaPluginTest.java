@@ -2,6 +2,7 @@ package bear.plugins.java;
 
 import bear.console.AbstractConsoleCommand;
 import bear.console.ConsoleCallback;
+import bear.plugins.sh.SessionTest;
 import bear.vcs.CommandLineResult;
 import com.google.common.base.Joiner;
 import org.junit.Test;

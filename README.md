@@ -13,7 +13,7 @@ Bear is in it's early development stages now. Questions, concerns? Just to drop 
 | Play! Framework single-host deployment      | Finished.      | 
 | Play! Framework three-hosts deployment      | In progress... |
 | Parametrize deployment (use mongo or mysql) | In progress... |
-| Test deployment rollbacks and db dumps      |                | 
+| Test deployment rollbacks and db dumps      | In progress... |
 | Grails/Tomcat demo deployment               |                | 
 | Node.js demo deployment                     |                | 
 | Refactoring, simplifying API                |                | 
@@ -29,10 +29,10 @@ Bear is in it's early development stages now. Questions, concerns? Just to drop 
 
 | Step                                        | State          | 
 | ------------------------------------------- |:--------------:|
-| Support Ubuntu Server                       |                | 
+| Support Debian/Ubuntu Server                |                |
 | Run via a Maven Plugin                      |                |
 | Support JDK 6 for CLI, JDK 7 for GUI        |                | 
-| Deployments to Heroku, AWS                  |                | 
+| Deployments to Heroku, AWS, GCE, Azure, Rackspace |      ?       |
 
 ### Bear Script
 

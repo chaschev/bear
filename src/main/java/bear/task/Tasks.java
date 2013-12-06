@@ -43,20 +43,6 @@ public class Tasks {
         }
     };
 
-    public final TaskDef deploy = new TaskDef("Deploy") {
-        @Override
-        public Task<TaskDef> newSession(SessionContext $, final Task parent) {
-            return new Task<TaskDef>(parent, this, $) {
-                @Override
-                protected TaskResult exec(SessionTaskRunner runner, Object input) {
-                    return runner.run(
-                        update,
-                        restartApp);
-                }
-            };
-        }
-    };
-
     public final TaskDef setup = new TaskDef("Generic Setup") {
         @Override
         public Task<TaskDef> newSession(SessionContext $, final Task parent) {
@@ -64,7 +50,7 @@ public class Tasks {
                 @Override
                 protected TaskResult exec(SessionTaskRunner runner, Object input) {
                     final String[] dirs = {
-                        $(bear.applicationPath), $(bear.releasesPath), $(bear.vcsCheckoutPath),
+                        $(bear.applicationPath), $(bear.vcsCheckoutPath),
                         $(bear.bearPath),
                         $(bear.sharedPath), $(bear.tempDirPath), $(bear.projectSharedPath),
                         $(bear.appLogsPath), $(bear.downloadDirPath),
@@ -108,75 +94,9 @@ public class Tasks {
         }
     }.setSetupTask(true);
 
-    public final TaskDef update = new TaskDef("Update") {
-        @Override
-        public Task<TaskDef> newSession(SessionContext $, final Task parent) {
-            return new Task<TaskDef>(parent, update, $) {
-                @Override
-                protected TaskResult exec(SessionTaskRunner runner, Object input) {
-                    return runner.run(new TransactionTaskDef(
-                        updateCode,
-                        createSymlink
-                    ));
-                }
-            };
-        }
-    };
-
-    public final TaskDef updateCode = new TaskDef() {
-        @Override
-        public Task<TaskDef> newSession(SessionContext $, final Task parent) {
-            return new Task<TaskDef>(parent, updateCode, $) {
-                @Override
-                protected TaskResult exec(SessionTaskRunner runner, Object input) {
-                    return TaskResult.and(
-                        runner.run($(bear.getStrategy)),
-                        runner.run(finalizeTouchCode));
-                }
-
-                @Override
-                protected void onRollback() {
-                    $.sys.rm($(bear.releasePath));
-                }
-            };
-        }
-    };
 
 
-    public final TaskDef finalizeTouchCode = new TaskDef() {
-        @Override
-        public Task<TaskDef> newSession(SessionContext $, final Task parent) {
-            return new Task<TaskDef>(parent, finalizeTouchCode, $) {
-                @Override
-                protected TaskResult exec(SessionTaskRunner runner, Object input) {
-                    $.sys.chmod("g+w", true, $(bear.getLatestReleasePath));
 
-                    return TaskResult.OK;
-                }
-            };
-        }
-    };
-
-    public final TaskDef createSymlink = new TaskDef() {
-        @Override
-        public Task<TaskDef> newSession(SessionContext $, final Task parent) {
-            return new Task<TaskDef>(parent, createSymlink, $) {
-                @Override
-                protected TaskResult exec(SessionTaskRunner runner, Object input) {
-                    return new TaskResult($.sys.link($(bear.getLatestReleasePath), $(bear.currentPath)));
-                }
-
-                @Override
-                protected void onRollback() {
-                    final String var = $(bear.getPreviousReleasePath);
-
-                    if (var != null) {
-                        $.sys.link(var, $(bear.currentPath));
-                    }
-                }
-            };
-        }
-    };
 
     public final TaskDef vcsUpdate = new TaskDef() {
         @Override

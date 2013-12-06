@@ -31,9 +31,11 @@ import bear.task.TaskResult;
 import bear.vcs.CommandLineResult;
 import chaschev.lang.Predicates2;
 import chaschev.util.Exceptions;
+import com.google.common.base.Function;
 import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
 import com.google.common.collect.Iterables;
+import com.google.common.collect.Lists;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.aether.version.InvalidVersionSpecificationException;
@@ -211,25 +213,17 @@ public abstract class SystemSession extends Task<SystemEnvironmentPlugin.SystemS
 
     protected abstract CommandLine rmLineImpl(@Nullable String dir, CommandLine line, String... paths);
 
-
-
     public abstract String getAddress();
 
-
-
-    public void download(String path) {
-        download(Collections.singletonList(path), new File("."));
+    public DownloadResult download(String path) {
+        return download(Collections.singletonList(path), new File("."));
     }
 
-    public void download(List<String> paths, File destParentDir) {
-        download(paths, SystemEnvironmentPlugin.DownloadMethod.SCP, destParentDir);
+    public DownloadResult download(List<String> paths, File destParentDir) {
+        return download(paths, SystemEnvironmentPlugin.DownloadMethod.SCP, destParentDir);
     }
 
-    public abstract Result download(List<String> paths, SystemEnvironmentPlugin.DownloadMethod method, File destParentDir);
-
-
-
-
+    public abstract DownloadResult download(List<String> paths, SystemEnvironmentPlugin.DownloadMethod method, File destParentDir);
 
     public abstract Result sftp(String dest, String host, String path, String user, String pw);
 
@@ -352,6 +346,14 @@ public abstract class SystemSession extends Task<SystemEnvironmentPlugin.SystemS
         return scp(dest, args, fullPaths);
     }
 
+    public List<String> lsAbs(final String path){
+        return Lists.newArrayList(Lists.transform(ls(path), new Function<String, String>() {
+            public String apply(String s) {
+                return path + "/" + s;
+            }
+        }));
+    }
+
     //TODO this should be temporary and redesigned
     public static interface OSHelper{
         String serviceCommand(String service, String command);
@@ -418,6 +420,8 @@ public abstract class SystemSession extends Task<SystemEnvironmentPlugin.SystemS
         }else
         if (text.contains("Ubuntu")) {
             throw new UnsupportedOperationException("todo support Ubuntu!");
+        }else{
+            throw new UnsupportedOperationException("todo support: " + text);
         }
 
         return new OSInfo(flavour, subFlavour, version);

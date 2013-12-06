@@ -29,10 +29,10 @@ public class WatchDogRunnable implements Runnable {
         } finally {
             finished = true;
 
-            arrivalLatch.countDown();
-
-            if(arrivalLatch.getCount() == 0){
-                $.removeConst(group.watchDogGroup);
+            if(group != null){
+                group.whenArrived(this);
+            }else{
+                arrivalLatch.countDown();
             }
         }
     }

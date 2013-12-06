@@ -89,6 +89,7 @@ public class GlobalContext extends AppGlobalContext<GlobalContext, Bear> {
         plugins.add(GroovyShellPlugin.class);
         plugins.add(PomPlugin.class);
         plugins.add(DownloadPlugin.class);
+//        plugins.add(ReleasesPlugin.class);
 
         plugins.build();
 

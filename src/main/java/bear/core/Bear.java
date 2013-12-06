@@ -23,10 +23,9 @@ import bear.plugins.Plugin;
 import bear.session.Address;
 import bear.session.BearVariables;
 import bear.session.DynamicVariable;
-import bear.strategy.DeployStrategyTaskDef;
 import bear.task.BearException;
 import bear.task.TaskDef;
-import bear.vcs.BranchInfoResult;
+import bear.vcs.BranchInfo;
 import bear.vcs.VCSSession;
 import bear.vcs.VcsCLIPlugin;
 import chaschev.lang.Functions2;
@@ -38,16 +37,11 @@ import com.google.common.base.Predicate;
 import com.google.common.collect.Collections2;
 import com.google.common.collect.Iterables;
 import org.apache.commons.lang3.RandomStringUtils;
-import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
-import org.joda.time.format.DateTimeFormat;
-import org.joda.time.format.DateTimeFormatter;
 
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.TimeZone;
 import java.util.regex.Pattern;
 
 import static bear.session.BearVariables.joinPath;
@@ -59,15 +53,12 @@ import static java.util.concurrent.TimeUnit.SECONDS;
  * @author Andrey Chaschev chaschev@gmail.com
  */
 public class Bear extends BearApp<GlobalContext> {
-    public static final DateTimeZone GMT = DateTimeZone.forTimeZone(TimeZone.getTimeZone("GMT"));
-    public static final DateTimeFormatter RELEASE_FORMATTER = DateTimeFormat.forPattern("yyyyMMdd.HHmmss").withZone(GMT);
 
     public Bear() {
 
     }
 
     public final DynamicVariable<Boolean>
-
         isNativeUnix = dynamic(new Fun<Boolean, SessionContext>() {
         public Boolean apply(SessionContext $) {
             return $.sys.isNativeUnix();
@@ -139,13 +130,7 @@ public class Bear extends BearApp<GlobalContext> {
     applicationPath = joinPath(applicationsPath, name).desc("Current release dir"),
     appLogsPath = condition(isNativeUnix, joinPath(sysLogsPath, name), concat(applicationPath, "log")),
 
-    currentDirName = strVar("Current release dir").defaultTo("current"),
-
     sharedDirName = strVar("").defaultTo("shared"),
-
-    releasesDirName = strVar("").defaultTo("releases"),
-
-    releaseName = strVar("I.e. 20140216").defaultTo(RELEASE_FORMATTER.print(new DateTime()) + ".GMT"),
 
     devEnvironment = enumConstant("devEnvironment", "Development environment", "dev", "test", "prod").defaultTo("prod"),
 
@@ -159,15 +144,13 @@ public class Bear extends BearApp<GlobalContext> {
         public String apply(SessionContext $) {
             final VCSSession vcsCLI = $.var(vcs);
 
-            BranchInfoResult r = vcsCLI.queryRevision($.var(revision))
-                .timeoutSec(20).run();
+            BranchInfo r = vcsCLI.queryRevision($.var(revision)).run();
 
             return r.revision;
         }
     }),
 
-    releasesPath = joinPath(applicationPath, releasesDirName),
-        currentPath = joinPath(applicationPath, currentDirName),
+
         sharedPath = joinPath(bearPath, sharedDirName),
         projectSharedPath = joinPath(applicationPath, sharedDirName),
         tempDirPath = joinPath(applicationPath, "temp"),
@@ -176,7 +159,6 @@ public class Bear extends BearApp<GlobalContext> {
         toolsInstallDirPath = newVar("/var/lib/bear/tools"),
 
 
-    releasePath = joinPath(releasesPath, releaseName),
 
     vcsCheckoutPath = joinPath(projectSharedPath, "vcs"),
 
@@ -184,45 +166,7 @@ public class Bear extends BearApp<GlobalContext> {
 
     vcsBranchLocalPath = joinPath(vcsCheckoutPath, vcsBranchName),
 
-    vcsBranchURI = joinPath(repositoryURI, vcsBranchName),
-
-    getLatestReleasePath = dynamic(new Fun<String, SessionContext>() {
-        public String apply(SessionContext $) {
-            final Releases r = $.var(getReleases);
-
-            if (r.releases.isEmpty()) return null;
-
-            return $.sys.joinPath($.var(releasesPath), r.last());
-        }
-    }).memoize(true),
-
-    getPreviousReleasePath = dynamic(new Fun<String, SessionContext>() {
-        public String apply(SessionContext $) {
-            final Releases r = $.var(getReleases);
-
-            if (r.releases.size() < 1) return null;
-
-            return $.sys.joinPath($.var(releasesPath), r.previous());
-        }
-    }).memoize(true),
-
-    getCurrentRevision = dynamic(new Fun<String, SessionContext>() {
-        public String apply(SessionContext $) {
-            return $.sys.readString($.joinPath(currentPath, "REVISION"), null);
-        }
-    }).memoize(true),
-
-    getLatestReleaseRevision = strVar("").setDynamic(new Fun<String, SessionContext>() {
-        public String apply(SessionContext $) {
-            return $.sys.readString($.joinPath(getLatestReleasePath, "REVISION"), null);
-        }
-    }).memoize(true),
-
-    getPreviousReleaseRevision = strVar("").setDynamic(new Fun<String, SessionContext>() {
-        public String apply(SessionContext $) {
-            return $.sys.readString($.joinPath(getPreviousReleasePath, "REVISION"), null);
-        }
-    }).memoize(true);
+    vcsBranchURI = joinPath(repositoryURI, vcsBranchName);
 
     public final DynamicVariable<Boolean>
         useSudo = bool("").defaultTo(true),
@@ -245,19 +189,12 @@ public class Bear extends BearApp<GlobalContext> {
     ;
 
     public final DynamicVariable<Integer>
-        keepXReleases = newVar(5),
         promptTimeoutMs = newVar((int) SECONDS.toMillis(10)),
         shortTimeoutMs = newVar((int) SECONDS.toMillis(30)),
         buildTimeoutMs = newVar((int) MINUTES.toMillis(10)),
         installationTimeoutMs = newVar((int) MINUTES.toMillis(60)),
-        defaultTimeout = equalTo(promptTimeoutMs)
+        defaultTimeout = equalTo(buildTimeoutMs)
     ;
-
-    public final DynamicVariable<Releases> getReleases = new DynamicVariable<Releases>("getReleases", "").setDynamic(new Fun<Releases, SessionContext>() {
-        public Releases apply(SessionContext $) {
-            return new Releases($.sys.ls($.var(releasesPath)));
-        }
-    });
 
     public final DynamicVariable<Stages> stages = new DynamicVariable<Stages>("List of stages. Stage is collection of servers with roles and auth defined for each of the server.");
     public final DynamicVariable<Stage> getStage = dynamic(new Fun<Stage, GlobalContext>() {
@@ -330,7 +267,7 @@ public class Bear extends BearApp<GlobalContext> {
 
             return (VCSSession) global.newPluginSession(vcsCLI, $, $.getCurrentTask());
         }
-    });
+    }).memoizeIn(SessionContext.class);
 
     public final DynamicVariable<File>
         scriptsDir = newVar(new File(".bear")),
@@ -339,8 +276,6 @@ public class Bear extends BearApp<GlobalContext> {
                 return new File($.var(scriptsDir), "global.properties");
             }
         });
-
-    public final DynamicVariable<DeployStrategyTaskDef> getStrategy = dynamic(DeployStrategyTaskDef.class).desc("Deployment strategy: how app files copied and built").memoize(true);
 
     public class FileNameGenerator{
         final SessionContext $;
