@@ -89,8 +89,8 @@ public class Variables {
         });
     }
 
-    public static <T> DynamicVariable<Boolean> isEql(String name, final DynamicVariable<T> variable, final String to) {
-        return dynamic(name, "", new Fun<Boolean, AbstractContext>() {
+    public static <T> DynamicVariable<Boolean> isEql(final DynamicVariable<T> variable, final String to) {
+        return dynamic(new Fun<Boolean, AbstractContext>() {
             public Boolean apply(AbstractContext $) {
                 final T v = $.var(variable);
                 return v == null ? to == null : String.valueOf(v).equals(to);

@@ -425,7 +425,6 @@ public class BearScript2 {
 
         }
 
-
         public String getPhaseId() {
             return phaseId;
         }
@@ -450,18 +449,16 @@ public class BearScript2 {
         final List<ScriptItem> scriptItems = parseResult.scriptItems;
 
         if (interactive) {
+            //this disable dependencies checks, verifications and installations
             global.putConst(bear.internalInteractiveRun, true);
         }
 
         // this should not be ran as a single task
         // OR this could be ran as a single task
 
-        final BearScriptExecContext scriptExecContext =
-            new BearScriptExecContext(initialPlugin);
+        final BearScriptExecContext scriptExecContext = new BearScriptExecContext(initialPlugin);
 
-        List<TaskDef<Task>> taskList;
-
-        taskList = newArrayList(transform(scriptItems, new Function<ScriptItem, TaskDef<Task>>() {
+        List<TaskDef<Task>> taskList = newArrayList(transform(scriptItems, new Function<ScriptItem, TaskDef<Task>>() {
             @Nullable
             @Override
             public TaskDef<Task> apply(ScriptItem scriptItem) {
@@ -475,7 +472,6 @@ public class BearScript2 {
 
         GlobalTaskRunner globalTaskRunner = new GlobalTaskRunner(global, taskList, preparationResult, shellContext);
 
-        //todo this should not be async - this message might be slow
         bearFX.sendMessageToUI(new RMIEventToUI("terminals", "onScriptStart", getHosts($s)));
 
         globalTaskRunner.startParties(global.localExecutor);

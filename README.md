@@ -4,7 +4,7 @@ Bear is a lightweight deployment tool for Java. It's primary task are builds and
 
 Bear is in it's early development stages now. Questions, concerns? Just to drop me a line at chaschev@gmail.com.
 
-### Road Map for Release 1.0b1 (for CentOS 6.4)
+### Road Map for Release 1.0a1 (for CentOS 6.4)
 
 | Step                                        | State          | 
 | ------------------------------------------- |:--------------:|
@@ -12,7 +12,7 @@ Bear is in it's early development stages now. Questions, concerns? Just to drop 
 | Install as services (Upstart)               | Finished.      | 
 | Play! Framework single-host deployment      | Finished.      | 
 | Play! Framework three-hosts deployment      | In progress... |
-| Parametrize deployment (use mongo or mysql) | In progress... |
+| Parametrize deployment (use mongo or mysql) | Finished.      |
 | Test deployment rollbacks and db dumps      | In progress... |
 | Grails/Tomcat demo deployment               |                | 
 | Node.js demo deployment                     |                | 
@@ -25,7 +25,7 @@ Bear is in it's early development stages now. Questions, concerns? Just to drop 
 
 
 
-### Road Map for Release 1.0b2 (+ Ubuntu Server, Cloud)
+### Road Map for Release 1.0a2 (+ Ubuntu Server, Cloud)
 
 | Step                                        | State          | 
 | ------------------------------------------- |:--------------:|

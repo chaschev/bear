@@ -4,6 +4,7 @@ import bear.plugins.maven.MavenPlugin;
 import bear.plugins.mongo.MongoDbPlugin;
 import bear.plugins.mysql.MySqlPlugin;
 import bear.plugins.play.PlayPlugin;
+import bear.session.DynamicVariable;
 import bear.strategy.DeploymentBuilder;
 import bear.task.Task;
 import bear.task.TaskCallable;
@@ -11,14 +12,16 @@ import bear.task.TaskDef;
 import bear.task.TaskResult;
 import bear.vcs.GitCLIPlugin;
 
+import java.util.regex.Pattern;
+
 import static bear.session.BearVariables.joinPath;
+import static bear.session.Variables.*;
 import static bear.task.TaskResult.OK;
 
 /**
  * @author Andrey Chaschev chaschev@gmail.com
  */
 public class SecureSocialDemoSettings extends IBearSettings {
-
     // these are the plugins which are injected
     JavaPlugin java;
     MavenPlugin maven;
@@ -28,6 +31,12 @@ public class SecureSocialDemoSettings extends IBearSettings {
     PlayPlugin play;
     MongoDbPlugin mongo;
     MySqlPlugin mysql;
+
+    public final DynamicVariable<String>
+        useDb = newVar("mysql"),
+        serviceString = condition(isEql(useDb, "mysql"),
+                newVar("9998:service.SqlUserService"),
+                newVar("9998:service.MongoUserService"));
 
     public SecureSocialDemoSettings(GlobalContextFactory factory) {
         super(factory);
@@ -44,7 +53,7 @@ public class SecureSocialDemoSettings extends IBearSettings {
         .BuildAndCopy_3(new TaskCallable<TaskDef>() {
             @Override
             public TaskResult call(SessionContext $, Task<TaskDef> task, Object input) throws Exception {
-                return $.run(play.build);
+                 updateDbConf($); return $.run(play.build);
             }
         })
         .StopService_5(new TaskCallable<TaskDef>() {
@@ -67,6 +76,18 @@ public class SecureSocialDemoSettings extends IBearSettings {
         })
         .done()
         .build();
+
+    private TaskResult updateDbConf(SessionContext $) {
+        String pluginsPath = $.var(play.projectPath) + "/conf/play.plugins";
+
+        String plugins = $.sys.readString(pluginsPath, null);
+
+        plugins = DB_LINE_PATTERN
+            .matcher(plugins)
+            .replaceFirst($.var(serviceString));
+
+        return $.sys.writeString(pluginsPath, plugins).toTaskResult();
+    }
 
     @Override
     protected GlobalContext configureMe(GlobalContextFactory factory) throws Exception {
@@ -100,4 +121,9 @@ public class SecureSocialDemoSettings extends IBearSettings {
 
         return global;
     }
+
+    //9998:service.SqlUserService
+
+    private static final Pattern DB_LINE_PATTERN = Pattern.compile("9998:[^\\n]+", Pattern.DOTALL | Pattern.MULTILINE);
+
 }

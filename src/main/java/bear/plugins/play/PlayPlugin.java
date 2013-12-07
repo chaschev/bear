@@ -385,9 +385,7 @@ public class PlayPlugin extends ZippedToolPlugin {
                     if (!$.var(useWatchDog)) {
                         r = TaskResult.OK;
                     } else {
-
                         WatchDogGroup watchDogs = $.var(watchStartDogGroup);
-
 
                         r = TaskResult.of(watchDogs.latch().await($.var(startupTimeoutMs), TimeUnit.MILLISECONDS),
                             "" + watchDogs.latch().getCount() + " instances did not start in " +

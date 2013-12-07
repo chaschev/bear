@@ -17,6 +17,7 @@
 package bear.main;
 
 import bear.context.Cli;
+import bear.context.DependencyInjection;
 import bear.context.Fun;
 import bear.core.*;
 import bear.main.event.LogEventToUI;
@@ -91,6 +92,7 @@ public class FXConf extends Cli {
             IBearSettings settings = (IBearSettings) settingsEntry.newInstance(factory);
 
             settings.loadProperties($(newRunProperties));
+            DependencyInjection.nameVars(settings, global);
 
             settings.configure(factory);
 

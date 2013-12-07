@@ -24,13 +24,28 @@ top priority:
 -- (ok) mongo plugin
 - (ok) bug: sendAllFinishedResults sends result only for the whole run
 - (ok) upstart plugin (& fix play app)
-- ReleaseManager + unit tests, embed release manager into deployment builder
--- get the last 1 and lastX commit messages for each of the releases
--- feature: rollback to a label or to a path
--- each release contains release.json with: date, branch, revision, lastX commit messages
--- deployment builder -> release manager -> creates a new pending release, builds the app, db migration
--- when done, builder -> play plugin -> stops the service, builder -> updates the label, then builder -> play -> starts
--- if it fails to start, then play plugin rolls back the label, deletes pending label and start the old version, reverts migration
+- (ok) ReleaseManager + unit tests, embed release manager into deployment builder
+-- (ok) get the last 1 and lastX commit messages for each of the releases
+-- (ok) feature: rollback to a label or to a path
+-- (ok) each release contains release.json with: date, branch, revision, lastX commit messages
+-- (ok) deployment builder -> release manager -> creates a new pending release, builds the app, db migration
+-- (ok) when done, builder -> play plugin -> stops the service, builder -> updates the label, then builder -> play -> starts
+-- if it fails to start, then play plugin rolls back the label, deletes pending label and starts the old version, reverts migration
+   the rollback must be done in deploymentbuilder:
+   failIfAnyFails()
+   ifRollback()
+     .beforeLabelSwitch(callable)
+     .afterLabelSwitch(callable)
+
+- CLI decoupling:
+-- Entry point is interpret(environment, properties, settings, script) in FXConf.java:308
+-- CLI is like FX version with different appenders
+-- single task execution model - app runs a
+- refactor BearScript and message sending (extract an interface from BearFX)
+-- separate bearscript from execution
+-- builders may provide settings and scripts
+-- (ok) run a simple captures test with builders
+-- (ok) mock server replies (inject mocked sys)
 
 - update git plugin for the release
 - ssh tests for servers to test connectivity and response
@@ -46,10 +61,6 @@ top priority:
 - refactor to be used with simplest builders
 - :run {"task":"tasks.setup"}
 - too many inputs for setting vars (how should I set a var in Groovy/ GroovyScript/bear, what is the file I am in?)
--- separate bearscript from execution
--- builders may provide settings and scripts
--- run a simple captures test with builders
--- mock server replies (inject mocked sys)
 - polish code
 - create unit tests coverage plan
 - ui: check if it's easy to send prompt - ok
@@ -72,10 +83,9 @@ Node.js:
 
 - (ok, 2) send messages from plugins via uiLogger (sends to 'ui'), logger (sends to console)
 - (ok, 3) ui: logback messages (output to file, a window to view, monitor errors and display red exclamation mark when there are)
-
 - (4) save logs from hosts to separate folders (log4j2?)
-- (5) print '$host: capture shell' feature
-- refactor BearScript and message sending (extract an interface from BearFX)
+- (ok, 5) print '$host: capture shell' feature
+
 
 - :use shell groovy {"scope": "global", "name": "mongoTest"} -> will be translated into OnceRunCallable
 - :set hosts=local
@@ -161,7 +171,7 @@ features:
 - rewrite deployments in static groovy/java 8
 - check live status
 
-cap4j script:
+Bear Script:
 
 Settings.java:
 

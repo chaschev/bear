@@ -69,13 +69,6 @@ public abstract class IBearSettings {
         for (Field field : OpenBean.fieldsOfType(this.getClass(), Plugin.class)) {
             Class<? extends Plugin<Task, TaskDef<?>>> aClass = (Class<? extends Plugin<Task, TaskDef<?>>>) field.getType();
 
-//            try {
-//                //
-//                aClass = (Class) Class.forName(aClass.getName());
-//            } catch (ClassNotFoundException e) {
-//                throw Exceptions.runtime(e);
-//            }
-
             factory.requirePlugins(aClass);
         }
 

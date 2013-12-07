@@ -418,7 +418,7 @@ public class Releases extends HavingContext<Releases, SessionContext>{
         }
 
         return AsciiTableInstance.get().getTable(
-                new ASCIITableHeader[]{h("Name"), h("Author"), h("Revision").maxWidth(10), h("comment").maxWidth(50), h("Active?")},
+                new ASCIITableHeader[]{h("Name"), h("Author"), h("Revision").maxWidth(10), h("Comment").maxWidth(50), h("Active?")},
                 table.toArray(new String[table.size()][])
             );
     }

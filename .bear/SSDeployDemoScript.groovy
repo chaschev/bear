@@ -16,6 +16,8 @@ class SSDeployDemoScript extends bear.main.Script {
 
         final IBearSettings settings = task.getGlobalRunner().getBearSettings()
 
+        _.putConst(settings.useDb, 'mongo')
+
         println "settings: " + settings.class
 
         def TaskDef<Task> task = settings.deployProject;

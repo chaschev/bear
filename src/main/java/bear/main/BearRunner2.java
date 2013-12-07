@@ -35,7 +35,6 @@ public class BearRunner2 {
             this.bearSettings = bearSettings;
             this.factory = factory;
             this.global = bearSettings.getGlobal();
-
         } catch (Exception e) {
             throw Exceptions.runtime(e);
         }
