@@ -1,4 +1,5 @@
 import bear.core.SessionContext
+import bear.task.TaskResult
 import bear.vcs.GitCLIPlugin
 import bear.vcs.VcsLogInfo
 
@@ -8,7 +9,7 @@ class VcsSampleScript extends bear.main.Script {
     SessionContext _
 
     @Override
-    void run()
+    TaskResult run()
     {
         _.putConst(bear.repositoryURI, 'git@github.com:chaschev/grailstwitter.git')
         _.putConst(bear.vcsBranchName, 'master')

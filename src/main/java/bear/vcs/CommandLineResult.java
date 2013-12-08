@@ -65,6 +65,7 @@ public class CommandLineResult extends TaskResult{
     public String toString() {
         final StringBuilder sb = new StringBuilder("CommandLineResult{");
         sb.append("result='").append(result).append('\'');
+        if(exception.isPresent()) sb.append(", exception='").append(exception.get().toString()).append('\'');
         sb.append(", script='").append(script).append('\'');
         sb.append(", text='").append(text).append('\'');
         sb.append(", exitCode=").append(exitCode);

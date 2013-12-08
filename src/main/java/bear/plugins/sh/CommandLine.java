@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-package bear.cli;
+package bear.plugins.sh;
 
 import bear.console.AbstractConsoleCommand;
+import bear.console.ConsoleCallback;
 import bear.core.SessionContext;
-import bear.plugins.sh.SystemSession;
 import bear.task.BearException;
 import bear.vcs.CommandLineOperator;
 import bear.vcs.CommandLineResult;
@@ -204,9 +204,9 @@ public abstract class CommandLine<T extends CommandLineResult, SCRIPT extends Sc
             sb.append("cd ").append(line.cd).append(" && ");
         }
 
-        if (forExecution && sys.isSudo()) {
-            sb.append("stty -echo && sudo ");
-        }
+//        if (forExecution && sys.isSudo()) {
+//            sb.append("stty -echo && sudo ");
+//        }
 
         List strings = line.strings;
 
@@ -235,6 +235,12 @@ public abstract class CommandLine<T extends CommandLineResult, SCRIPT extends Sc
         }
 
         return sb.toString();
+    }
+
+    @Override
+    public CommandLine<T, ?> setCallback(ConsoleCallback callback) {
+        super.setCallback(callback);
+        return this;
     }
 
     private String extractWildcards(String s) {
@@ -267,5 +273,10 @@ public abstract class CommandLine<T extends CommandLineResult, SCRIPT extends Sc
     public CommandLine sudoOrStty(boolean sudo){
         if(sudo) return sudo();
         return stty();
+    }
+
+    public CommandLine sshCallback(SessionContext $) {
+        setCallback($.sshCallback());
+        return this;
     }
 }

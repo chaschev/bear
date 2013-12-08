@@ -1,6 +1,7 @@
 package bear.plugins.misc;
 
 import bear.context.DependencyInjection;
+import bear.plugins.sh.RmInput;
 import bear.plugins.sh.SessionTest;
 import bear.session.Result;
 import bear.vcs.BranchInfo;
@@ -20,6 +21,7 @@ import org.mockito.stubbing.Answer;
 import java.util.*;
 
 import static bear.plugins.misc.ReleaseRef.label;
+import static bear.plugins.sh.RmInput.newRm;
 import static com.google.common.base.Predicates.*;
 import static com.google.common.collect.Lists.newArrayList;
 import static org.fest.assertions.api.Assertions.assertThat;
@@ -169,7 +171,7 @@ public class ReleasesTest extends SessionTest{
 
         releases.deleteRelease(label("path2"));
 
-        verify(sys, times(1)).rm(l("path2"));
+        verify(sys, times(1)).rm(newRm(l("path2")));
 
         assertThat(releases.folders).doesNotContain(l("path2"));
         assertThat(releases.folderMap).doesNotContainKey(l("path2"));
@@ -183,7 +185,7 @@ public class ReleasesTest extends SessionTest{
 
         releases.deleteRelease(label("path3"));
 
-        verify(sys, times(1)).rm(l("path3"));
+        verify(sys, times(1)).rm(newRm(l("path3")));
         verify(releases, times(2)).saveJson();
 
         assertThat(releases.folders).doesNotContain(l("path3"));
@@ -234,7 +236,7 @@ public class ReleasesTest extends SessionTest{
     @Test
     public void testActivatePending() throws Exception {
         doReturn(Result.OK).when(sys).link(anyString(), anyString());
-        doReturn(Result.OK).when(sys).rm(anyString());
+        doReturn(Result.OK).when(sys).rm(any(RmInput.class));
 
         PendingRelease pendingRelease = releases.newPendingRelease();
 
@@ -263,7 +265,7 @@ public class ReleasesTest extends SessionTest{
         assertThat(releases.folderMap).containsKey(activeRelease.path);
 
         verify(sys, atLeast(1)).link(activeRelease.path, $(plugin.currentReleaseLinkPath));
-        verify(sys, atLeast(1)).rm($(plugin.currentReleaseLinkPath));
+        verify(sys, atLeast(1)).rm(newRm($(plugin.currentReleaseLinkPath)));
 
 
     }

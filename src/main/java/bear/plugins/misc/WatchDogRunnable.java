@@ -1,6 +1,7 @@
 package bear.plugins.misc;
 
 import bear.core.SessionContext;
+import bear.vcs.CommandLineResult;
 
 import java.util.concurrent.CountDownLatch;
 
@@ -15,6 +16,7 @@ public class WatchDogRunnable implements Runnable {
     volatile boolean finished;
     CountDownLatch arrivalLatch;
     WatchDogGroup group;
+    private volatile CommandLineResult result;
 
     public WatchDogRunnable(SessionContext $, FileWatchDogPlugin watchDog, WatchDogInput input) {
         this.$ = $;
@@ -25,7 +27,7 @@ public class WatchDogRunnable implements Runnable {
     @Override
     public void run() {
         try {
-            watchDog.watch($, input);
+            result = watchDog.watch($, input);
         } finally {
             finished = true;
 
@@ -35,5 +37,9 @@ public class WatchDogRunnable implements Runnable {
                 arrivalLatch.countDown();
             }
         }
+    }
+
+    public CommandLineResult getResult() {
+        return result;
     }
 }

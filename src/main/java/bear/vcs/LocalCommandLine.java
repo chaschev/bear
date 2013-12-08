@@ -16,8 +16,8 @@
 
 package bear.vcs;
 
-import bear.cli.CommandLine;
-import bear.cli.Script;
+import bear.plugins.sh.CommandLine;
+import bear.plugins.sh.Script;
 import bear.plugins.sh.SystemSession;
 
 /**

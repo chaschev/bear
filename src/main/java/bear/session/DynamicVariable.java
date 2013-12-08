@@ -137,7 +137,7 @@ public class DynamicVariable<T> implements Nameable<T> {
         return defaultTo(defaultValue);
     }
 
-    public DynamicVariable<T> defaultTo(T defaultValue, boolean force) {
+    public DynamicVariable<T> defaultTo(T newValue, boolean force) {
         Preconditions.checkArgument(memoizeIn == null, "memoized vars are dynamic");
 
         if (fun != null) {
@@ -149,9 +149,9 @@ public class DynamicVariable<T> implements Nameable<T> {
         }
 
         T oldValue = this.defaultValue;
-        this.defaultValue = defaultValue;
+        this.defaultValue = newValue;
 
-        onValueChange(oldValue, defaultValue);
+        onValueChange(oldValue, newValue);
 
         return this;
     }

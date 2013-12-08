@@ -22,7 +22,7 @@ import com.google.common.base.Function;
  * @author Andrey Chaschev chaschev@gmail.com
  */
 public interface Fun<T, CONTEXT extends AbstractContext> extends Function<CONTEXT, T> {
-    Object UNDEFINED = new UndefinedReturnValue();
+    public static final Object UNDEFINED = new UndefinedReturnValue();
 
     T apply(CONTEXT $);
 

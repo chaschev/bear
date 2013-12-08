@@ -20,7 +20,10 @@ import bear.core.Bear;
 import bear.core.GlobalContext;
 import bear.core.SessionContext;
 import bear.plugins.Plugin;
+import chaschev.lang.OpenStringBuilder;
 import com.google.common.base.Preconditions;
+
+import java.util.Arrays;
 
 
 /**
@@ -57,16 +60,20 @@ public class Tasks {
                         $(bear.toolsInstallDirPath)
                     };
 
-                    $.sys.sudo().mkdirs(dirs);
+                    //todo sudo
+                    $.sys.mkdirs(dirs);
 
                     final String sshUser = $(bear.sshUsername);
                     final String appUser = $(bear.appUsername);
 
-                    $.sys.sudo().chown(sshUser + "." + sshUser, true, dirs);
-                    $.sys.sudo().chmod("g+w", true, dirs);
+                    //todo sudo
+                    $.sys.chown(sshUser + "." + sshUser, true, dirs);
+                    //todo sudo
+                    $.sys.chmod("g+w", true, dirs);
 
                     if (!appUser.equals(sshUser)) {
-                        $.sys.sudo().chown(appUser + "." + appUser, true, $(bear.appLogsPath));
+                        //todo sudo
+                        $.sys.chown(appUser + "." + appUser, true, $(bear.appLogsPath));
                     }
 
                     if ($(bear.autoInstallPlugins) || $(bear.verifyPlugins)) {
@@ -77,7 +84,7 @@ public class Tasks {
                                 if ($(bear.autoInstallPlugins)) {
                                     $.log("plugin %s was not installed. installing it...", plugin);
                                     TaskResult run = runner.run(plugin.getInstall());
-                                    if(!run.ok()){
+                                    if (!run.ok()) {
                                         $.error("could not install %s:%n%s", plugin, run);
                                         break;
                                     }
@@ -93,9 +100,6 @@ public class Tasks {
             };
         }
     }.setSetupTask(true);
-
-
-
 
 
     public final TaskDef vcsUpdate = new TaskDef() {
@@ -116,18 +120,69 @@ public class Tasks {
         }
     };
 
-    public static TaskCallable<TaskDef> andThen(final TaskCallable<TaskDef>... callables){
+    public static TaskCallable<TaskDef> andThen(final TaskCallable<TaskDef>... callables) {
+        int nullCount = 0;
+        int lastNullIndex = -1;
+        for (int i = 0; i < callables.length; i++) {
+            TaskCallable<TaskDef> callable = callables[i];
+            if (callable == null) {
+                nullCount++;
+                lastNullIndex = i;
+            }
+        }
+
+        if (nullCount == 1) {
+            return callables[lastNullIndex];
+        }
+
         return new TaskCallable<TaskDef>() {
             @Override
             public TaskResult call(SessionContext $, Task<TaskDef> task, Object input) throws Exception {
                 TaskResult lastResult = null;
 
                 for (TaskCallable<TaskDef> callable : callables) {
+                    if (callable == null) continue;
                     lastResult = callable.call($, task, input);
                 }
 
                 return lastResult;
             }
         };
+    }
+
+    public static TaskResult and(TaskResult... results) {
+        return and(Arrays.asList(results));
+    }
+
+    public static TaskResult and(Iterable<? extends TaskResult> results) {
+        TaskResult last = TaskResult.OK;
+
+        OpenStringBuilder sb = new OpenStringBuilder();
+
+        Throwable lastException = null;
+
+        boolean ok = true;
+
+        for (TaskResult result : results) {
+            last = result;
+            if (!result.ok()) {
+                ok = false;
+
+                if (result.exception.isPresent()) {
+                    lastException = result.exception.get();
+                    sb.append(result.exception.get().toString()).append("\n");
+                }
+            }
+        }
+
+        if (ok) return last;
+
+        Exception ex = new Exception(sb.trim().toString());
+
+        if (lastException != null) {
+            ex.setStackTrace(lastException.getStackTrace());
+        }
+
+        return new TaskResult(ex);
     }
 }

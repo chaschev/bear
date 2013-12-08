@@ -2,7 +2,7 @@
 
 Bear is a lightweight deployment tool for Java. It's primary task are builds and remote deploys of anything to your hosts. At the moment Tomcat, Grails and Maven are supported. Bear first started as a Capistrano clone, but then grew into a different project.
 
-Bear is in it's early development stages now. Questions, concerns? Just to drop me a line at chaschev@gmail.com.
+Bear is in it's early development stages now. Questions, concerns? Just drop me a line at chaschev@gmail.com.
 
 ### Road Map for Release 1.0a1 (for CentOS 6.4)
 

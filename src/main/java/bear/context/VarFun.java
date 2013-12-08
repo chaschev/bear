@@ -32,4 +32,7 @@ public abstract class VarFun<T, CONTEXT extends AbstractContext> implements Fun<
         this.var = var;
     }
 
+    public static <T> T undefined(){
+        return (T)UNDEFINED;
+    }
 }

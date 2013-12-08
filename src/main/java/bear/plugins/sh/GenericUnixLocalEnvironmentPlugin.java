@@ -16,9 +16,7 @@
 
 package bear.plugins.sh;
 
-import bear.cli.CommandLine;
 import bear.console.AbstractConsoleCommand;
-import bear.console.ConsoleCallback;
 import bear.core.GlobalContext;
 import bear.core.SessionContext;
 import bear.core.Shell;
@@ -37,7 +35,6 @@ import org.apache.tools.ant.types.ZipFileSet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.io.File;
 import java.io.IOException;
@@ -164,12 +161,12 @@ public class GenericUnixLocalEnvironmentPlugin extends SystemEnvironmentPlugin {
             }
 
             @Override
-            public <T extends CommandLineResult> T sendCommandImpl(final AbstractConsoleCommand<T> command, ConsoleCallback userCallback) {
+            public <T extends CommandLineResult> T sendCommandImpl(final AbstractConsoleCommand<T> command) {
 
                 logger.debug("command: {}", command);
 
                 final ProcessRunner.ProcessResult r = new ProcessRunner<T>(command, global.localExecutor)
-                    .setInputCallback(userCallback)
+                    .setInputCallback(command.getCallback())
                     .setProcessTimeoutMs((int) command.getTimeoutMs())
                     .run();
 
@@ -240,12 +237,7 @@ public class GenericUnixLocalEnvironmentPlugin extends SystemEnvironmentPlugin {
             }
 
             @Override
-            public Result rmCd(String dir, String... paths) {
-                throw new UnsupportedOperationException("todo GenericUnixLocalEnvironment.rm");
-            }
-
-            @Override
-            public CommandLine rmLineImpl(@Nonnull String dir, CommandLine line, String... paths) {
+            public CommandLine rmLineImpl(RmInput rmInput, CommandLine line) {
                 throw new UnsupportedOperationException("todo GenericUnixLocalEnvironment.rmLine");
             }
 

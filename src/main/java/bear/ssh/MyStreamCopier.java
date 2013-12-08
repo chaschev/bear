@@ -16,15 +16,18 @@
 
 package bear.ssh;
 
-import bear.session.Result;
+import bear.core.GlobalContext;
+import bear.task.TaskResult;
 import chaschev.lang.OpenBean;
 import chaschev.util.CatchyCallable;
 import chaschev.util.Exceptions;
+import com.google.common.base.Throwables;
 import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.InputStream;
+import java.io.InterruptedIOException;
 import java.io.OutputStream;
 import java.lang.reflect.Field;
 import java.util.concurrent.Callable;
@@ -105,11 +108,11 @@ public class MyStreamCopier {
         return this;
     }
 
-    public Future<Result> spawn(ExecutorService service, final long finishAtMs) {
+    public Future<TaskResult> spawn(ExecutorService service, final long finishAtMs) {
         this.finishAtMs = finishAtMs;
-        return service.submit(new CatchyCallable<Result>(new Callable<Result>() {
+        return service.submit(new CatchyCallable<TaskResult>(new Callable<TaskResult>() {
             @Override
-            public Result call() {
+            public TaskResult call() {
                 boolean interrupted = false;
 
                 while (!stopFlag) {
@@ -131,13 +134,22 @@ public class MyStreamCopier {
                         if(!(periodMs <= 0 && periodNano <=0)){
                             Thread.sleep(periodMs, periodNano);
                         }
-                    } catch (Exception e) {
-                        log.error("", e);
-                        return Result.ERROR;
+                    }
+                    catch (Exception e) {
+                        if(e instanceof InterruptedIOException){
+                            GlobalContext.AwareThread t = (GlobalContext.AwareThread) Thread.currentThread();
+                            log.error("interrupted by: {}, at: {}, I am at {}",
+                                t.getInterruptedBy(),
+                                Throwables.getStackTraceAsString(t.getInterruptedAt()),
+                                Throwables.getStackTraceAsString(e)
+                            );
+                        }else{
+                            log.error("", e);
+
+                        }
+                        return new TaskResult(e);
                     }
                 }
-
-
 
                 try {
                     nonBlockingCopy();
@@ -160,7 +172,7 @@ public class MyStreamCopier {
                 } catch (Exception e) {
                     log.error("", e);
 
-                    return Result.ERROR;
+                    return new TaskResult(e);
                 } finally {
                     if(stopFlag || interrupted){
                         IOUtils.closeQuietly(in);
@@ -169,7 +181,7 @@ public class MyStreamCopier {
 
                 finished = true;
 
-                return Result.OK;
+                return TaskResult.OK;
             }
         }));
     }

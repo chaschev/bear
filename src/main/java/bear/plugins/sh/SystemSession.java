@@ -16,15 +16,12 @@
 
 package bear.plugins.sh;
 
-import bear.cli.CommandLine;
-import bear.cli.Script;
 import bear.console.AbstractConsole;
 import bear.console.AbstractConsoleCommand;
 import bear.console.ConsoleCallback;
 import bear.core.Role;
 import bear.core.SessionContext;
 import bear.session.*;
-import bear.task.BearException;
 import bear.task.SessionTaskRunner;
 import bear.task.Task;
 import bear.task.TaskResult;
@@ -36,8 +33,6 @@ import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
-import org.apache.commons.io.FilenameUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.eclipse.aether.version.InvalidVersionSpecificationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -65,30 +60,22 @@ public abstract class SystemSession extends Task<SystemEnvironmentPlugin.SystemS
         super(parent, definition, $);
     }
 
-    protected abstract <T extends CommandLineResult> T sendCommandImpl(AbstractConsoleCommand<T> command, ConsoleCallback userCallback);
+    protected abstract <T extends CommandLineResult> T sendCommandImpl(AbstractConsoleCommand<T> command);
 
-    public <T extends CommandLineResult> T sendCommand(AbstractConsoleCommand<T> command){
-        return sendCommand(command, null);
-    }
+   @Override
+    public <T extends CommandLineResult> T sendCommand(AbstractConsoleCommand<T> command) {
+        Task<?> task = $.getCurrentTask();
 
-    @Override
-    public <T extends CommandLineResult> T sendCommand(AbstractConsoleCommand<T> command, ConsoleCallback userCallback) {
-        $.getCurrentTask().onCommandExecutionStart(command);
+        task.onCommandExecutionStart(command);
 
-        T result = sendCommandImpl(command, userCallback);
+        T result = sendCommandImpl(command);
 
-        $.getCurrentTask().onCommandExecutionEnd(command, result);
-
-//        result.validate($);
+        task.onCommandExecutionEnd(command, result);
 
         return result;
     }
 
-    public CommandLineResult run(Script script) {
-        return run(script, null);
-    }
-
-    public <T extends CommandLineResult> T run(Script<T, ?> script, ConsoleCallback callback) {
+    public <T extends CommandLineResult> T run(Script<T, ?> script) {
         StringBuilder sb = new StringBuilder(1024);
 
         for (CommandLine line : script.lines) {
@@ -96,7 +83,7 @@ public abstract class SystemSession extends Task<SystemEnvironmentPlugin.SystemS
                 line.cd = script.cd;
             }
 
-            final CommandLineResult result = sendCommand(line, callback);
+            final CommandLineResult result = sendCommand(line);
 
             sb.append(result.text);
         }
@@ -105,7 +92,7 @@ public abstract class SystemSession extends Task<SystemEnvironmentPlugin.SystemS
     }
 
     public <T extends CommandLineResult> T sendCommand(CommandLine<T, ?> commandLine) {
-        return sendCommand(commandLine, null);
+        return sendCommand((AbstractConsoleCommand<T>) commandLine);
     }
 
     public CommandLine line(Script script) {
@@ -186,32 +173,19 @@ public abstract class SystemSession extends Task<SystemEnvironmentPlugin.SystemS
             line.stty();
         }
 
-        return sendCommand(line.addRaw(s), callback);
+        return sendCommand(line.addRaw(s));
     }
 
-    public CommandLine addRmLine(CommandLine line, String... paths){
-        return rmLine(null, line, paths);
+    public Script addRmLine(Script script, RmInput rm){
+        addRmLine(script.line(), rm);
+        return script;
     }
 
-    public CommandLine rmLine(@Nullable String dir, CommandLine line, String... paths){
-        for (String path : paths) {
-            if(dir != null && !dir.equals(".")){
-                path = FilenameUtils.normalize(dir + "/" + path, true);
-            }
-
-            path = FilenameUtils.normalize(path, true);
-
-            int dirLevel = StringUtils.split(path, '/').length;
-
-            if(dirLevel <= 2) {
-                throw new BearException(String.format("can't delete delete a directory on the second level or higher: %s, dir: %s", dirLevel, path));
-            }
-        }
-
-        return rmLineImpl(dir, line, paths);
+    CommandLine addRmLine(CommandLine line, RmInput rm){
+        return rmLineImpl(rm, line);
     }
 
-    protected abstract CommandLine rmLineImpl(@Nullable String dir, CommandLine line, String... paths);
+    protected abstract CommandLine rmLineImpl(RmInput rmInput, CommandLine line);
 
     public abstract String getAddress();
 
@@ -247,10 +221,8 @@ public abstract class SystemSession extends Task<SystemEnvironmentPlugin.SystemS
 
     public abstract String readLink(String path);
 
-    public abstract Result rmCd(String dir, String... paths);
-
-    public Result rm(String... paths) {
-        return rmCd(".", paths);
+    public CommandLineResult rm(RmInput rm){
+        return rmLineImpl(rm, script().line()).build().run();
     }
 
     public Result copy(String src, String dest) {
@@ -287,11 +259,6 @@ public abstract class SystemSession extends Task<SystemEnvironmentPlugin.SystemS
 
     public String getDesc() {
         return getDefinition().description;
-    }
-
-    public SystemSession sudo() {
-        getDefinition().getPlugin().sudo = true;
-        return this;
     }
 
     public String diskRoot() {
@@ -352,6 +319,10 @@ public abstract class SystemSession extends Task<SystemEnvironmentPlugin.SystemS
                 return path + "/" + s;
             }
         }));
+    }
+
+    public CommandLineResult resetFile(String logPath, boolean sudo) {
+        return script().line().sudo(sudo).sshCallback($).addRaw("cat /dev/null >| ").a(logPath).build().run();
     }
 
     //TODO this should be temporary and redesigned
@@ -482,10 +453,6 @@ public abstract class SystemSession extends Task<SystemEnvironmentPlugin.SystemS
             default:
                 throw new UnsupportedOperationException("todo support" + getOsInfo() + " !");
         }
-    }
-
-    public boolean isSudo() {
-        return getDefinition().getPlugin().sudo;
     }
 
     protected TaskResult exec(SessionTaskRunner runner, Object input) {

@@ -19,6 +19,7 @@ package bear.task;
 import bear.session.Result;
 import chaschev.util.Exceptions;
 import com.google.common.base.Optional;
+import com.google.common.collect.Lists;
 
 /**
  * @author Andrey Chaschev chaschev@gmail.com
@@ -39,14 +40,8 @@ public class TaskResult {
 
     public static final TaskResult OK = new TaskResult(Result.OK);
 
-    public static TaskResult and(TaskResult... results){
-        for (TaskResult result : results) {
-            if(!result.ok()){
-                return result;
-            }
-        }
-
-        return results[results.length - 1];
+    public TaskResult and(TaskResult... results){
+        return Tasks.and(Lists.asList(this, results));
     }
 
     public boolean ok() {
@@ -81,12 +76,22 @@ public class TaskResult {
         return b ? OK : new TaskResult(new Exception(errorMessage));
     }
 
+    public static TaskResult error(String errorMessage) {
+        return of(false, errorMessage);
+    }
+
     public Result getResult() {
         return result;
     }
 
     public TaskResult setResult(Result result) {
         this.result = result;
+        return this;
+    }
+
+    public TaskResult setException(Exception e) {
+        this.result = Result.ERROR;
+        this.exception = Optional.of(e);
         return this;
     }
 }

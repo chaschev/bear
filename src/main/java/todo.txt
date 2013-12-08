@@ -31,7 +31,7 @@ top priority:
 -- (ok) deployment builder -> release manager -> creates a new pending release, builds the app, db migration
 -- (ok) when done, builder -> play plugin -> stops the service, builder -> updates the label, then builder -> play -> starts
 -- if it fails to start, then play plugin rolls back the label, deletes pending label and starts the old version, reverts migration
-   the rollback must be done in deploymentbuilder:
+   the rollback must be done in deployment builder:
    failIfAnyFails()
    ifRollback()
      .beforeLabelSwitch(callable)
@@ -40,13 +40,14 @@ top priority:
 - CLI decoupling:
 -- Entry point is interpret(environment, properties, settings, script) in FXConf.java:308
 -- CLI is like FX version with different appenders
--- single task execution model - app runs a
+-- single task execution model - app runs a task and finishes
 - refactor BearScript and message sending (extract an interface from BearFX)
 -- separate bearscript from execution
 -- builders may provide settings and scripts
 -- (ok) run a simple captures test with builders
 -- (ok) mock server replies (inject mocked sys)
 
+- better rm
 - update git plugin for the release
 - ssh tests for servers to test connectivity and response
 - (ok) FileWatcher
@@ -238,6 +239,7 @@ os plugin:
 -- (ok) dependencies
 - (ok) GitHub support
 - (ok) replace Functions with VarFunctions
+- bug: 4 releases instead of 5
 
 
  bearFX.sendMessageToUI(new ScriptFinishedEventToUI($.getName(),

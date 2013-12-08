@@ -17,7 +17,6 @@
 package bear.task;
 
 import bear.console.AbstractConsoleCommand;
-import bear.context.HavingContext;
 import bear.core.SessionContext;
 import bear.vcs.CommandLineResult;
 import com.google.common.base.Optional;
@@ -42,33 +41,56 @@ import static com.google.common.base.Optional.of;
  *
  * @author Andrey Chaschev chaschev@gmail.com
  */
-
-
-public class TaskExecutionContext extends HavingContext<TaskExecutionContext, SessionContext> {
-    TaskExecutionEntry selfEntry;
-    List<ExecutionEntry> executionEntries = new ArrayList<ExecutionEntry>();
+public class TaskExecutionContext extends ExecContext<TaskExecutionContext> {
+//    TaskExecutionEntry selfEntry;
+    List<ExecContext> execEntries = new ArrayList<ExecContext>();
     public TaskResult taskResult;
+    protected Task<? extends TaskDef> task;
+
 
     public TaskExecutionContext(SessionContext $, Task<? extends TaskDef> task) {
-        super($);
+        super($, getParentContext(task));
+        this.task = task;
 
-        selfEntry = new TaskExecutionEntry(task.getParentEntry(), task);
+//        selfEntry = new TaskExecutionEntry(task.getParentEntry(), task);
     }
 
-    protected ExecutionEntry findEntryByTask(Task<? extends TaskDef> task) {
-        for (ExecutionEntry e : executionEntries) {
-            if (e instanceof TaskExecutionEntry) {
-                if (((TaskExecutionEntry) e).task == task) return e;
+    private static TaskExecutionContext getParentContext(@Nonnull Task<? extends TaskDef> task) {
+        Task<TaskDef> parent = task.getParent();
+
+        if (parent == null) return null;
+
+        return parent.getExecutionContext();
+    }
+
+    protected ExecContext findEntryByTask(Task<? extends TaskDef> task) {
+//        for (ExecutionEntry e : executionEntries) {
+//            if (e instanceof TaskExecutionEntry) {
+//                if (((TaskExecutionEntry) e).task == task) return e;
+//            }
+//        }
+
+        for (ExecContext e : execEntries) {
+            if (e instanceof TaskExecutionContext) {
+                TaskExecutionContext context = (TaskExecutionContext) e;
+                if(context.task == task) return e;
             }
         }
 
         return null;
     }
 
-    protected ExecutionEntry findEntryByCommand(AbstractConsoleCommand command) {
-        for (ExecutionEntry e : executionEntries) {
-            if (e instanceof CommandExecutionEntry) {
-                if (((CommandExecutionEntry) e).command == command) return e;
+    protected ExecContext findEntryByCommand(AbstractConsoleCommand command) {
+//        for (ExecutionEntry e : executionEntries) {
+//            if (e instanceof CommandExecutionEntry) {
+//                if (((CommandExecutionEntry) e).command == command) return e;
+//            }
+//        }
+
+        for (ExecContext e : execEntries) {
+            if (e instanceof CommandContext) {
+                CommandContext context = (CommandContext) e;
+                if(context.command==command) return e;
             }
         }
 
@@ -76,8 +98,8 @@ public class TaskExecutionContext extends HavingContext<TaskExecutionContext, Se
     }
 
     public void addNewSubTask(Task<? extends TaskDef> subTask) {
-        //
-        executionEntries.add(new TaskExecutionEntry(subTask.getParentEntry(), subTask));
+//        executionEntries.add(new TaskExecutionEntry(subTask.getParentEntry(), subTask));
+        execEntries.add(new TaskExecutionContext($, subTask));
     }
 
     public void onEndSubTask(Task<? extends TaskDef> task, TaskResult result) {
@@ -85,11 +107,11 @@ public class TaskExecutionContext extends HavingContext<TaskExecutionContext, Se
     }
 
     public <T extends CommandLineResult> void addNewCommand(AbstractConsoleCommand<T> command) {
-        CommandExecutionEntry commandEntry = new CommandExecutionEntry(selfEntry, command);
+        CommandContext co = new CommandContext($, this, command);
 
-        executionEntries.add(commandEntry);
+        execEntries.add(co);
 
-        $.getExecutionContext().currentCommand.defaultTo(commandEntry);
+        $.getExecutionContext().currentCommand.defaultTo(co);
     }
 
     public <T extends CommandLineResult> void onEndCommand(AbstractConsoleCommand<T> command, T result) {
@@ -97,27 +119,27 @@ public class TaskExecutionContext extends HavingContext<TaskExecutionContext, Se
     }
 
     @Nonnull
-    public Optional<ExecutionEntry> getFirstEntry() {
-        if (executionEntries.isEmpty()) {
+    public Optional<ExecContext> getFirstEntry() {
+        if (execEntries.isEmpty()) {
             return absent();
         }
 
-        return of(executionEntries.get(0));
+        return of(execEntries.get(0));
     }
 
     @Nonnull
-    public Optional<ExecutionEntry> getLastEntry() {
-        if (executionEntries.isEmpty()) return absent();
+    public Optional<ExecContext> getLastEntry() {
+        if (execEntries.isEmpty()) return absent();
 
-        return of(executionEntries.get(executionEntries.size() - 1));
+        return of(execEntries.get(execEntries.size() - 1));
     }
 
     public boolean isEmpty() {
-        return getFirstEntry() == null;
+        return !getFirstEntry().isPresent();
     }
 
     public DateTime getStartedAt() {
-        Optional<ExecutionEntry> e = getFirstEntry();
+        Optional<ExecContext> e = getFirstEntry();
 
         if (e.isPresent()) return e.get().getStartedAt();
 
@@ -125,13 +147,13 @@ public class TaskExecutionContext extends HavingContext<TaskExecutionContext, Se
     }
 
     public long getDuration() {
-        Optional<ExecutionEntry> firstEntry = getFirstEntry();
+        Optional<ExecContext> firstEntry = getFirstEntry();
 
         if (!firstEntry.isPresent()) {
             return 0;
         }
 
-        Optional<ExecutionEntry> lastEntry = getLastEntry();
+        Optional<ExecContext> lastEntry = getLastEntry();
 
         DateTime finishedAt = lastEntry.isPresent() ? null : lastEntry.get().getFinishedAt();
 
@@ -148,7 +170,59 @@ public class TaskExecutionContext extends HavingContext<TaskExecutionContext, Se
         return !isRunning();
     }
 
-    public TaskExecutionEntry getExecutionEntry() {
-        return selfEntry;
+    public static interface ExecutionVisitor{
+        boolean visit(ExecContext<?> execContext);
+    }
+
+    public Optional<TaskResult> lastResult(){
+        if(taskResult != null){
+            return of(taskResult);
+        }
+
+        TaskExecutionContext last = null;
+
+        for (ExecContext execEntry : execEntries) {
+            if (execEntry instanceof TaskExecutionContext) {
+                last = (TaskExecutionContext) execEntry;
+            }
+        }
+
+        if(last != null){
+            return last.lastResult();
+        }
+
+        return absent();
+    }
+
+    public Optional<TaskResult> findResult(final TaskDef<Task> def){
+        final TaskResult[] r = new TaskResult[1];
+
+        visit(new ExecutionVisitor() {
+            @Override
+            public boolean visit(ExecContext<?> execContext) {
+                if (execContext instanceof TaskExecutionContext) {
+                    TaskExecutionContext context = (TaskExecutionContext) execContext;
+                    if(context.task.getDefinition() == def){
+                        r[0] = context.task.getExecutionContext().taskResult;
+                        return false;
+                    }
+                }
+
+                return true;
+            }
+        });
+
+        return Optional.fromNullable(r[0]);
+    }
+
+    @Override
+    public boolean visit(ExecutionVisitor visitor){
+        if(!visitor.visit(this)) return false;
+
+        for (ExecContext execEntry : execEntries) {
+            if(!execEntry.visit(visitor)) return false;
+        }
+
+        return true;
     }
 }

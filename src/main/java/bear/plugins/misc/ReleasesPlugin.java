@@ -8,6 +8,7 @@ import bear.plugins.Plugin;
 import bear.session.DynamicVariable;
 import bear.task.InstallationTask;
 import bear.task.InstallationTaskDef;
+import com.google.common.base.Optional;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.format.DateTimeFormat;
@@ -24,6 +25,18 @@ import static bear.session.Variables.*;
 public class ReleasesPlugin extends Plugin {
     public static final DateTimeZone GMT = DateTimeZone.forTimeZone(TimeZone.getTimeZone("GMT"));
     public static final DateTimeFormatter RELEASE_FORMATTER = DateTimeFormat.forPattern("yyyyMMdd.HHmmss").withZone(GMT);
+
+    public final DynamicVariable<PendingRelease> pendingRelease = undefined();
+
+    // not present when: there is no activation for pending release OR when there is no release
+    public final DynamicVariable<Optional<Release>> activatedRelease = dynamic(new Fun<Optional<Release>, AbstractContext>() {
+        @Override
+        public Optional<Release> apply(AbstractContext $) {
+            return $.var(session).getCurrentRelease();
+        }
+    });
+
+    public final DynamicVariable<Optional<Release>> rollbackToRelease = undefined();
 
     public final DynamicVariable<String>
         dirName = newVar("releases"),

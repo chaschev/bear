@@ -1,7 +1,6 @@
 package bear.plugins.sh;
 
 import bear.console.AbstractConsoleCommand;
-import bear.console.ConsoleCallback;
 import bear.context.HavingContext;
 import bear.core.GlobalContext;
 import bear.core.SessionContext;
@@ -87,7 +86,7 @@ public class SessionTest extends HavingContext<SessionTest, SessionContext>{
     }
 
     protected void stubSendCommand() {
-        doReturn(CommandLineResult.OK).when(sys).sendCommand(any(AbstractConsoleCommand.class), any(ConsoleCallback.class));
+        doReturn(CommandLineResult.OK).when(sys).sendCommand(any(AbstractConsoleCommand.class));
     }
 
     private static SystemSession.OSInfo centos()  {

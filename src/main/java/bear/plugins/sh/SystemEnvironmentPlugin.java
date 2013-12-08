@@ -38,7 +38,6 @@ import javax.annotation.Nonnull;
 public abstract class SystemEnvironmentPlugin extends Plugin<SystemSession, SystemEnvironmentPlugin.SystemSessionDef> {
     private static final Logger logger = LoggerFactory.getLogger(SystemEnvironmentPlugin.class);
 
-    protected boolean sudo;
     private int defaultTimeout = 5000;
 
     public enum CopyCommandType {
@@ -76,10 +75,6 @@ public abstract class SystemEnvironmentPlugin extends Plugin<SystemSession, Syst
 
     public void connect() {
 
-    }
-
-    public boolean isSudo() {
-        return sudo;
     }
 
     public static enum DownloadMethod {

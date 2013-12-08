@@ -158,8 +158,6 @@ public class Bear extends BearApp<GlobalContext> {
         downloadDirPath = BearVariables.joinPath(sharedPath, "downloads"),
         toolsInstallDirPath = newVar("/var/lib/bear/tools"),
 
-
-
     vcsCheckoutPath = joinPath(projectSharedPath, "vcs"),
 
     vcsBranchName = dynamic("Relative path of the branch to use"),
@@ -193,7 +191,9 @@ public class Bear extends BearApp<GlobalContext> {
         shortTimeoutMs = newVar((int) SECONDS.toMillis(30)),
         buildTimeoutMs = newVar((int) MINUTES.toMillis(10)),
         installationTimeoutMs = newVar((int) MINUTES.toMillis(60)),
-        defaultTimeout = equalTo(buildTimeoutMs)
+        defaultTimeout = equalTo(buildTimeoutMs),
+        appStartTimeoutSec = newVar(120),
+        appWaitOthersTimeoutSec = newVar(120)
     ;
 
     public final DynamicVariable<Stages> stages = new DynamicVariable<Stages>("List of stages. Stage is collection of servers with roles and auth defined for each of the server.");

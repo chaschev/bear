@@ -39,6 +39,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.util.*;
 
+import static bear.plugins.sh.RmInput.newRm;
 import static com.bethecoder.table.ASCIITableHeader.h;
 
 /**
@@ -83,9 +84,7 @@ public class Releases extends HavingContext<Releases, SessionContext>{
 
         $.sys.move(pendingRelease.path, releasePath);
 
-        logger.info("removeItem - before - RELEASES:\n{}", show());
         removeItem(pendingRelease.path);
-        logger.info("removeItem - after - RELEASES:\n{}", show());
 
         Release activeRelease = new Release(pendingRelease.log, pendingRelease.branchInfo, releasePath, "active");
 
@@ -100,6 +99,7 @@ public class Releases extends HavingContext<Releases, SessionContext>{
 
         cleanupAndSave();
 
+
 //        saveJson();
 
         return activeRelease;
@@ -107,11 +107,13 @@ public class Releases extends HavingContext<Releases, SessionContext>{
 
     private void makeActive(Release activeRelease) {
         for (Release release : folderMap.values()) {
-            if(release == null) continue;
+            if(release == null || "failed".equals(release.status)) continue;
             release.status = "inactive";
         }
 
         activeRelease.status = "active";
+
+        $.putConst(releases.activatedRelease, Optional.of(activeRelease));
     }
 
 
@@ -197,16 +199,20 @@ public class Releases extends HavingContext<Releases, SessionContext>{
         folders.add(pendingPath);
         folderMap.put(pendingPath, release);
 
-        logger.info("newPendingRelease - RELEASES:\n{}", show());
-
         sort();
 
         saveJson();
 
-        logger.info("newPendingRelease - after save - RELEASES:\n{}", show());
+        $.putConst(releases.pendingRelease, release);
+        $.putConst(releases.rollbackToRelease, getCurrentRelease());
 
+        logger.info("newPendingRelease - RELEASES:\n{}", show());
 
         return release;
+    }
+
+    public void rollbackTo(Release release){
+        rollbackTo(ReleaseRef.path(release.path));
     }
 
     public void rollbackTo(ReleaseRef releaseRef){
@@ -234,7 +240,7 @@ public class Releases extends HavingContext<Releases, SessionContext>{
 
         removeItem(path);
 
-        $.sys.rm(path);
+        $.sys.rm(newRm(path));
 
         saveJson();
     }
@@ -246,7 +252,7 @@ public class Releases extends HavingContext<Releases, SessionContext>{
 
         if($(releases.cleanPending)){
             String path = $(releases.path) + "/" + $(releases.pendingName) + "*";
-            $.sys.addRmLine($.sys.script().line().sudo(), path).build().run();
+            $.sys.rm(newRm(path).sudo());
         }
 
         if(keepX > 0){
@@ -266,8 +272,9 @@ public class Releases extends HavingContext<Releases, SessionContext>{
         }
 
         //apps may be run under a root and create files with root's owner
-        //todo rm(boolean sudo)
-        $.sys.addRmLine($.sys.script().line().sudo(), toDelete.toArray(new String[toDelete.size()])).build().run();
+        String[] paths = toDelete.toArray(new String[toDelete.size()]);
+
+        $.sys.rm(newRm(paths).sudo());
 
         sort();
     }
@@ -290,8 +297,10 @@ public class Releases extends HavingContext<Releases, SessionContext>{
 
     private void switchLinkTo(String path) {
         current = path;
-        $.sys.rm($(releases.currentReleaseLinkPath));
+
         $.sys.link(path, $(releases.currentReleaseLinkPath));
+
+        getCurrentRelease(); //makes it active
     }
 
     private Optional<Release> findByRef(ReleaseRef releaseRef) {
@@ -312,7 +321,11 @@ public class Releases extends HavingContext<Releases, SessionContext>{
     }
 
     void saveJson() {
-        $.sys.writeString($(releases.releasesJsonPath), JACKSON_MAPPER.toJSON(folderMap));
+        try {
+            $.sys.writeString($(releases.releasesJsonPath), JACKSON_MAPPER.toJSON(folderMap));
+        } catch (Exception e) {
+            logger.warn("unable to save JSON", e);
+        }
     }
 
     protected Releases loadCache(){
@@ -413,13 +426,18 @@ public class Releases extends HavingContext<Releases, SessionContext>{
                     String.valueOf(Optional.fromNullable(release.branchInfo.author).or(release.log.lastAuthor())),
                     release.branchInfo.revision,
                     release.log.lastComment(),
-                    release.isActive() ? "Y" : ""
+                    release.status
             });
         }
 
         return AsciiTableInstance.get().getTable(
-                new ASCIITableHeader[]{h("Name"), h("Author"), h("Revision").maxWidth(10), h("Comment").maxWidth(50), h("Active?")},
+                new ASCIITableHeader[]{h("Name"), h("Author"), h("Revision").maxWidth(10), h("Comment").maxWidth(50), h("Status")},
                 table.toArray(new String[table.size()][])
             );
+    }
+
+    public void markFailed(Release release) {
+        release.status = "failed";
+        saveJson();
     }
 }

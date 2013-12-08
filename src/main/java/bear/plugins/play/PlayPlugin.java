@@ -16,8 +16,6 @@
 
 package bear.plugins.play;
 
-import bear.cli.CommandLine;
-import bear.cli.Script;
 import bear.console.AbstractConsole;
 import bear.console.ConsoleCallback;
 import bear.console.ConsoleCallbackResult;
@@ -28,6 +26,8 @@ import bear.main.event.NoticeEventToUI;
 import bear.plugins.ZippedToolPlugin;
 import bear.plugins.java.JavaPlugin;
 import bear.plugins.misc.*;
+import bear.plugins.sh.CommandLine;
+import bear.plugins.sh.Script;
 import bear.plugins.sh.SystemSession;
 import bear.session.DynamicVariable;
 import bear.session.Result;
@@ -54,8 +54,7 @@ import static java.lang.String.format;
  * @author Andrey Chaschev chaschev@gmail.com
  */
 public class PlayPlugin extends ZippedToolPlugin {
-    private static final Logger logger = LoggerFactory.getLogger(PlayPlugin.class);
-    private static final String PENDING_RELEASE = "pendingRelease";
+    public static final Logger logger = LoggerFactory.getLogger(PlayPlugin.class);
 
     protected UpstartPlugin upstart;
     protected FileWatchDogPlugin watchDog;
@@ -184,9 +183,7 @@ public class PlayPlugin extends ZippedToolPlugin {
                         return result;
                     }
 
-                    Release pendingRelease = $(releases.session).newPendingRelease();
-
-                    $.putConst(PENDING_RELEASE, pendingRelease);
+                    PendingRelease pendingRelease = $.var(releases.pendingRelease);
 
                     String dest = pendingRelease.path + "/" + $(playAppName); //eq to ${pendingRelease.path}/play-app
 
@@ -203,29 +200,17 @@ public class PlayPlugin extends ZippedToolPlugin {
         @Override
         protected Task newSession(SessionContext $, final Task parent) {
             return new Task<TaskDef>(parent, this, $) {
-
                 @Override
                 protected TaskResult exec(SessionTaskRunner runner, Object input) {
                     $.log("starting the app (stage)...");
 
-                    Release release;
+                    Optional<Release> optionalRelease = $.var(releases.activatedRelease);
 
-                    {
-                        PendingRelease pendingRelease = (PendingRelease) $.getConstant(PENDING_RELEASE);
-
-                        if (pendingRelease != null) {
-                            release = pendingRelease.activate();
-                        } else {
-                            // a case of standalone start
-                            Optional<Release> releaseOptional = $(releases.session).getCurrentRelease();
-
-                            if (!releaseOptional.isPresent()) {
-                                throw new IllegalStateException("there is no release set!");
-                            }
-
-                            release = releaseOptional.get();
-                        }
+                    if(!optionalRelease.isPresent()){
+                        return TaskResult.error("there is no release to start!");
                     }
+
+                    Release release = optionalRelease.get();
 
                     Optional<String> execPath = getExecPath(release);
 
@@ -244,7 +229,11 @@ public class PlayPlugin extends ZippedToolPlugin {
 
                         String consolePath = consoleLogPath(port);
 
-                        script.line().addRaw("exec " + execPath.get() + " -Dhttp.port=" + port + " 2>&1 >" + consolePath).build();
+                        // good thing to do before any restart
+                        resetConsolePath($, consolePath);
+
+                        script.line().addRaw("" +
+                            "exec " + execPath.get() + " -Dhttp.port=" + port + " 2>&1 >" + consolePath).build();
 
                         serviceList.add(new UpstartService(
                             single ? $(singleServiceName) : format($(multiServiceName), port),
@@ -292,16 +281,32 @@ public class PlayPlugin extends ZippedToolPlugin {
                     final WatchDogGroup watchDogGroup = new WatchDogGroup(ports.size(), watchStartDogGroup);
 
                     for (final String port : ports) {
+                        String consolePath = consoleLogPath(port);
+
+                        // to make sure there are no old start entries
+                        resetConsolePath($, consolePath);
+
                         WatchDogRunnable runnable = new WatchDogRunnable($, watchDog, new WatchDogInput(
-                            consoleLogPath(port), false, new ConsoleCallback() {
+                            consolePath, false, new ConsoleCallback() {
                             @Override
                             @Nonnull
                             public ConsoleCallbackResult progress(AbstractConsole.Terminal console, String buffer, String wholeText) {
                                 if (buffer.contains("Listening for HTTP on")) {
+//                                    logger.debug("OOOOOOOOOOOOPS - listening!");
+
                                     SessionContext.ui.info(new NoticeEventToUI($(bear.fullName),
                                         "started play instance on port " + port + ", release " + $(releases.session).getCurrentRelease().get().name()));
 
                                     return new ConsoleCallbackResult(ConsoleCallbackResultType.DONE, null);
+                                }
+
+                                if(buffer.contains("Oops, cannot start the server.")){
+//                                    logger.debug("OOOOOOOOOOOOPS - found");
+                                    String message = "unable to start play instance on port " + port + ", release " + $(releases.session).getCurrentRelease().get().name();
+                                    SessionContext.ui.error(new NoticeEventToUI($(bear.fullName),
+                                        message));
+
+                                    return new ConsoleCallbackResult(ConsoleCallbackResultType.EXCEPTION, message);
                                 }
 
                                 return ConsoleCallbackResult.CONTINUE;
@@ -315,7 +320,7 @@ public class PlayPlugin extends ZippedToolPlugin {
 
                     watchDogGroup.startThreads();
 
-                    watchDogGroup.scheduleForcedShutdown($.getGlobal().scheduler, $(startupTimeoutMs), TimeUnit.MILLISECONDS);
+                    watchDogGroup.scheduleForcedShutdown($.getGlobal().scheduler, $(bear.appStartTimeoutSec), TimeUnit.SECONDS);
                 }
 
 
@@ -327,6 +332,11 @@ public class PlayPlugin extends ZippedToolPlugin {
                     return format($(consoleLogPath), port);
                 }
             };
+        }
+
+        private void resetConsolePath(SessionContext $, String logPath) {
+            $.sys.chmod("u+rwx,g+rwx,o+rwx", false, logPath);
+            $.sys.resetFile(logPath, true);
         }
     };
 
@@ -385,11 +395,16 @@ public class PlayPlugin extends ZippedToolPlugin {
                     if (!$.var(useWatchDog)) {
                         r = TaskResult.OK;
                     } else {
-                        WatchDogGroup watchDogs = $.var(watchStartDogGroup);
+                        WatchDogGroup watchDogGroup = $.var(watchStartDogGroup);
 
-                        r = TaskResult.of(watchDogs.latch().await($.var(startupTimeoutMs), TimeUnit.MILLISECONDS),
-                            "" + watchDogs.latch().getCount() + " instances did not start in " +
+                        boolean awaitOk = watchDogGroup.latch().await($.var(startupTimeoutMs), TimeUnit.MILLISECONDS);
+
+                        if(awaitOk){
+                            r  = watchDogGroup.getResult();
+                        }else{
+                            r = TaskResult.error(watchDogGroup.latch().getCount() + " instances did not start in " +
                                 TimeUnit.MILLISECONDS.toSeconds($.var(startupTimeoutMs)) + " seconds");
+                        }
                     }
 
                     printCurrentReleases($);

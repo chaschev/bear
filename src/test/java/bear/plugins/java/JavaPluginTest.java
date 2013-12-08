@@ -1,7 +1,6 @@
 package bear.plugins.java;
 
 import bear.console.AbstractConsoleCommand;
-import bear.console.ConsoleCallback;
 import bear.plugins.sh.SessionTest;
 import bear.vcs.CommandLineResult;
 import com.google.common.base.Joiner;
@@ -34,7 +33,7 @@ public class JavaPluginTest extends SessionTest {
         assertThat($(java.versionName)).isEqualTo("jdk-7u40-linux-x64");
         assertThat($(java.toolDistrName)).isEqualTo("jdk");
 
-        when(sys.sendCommand(any(AbstractConsoleCommand.class), any(ConsoleCallback.class))).thenAnswer(new Answer<Object>() {
+        when(sys.sendCommand(any(AbstractConsoleCommand.class))).thenAnswer(new Answer<Object>() {
             @Override
             public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
                 AbstractConsoleCommand command = (AbstractConsoleCommand) invocationOnMock.getArguments()[0];

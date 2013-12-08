@@ -16,7 +16,7 @@
 
 package bear.session;
 
-import bear.cli.CommandLine;
+import bear.plugins.sh.CommandLine;
 import bear.console.AbstractConsoleCommand;
 import bear.console.ConsoleCallback;
 import bear.vcs.CommandLineResult;

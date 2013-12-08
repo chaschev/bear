@@ -1,6 +1,6 @@
 package bear.vcs;
 
-import bear.cli.CommandLine;
+import bear.plugins.sh.CommandLine;
 import bear.console.ConsoleCallback;
 import bear.core.SessionContext;
 import bear.plugins.sh.SystemEnvironmentPlugin;

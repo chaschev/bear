@@ -41,7 +41,7 @@ import java.util.concurrent.Future;
 
 @Shell("ssh")
 public class GenericUnixRemoteEnvironmentPlugin extends SystemEnvironmentPlugin {
-    private static final Logger logger = LoggerFactory.getLogger(GenericUnixRemoteEnvironmentPlugin.class);
+    private static final Logger logger = LoggerFactory.getLogger(RemoteConsole.class);
 
     public GenericUnixRemoteEnvironmentPlugin(GlobalContext global) {
         super(global, "remote unix plugin");

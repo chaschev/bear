@@ -21,6 +21,7 @@ import bear.core.GlobalContext;
 import bear.core.SessionContext;
 import bear.context.AbstractContext;
 import bear.plugins.ZippedToolPlugin;
+import bear.plugins.sh.RmInput;
 import bear.session.BearVariables;
 import bear.session.DynamicVariable;
 import bear.session.Variables;
@@ -85,19 +86,12 @@ public class TomcatPlugin extends ZippedToolPlugin {
                 return new Task<TaskDef>(parent, this, $) {
                     @Override
                     protected TaskResult exec(SessionTaskRunner runner, Object input) {
-                        $.sys.sudo().rm($(warCacheDirs));
+                        $.sys.rm(RmInput.newRm($(warCacheDirs)).sudo());
                         $.sys.script()
                             .line().addRaw("catalina stop").build()
                             .line().addRaw("nohup catalina start").build()
                             .timeoutSec(60)
                             .run();
-//                        $.sys.sudo().run($.newCommandLine()
-//                            .a("service", "tomcat6", "stop")
-//                            .semicolon()
-//                            .sudo()
-//                            .a("service", "tomcat6", "start")
-//                            .timeoutMin(2)
-//                        );
 
                         return TaskResult.OK;
                     }

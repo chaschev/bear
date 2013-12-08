@@ -16,8 +16,8 @@
 
 package bear.task;
 
-import bear.cli.CommandLine;
-import bear.cli.Script;
+import bear.plugins.sh.CommandLine;
+import bear.plugins.sh.Script;
 import bear.core.SessionContext;
 import bear.session.Result;
 import com.google.common.base.Predicate;

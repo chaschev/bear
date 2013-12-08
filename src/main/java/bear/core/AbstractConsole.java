@@ -17,9 +17,13 @@
 package bear.core;
 
 import bear.console.ConsoleCallbackResult;
+import bear.console.ConsoleCallbackResultType;
+import bear.plugins.sh.GenericUnixRemoteEnvironmentPlugin;
 import bear.ssh.MyStreamCopier;
 import chaschev.util.Exceptions;
+import com.google.common.base.Optional;
 import org.apache.commons.io.IOUtils;
+import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nonnull;
@@ -37,6 +41,7 @@ import static java.util.concurrent.TimeUnit.NANOSECONDS;
  * @author Andrey Chaschev chaschev@gmail.com
  */
 public abstract class AbstractConsole extends bear.console.AbstractConsole.Terminal {
+    private static final Logger logger = LoggerFactory.getLogger(GenericUnixRemoteEnvironmentPlugin.RemoteConsole.class);
 
     public static abstract class Listener {
         protected AbstractConsole console;
@@ -57,6 +62,10 @@ public abstract class AbstractConsole extends bear.console.AbstractConsole.Termi
     List<MyStreamCopier> copiers = new ArrayList<MyStreamCopier>();
     List<MarkedBuffer> buffers = new ArrayList<MarkedBuffer>();
     List<Future> futures = new ArrayList<Future>();
+
+    protected volatile transient ConsoleCallbackResult lastCallbackResult;
+    protected volatile transient ConsoleCallbackResult lastError;
+
 
     protected AbstractConsole(Listener listener, Closeable shutdownTrigger) {
         this.listener = listener;
@@ -108,9 +117,14 @@ public abstract class AbstractConsole extends bear.console.AbstractConsole.Termi
 
                 LoggerFactory.getLogger("log").trace("appended to buffer: {}", buffer.interimText());
 
-                ConsoleCallbackResult result = listener.textAdded(buffer.interimText(), buffer);
+                lastCallbackResult = listener.textAdded(buffer.interimText(), buffer);
 
-                switch (result.type) {
+                if(lastCallbackResult.type == ConsoleCallbackResultType.EXCEPTION){
+                    lastError = lastCallbackResult;
+//                    PlayPlugin.logger.debug("OOOOOOOOOOOOPS - set error!!");
+                }
+
+                switch (lastCallbackResult.type) {
                     case DONE:
                     case EXCEPTION:
                     case FINISHED:
@@ -118,6 +132,8 @@ public abstract class AbstractConsole extends bear.console.AbstractConsole.Termi
                         IOUtils.closeQuietly(shutdownTrigger);
                         break;
                 }
+
+
 
                 buffer.markInterim();
             }
@@ -127,12 +143,16 @@ public abstract class AbstractConsole extends bear.console.AbstractConsole.Termi
     }
 
     public void stopStreamCopiersGracefully() {
+//        logger.debug("OOOOOOOOOOOOPS - stopStreamCopiersGracefully");
+
         for (MyStreamCopier copier : copiers) {
             copier.stop();
         }
     }
 
     public void stopStreamCopiers() {
+//        logger.debug("OOOOOOOOOOOOPS - stopStreamCopiers", new Exception());
+
         for (int i = 0; i < copiers.size(); i++) {
             copiers.get(i).stop();
             final Future future = futures.get(i);
@@ -145,6 +165,8 @@ public abstract class AbstractConsole extends bear.console.AbstractConsole.Termi
     }
 
     public boolean awaitStreamCopiers(long duration, TimeUnit unit) {
+//        logger.debug("OOOOOOOOOOOOPS - awaitStreamCopiers");
+
         long periodNs = NANOSECONDS.convert(duration, unit) / 9;
 
         if (periodNs == 0) {
@@ -245,4 +267,11 @@ public abstract class AbstractConsole extends bear.console.AbstractConsole.Termi
         return sb;
     }
 
+    public Optional<ConsoleCallbackResult> getLastCallbackResult() {
+        return Optional.fromNullable(lastCallbackResult);
+    }
+
+    public Optional<ConsoleCallbackResult> getLastError() {
+        return Optional.fromNullable(lastError);
+    }
 }

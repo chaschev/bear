@@ -5,7 +5,7 @@ import bear.plugins.mongo.MongoDbPlugin;
 import bear.plugins.mysql.MySqlPlugin;
 import bear.plugins.play.PlayPlugin;
 import bear.session.DynamicVariable;
-import bear.strategy.DeploymentBuilder;
+import bear.strategy.DeploymentPlugin;
 import bear.task.Task;
 import bear.task.TaskCallable;
 import bear.task.TaskDef;
@@ -31,6 +31,7 @@ public class SecureSocialDemoSettings extends IBearSettings {
     PlayPlugin play;
     MongoDbPlugin mongo;
     MySqlPlugin mysql;
+    DeploymentPlugin deployment;
 
     public final DynamicVariable<String>
         useDb = newVar("mysql"),
@@ -42,40 +43,7 @@ public class SecureSocialDemoSettings extends IBearSettings {
         super(factory);
     }
 
-    // this defines the deployment
-    public final TaskDef<Task> deployProject = new DeploymentBuilder()
-        .CheckoutFiles_2(new TaskCallable<TaskDef>() {
-            @Override
-            public TaskResult call(SessionContext $, Task<TaskDef> task, Object input) throws Exception {
-                return $.run(global.tasks.vcsUpdate);
-            }
-        })
-        .BuildAndCopy_3(new TaskCallable<TaskDef>() {
-            @Override
-            public TaskResult call(SessionContext $, Task<TaskDef> task, Object input) throws Exception {
-                 updateDbConf($); return $.run(play.build);
-            }
-        })
-        .StopService_5(new TaskCallable<TaskDef>() {
-            @Override
-            public TaskResult call(SessionContext $, Task<TaskDef> task, Object input) throws Exception {
-                $.run(play.stop); return OK;
-            }
-        })
-        .StartService_8(new TaskCallable<TaskDef>() {
-            @Override
-            public TaskResult call(SessionContext $, Task<TaskDef> task, Object input) throws Exception {
-                return $.run(play.start);
-            }
-        })
-        .WaitForServiceToStart_9(new TaskCallable<TaskDef>() {
-            @Override
-            public TaskResult call(SessionContext $, Task<TaskDef> task, Object input) throws Exception {
-                return $.run(play.watchStart);
-            }
-        })
-        .done()
-        .build();
+    public TaskDef<Task> deployProject;
 
     private TaskResult updateDbConf(SessionContext $) {
         String pluginsPath = $.var(play.projectPath) + "/conf/play.plugins";
@@ -118,6 +86,49 @@ public class SecureSocialDemoSettings extends IBearSettings {
                     new Stage("three")
                         .addHosts(stages.hosts("vm01, vm02, vm03"))
                 ));
+
+        // this defines the deployment task
+        deployProject = deployment.newBuilder()
+            .CheckoutFiles_2(new TaskCallable<TaskDef>() {
+                @Override
+                public TaskResult call(SessionContext $, Task<TaskDef> task, Object input) throws Exception {
+                    return $.run(global.tasks.vcsUpdate);
+                }
+            })
+            .BuildAndCopy_3(new TaskCallable<TaskDef>() {
+                @Override
+                public TaskResult call(SessionContext $, Task<TaskDef> task, Object input) throws Exception {
+                    updateDbConf($); return $.run(play.build);
+                }
+            })
+            .StopService_5(new TaskCallable<TaskDef>() {
+                @Override
+                public TaskResult call(SessionContext $, Task<TaskDef> task, Object input) throws Exception {
+                    $.run(play.stop); return OK;
+                }
+            })
+            .StartService_8(new TaskCallable<TaskDef>() {
+                @Override
+                public TaskResult call(SessionContext $, Task<TaskDef> task, Object input) throws Exception {
+                    return $.run(play.start, play.watchStart);
+                }
+            })
+            .endDeploy()
+            .ifRollback()
+            .beforeLinkSwitch(new TaskCallable<TaskDef>() {
+                @Override
+                public TaskResult call(SessionContext $, Task<TaskDef> task, Object input) throws Exception {
+                    return $.run(play.stop);
+                }
+            })
+            .afterLinkSwitch(new TaskCallable<TaskDef>() {
+                @Override
+                public TaskResult call(SessionContext $, Task<TaskDef> task, Object input) throws Exception {
+                    return $.run(play.start, play.watchStart);
+                }
+            })
+            .endRollback()
+            .build();
 
         return global;
     }

@@ -128,9 +128,10 @@ public class SessionTaskRunner extends HavingContext<SessionTaskRunner, SessionC
 
                     result = runSession(taskSession);
 
-                    //todo add rollback
-
                     if(!result.ok()){
+                        logger.warn("running rollback for task: {}", taskDef);
+                        taskDef.runRollback(this);
+
                         return result;
                     }
                 }

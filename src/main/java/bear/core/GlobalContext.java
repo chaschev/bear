@@ -59,13 +59,52 @@ public class GlobalContext extends AppGlobalContext<GlobalContext, Bear> {
         5L, TimeUnit.SECONDS,
         new LinkedBlockingQueue<Runnable>()));
 
+    public static class AwareThread extends Thread{
+        private Exception interruptedAt;
+        private String interruptedBy;
+
+        public AwareThread() {
+        }
+
+        public AwareThread(Runnable target) {
+            super(target);
+        }
+
+        public AwareThread(String name) {
+            super(name);
+        }
+
+        public AwareThread(Runnable target, String name) {
+            super(target, name);
+        }
+
+        @Override
+        public void interrupt() {
+            interruptedAt = new Exception();
+            interruptedBy = Thread.currentThread().getName();
+            super.interrupt();
+        }
+
+        public Exception getInterruptedAt() {
+            return interruptedAt;
+        }
+
+        public String getInterruptedBy() {
+            return interruptedBy;
+        }
+
+        public boolean wasInterrupted(){
+            return interruptedAt != null;
+        }
+    }
+
     public final ListeningExecutorService localExecutor = listeningDecorator(new ThreadPoolExecutor(4, 32,
         5L, TimeUnit.SECONDS,
         new SynchronousQueue<Runnable>(),
         new ThreadFactory() {
             @Override
             public Thread newThread(Runnable r) {
-                final Thread thread = new Thread(r);
+                final AwareThread thread = new AwareThread(r);
                 thread.setDaemon(true);
                 return thread;
             }

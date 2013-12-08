@@ -23,10 +23,7 @@ import bear.main.event.TextConsoleEventToUI;
 import bear.session.Address;
 import bear.session.DynamicVariable;
 import bear.session.SshAddress;
-import bear.task.SessionTaskRunner;
-import bear.task.Task;
-import bear.task.CommandExecutionEntry;
-import bear.task.TaskExecutionContext;
+import bear.task.*;
 import chaschev.lang.Functions2;
 import chaschev.lang.MutableSupplier;
 import com.google.common.base.Function;
@@ -102,9 +99,9 @@ public class Stage {
                 }
             });
 
-            execContext.currentCommand.addListener(new DynamicVariable.ChangeListener<CommandExecutionEntry>() {
+            execContext.currentCommand.addListener(new DynamicVariable.ChangeListener<CommandContext>() {
                 @Override
-                public void changedValue(DynamicVariable<CommandExecutionEntry> var, CommandExecutionEntry oldValue, CommandExecutionEntry newValue) {
+                public void changedValue(DynamicVariable<CommandContext> var, CommandContext oldValue, CommandContext newValue) {
                     ui.info(new CommandConsoleEventToUI($.getName(), newValue.toString())
                         .setId(newValue.command.id)
                         .setParentId(execContext.currentTask.getDefaultValue().getId())

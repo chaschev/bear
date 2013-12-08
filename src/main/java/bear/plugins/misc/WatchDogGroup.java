@@ -1,7 +1,10 @@
 package bear.plugins.misc;
 
+import bear.core.GlobalContext;
 import bear.core.SessionContext;
 import bear.session.DynamicVariable;
+import bear.task.TaskResult;
+import bear.task.Tasks;
 import chaschev.util.CatchyRunnable;
 import com.google.common.util.concurrent.ListenableScheduledFuture;
 import com.google.common.util.concurrent.ListeningScheduledExecutorService;
@@ -49,8 +52,12 @@ public class WatchDogGroup {
     public void startThreads() {
         $.putConst(watchDogGroup, this);
 
+        int i = 1;
+        String myName = Thread.currentThread().getName();
         for (WatchDogRunnable runnable : runnables) {
-            (runnable.thread = new Thread(new CatchyRunnable(runnable))).start();
+            (runnable.thread = new GlobalContext.AwareThread(new CatchyRunnable(runnable))).start();
+            runnable.thread.setName(myName + "-dog-" + i);
+            i++;
         }
     }
 
@@ -75,5 +82,15 @@ public class WatchDogGroup {
         if(arrivalLatch.getCount() == 0){
             forcedShutdownFuture.cancel(true);
         }
+    }
+
+    public TaskResult getResult(){
+        List<TaskResult> temp = new ArrayList<TaskResult>(runnables.size());
+
+        for (WatchDogRunnable runnable : runnables) {
+            temp.add(runnable.getResult() == null ? TaskResult.error("null result for watch dog") : runnable.getResult());
+        }
+
+        return Tasks.and(temp);
     }
 }

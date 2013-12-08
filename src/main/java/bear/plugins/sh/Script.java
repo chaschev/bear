@@ -14,11 +14,10 @@
  * limitations under the License.
  */
 
-package bear.cli;
+package bear.plugins.sh;
 
 import bear.console.ConsoleCallback;
 import bear.core.SessionContext;
-import bear.plugins.sh.SystemSession;
 import bear.session.Result;
 import bear.vcs.CommandLineResult;
 import chaschev.lang.OpenStringBuilder;
@@ -79,10 +78,6 @@ public class Script <T extends CommandLineResult, CHILD extends Script>{
 
     public T run() {
         return (T) sys.run(this);
-    }
-
-    public T run(ConsoleCallback callback) {
-        return sys.run(this, callback);
     }
 
     public CHILD setParser(Function<String, T> parser) {
@@ -160,5 +155,25 @@ public class Script <T extends CommandLineResult, CHILD extends Script>{
 
     public Script timeoutShort() {
         return timeoutMs(sys.$(sys.getBear().shortTimeoutMs));
+    }
+
+    public ConsoleCallback callback() {
+        for (CommandLine<T, CHILD> line : lines) {
+            ConsoleCallback callback = line.getCallback();
+            if (callback != null) {
+                return callback;
+            }
+        }
+        return null;
+    }
+
+    public Script<T, CHILD> callback(ConsoleCallback callback){
+        for (CommandLine<T, CHILD> line : lines) {
+            if(line.getCallback() == null){
+                line.setCallback(callback);
+            }
+        }
+
+        return this;
     }
 }

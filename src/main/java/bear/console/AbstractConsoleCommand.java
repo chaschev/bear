@@ -29,6 +29,7 @@ public abstract class AbstractConsoleCommand<T extends CommandLineResult>{
     public final String id = SessionContext.randomId();
 
     protected TextListener textListener;
+    protected ConsoleCallback callback;
 
     public interface TextListener{
         void on(CharSequence newText, StringBuilder wholeText);
@@ -58,5 +59,12 @@ public abstract class AbstractConsoleCommand<T extends CommandLineResult>{
         return output;
     }
 
+    public AbstractConsoleCommand<T> setCallback(ConsoleCallback callback) {
+        this.callback = callback;
+        return this;
+    }
 
+    public ConsoleCallback getCallback() {
+        return callback;
+    }
 }

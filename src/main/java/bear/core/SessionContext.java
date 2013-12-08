@@ -16,7 +16,8 @@
 
 package bear.core;
 
-import bear.cli.CommandLine;
+import bear.console.ConsoleCallback;
+import bear.plugins.sh.CommandLine;
 import bear.context.AbstractContext;
 import bear.plugins.Plugin;
 import bear.plugins.sh.GenericUnixLocalEnvironmentPlugin;
@@ -27,17 +28,16 @@ import bear.session.Address;
 import bear.session.DynamicVariable;
 import bear.session.SshAddress;
 import bear.session.Variables;
-import bear.task.SessionTaskRunner;
-import bear.task.Task;
-import bear.task.TaskDef;
-import bear.task.TaskResult;
-import bear.task.CommandExecutionEntry;
-import bear.task.TaskExecutionContext;
+import bear.task.*;
+import com.google.common.base.Optional;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.joda.time.DateTime;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
+
+import java.util.HashMap;
+import java.util.Map;
 
 import static bear.session.Variables.*;
 
@@ -126,6 +126,21 @@ public class SessionContext extends AbstractContext {
         return executionContext.isRunning();
     }
 
+    public ConsoleCallback sshCallback() {
+        return SystemEnvironmentPlugin.println(var(bear.sshPassword));
+    }
+
+
+    public static class ExecutionHistoryEntry{
+
+    }
+
+    public static class ExecutionHistory{
+        protected Map<TaskDef<Task>, TaskResult> resultMap = new HashMap<TaskDef<Task>, TaskResult>();
+
+
+    }
+
     public class ExecutionContext{
         public final DateTime startedAt = new DateTime();
         public final DynamicVariable<String> phaseId = undefined();
@@ -134,7 +149,7 @@ public class SessionContext extends AbstractContext {
         public final DynamicVariable<String> textAppended = dynamic(String.class).desc("text appended in session").defaultTo("");
         public final DynamicVariable<TaskExecutionContext> rootExecutionContext = dynamic(TaskExecutionContext.class);
         public final DynamicVariable<Task> currentTask = dynamic(Task.class);
-        public final DynamicVariable<CommandExecutionEntry> currentCommand = dynamic(CommandExecutionEntry.class);
+        public final DynamicVariable<CommandContext> currentCommand = dynamic(CommandContext.class);
         public String phaseName;
 
         public void textAdded(String textAdded) {
@@ -291,5 +306,14 @@ public class SessionContext extends AbstractContext {
 
     public TaskResult runSession(Task<?> taskSession, Object input) {
         return runner.runSession(taskSession, input);
+    }
+
+    public Optional<TaskResult> findResult(TaskDef<Task> def){
+        return executionContext.rootExecutionContext.getDefaultValue().findResult(def);
+    }
+
+    // returns last available result, null if none of the tasks finished
+    public Optional<TaskResult> lastResult(){
+        return executionContext.rootExecutionContext.getDefaultValue().lastResult();
     }
 }

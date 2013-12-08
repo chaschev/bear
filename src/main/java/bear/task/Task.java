@@ -26,7 +26,10 @@ import bear.core.SessionContext;
 import bear.main.phaser.ComputingGrid;
 import bear.main.phaser.Phase;
 import bear.main.phaser.PhaseParty;
+import bear.session.DynamicVariable;
 import bear.vcs.CommandLineResult;
+import chaschev.util.Exceptions;
+import com.google.common.base.Preconditions;
 import com.google.common.util.concurrent.ListenableFuture;
 
 import javax.annotation.Nullable;
@@ -35,6 +38,8 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+
+import static bear.session.Variables.newVar;
 
 /**
  * @author Andrey Chaschev chaschev@gmail.com
@@ -45,7 +50,7 @@ public class Task<TASK_DEF extends TaskDef> extends HavingContext<Task<TaskDef>,
     private final String id = SessionContext.randomId();
 
     protected TaskCallable taskCallable;
-    protected TaskContext<TASK_DEF> taskContext;
+    protected final TaskContext<TASK_DEF> taskContext;
 
     public Task(TaskContext<TASK_DEF> taskContext, TaskCallable taskCallable) {
         super(taskContext.$);
@@ -97,10 +102,6 @@ public class Task<TASK_DEF extends TaskDef> extends HavingContext<Task<TaskDef>,
         }
 
         return result;
-    }
-
-    ExecutionEntry getExecutionEntry() {
-        return taskContext.executionContext.selfEntry;
     }
 
     protected TaskResult exec(SessionTaskRunner runner, Object input) {
@@ -241,6 +242,19 @@ public class Task<TASK_DEF extends TaskDef> extends HavingContext<Task<TaskDef>,
         return getPhase().getRelativePhase(offset, tClass);
     }
 
+    public <T> T getPreviousResult(Class<T> tClass) {
+        return getPreviousResult(1, tClass);
+    }
+
+    public <T> T getPreviousResult(int distance, Class<T> tClass) {
+        try {
+            Preconditions.checkArgument(distance > 0, "distance must be positive");
+            return getGrid().cellAt(getPhase().getRowIndex() - distance, getPhaseParty().getIndex(), tClass).getFuture().get(0, TimeUnit.MILLISECONDS);
+        } catch (Exception e) {
+            throw Exceptions.runtime(e);
+        }
+    }
+
     public <T> List<ListenableFuture<T>> getRelativeFutures(int offset, Class<T> tClass) {
         return getGrid().phaseFutures(getPhase().getRowIndex() + offset, tClass);
     }
@@ -253,15 +267,19 @@ public class Task<TASK_DEF extends TaskDef> extends HavingContext<Task<TaskDef>,
         aggregateRelatively(-1, Object.class).get(timeout, unit);
     }
 
-    public static TaskCallable<TaskDef> awaitOthersCallable(final long timeout, final TimeUnit unit) {
+    public static TaskCallable<TaskDef> awaitOthersCallable(final int timeout, final TimeUnit unit) {
+        return awaitOthersCallable(newVar(timeout), unit);
+    }
+
+    public static TaskCallable<TaskDef> awaitOthersCallable(final DynamicVariable<Integer> timeout, final TimeUnit unit) {
         return new TaskCallable<TaskDef>() {
             @Override
             public TaskResult call(SessionContext $, Task<TaskDef> task, Object input) throws Exception {
                 try {
-                    task.awaitOthers(timeout, unit);
+                    task.awaitOthers($.var(timeout), unit);
                     return TaskResult.OK;
                 } catch (TimeoutException e) {
-                    throw new RuntimeException("timeout while waiting for parties at task " + task);
+                    return new TaskResult(new Exception("timeout while waiting for parties"));
                 }
             }
         };
@@ -272,14 +290,5 @@ public class Task<TASK_DEF extends TaskDef> extends HavingContext<Task<TaskDef>,
         return this;
     }
 
-    @Nullable
-    TaskExecutionEntry getParentEntry(){
-        Task<TaskDef> parent = getParent();
 
-        if(parent != null){
-            return parent.getExecutionContext().getExecutionEntry();
-        }
-
-        return null;
-    }
 }

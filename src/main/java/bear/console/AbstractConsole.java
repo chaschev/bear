@@ -30,7 +30,6 @@ public interface AbstractConsole {
     }
 
     /**
-     * @param userCallback Callback for answering questions like 'Enter password'.
      */
-    <T extends CommandLineResult> T sendCommand(AbstractConsoleCommand<T> command, ConsoleCallback userCallback);
+    <T extends CommandLineResult> T sendCommand(AbstractConsoleCommand<T> command);
 }

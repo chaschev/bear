@@ -16,14 +16,14 @@
 
 package bear.vcs;
 
-import bear.cli.CommandLine;
-import bear.cli.Script;
-import bear.cli.StubScript;
 import bear.console.AbstractConsole;
 import bear.console.ConsoleCallback;
 import bear.console.ConsoleCallbackResult;
 import bear.core.GlobalContext;
 import bear.core.SessionContext;
+import bear.plugins.sh.CommandLine;
+import bear.plugins.sh.Script;
+import bear.plugins.sh.StubScript;
 import bear.session.DynamicVariable;
 import bear.session.Variables;
 import bear.task.Dependency;
@@ -44,6 +44,7 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static bear.plugins.sh.RmInput.newRm;
 import static bear.session.Variables.equalTo;
 import static bear.session.Variables.newVar;
 import static chaschev.lang.LangUtils.elvis;
@@ -289,7 +290,7 @@ public class GitCLIPlugin extends VcsCLIPlugin<Task, TaskDef<?>> {
             newRevision = $.sys.sendCommand(commandPrefix("rev-parse", emptyParams())
                 .cd($(getBear().vcsBranchLocalPath))
                 .a("--revs-only", origin() + "/" + revision)
-                .timeoutSec(10), passwordCallback()).text.trim();
+                .timeoutSec(10)).text.trim();
 
             if (!validRevision(newRevision)) {
                 return newQueryRevisionResult(newRevision);
@@ -332,8 +333,7 @@ public class GitCLIPlugin extends VcsCLIPlugin<Task, TaskDef<?>> {
 
         @Override
         public VCSScript<?> export(String revision, String destination, Map<String, String> params) {
-            return checkout(revision, destination, emptyParams())
-                .line($.sys.addRmLine($.sys.line(), ".", destination + "/.git"));
+            return (VCSScript<?>) $.sys.addRmLine(checkout(revision, destination, emptyParams()), newRm(destination + "/.git").cd("."));
         }
 
         @Override

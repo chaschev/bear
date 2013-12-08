@@ -172,7 +172,7 @@ public class Plugins {
                 }
             }
 
-            pluginsGraph.findFirstCycle();
+//            pluginsGraph.findFirstCycle();
 
             for (int i = directDependencies.size(); i < plugins.size(); i++) {
                 plugins.get(i).transitiveDependency = true;

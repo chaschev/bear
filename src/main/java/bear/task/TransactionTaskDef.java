@@ -58,7 +58,7 @@ public class TransactionTaskDef extends TaskDef {
                 if (result.nok()) {
                     //let's keep it simple and not rollback the whole tree
                     for (TaskDef task : tasks) {
-                        runner.runRollback(task);
+//                        runner.runRollback(task);
                     }
                 }
 

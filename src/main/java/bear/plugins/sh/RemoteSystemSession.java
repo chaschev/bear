@@ -1,7 +1,5 @@
 package bear.plugins.sh;
 
-import bear.cli.CommandLine;
-import bear.cli.Script;
 import bear.console.AbstractConsoleCommand;
 import bear.console.ConsoleCallback;
 import bear.console.ConsoleCallbackResult;
@@ -14,13 +12,13 @@ import bear.session.SshAddress;
 import bear.session.Variables;
 import bear.task.BearException;
 import bear.task.Task;
+import bear.task.TaskResult;
 import bear.vcs.CommandLineResult;
 import bear.vcs.RemoteCommandLine;
 import chaschev.util.Exceptions;
-import com.google.common.base.Preconditions;
-import com.google.common.base.Stopwatch;
-import com.google.common.base.Strings;
+import com.google.common.base.*;
 import net.schmizz.sshj.common.IOUtils;
+import net.schmizz.sshj.connection.ConnectionException;
 import net.schmizz.sshj.connection.channel.direct.Session;
 import net.schmizz.sshj.sftp.SFTPClient;
 import net.schmizz.sshj.xfer.FileSystemFile;
@@ -70,8 +68,9 @@ class RemoteSystemSession extends SystemSession {
 
     @Override
     protected  <T extends CommandLineResult> T sendCommandImpl(
-        final AbstractConsoleCommand<T> command,
-        final ConsoleCallback userCallback) {
+        final AbstractConsoleCommand<T> command) {
+
+        final ConsoleCallback userCallback = command.getCallback();
 
         Preconditions.checkArgument(command instanceof CommandLine<?, ?>);
 
@@ -79,7 +78,7 @@ class RemoteSystemSession extends SystemSession {
 
         final int[] exitStatus = {0};
 
-        final Result[] result = {Result.ERROR};
+        final TaskResult[] result = {new TaskResult(Result.ERROR)};
 
         //1. it's also blocking
         //2. add callback
@@ -136,19 +135,36 @@ class RemoteSystemSession extends SystemSession {
                     .spawn(global.localExecutor, (int) getTimeout(command), TimeUnit.MILLISECONDS);
 
                 Stopwatch sw = Stopwatch.createStarted();
+
+                boolean wasInterrupted = false;
+                Exception error = null;
+
                 try {
                     execSshCommand.join((int) getTimeout(command), TimeUnit.MILLISECONDS);
-
-                    if(logger.isDebugEnabled()){
-                        logger.debug("join timing: {} ms, cmd: {}", sw.elapsed(TimeUnit.MILLISECONDS), command.asText(false));
-                    }
 
                     if(!remoteConsole.awaitStreamCopiers(20, TimeUnit.MILLISECONDS)){
     //                            logger.debug("WAAARN, NOT ALL FINISHED!!!");
                         remoteConsole.stopStreamCopiers();
     //                            logger.debug("stopStreamCopiers timing: {}", sw.elapsed(TimeUnit.MILLISECONDS));
                     }
-                } finally {
+
+                    if(logger.isDebugEnabled()){
+                        logger.debug("join timing: {} ms, cmd: {}", sw.elapsed(TimeUnit.MILLISECONDS), command.asText(false));
+                    }
+                } catch (ConnectionException e){
+                    if(logger.isDebugEnabled()){
+                        logger.debug("(exception) join timing: {} ms, cmd: {}, ex: {}", sw.elapsed(TimeUnit.MILLISECONDS), command.asText(false),
+                            Throwables.getStackTraceAsString(e));
+                    }
+                    // can be interrupted by self:
+                    // callback returns done|exception
+                    //
+                    error = e;
+                    if(Throwables.getRootCause(e) instanceof InterruptedException){
+                        wasInterrupted = true;
+                    }
+                }
+                finally {
                     if(!remoteConsole.allFinished()){
                         remoteConsole.stopStreamCopiers();
                     }
@@ -167,14 +183,24 @@ class RemoteSystemSession extends SystemSession {
                 exitStatus[0] = code == null ? 0 : code;
 
                 if (exitStatus[0] == 0) {
-                    result[0] = Result.OK;
+                    result[0].setResult(Result.OK);
                 }
+
+                if(error != null){
+                    result[0].setException(error);
+                }
+
+                Optional<ConsoleCallbackResult> lastCallbackError = remoteConsole.getLastError();
+
+                if(lastCallbackError.isPresent()){
+                    result[0].setException(new Exception("last callback error: " + lastCallbackError.get().object));
+                }
+
+//                logger.debug("OOOOOOOOOOOOPS, error in sendImpl: {}", lastCallbackError);
 
                 text = remoteConsole.concatOutputs().toString().trim();
 
                 logger.debug("response: {}", text);
-
-                remotePlugin.sudo = false;
             }
         };
 
@@ -184,7 +210,12 @@ class RemoteSystemSession extends SystemSession {
 
 //                System.out.println("WITH_TEXT!!!! '" + withSession.text+"'");
 
-        t.setResult(Result.and(result[0]));
+
+        t.setResult(Result.and(t.getResult(), result[0].getResult()));
+
+        if(result[0].exception.isPresent()){
+            t.setException(result[0].exception.get());
+        }
 
         return t;
 
@@ -308,7 +339,11 @@ class RemoteSystemSession extends SystemSession {
 
         line.a(dest);
 
-        CommandLineResult run = line.build().run(SystemEnvironmentPlugin.sshPassword($));
+        if(line.getCallback() == null){
+            line.setCallback(SystemEnvironmentPlugin.sshPassword($));
+        }
+
+        CommandLineResult run = line.build().run();
 
         return run.getResult();
     }
@@ -344,10 +379,11 @@ class RemoteSystemSession extends SystemSession {
         if (owner == null) {
             return sendCommand(line).getResult();
         } else {
-            sudo().sendCommand(line);
+            //todo sudo
+            sendCommand(line);
         }
 
-        return sudo().chown(owner, true, dest);
+        return chown(owner, true, dest);
     }
 
     @Override
@@ -368,7 +404,7 @@ class RemoteSystemSession extends SystemSession {
     public Result chmod(String octal, boolean recursive, String... files) {
         final CommandLine<CommandLineResult, ?> line = newCommandLine();
 
-        line.a("chmod");
+        line.sudo(true).addRaw("chmod");
         if (recursive) line.a("-R");
         line.a(octal);
         line.a(files);
@@ -422,7 +458,7 @@ class RemoteSystemSession extends SystemSession {
                 line.addRaw(" && chmod " + input.permissions.get() +" ").a(input.path);
             }
 
-            CommandLineResult run = run(script, SystemEnvironmentPlugin.println($.var(getBear().sshPassword)));
+            CommandLineResult run = run(script.callback(SystemEnvironmentPlugin.println($.var(getBear().sshPassword))));
 
             return run.getResult();
         } catch (IOException e) {
@@ -466,16 +502,23 @@ class RemoteSystemSession extends SystemSession {
     }
 
     @Override
-    public Result rmCd(@Nonnull String dir, String... paths) {
-        return sendCommand(rmLine(dir, line(), paths)).getResult();
-    }
+    public CommandLine rmLineImpl(RmInput rm, CommandLine line) {
+        rm.validate();
 
-    @Override
-    public CommandLine rmLineImpl(@Nullable String dir, CommandLine line, String... paths) {
-        if (dir != null) {
-            line.cd(dir);
+        if (rm.cd != null) {
+            line.cd(rm.cd);
         }
-        return line.a("rm", "-rf").a(paths);
+
+        if(rm.sudo && rm.callback == null){
+            rm.callback = $.sshCallback();
+        }
+
+        if(rm.callback != null){
+            line.sudoOrStty(rm.sudo);
+            line.setCallback(rm.callback);
+        }
+
+        return line.addRaw("rm").a(rm.recursive ? rm.force ? "-rf" : "-r" : "-f" ).a(rm.paths);
     }
 
     @Override

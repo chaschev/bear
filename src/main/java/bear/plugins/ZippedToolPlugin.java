@@ -16,18 +16,17 @@
 
 package bear.plugins;
 
-import bear.cli.Script;
-import bear.console.ConsoleCallback;
 import bear.core.GlobalContext;
 import bear.core.SessionContext;
 import bear.plugins.java.JavaPlugin;
-import bear.plugins.sh.SystemEnvironmentPlugin;
+import bear.plugins.sh.Script;
 import bear.session.DynamicVariable;
 import bear.task.*;
 import bear.vcs.CommandLineResult;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
 
+import static bear.plugins.sh.RmInput.newRm;
 import static bear.session.Variables.*;
 import static chaschev.lang.Predicates2.contains;
 import static com.google.common.base.Predicates.or;
@@ -108,7 +107,7 @@ public abstract class ZippedToolPlugin extends Plugin<Task, TaskDef<?>> {
         }
 
         protected void clean(){
-            $.sys.rm($(buildPath));
+            $.sys.rm(newRm($(buildPath)));
             $.sys.mkdirs($(buildPath));
         }
 
@@ -171,33 +170,29 @@ public abstract class ZippedToolPlugin extends Plugin<Task, TaskDef<?>> {
 
             script = $.sys.script();
 
-            $.sys.addRmLine(script.line().sudo(), $(homePath), $(currentVersionPath));
-//            $.sys.addRmToLine(script.line().sudo(), $(homeVersionPath));
+            $.sys.addRmLine(script, newRm($(homePath), $(currentVersionPath)).sudo());
 
             script
                 .line().sudo().addRaw("mkdir -p %s", $(homePath)).build()
                 .line().sudo().addRaw("mv %s %s", $(buildPath) + "/" + $(versionName) + "/*", $(homePath)).build()
                 .line().sudo().addRaw("ln -s %s %s", $(homePath), $(currentVersionPath)).build()
                 .line().sudo().addRaw("chmod -R g+r,o+r %s", $(homeParentPath)).build()
-                .line().sudo().addRaw("chmod u+x,g+x,o+x %s/bin/*", $(homeParentPath)).build();
+                .line().sudo().addRaw("chmod u+x,g+x,o+x %s/bin/*", $(homeParentPath)).build()
+                .callback($.sshCallback());
 
-            script.run(sshCallback());
+            script.run();
 
             return script;
-        }
-
-        private ConsoleCallback sshCallback() {
-            return SystemEnvironmentPlugin.println($.var(bear.sshPassword));
         }
 
         protected void shortCut(String newCommandName, String sourceExecutableName){
             Script script = $.sys.script();
 
-            $.sys.addRmLine(script.line().sudo(), "/usr/bin/" + newCommandName);
+            $.sys.addRmLine(script, newRm("/usr/bin/" + newCommandName).sudo());
 
             script
                 .line().sudo().addRaw("ln -s %s/%s /usr/bin/%s", $(currentVersionPath), sourceExecutableName, newCommandName).build()
-                .run(sshCallback());
+                .run();
         }
 
 

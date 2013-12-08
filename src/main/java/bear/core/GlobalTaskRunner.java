@@ -14,11 +14,15 @@ import bear.session.Variables;
 import bear.task.*;
 import chaschev.util.Exceptions;
 import com.google.common.base.Function;
+import com.google.common.base.Throwables;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -55,93 +59,118 @@ public class GlobalTaskRunner {
             .defaultTo(new Stats($s.size(), TaskDef.EMPTY));
 
 
-        List<Phase<TaskResult, BearScriptPhase>> phaseList = Lists.newArrayList(Lists.transform(taskDefs, new Function<TaskDef, Phase<TaskResult, BearScriptPhase>>() {
+        List<List<Phase<TaskResult, BearScriptPhase>>> notFlatList = Lists.transform(taskDefs, new Function<TaskDef<Task>, List<Phase<TaskResult, BearScriptPhase>>>() {
             @Override
-            public Phase<TaskResult, BearScriptPhase> apply(final TaskDef taskDef) {
-                return new Phase<TaskResult, BearScriptPhase>(new BearScriptPhase(taskDef, null, createGroupDivider($s)), new Function<Integer, PhaseCallable<SessionContext, TaskResult, BearScriptPhase>>() {
-                    @Override
-                    public PhaseCallable<SessionContext, TaskResult, BearScriptPhase> apply(Integer partyIndex) {
-                        final SessionContext $ = $s.get(partyIndex);
+            public List<Phase<TaskResult, BearScriptPhase>> apply(final TaskDef<Task> taskDef) {
+                List<TaskDef<Task>> listOfDefs;
 
-                        return new PhaseCallable<SessionContext, TaskResult, BearScriptPhase>() {
-                            @Override
-                            public TaskResult call(final PhaseParty<SessionContext, BearScriptPhase> party, int phaseIndex, final Phase<?, BearScriptPhase> phase) throws Exception {
-                                TaskResult result = TaskResult.OK;
+                if (taskDef.isMultitask()) {
+                    listOfDefs = taskDef.asList();
+                } else {
+                    listOfDefs = Collections.singletonList(taskDef);
+                }
 
-                                try {
-                                    ui.info(new NewPhaseConsoleEventToUI($.getName(), $.id, phase.getPhase().id));
+                List<Phase<TaskResult, BearScriptPhase>> subPhases = new ArrayList<Phase<TaskResult, BearScriptPhase>>();
 
-                                    $.setThread(Thread.currentThread());
+                //for multitasks verifications are applied only for the first task
+                boolean isFirstCallable = true;
 
-                                    $.whenPhaseStarts(phase.getPhase(), shellContext);
+                for (final TaskDef<Task> def : listOfDefs) {
 
-                                    if ($.var($.bear.verifyPlugins)) {
-                                        DependencyResult r = new DependencyResult(Result.OK);
+                    final boolean isFirstCallableFinal = isFirstCallable;
 
-                                        for (Plugin<Task, TaskDef<?>> plugin : global.getGlobalPlugins()) {
-                                            r.join(plugin.checkPluginDependencies());
+                    subPhases.add(new Phase<TaskResult, BearScriptPhase>(new BearScriptPhase(taskDef, null, createGroupDivider($s)), new Function<Integer, PhaseCallable<SessionContext, TaskResult, BearScriptPhase>>() {
+                        @Override
+                        public PhaseCallable<SessionContext, TaskResult, BearScriptPhase> apply(Integer partyIndex) {
+                            final SessionContext $ = $s.get(partyIndex);
 
-                                            if (!taskDef.isSetupTask()) {
-                                                Dependency dependency = plugin.getInstall()
-                                                    .singleTask()
-                                                    .createNewSession($, $.currentTask)
-                                                    .asInstalledDependency();
+                            return new PhaseCallable<SessionContext, TaskResult, BearScriptPhase>() {
+                                @Override
+                                public TaskResult call(final PhaseParty<SessionContext, BearScriptPhase> party, int phaseIndex, final Phase<?, BearScriptPhase> phase) throws Exception {
 
-                                                result = $.runner.runSession(dependency);
+                                    TaskResult result = TaskResult.OK;
 
-                                                r.join((DependencyResult) result);
+                                    try {
+                                        ui.info(new NewPhaseConsoleEventToUI($.getName(), $.id, phase.getPhase().id));
+
+                                        $.setThread(Thread.currentThread());
+
+                                        $.whenPhaseStarts(phase.getPhase(), shellContext);
+
+                                        if (isFirstCallableFinal && $.var($.bear.verifyPlugins)) {
+                                            DependencyResult r = new DependencyResult(Result.OK);
+
+                                            for (Plugin<Task, TaskDef<?>> plugin : global.getGlobalPlugins()) {
+                                                r.join(plugin.checkPluginDependencies());
+
+                                                if (!taskDef.isSetupTask()) {
+                                                    Dependency dependency = plugin.getInstall()
+                                                        .singleTask()
+                                                        .createNewSession($, $.currentTask)
+                                                        .asInstalledDependency();
+
+                                                    result = $.runner.runSession(dependency);
+
+                                                    r.join((DependencyResult) result);
+                                                }
+                                            }
+
+                                            if (r.nok()) {
+                                                throw PartyResultException.create(r, party, phase.getName());
                                             }
                                         }
 
-                                        if (r.nok()) {
-                                            throw PartyResultException.create(r, party, phase.getName());
+                                        $.runner.taskPreRun = new Function<Task<TaskDef>, Task<TaskDef>>() {
+                                            @Override
+                                            public Task<TaskDef> apply(Task<TaskDef> task) {
+                                                task.init(phase, party, party.grid, GlobalTaskRunner.this);
+
+                                                return task;
+                                            }
+                                        };
+
+                                        result = $.run(def);
+
+                                        if (!result.ok()) {
+                                            throw PartyResultException.create(result, party, phase.getName());
                                         }
-                                    }
 
-                                    $.runner.taskPreRun = new Function<Task<TaskDef>, Task<TaskDef>>() {
-                                        @Override
-                                        public Task<TaskDef> apply(Task<TaskDef> task) {
-                                            task.init(phase, party, party.grid, GlobalTaskRunner.this);
-
-                                            return task;
-                                        }
-                                    };
-
-                                    result = $.run(taskDef);
-
-                                    if (!result.ok()) {
-                                        throw PartyResultException.create(result, party, phase.getName());
-                                    }
-
-                                    return result;
-                                } catch (PartyResultException e) {
-                                    throw e;
-                                } catch (Throwable e) {
-                                    Cli.logger.warn("", e);
-                                    result = new TaskResult(e);
-
-                                    $.executionContext.rootExecutionContext.getDefaultValue().taskResult = result;
-
-                                    throw Exceptions.runtime(e);
-                                } finally {
-                                    try {
-                                        long duration = System.currentTimeMillis() - phase.getPhase().startedAtMs;
-                                        phase.getPhase().addArrival($, duration, result);
-                                        $.executionContext.rootExecutionContext.fireExternalModification();
-
-                                        Cli.ui.info(new PhasePartyFinishedEventToUI($.getName(), duration, result));
-
-                                        $.whenSessionComplete(GlobalTaskRunner.this);
-                                    } catch (Exception e) {
+                                        return result;
+                                    } catch (PartyResultException e) {
+                                        throw e;
+                                    } catch (Throwable e) {
                                         Cli.logger.warn("", e);
+                                        result = new TaskResult(e);
+
+                                        $.executionContext.rootExecutionContext.getDefaultValue().taskResult = result;
+
+                                        throw Exceptions.runtime(e);
+                                    } finally {
+                                        try {
+                                            long duration = System.currentTimeMillis() - phase.getPhase().startedAtMs;
+                                            phase.getPhase().addArrival($, duration, result);
+                                            $.executionContext.rootExecutionContext.fireExternalModification();
+
+                                            Cli.ui.info(new PhasePartyFinishedEventToUI($.getName(), duration, result));
+
+                                            $.whenSessionComplete(GlobalTaskRunner.this);
+                                        } catch (Exception e) {
+                                            Cli.logger.warn("", e);
+                                        }
                                     }
                                 }
-                            }
-                        };
-                    }
-                });
+                            };
+                        }
+                    }));
+
+                    isFirstCallable = false;
+                }
+
+                return subPhases;
             }
-        }));
+        });
+
+        List<Phase<TaskResult, BearScriptPhase>> phaseList = Lists.newArrayList(Iterables.concat(notFlatList));
 
         stats.addListener(new DynamicVariable.ChangeListener<Stats>() {
             @Override
@@ -170,7 +199,7 @@ public class GlobalTaskRunner {
                 if(party.failed()){
                     SessionContext.ui.error(new NoticeEventToUI(
                         party.getColumn().getName() +
-                            ": Party Failed", "Phase " + name + "(" + party.getException().getCause().toString() + ")"));
+                            ": Party Failed", "Phase " + name + "(" + Throwables.getRootCause(party.getException()).toString() + ")"));
                 }else{
                     SessionContext.ui.fatal(new NoticeEventToUI(
                         party.getColumn().getName(), "Party Finished"));

@@ -1,8 +1,6 @@
-package bear.cli;
+package bear.plugins.sh;
 
-import bear.console.ConsoleCallback;
 import bear.core.SessionContext;
-import bear.plugins.sh.SystemSession;
 import bear.vcs.CommandLineResult;
 import bear.vcs.VCSScript;
 import bear.vcs.VCSSession;
@@ -18,10 +16,6 @@ public class StubScript<T extends CommandLineResult> extends VCSScript<T> {
         this.result = result;
     }
 
-    @Override
-    public T run(ConsoleCallback callback) {
-        return result;
-    }
 
     @Override
     public T parseResult(String text, SessionContext $, String script) {

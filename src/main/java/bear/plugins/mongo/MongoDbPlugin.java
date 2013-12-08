@@ -24,10 +24,10 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static bear.plugins.sh.RmInput.newRm;
 import static bear.plugins.sh.SystemEnvironmentPlugin.sshPassword;
 import static bear.session.Variables.*;
 import static bear.session.Versions.*;
-import static bear.task.TaskResult.and;
 
 /**
  * @author Andrey Chaschev chaschev@gmail.com
@@ -86,14 +86,14 @@ public class MongoDbPlugin extends Plugin {
                     }
 
                     if (serverVersion == NOT_INSTALLED) {
-                        r = and(r, $.sys.getPackageManager().installPackage($(serverPackage)));
+                        r = Tasks.and(r, $.sys.getPackageManager().installPackage($(serverPackage)));
                     }
 
                     if(clientVersion == NOT_INSTALLED){
-                        r = and(r, $.sys.getPackageManager().installPackage($(clientPackage)));
+                        r = Tasks.and(r, $.sys.getPackageManager().installPackage($(clientPackage)));
                     }
 
-                    $.sys.run($.sys.plainScript("service mongod start", true).timeoutMin(2), sshPassword($));
+                    $.sys.run($.sys.plainScript("service mongod start", true).timeoutForBuild().callback(sshPassword($)));
 
                     //TODO extract interface SystemService, ensure started: http://docs.mongodb.org/manual/tutorial/install-mongodb-on-red-hat-centos-or-fedora-linux/
 
@@ -128,7 +128,7 @@ public class MongoDbPlugin extends Plugin {
 
         CommandLineResult lineResult = $.sys.captureResult("mongo " + $.var(connectionString) + " " + tempPath, sshPassword($));
 
-        $.sys.rm(tempPath);
+        $.sys.rm(newRm(tempPath));
 
         if(lineResult.text!=null
             && lineResult.text.contains("doesn't exist")

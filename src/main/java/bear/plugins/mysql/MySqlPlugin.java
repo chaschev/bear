@@ -43,7 +43,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static bear.session.Variables.strVar;
-import static bear.task.TaskResult.and;
 
 /**
  * @author Andrey Chaschev chaschev@gmail.com
@@ -105,20 +104,20 @@ public class MySqlPlugin extends Plugin<Task, TaskDef<?>> {
                     TaskResult r = TaskResult.OK;
 
                     if (!installedVersionOk) {
-                        $.sys.sudo().sendCommand($.sys.newCommandLine().sudo().addSplit("rpm -Uvh http://mirror.webtatic.com/yum/el6/latest.rpm"));
-                        r = and(r, $.sys.getPackageManager().installPackage(new PackageInfo($(clientPackage))));
+                        $.sys.sendCommand($.sys.newCommandLine().sudo().addSplit("rpm -Uvh http://mirror.webtatic.com/yum/el6/latest.rpm"));
+                        r = Tasks.and(r, $.sys.getPackageManager().installPackage(new PackageInfo($(clientPackage))));
                     }
 
                     Version serverVersion = computeInstalledServerVersion(runner);
 
                     if (serverVersion == null) {
-                        r = and(r, $.sys.getPackageManager().installPackage(new PackageInfo($(serverPackage))));
+                        r = Tasks.and(r, $.sys.getPackageManager().installPackage(new PackageInfo($(serverPackage))));
                     }
 
-                    $.sys.sudo().sendCommand($.sys.newCommandLine().timeoutSec(30).sudo().addSplit("service mysqld start"));
+                    $.sys.sendCommand($.sys.newCommandLine().timeoutSec(30).sudo().addSplit("service mysqld start"));
 
-                    $.sys.sudo().sendCommand($.sys.newCommandLine().sudo().addSplit(MessageFormat.format("mysqladmin -u {0} password", $(adminUser))).addRaw("'" + $(adminPassword) + "'"));
-                    $.sys.sudo().sendCommand($.sys.newCommandLine().sudo().addSplit(MessageFormat.format("mysqladmin -u {0} -h {1} password",
+                    $.sys.sendCommand($.sys.newCommandLine().sudo().addSplit(MessageFormat.format("mysqladmin -u {0} password", $(adminUser))).addRaw("'" + $(adminPassword) + "'"));
+                    $.sys.sendCommand($.sys.newCommandLine().sudo().addSplit(MessageFormat.format("mysqladmin -u {0} -h {1} password",
                         $(adminUser), $(getBear().sessionHostname))).addRaw("'" + $(adminPassword) + "'"));
 
                     final String createDatabaseSql = MessageFormat.format(
@@ -129,7 +128,7 @@ public class MySqlPlugin extends Plugin<Task, TaskDef<?>> {
                         $(password)
                     );
 
-                    r = and(r, runScript(runner, createDatabaseSql,
+                    r = Tasks.and(r, runScript(runner, createDatabaseSql,
                         $(adminUser),
                         $(adminPassword)
                     ));
@@ -219,7 +218,7 @@ public class MySqlPlugin extends Plugin<Task, TaskDef<?>> {
                         .pipe()
                         .addSplit("bzip2 --best")
                         .redirectTo($(dumpPath))
-                        , mysqlPasswordCallback($(password)));
+                    );
 
                     return TaskResult.OK;
                 }
@@ -254,8 +253,8 @@ public class MySqlPlugin extends Plugin<Task, TaskDef<?>> {
                     return $.sys.sendCommand($.sys.line()
                         .addSplit(String.format("bzcat %s", $(dumpPath)))
                         .pipe()
-                        .addSplit(String.format("mysql --user=%s -p %s", $(user), $(dbName))),
-                        mysqlPasswordCallback($(password)));
+                        .addSplit(String.format("mysql --user=%s -p %s", $(user), $(dbName)))
+                    );
                 }
             };
         }
@@ -272,7 +271,7 @@ public class MySqlPlugin extends Plugin<Task, TaskDef<?>> {
         final SystemSession sys = runner.$().sys;
         sys.writeString(filePath, sql);
 
-        return sys.sendCommand(sys.newCommandLine().stty().a("mysql", "-u", user, "-p").redirectFrom(filePath), mysqlPasswordCallback(pw));
+        return sys.sendCommand(sys.newCommandLine().stty().a("mysql", "-u", user, "-p").redirectFrom(filePath));
     }
 
     private static ConsoleCallback mysqlPasswordCallback(final String pw) {
