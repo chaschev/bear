@@ -1,10 +1,7 @@
 package bear.console;
 
 import chaschev.lang.Lists2;
-import com.google.common.base.Function;
-import com.google.common.base.Optional;
-import com.google.common.base.Predicate;
-import com.google.common.base.Predicates;
+import com.google.common.base.*;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 
@@ -46,20 +43,26 @@ public class GroupDivider<ENTRY> {
 
     protected double thresholdDistancePct = 5;
 
-    public GroupDivider(List<ENTRY> entries, Function<ENTRY, String> groupById, Function<ENTRY, String> entryId, Function<ENTRY, String> entryAsText) {
-        this.entries = entries;
+    public GroupDivider(Function<ENTRY, String> groupById, Function<ENTRY, String> entryId, Function<ENTRY, String> entryAsText) {
         this.groupById = groupById;
-        convertedEntries = new String[entries.size()];
-        arrivedEntries = Lists2.newFilledArrayList(entries.size(), null);
         this.entryId = entryId;
         this.entryAsText = entryAsText;
     }
 
+    public void init(List<ENTRY> entries) {
+        this.entries = entries;
+
+        convertedEntries = new String[entries.size()];
+        arrivedEntries = Lists2.newFilledArrayList(entries.size(), null);
+    }
+
     public GroupDivider(List<ENTRY> entries, Function<ENTRY, String> entryId, Function<ENTRY, String> entryAsText) {
-        this(entries, entryId, entryId, entryAsText);
+        this(entryId, entryId, entryAsText);
     }
 
     public void addArrival(int i, ENTRY entry) {
+        Preconditions.checkNotNull(entries, "GroupDivider not initialized, call init()");
+
         arrivedEntries.set(i, new ArrivedEntry<ENTRY>(entryId.apply(entry), entry));
 
         if(entry == null){

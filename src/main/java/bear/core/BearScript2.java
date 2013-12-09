@@ -424,14 +424,6 @@ public class BearScript2 {
         ShellSessionContext() {
 
         }
-
-        public String getPhaseId() {
-            return phaseId;
-        }
-
-        public void newTaskId() {
-            phaseId = SessionContext.randomId();
-        }
     }
 
     /**
@@ -470,7 +462,11 @@ public class BearScript2 {
 
         List<SessionContext> $s = preparationResult.getSessions();
 
-        GlobalTaskRunner globalTaskRunner = new GlobalTaskRunner(global, taskList, preparationResult, shellContext);
+        GridBuilder gridBuilder = new GridBuilder().addAll(taskList);
+
+        GlobalTaskRunner globalTaskRunner = new GlobalTaskRunner(global, gridBuilder.build(), preparationResult, shellContext);
+
+        gridBuilder.injectGlobalRunner(globalTaskRunner);
 
         bearFX.sendMessageToUI(new RMIEventToUI("terminals", "onScriptStart", getHosts($s)));
 

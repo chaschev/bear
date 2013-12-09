@@ -1,28 +1,24 @@
 package bear.core;
 
 import bear.console.GroupDivider;
-import bear.context.Cli;
-import bear.main.event.*;
+import bear.main.event.GlobalStatusEventToUI;
+import bear.main.event.NewPhaseConsoleEventToUI;
+import bear.main.event.NoticeEventToUI;
+import bear.main.event.TaskConsoleEventToUI;
 import bear.main.phaser.ComputingGrid;
 import bear.main.phaser.Phase;
-import bear.main.phaser.PhaseCallable;
 import bear.main.phaser.PhaseParty;
-import bear.plugins.Plugin;
 import bear.session.DynamicVariable;
-import bear.session.Result;
 import bear.session.Variables;
-import bear.task.*;
-import chaschev.util.Exceptions;
+import bear.task.Task;
+import bear.task.TaskDef;
+import bear.task.TaskResult;
 import com.google.common.base.Function;
 import com.google.common.base.Throwables;
-import com.google.common.collect.Iterables;
-import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -44,134 +40,20 @@ public class GlobalTaskRunner {
 
     private final long startedAtMs = System.currentTimeMillis();
     private final GlobalContext global;
+    private final BearScript2.ShellSessionContext shellContext;
 
     public final DynamicVariable<Stats> stats;
     public final DynamicVariable<AtomicInteger> arrivedCount = Variables.newVar(new AtomicInteger(0));
 
-    public GlobalTaskRunner(final GlobalContext global, List<TaskDef<Task>> taskDefs, final PreparationResult preparationResult, final BearScript2.ShellSessionContext shellContext) {
+    public GlobalTaskRunner(final GlobalContext global, List<Phase<TaskResult, BearScriptPhase>> phaseList, final PreparationResult preparationResult, final BearScript2.ShellSessionContext shellContext) {
         this.global = global;
+        this.shellContext = shellContext;
         this.bear = global.bear;
-        this.taskDefs = taskDefs;
         this.$s = preparationResult.getSessions();
         this.bearSettings = preparationResult.bearSettings;
 
         stats = Variables.dynamic(Stats.class)
             .defaultTo(new Stats($s.size(), TaskDef.EMPTY));
-
-
-        List<List<Phase<TaskResult, BearScriptPhase>>> notFlatList = Lists.transform(taskDefs, new Function<TaskDef<Task>, List<Phase<TaskResult, BearScriptPhase>>>() {
-            @Override
-            public List<Phase<TaskResult, BearScriptPhase>> apply(final TaskDef<Task> taskDef) {
-                List<TaskDef<Task>> listOfDefs;
-
-                if (taskDef.isMultitask()) {
-                    listOfDefs = taskDef.asList();
-                } else {
-                    listOfDefs = Collections.singletonList(taskDef);
-                }
-
-                List<Phase<TaskResult, BearScriptPhase>> subPhases = new ArrayList<Phase<TaskResult, BearScriptPhase>>();
-
-                //for multitasks verifications are applied only for the first task
-                boolean isFirstCallable = true;
-
-                for (final TaskDef<Task> def : listOfDefs) {
-
-                    final boolean isFirstCallableFinal = isFirstCallable;
-
-                    subPhases.add(new Phase<TaskResult, BearScriptPhase>(new BearScriptPhase(taskDef, null, createGroupDivider($s)), new Function<Integer, PhaseCallable<SessionContext, TaskResult, BearScriptPhase>>() {
-                        @Override
-                        public PhaseCallable<SessionContext, TaskResult, BearScriptPhase> apply(Integer partyIndex) {
-                            final SessionContext $ = $s.get(partyIndex);
-
-                            return new PhaseCallable<SessionContext, TaskResult, BearScriptPhase>() {
-                                @Override
-                                public TaskResult call(final PhaseParty<SessionContext, BearScriptPhase> party, int phaseIndex, final Phase<?, BearScriptPhase> phase) throws Exception {
-
-                                    TaskResult result = TaskResult.OK;
-
-                                    try {
-                                        ui.info(new NewPhaseConsoleEventToUI($.getName(), $.id, phase.getPhase().id));
-
-                                        $.setThread(Thread.currentThread());
-
-                                        $.whenPhaseStarts(phase.getPhase(), shellContext);
-
-                                        if (isFirstCallableFinal && $.var($.bear.verifyPlugins)) {
-                                            DependencyResult r = new DependencyResult(Result.OK);
-
-                                            for (Plugin<Task, TaskDef<?>> plugin : global.getGlobalPlugins()) {
-                                                r.join(plugin.checkPluginDependencies());
-
-                                                if (!taskDef.isSetupTask()) {
-                                                    InstallationTaskDef<? extends InstallationTask> installTask = plugin.getInstall();
-                                                    Dependency dependency = installTask
-                                                        .singleTaskSupplier()
-                                                        .createNewSession($, $.currentTask, (TaskDef) installTask)
-                                                        .asInstalledDependency();
-
-                                                    result = $.runner.runSession(dependency);
-
-                                                    r.join((DependencyResult) result);
-                                                }
-                                            }
-
-                                            if (r.nok()) {
-                                                throw PartyResultException.create(r, party, phase.getName());
-                                            }
-                                        }
-
-                                        $.runner.taskPreRun = new Function<Task<TaskDef>, Task<TaskDef>>() {
-                                            @Override
-                                            public Task<TaskDef> apply(Task<TaskDef> task) {
-                                                task.init(phase, party, party.grid, GlobalTaskRunner.this);
-
-                                                return task;
-                                            }
-                                        };
-
-                                        result = $.run(def);
-
-                                        if (!result.ok()) {
-                                            throw PartyResultException.create(result, party, phase.getName());
-                                        }
-
-                                        return result;
-                                    } catch (PartyResultException e) {
-                                        throw e;
-                                    } catch (Throwable e) {
-                                        Cli.logger.warn("", e);
-                                        result = new TaskResult(e);
-
-                                        $.executionContext.rootExecutionContext.getDefaultValue().taskResult = result;
-
-                                        throw Exceptions.runtime(e);
-                                    } finally {
-                                        try {
-                                            long duration = System.currentTimeMillis() - phase.getPhase().startedAtMs;
-                                            phase.getPhase().addArrival($, duration, result);
-                                            $.executionContext.rootExecutionContext.fireExternalModification();
-
-                                            Cli.ui.info(new PhasePartyFinishedEventToUI($.getName(), duration, result));
-
-                                            $.whenSessionComplete(GlobalTaskRunner.this);
-                                        } catch (Exception e) {
-                                            Cli.logger.warn("", e);
-                                        }
-                                    }
-                                }
-                            };
-                        }
-                    }));
-
-                    isFirstCallable = false;
-                }
-
-                return subPhases;
-            }
-        });
-
-        List<Phase<TaskResult, BearScriptPhase>> phaseList = Lists.newArrayList(Iterables.concat(notFlatList));
 
         stats.addListener(new DynamicVariable.ChangeListener<Stats>() {
             @Override
@@ -220,8 +102,8 @@ public class GlobalTaskRunner {
         });
     }
 
-    private static GroupDivider<SessionContext> createGroupDivider(List<SessionContext> $s) {
-        return new GroupDivider<SessionContext>($s, Stage.SESSION_ID, new Function<SessionContext, String>() {
+    static GroupDivider<SessionContext> createGroupDivider() {
+        return new GroupDivider<SessionContext>(Stage.SESSION_ID, new Function<SessionContext, String>() {
             public String apply(SessionContext $) {
                 DynamicVariable<Task> task = $.getExecutionContext().currentTask;
                 return task.isUndefined() ? null : task.getDefaultValue().getId();
@@ -299,5 +181,9 @@ public class GlobalTaskRunner {
 
     public IBearSettings getBearSettings() {
         return bearSettings;
+    }
+
+    public BearScript2.ShellSessionContext getShellContext() {
+        return shellContext;
     }
 }

@@ -8,6 +8,7 @@ import bear.task.Task;
 import bear.task.TaskDef;
 import bear.task.TaskResult;
 import chaschev.util.CatchyCallable;
+import com.google.common.base.Preconditions;
 
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -28,11 +29,11 @@ public class BearScriptPhase {
 
     BearFX bearFX;
 
-    GroupDivider<SessionContext> groupDivider;
+    final GroupDivider<SessionContext> groupDivider;
 
     public final long startedAtMs = System.currentTimeMillis();
 
-    final int partiesCount;
+    int partiesCount = -1;
 
     public int partiesPending;
     public int partiesFailed = 0;
@@ -40,8 +41,12 @@ public class BearScriptPhase {
     public BearScriptPhase(TaskDef<Task> taskDef, BearFX bearFX, GroupDivider<SessionContext> groupDivider) {
         this.taskDef = taskDef;
         this.bearFX = bearFX;
-        this.partiesCount = groupDivider.getEntries().size();
         this.groupDivider = groupDivider;
+    }
+
+    public void init(List<SessionContext> $s){
+        groupDivider.init($s);
+        this.partiesCount = $s.size();
     }
 
     public String getName() {
@@ -53,6 +58,8 @@ public class BearScriptPhase {
     }
 
     public void addArrival(final SessionContext $, final long duration, TaskResult result) {
+        Preconditions.checkArgument(partiesCount != -1, "BearScriptPhase is not initialized");
+
         groupDivider.addArrival($);
 
         if (result.ok()) {
