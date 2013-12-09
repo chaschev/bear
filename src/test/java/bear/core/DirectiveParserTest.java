@@ -30,9 +30,9 @@ public class DirectiveParserTest {
         assertThat(d1.params).contains(entry("value", "val"));
         assertThat(d2.params).contains(entry("groovy", "expression"));
 
-        assertThat(new BearScript2.ScriptItem(Optional.of("var1"), "groovy", 0).addVariable("var1", d1).variables.get().values())
+        assertThat(new ScriptItem(Optional.of("var1"), "groovy", 0).addVariable("var1", d1).variables.get().values())
             .contains(new BearScript2.ScriptSetVariable("var1", "val", null, true, false, true));
-        assertThat(new BearScript2.ScriptItem(Optional.of("var2"), "groovy", 0).addVariable("var2", d2).variables.get().values())
+        assertThat(new ScriptItem(Optional.of("var2"), "groovy", 0).addVariable("var2", d2).variables.get().values())
             .contains(new BearScript2.ScriptSetVariable("var2", null, "expression", false, false, false));
 
         assertThat(p(":ref {}").directive).isEqualTo(":ref");

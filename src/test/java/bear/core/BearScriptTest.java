@@ -22,7 +22,7 @@ public class BearScriptTest {
             ":set x='lala'\n" +
             "pwd", "initial");
 
-        List<BearScript2.ScriptItem> items = parseResult.scriptItems;
+        List<ScriptItem> items = parseResult.scriptItems;
 
         assertThat(items).hasSize(2);
         assertThat(parseResult.globalErrors).isEmpty();

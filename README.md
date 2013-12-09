@@ -11,17 +11,17 @@ Bear is in it's early development stages now. Questions, concerns? Just drop me 
 | Git, MongoDB and MySQL plugins              | Finished.      |
 | Install as services (Upstart)               | Finished.      | 
 | Play! Framework single-host deployment      | Finished.      | 
-| Play! Framework three-hosts deployment      | In progress... |
 | Parametrize deployment (use mongo or mysql) | Finished.      |
+| CLI version                                 | Finished.      |
 | Test deployment rollbacks and db dumps      | In progress... |
-| Grails/Tomcat demo deployment               |                | 
-| Node.js demo deployment                     |                | 
-| Refactoring, simplifying API                |                | 
+| Play! Framework three-hosts deployment      | In progress... |
+| Grails/Tomcat demo deployment               |                |
+| Node.js demo deployment                     |                |
+| Refactoring, simplifying API                |                |
 | Unit test coverage                          |                |
 | UI bugfixing                                |                |
 | Installer                                   |                |
-| CLI version                                 |                | 
-| Refactoring, simplifying API                |                | 
+| Refactoring, simplifying API                |                |
 
 
 

@@ -20,6 +20,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static bear.core.SessionContext.ui;
@@ -40,14 +41,18 @@ public class GlobalTaskRunner {
 
     private final long startedAtMs = System.currentTimeMillis();
     private final GlobalContext global;
-    private final BearScript2.ShellSessionContext shellContext;
+    private final BearScriptRunner.ShellSessionContext shellContext;
+
+    private final CountDownLatch finishedLatch = new CountDownLatch(1);
+
+    ComputingGrid.WhenAllFinished whenAllFinished;
 
     public final DynamicVariable<Stats> stats;
     public final DynamicVariable<AtomicInteger> arrivedCount = Variables.newVar(new AtomicInteger(0));
 
-    public GlobalTaskRunner(final GlobalContext global, List<Phase<TaskResult, BearScriptPhase>> phaseList, final PreparationResult preparationResult, final BearScript2.ShellSessionContext shellContext) {
+    public GlobalTaskRunner(final GlobalContext global, List<Phase<TaskResult, BearScriptPhase>> phaseList, final PreparationResult preparationResult) {
         this.global = global;
-        this.shellContext = shellContext;
+        this.shellContext = new BearScriptRunner.ShellSessionContext();
         this.bear = global.bear;
         this.$s = preparationResult.getSessions();
         this.bearSettings = preparationResult.bearSettings;
@@ -93,10 +98,18 @@ public class GlobalTaskRunner {
         grid.setWhenAllFinished(new ComputingGrid.WhenAllFinished() {
             @Override
             public void run(int failedParties, int okParties) {
-                if(failedParties > 0){
-                    SessionContext.ui.error(new NoticeEventToUI("All parties arrived", failedParties + " errors"));
-                }else{
-                    SessionContext.ui.fatal(new NoticeEventToUI("All parties arrived.", null));
+                try {
+                    if(failedParties > 0){
+                        SessionContext.ui.error(new NoticeEventToUI("All parties arrived", failedParties + " errors"));
+                    }else{
+                        SessionContext.ui.fatal(new NoticeEventToUI(null, "All parties arrived"));
+                    }
+
+                    if(whenAllFinished != null){
+                        whenAllFinished.run(failedParties, okParties);
+                    }
+                } finally {
+                    finishedLatch.countDown();
                 }
             }
         });
@@ -183,7 +196,16 @@ public class GlobalTaskRunner {
         return bearSettings;
     }
 
-    public BearScript2.ShellSessionContext getShellContext() {
+    public BearScriptRunner.ShellSessionContext getShellContext() {
         return shellContext;
+    }
+
+    public CountDownLatch getFinishedLatch() {
+        return finishedLatch;
+    }
+
+    public GlobalTaskRunner whenAllFinished(ComputingGrid.WhenAllFinished whenAllFinished) {
+        this.whenAllFinished = whenAllFinished;
+        return this;
     }
 }

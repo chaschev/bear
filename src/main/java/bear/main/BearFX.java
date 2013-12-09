@@ -101,15 +101,41 @@ public class BearFX {
         }
     }
 
-    public Object call(String delegate, String method) { return facade.call(delegate, method); }
-    public Object call(String delegate, String method, Object p1) { return facade.call(delegate, method, p1); }
-    public Object call(String delegate, String method, Object p1, Object p2) { return facade.call(delegate, method, p1, p2); }
-    public Object call(String delegate, String method, Object p1, Object p2, Object p3) { return facade.call(delegate, method, p1, p2,p3); }
-    public Object call(String delegate, String method, Object p1, Object p2, Object p3, Object p4) { return facade.call(delegate, method, p1, p2,p3,p4); }
-    public Object call(String delegate, String method, Object p1, Object p2, Object p3, Object p4, Object p5) { return facade.call(delegate, method, p1, p2,p3,p4,p5); }
-    public Object call(String delegate, String method, Object p1, Object p2, Object p3, Object p4, Object p5, Object p6) { return facade.call(delegate, method, p1, p2,p3,p4,p5,p6); }
-    public Object call(String delegate, String method, Object p1, Object p2, Object p3, Object p4, Object p5, Object p6, Object p7) { return facade.call(delegate, method, p1, p2,p3,p4,p5,p6,p7); }
-    public Object call(String delegate, String method, Object p1, Object p2, Object p3, Object p4, Object p5, Object p6, Object p7, Object p8) { return facade.call(delegate, method, p1, p2,p3,p4,p5,p6,p7,p8); }
+    public Object call(String delegate, String method) {
+        return facade.call(delegate, method);
+    }
+
+    public Object call(String delegate, String method, Object p1) {
+        return facade.call(delegate, method, p1);
+    }
+
+    public Object call(String delegate, String method, Object p1, Object p2) {
+        return facade.call(delegate, method, p1, p2);
+    }
+
+    public Object call(String delegate, String method, Object p1, Object p2, Object p3) {
+        return facade.call(delegate, method, p1, p2, p3);
+    }
+
+    public Object call(String delegate, String method, Object p1, Object p2, Object p3, Object p4) {
+        return facade.call(delegate, method, p1, p2, p3, p4);
+    }
+
+    public Object call(String delegate, String method, Object p1, Object p2, Object p3, Object p4, Object p5) {
+        return facade.call(delegate, method, p1, p2, p3, p4, p5);
+    }
+
+    public Object call(String delegate, String method, Object p1, Object p2, Object p3, Object p4, Object p5, Object p6) {
+        return facade.call(delegate, method, p1, p2, p3, p4, p5, p6);
+    }
+
+    public Object call(String delegate, String method, Object p1, Object p2, Object p3, Object p4, Object p5, Object p6, Object p7) {
+        return facade.call(delegate, method, p1, p2, p3, p4, p5, p6, p7);
+    }
+
+    public Object call(String delegate, String method, Object p1, Object p2, Object p3, Object p4, Object p5, Object p6, Object p7, Object p8) {
+        return facade.call(delegate, method, p1, p2, p3, p4, p5, p6, p7, p8);
+    }
 
     public BearFX(BearFXApp bearFXApp, FXConf conf, Properties bearProperties) {
         this.bearFXApp = bearFXApp;
@@ -127,40 +153,18 @@ public class BearFX {
         Bindings bindings = new Bindings();
         Stage stage;
 
-        public void sendMessageToUI(EventToUI eventToUI){
-            if (eventToUI instanceof EventWithId) {
-                String id = ((EventWithId) eventToUI).getId();
-                Preconditions.checkNotNull(id, "id is null for %s", eventToUI);
-            }
-
-            final String s = mapper.toJSON(eventToUI);
-
-            logger.debug("sending to ui: {}", s);
-
-            Platform.runLater(new Runnable() {
-                @Override
-                public void run() {
-                    webEngine.executeScript("Java.receiveEvent(" + s + ")");
-                }
-            });
-        }
-
-        public void runLater(Runnable runnable){
-            Platform.runLater(runnable);
-        }
-
         @Override
         public void start(Stage stage) throws Exception {
             try {
                 Properties properties = new Properties();
                 properties.load(new FileInputStream(".bear/bear-fx.properties"));
 
-                FXConf configurator = new FXConf(
+                FXConf fxConf = new FXConf(
                     "-VfXConf.settingsFile=" + properties.get("bear-fx.settings"),
                     "-VfXConf.propertiesFile=" + properties.get("bear-fx.properties")
                 );
 
-                configurator.bearFX = bearFX = new BearFX(this, configurator, properties);
+                fxConf.bearFX = bearFX = new BearFX(this, fxConf, properties);
                 this.stage = stage;
 
                 stage.initStyle(StageStyle.UNDECORATED);
@@ -184,7 +188,7 @@ public class BearFX {
                 addLog4jAppender("root", fxAppInfo, null, null);
                 addLog4jAppender("fx", fxAppDebug, null, null);
 
-                configurator.configure();
+                fxConf.configure();
 
                 final WebView webView = new WebView();
                 webEngine = webView.getEngine();
@@ -208,39 +212,61 @@ public class BearFX {
                     }
                 });
 
-    webEngine.getLoadWorker().stateProperty().addListener(new ChangeListener<Worker.State>() {
-        @Override
-        public void changed(ObservableValue<? extends Worker.State> ov, Worker.State t, Worker.State t1) {
-            logger.debug("[JAVA INIT] setting...");
+                webEngine.getLoadWorker().stateProperty().addListener(new ChangeListener<Worker.State>() {
+                    @Override
+                    public void changed(ObservableValue<? extends Worker.State> ov, Worker.State t, Worker.State t1) {
+                        logger.debug("[JAVA INIT] setting...");
 
-            if (t1 == Worker.State.SUCCEEDED) {
-                JSObject window = (JSObject) webEngine.executeScript("window");
+                        if (t1 == Worker.State.SUCCEEDED) {
+                            JSObject window = (JSObject) webEngine.executeScript("window");
 
-                window.setMember("bearFX", bearFX);
-                window.setMember("OpenBean", OpenBean.INSTANCE);
-                window.setMember("Bindings", bindings);
+                            window.setMember("bearFX", bearFX);
+                            window.setMember("OpenBean", OpenBean.INSTANCE);
+                            window.setMember("Bindings", bindings);
 
-                logger.debug("[JAVA INIT] calling bindings JS initializer...");
-                webEngine.executeScript("Java.init(window);");
-                logger.debug("[JAVA INIT] calling app JS initializer...");
-                webEngine.executeScript("Java.initApp();");
+                            logger.debug("[JAVA INIT] calling bindings JS initializer...");
+                            webEngine.executeScript("Java.init(window);");
+                            logger.debug("[JAVA INIT] calling app JS initializer...");
+                            webEngine.executeScript("Java.initApp();");
 
-                bearFX.sendMessageToUI(new NewPhaseConsoleEventToUI("status", randomId()));
+                            bearFX.sendMessageToUI(new NewPhaseConsoleEventToUI("status", randomId()));
 
-                logger.error("[Loggers Diagnostics]");
-                LoggerFactory.getLogger(BearFX.class).debug("MUST NOT BE SEEN started the Bear - -1!");
-                LoggerFactory.getLogger("fx").info("started the Bear - 0!");
-                LoggerFactory.getLogger("fx").warn("started the Bear - 1!");
-                LoggerFactory.getLogger("root").warn("started the Bear - 2!");
-                LoggerFactory.getLogger(BearFX.class).warn("started the Bear - 3!");
-                LogManager.getLogger(BearFX.class).warn("started the Bear - 4!");
-                LoggerFactory.getLogger("fx").debug("started the Bear - 5!");
-            }
-        }
-    });
+                            logger.error("[Loggers Diagnostics]");
+                            LoggerFactory.getLogger(BearFX.class).debug("MUST NOT BE SEEN started the Bear - -1!");
+                            LoggerFactory.getLogger("fx").info("started the Bear - 0!");
+                            LoggerFactory.getLogger("fx").warn("started the Bear - 1!");
+                            LoggerFactory.getLogger("root").warn("started the Bear - 2!");
+                            LoggerFactory.getLogger(BearFX.class).warn("started the Bear - 3!");
+                            LogManager.getLogger(BearFX.class).warn("started the Bear - 4!");
+                            LoggerFactory.getLogger("fx").debug("started the Bear - 5!");
+                        }
+                    }
+                });
             } catch (Exception e) {
                 e.printStackTrace();
             }
+        }
+
+        public void sendMessageToUI(EventToUI eventToUI) {
+            if (eventToUI instanceof EventWithId) {
+                String id = ((EventWithId) eventToUI).getId();
+                Preconditions.checkNotNull(id, "id is null for %s", eventToUI);
+            }
+
+            final String s = mapper.toJSON(eventToUI);
+
+            logger.debug("sending to ui: {}", s);
+
+            Platform.runLater(new Runnable() {
+                @Override
+                public void run() {
+                    webEngine.executeScript("Java.receiveEvent(" + s + ")");
+                }
+            });
+        }
+
+        public void runLater(Runnable runnable) {
+            Platform.runLater(runnable);
         }
 
         @Override
@@ -261,15 +287,15 @@ public class BearFX {
             LoggerContext context = coreLogger.getContext();
 
             org.apache.logging.log4j.core.config.BaseConfiguration configuration
-            = (org.apache.logging.log4j.core.config.BaseConfiguration)context.getConfiguration();
+                = (org.apache.logging.log4j.core.config.BaseConfiguration) context.getConfiguration();
 
             configuration.addAppender(appender);
 
             context.updateLoggers(configuration);
-            
+
 //            coreLogger.addAppender(appender);
 
-            if("root".equals(loggerName)){
+            if ("root".equals(loggerName)) {
                 for (LoggerConfig loggerConfig : configuration.getLoggers().values()) {
                     loggerConfig.addAppender(appender, level, filter);
                 }

@@ -17,8 +17,6 @@
 package bear.main;
 
 import bear.context.Cli;
-import bear.context.DependencyInjection;
-import bear.context.Fun;
 import bear.core.*;
 import bear.main.event.LogEventToUI;
 import bear.main.event.NoticeEventToUI;
@@ -26,17 +24,18 @@ import bear.main.phaser.SettableFuture;
 import bear.plugins.CommandInterpreter;
 import bear.plugins.Plugin;
 import bear.plugins.PomPlugin;
-import bear.plugins.groovy.GroovyShellPlugin;
 import bear.plugins.groovy.Replacement;
 import bear.plugins.groovy.Replacements;
 import bear.plugins.sh.GenericUnixRemoteEnvironmentPlugin;
-import bear.session.Question;
 import chaschev.json.JacksonMapper;
 import chaschev.lang.Lists2;
 import chaschev.lang.Predicates2;
 import chaschev.util.Exceptions;
 import com.fasterxml.jackson.core.JsonGenerator;
-import com.google.common.base.*;
+import com.google.common.base.Charsets;
+import com.google.common.base.Optional;
+import com.google.common.base.Preconditions;
+import com.google.common.base.Supplier;
 import com.google.common.collect.Iterables;
 import com.google.common.io.CharStreams;
 import com.google.common.io.Files;
@@ -52,15 +51,12 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.IOException;
 import java.io.StringWriter;
-import java.net.MalformedURLException;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 
 import static chaschev.lang.Maps2.newHashMap;
-import static com.google.common.collect.Lists.transform;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 
@@ -68,75 +64,16 @@ import static java.util.Collections.singletonList;
  * @author Andrey Chaschev chaschev@gmail.com
  */
 public class FXConf extends Cli {
-    private CompileManager compileManager;
-
     private static final Logger logger = LoggerFactory.getLogger(FXConf.class);
     private static final org.apache.logging.log4j.Logger ui = LogManager.getLogger("ui");
 
-    private BearCommandInterpreter commandInterpreter;
+    protected BearCommandInterpreter commandInterpreter;
 
     public FXConf(String... args) {
         super(GlobalContextFactory.INSTANCE.getGlobal(), args);
     }
 
-    public IBearSettings newSettings() {
-        return newSettings($(settingsFile).getName());
-    }
-
-    public IBearSettings newSettings(String bearSettings) {
-        try {
-            final CompiledEntry settingsEntry = compileManager.findClass(bearSettings, false);
-
-            Preconditions.checkNotNull(settingsEntry, "%s not found", bearSettings);
-
-            IBearSettings settings = (IBearSettings) settingsEntry.newInstance(factory);
-
-            settings.loadProperties($(newRunProperties));
-            DependencyInjection.nameVars(settings, global);
-
-            settings.configure(factory);
-
-            return settings;
-        } catch (Exception e) {
-            throw Exceptions.runtime(e);
-        }
-    }
-
-    private Optional<CompiledEntry> compileAndLoadScript() throws MalformedURLException {
-        CompilationResult result = compileManager.compileWithAll();
-
-        return findScriptToRun((List) result.scriptClasses);
-    }
-
-    private Optional<CompiledEntry> findScriptToRun(List<CompiledEntry> compiledEntries) {
-        if (isScriptNameSet()) {
-            String scriptName = $(script).getName();
-
-            BearMain.logger.info("script is set in the command line to {}", scriptName);
-            bear.deployScript.defaultTo(scriptName);
-        } else {
-            new Question("Enter a script name to run:",
-                transform(compiledEntries, new Function<CompiledEntry, String>() {
-                    public String apply(CompiledEntry input) {
-                        return input.aClass.getSimpleName();
-                    }
-                }),
-                bear.deployScript).ask();
-        }
-
-        return Iterables.tryFind(compiledEntries, new Predicate<CompiledEntry>() {
-            @Override
-            public boolean apply(CompiledEntry input) {
-                return input.aClass.getName().equals(global.var(bear.deployScript));
-            }
-        });
-    }
-
-    private boolean isScriptNameSet() {
-        return $.isSet(script) && $.var(script) != Fun.UNDEFINED;
-    }
-
-    public String getScriptText() throws IOException {
+    protected String getScriptText() throws IOException {
         return FileUtils.readFileToString($(script));
     }
 
@@ -160,10 +97,6 @@ public class FXConf extends Cli {
         compileManager.findClass(className).saveText(text);
     }
 
-    public void build() {
-        compileManager.compileWithAll();
-    }
-
     public String getSelectedSettings() {
         return FilenameUtils.getBaseName($(settingsFile).getName());
     }
@@ -171,7 +104,7 @@ public class FXConf extends Cli {
     public Response run(String uiContextS) throws Exception {
         logger.info("running a script with params: {}", uiContextS);
 
-        BearScript2.UIContext uiContext = commandInterpreter.mapper.fromJSON(uiContextS, BearScript2.UIContext.class);
+        BearScriptRunner.UIContext uiContext = commandInterpreter.mapper.fromJSON(uiContextS, BearScriptRunner.UIContext.class);
 
         File file = compileManager.findScript(uiContext.script);
 
@@ -185,8 +118,8 @@ public class FXConf extends Cli {
     public Response runWithScript(String bearScript, String settingsName) throws Exception {
         IBearSettings settings = newSettings(settingsName);
 
-        return new BearScript2(global, bearFX, null, settings).exec(true,
-            new BearScript2.ParserScriptSupplier(null, bearScript));
+        return new BearScriptRunner(getGlobal(), null, settings)
+            .exec(new BearScript2.ParserScriptSupplier(null, bearScript), true);
     }
 
     public Response interpret(String command, String uiContextS) throws Exception {
@@ -258,18 +191,14 @@ public class FXConf extends Cli {
         }
     }
 
-    public static class CompilationResult {
-        public long timestamp;
+    @Override
+    public FXConf configure() throws IOException {
+        super.configure();
 
-        public CompilationResult() {
-        }
+        commandInterpreter = $.wire(new BearCommandInterpreter());
+        commandInterpreter.switchToPlugin(GenericUnixRemoteEnvironmentPlugin.class);
 
-        public List<CompiledEntry> scriptClasses = new ArrayList<CompiledEntry>();
-        public List<CompiledEntry> settingsClasses = new ArrayList<CompiledEntry>();
-
-        public CompilationResult mergeIn() {
-            throw new UnsupportedOperationException();
-        }
+        return this;
     }
 
     public static class FileResponse {
@@ -286,6 +215,44 @@ public class FXConf extends Cli {
         }
     }
 
+    private String[] getNames(List classes) {
+        return (String[]) Lists2.projectMethod(classes, "getName").toArray(new String[classes.size()]);
+    }
+
+    public void cancelAll(){
+        GlobalTaskRunner runContext = global.currentGlobalRunner;
+
+        if(runContext == null){
+            ui.warn(new LogEventToUI("shell", "not running"));
+            return;
+        }
+
+        List<SessionContext> entries = runContext.getSessions();
+
+        for (SessionContext $ : entries) {
+            if($.isRunning()){
+                try {
+                    $.terminate();
+                } catch (Exception e) {
+                    logger.warn("could not terminate", e);
+                }
+            }
+        }
+    }
+
+    public void cancelThread(String name){
+        GlobalTaskRunner runContext = global.currentGlobalRunner;
+
+        if(runContext == null){
+            ui.warn(new LogEventToUI("shell", "not running"));
+            return;
+        }
+
+        SessionContext $ = Iterables.find(runContext.getSessions(), Predicates2.methodEquals("getName", name));
+
+        $.terminate();
+    }
+
     public class BearCommandInterpreter {
         GlobalContext global;
 
@@ -295,7 +262,7 @@ public class FXConf extends Cli {
             return currentShellPlugin.getShell();
         }
 
-        final JacksonMapper mapper = new JacksonMapper();
+        public final JacksonMapper mapper = new JacksonMapper();
 
 
         /**
@@ -310,15 +277,13 @@ public class FXConf extends Cli {
         public Response interpret(final String command, String uiContextS) throws Exception {
             ui.info("interpreting command: '{}', params: {}", StringUtils.substringBefore(command, "\n").trim(), uiContextS);
 
-            final BearScript2.UIContext uiContext = mapper.fromJSON(uiContextS, BearScript2.UIContext.class);
+            final BearScriptRunner.UIContext uiContext = mapper.fromJSON(uiContextS, BearScriptRunner.UIContext.class);
 
             final IBearSettings settings = newSettings(uiContext.settingsName);
 
-            Callable<BearScript2.MessageResponse> execScriptCallable = new Callable<BearScript2.MessageResponse>() {
+            Callable<BearScriptRunner.MessageResponse> execScriptCallable = new Callable<BearScriptRunner.MessageResponse>() {
                 @Override
-                public BearScript2.MessageResponse call() throws Exception {
-                    final BearScript2 script = new BearScript2(global, bearFX, currentShellPlugin, settings);
-
+                public BearScriptRunner.MessageResponse call() throws Exception {
                     Supplier<BearScript2.BearScriptParseResult> supplier;
 
                     if(uiContext.script.endsWith(".groovy")){
@@ -327,9 +292,9 @@ public class FXConf extends Cli {
                         supplier = new BearScript2.ParserScriptSupplier(currentShellPlugin, command);
                     }
 
-                    script.exec(true, supplier);
+                    new BearScriptRunner(getGlobal(), currentShellPlugin, settings).exec(supplier, true);
 
-                    return new BearScript2.MessageResponse("started script execution");
+                    return new BearScriptRunner.MessageResponse("started script execution");
                 }
             };
 
@@ -376,61 +341,5 @@ public class FXConf extends Cli {
                 throw Exceptions.runtime(e);
             }
         }
-    }
-
-    @Override
-    public Cli configure() throws IOException {
-        super.configure();
-
-        compileManager = new CompileManager($(scriptsDir), $(buildDir));
-
-        $.localCtx().log("configuring Bear with default settings...");
-
-        commandInterpreter = $.wire(new BearCommandInterpreter());
-        commandInterpreter.switchToPlugin(GenericUnixRemoteEnvironmentPlugin.class);
-
-        global.getPlugin(GroovyShellPlugin.class).getShell().set$(this);
-
-        build();
-
-        return this;
-    }
-
-    private String[] getNames(List classes) {
-        return (String[]) Lists2.projectMethod(classes, "getName").toArray(new String[classes.size()]);
-    }
-
-    public void cancelAll(){
-        GlobalTaskRunner runContext = global.currentGlobalRunner;
-
-        if(runContext == null){
-            ui.warn(new LogEventToUI("shell", "not running"));
-            return;
-        }
-
-        List<SessionContext> entries = runContext.getSessions();
-
-        for (SessionContext $ : entries) {
-            if($.isRunning()){
-                try {
-                    $.terminate();
-                } catch (Exception e) {
-                    logger.warn("could not terminate", e);
-                }
-            }
-        }
-    }
-
-    public void cancelThread(String name){
-        GlobalTaskRunner runContext = global.currentGlobalRunner;
-
-        if(runContext == null){
-            ui.warn(new LogEventToUI("shell", "not running"));
-            return;
-        }
-
-        SessionContext $ = Iterables.find(runContext.getSessions(), Predicates2.methodEquals("getName", name));
-
-        $.terminate();
     }
 }

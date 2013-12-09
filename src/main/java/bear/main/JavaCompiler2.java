@@ -16,12 +16,17 @@
 
 package bear.main;
 
-import bear.context.Cli;
 import bear.core.IBearSettings;
 import chaschev.util.Exceptions;
 import com.google.common.base.Function;
+import com.google.common.base.Predicate;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
+import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.filefilter.SuffixFileFilter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.tools.JavaCompiler;
 import javax.tools.ToolProvider;
@@ -42,6 +47,7 @@ import static org.apache.commons.io.FilenameUtils.getBaseName;
 * @author Andrey Chaschev chaschev@gmail.com
 */
 public class JavaCompiler2 extends Compiler {
+    private static final Logger logger = LoggerFactory.getLogger(JavaCompiler2.class);
     private URLClassLoader classLoader;
 
     JavaCompiler2(File sourcesDir, File buildDir) {
@@ -96,9 +102,29 @@ public class JavaCompiler2 extends Compiler {
         }
 
         Collections.addAll(params, "-d", buildDir.getAbsolutePath());
-        final List<File> filesList = newArrayList(files);
+        List<File> javaFilesList = newArrayList(files);
 
-        final List<String> filePaths = Lists.transform(filesList, new Function<File, String>() {
+        List<File> filesListToCompile = ImmutableList.copyOf(Iterables.filter(javaFilesList, new Predicate<File>() {
+            @Override
+            public boolean apply(File javaFile) {
+                File classFile = new File(buildDir, FilenameUtils.getBaseName(javaFile.getName()) + ".class");
+
+                boolean upToDate = classFile.exists() && classFile.lastModified() > javaFile.lastModified();
+
+                if(upToDate){
+                    logger.info("{} is up-to-date", javaFile);
+                }
+
+                return !upToDate;
+            }
+        }));
+
+        if(filesListToCompile.isEmpty()){
+            logger.info("all files are up-to-date");
+            return javaFilesList;
+        }
+
+        final List<String> filePaths = Lists.transform(filesListToCompile, new Function<File, String>() {
             public String apply(File input) {
                 return input.getAbsolutePath();
             }
@@ -106,18 +132,18 @@ public class JavaCompiler2 extends Compiler {
 
         params.addAll(filePaths);
 
-        Cli.logger.info("compiling {}", params);
+        logger.info("compiling {}", params);
 
         final JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
 
         final int r = compiler.run(null, null, null, params.toArray(new String[params.size()]));
 
         if (r == 0) {
-            Cli.logger.info("compilation OK.");
+            logger.info("compilation OK.");
         } else {
-            Cli.logger.info("compilation failed.");
+            logger.info("compilation failed.");
         }
 
-        return filesList;
+        return javaFilesList;
     }
 }

@@ -81,7 +81,7 @@ public class SessionContext extends AbstractContext {
         thread.setName(threadName());
     }
 
-    public void whenPhaseStarts(BearScriptPhase phase, BearScript2.ShellSessionContext shellSessionContext){
+    public void whenPhaseStarts(BearScriptPhase phase, BearScriptRunner.ShellSessionContext shellSessionContext){
         StringBuilder phaseSB = executionContext.phaseText.getDefaultValue();
         phaseSB.setLength(0);
         executionContext.phaseText.fireExternalModification();
