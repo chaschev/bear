@@ -63,7 +63,9 @@ public abstract class Plugin<TASK extends Task, TASK_DEF extends TaskDef<? exten
         }
     }
 
-    public abstract InstallationTaskDef<? extends InstallationTask> getInstall();
+    public InstallationTaskDef<? extends InstallationTask> getInstall(){
+        return InstallationTaskDef.EMPTY;
+    }
 
     public DependencyResult checkPluginDependencies(){
         return DependencyResult.OK;

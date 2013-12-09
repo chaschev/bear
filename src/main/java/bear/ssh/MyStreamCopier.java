@@ -145,7 +145,6 @@ public class MyStreamCopier {
                             );
                         }else{
                             log.error("", e);
-
                         }
                         return new TaskResult(e);
                     }

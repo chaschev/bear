@@ -1,4 +1,5 @@
 import bear.core.*;
+import bear.plugins.db.DumpManagerPlugin;
 import bear.plugins.java.JavaPlugin;
 import bear.plugins.maven.MavenPlugin;
 import bear.plugins.mongo.MongoDbPlugin;
@@ -32,6 +33,7 @@ public class SecureSocialDemoSettings extends IBearSettings {
     MongoDbPlugin mongo;
     MySqlPlugin mysql;
     DeploymentPlugin deployment;
+    DumpManagerPlugin dumpManager;
 
     public final DynamicVariable<String>
         useDb = newVar("mysql"),
