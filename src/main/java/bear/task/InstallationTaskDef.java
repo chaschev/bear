@@ -21,16 +21,15 @@ import bear.core.SessionContext;
 /**
 * @author Andrey Chaschev chaschev@gmail.com
 */
-public abstract class InstallationTaskDef<TASK extends InstallationTask> extends TaskDef<TASK>{
-    public static final InstallationTaskDef<InstallationTask> EMPTY = new InstallationTaskDef<InstallationTask>() {
+public class InstallationTaskDef<TASK extends InstallationTask> extends TaskDef<TASK>{
+    public static final InstallationTaskDef<InstallationTask> EMPTY = new InstallationTaskDef<InstallationTask>(new SingleTaskSupplier() {
         @Override
-        public InstallationTask newSession(SessionContext $, final Task parent) {
+        public Task createNewSession(SessionContext $, Task parent, TaskDef def) {
             return InstallationTask.nop();
         }
-    };
+    });
 
-    @Override
-    protected TASK newSession(SessionContext $, Task parent) {
-        throw new UnsupportedOperationException("todo InstallationTaskDef.newSession");
+    public InstallationTaskDef(SingleTaskSupplier singleTaskSupplier) {
+        super(singleTaskSupplier);
     }
 }

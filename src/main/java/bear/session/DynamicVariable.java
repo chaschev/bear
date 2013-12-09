@@ -32,7 +32,7 @@ public class DynamicVariable<T> implements Nameable<T> {
 
     public static abstract class ChangeListener<T>{
         public abstract void changedValue(DynamicVariable<T> var, T oldValue, T newValue);
-        public void changedDynamic(DynamicVariable<T> var, Fun<T, ? extends AbstractContext> oldFun, Fun<T, ? extends AbstractContext> newFun){}
+        public void changedDynamic(DynamicVariable<T> var, Fun<? extends AbstractContext, T> oldFun, Fun<? extends AbstractContext, T> newFun){}
     }
 
     protected List<ChangeListener<T>> listeners;
@@ -45,7 +45,7 @@ public class DynamicVariable<T> implements Nameable<T> {
     public String name;
     public String desc;
 
-    protected Fun<T, ? extends AbstractContext> fun;
+    protected Fun<? extends AbstractContext, T> fun;
 
     //todo: change to object, make UNDEFINED default, throw an error when evaluating
     T defaultValue;
@@ -101,7 +101,7 @@ public class DynamicVariable<T> implements Nameable<T> {
         }
 
         if (fun != null) {
-            final T r = ((Fun<T, AbstractContext>)fun).apply($);
+            final T r = ((Fun<AbstractContext, T>)fun).apply($);
 
             if(logger.isTraceEnabled()){
                 logger.trace(":{} (dynamic): {}", $.getName(), name, r);
@@ -156,8 +156,8 @@ public class DynamicVariable<T> implements Nameable<T> {
         return this;
     }
 
-    public DynamicVariable<T> setDynamic(Fun<T, ? extends AbstractContext> impl) {
-        Fun<T, ? extends AbstractContext> oldFun = this.fun;
+    public DynamicVariable<T> setDynamic(Fun<? extends AbstractContext, T> impl) {
+        Fun<? extends AbstractContext, T> oldFun = this.fun;
         this.fun = impl;
 
         if (impl instanceof VarFun<?, ?>) {
@@ -232,7 +232,7 @@ public class DynamicVariable<T> implements Nameable<T> {
     }
 
     public DynamicVariable<T> setEqualTo(final DynamicVariable<T> variable) {
-        setDynamic(new Fun<T, AbstractContext>() {
+        setDynamic(new Fun<AbstractContext, T>() {
             public T apply(AbstractContext $) {
                 return $.var(variable);
             }

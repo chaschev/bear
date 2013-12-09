@@ -36,9 +36,9 @@ public class UpstartPlugin extends Plugin {
 
     }
 
-    public final TaskDef<Task> create = new TaskDef<Task>() {
+    public final TaskDef<Task> create = new TaskDef<Task>(new TaskDef.SingleTaskSupplier<Task>() {
         @Override
-        protected Task newSession(SessionContext $, Task parent) {
+        public Task createNewSession(SessionContext $, Task parent, TaskDef<Task> def) {
             return new Task(parent, new TaskCallable() {
                 @Override
                 public TaskResult call(SessionContext $, Task task, Object input) throws Exception {
@@ -65,8 +65,8 @@ public class UpstartPlugin extends Plugin {
                                 "author      \"bear\"\n" +
                                 (service.dir.isPresent() ? "chdir " + service.dir.get() : "") +
                                 "\n" +
-                                "start on runlevel [" + $.var(startOn) + "]\n" +
-                                "stop on runlevel [" + $.var(stopOn) + "]\n" +
+                                "start on runlevel " + $.var(startOn) + "\n" +
+                                "stop on runlevel " + $.var(stopOn) + "\n" +
                                 "\n" +
                                 "# exports\n" +
                                 sb.toString() + "\n" +
@@ -109,7 +109,7 @@ public class UpstartPlugin extends Plugin {
                 }
             });
         }
-    };
+    });
 
     @Override
     public InstallationTaskDef<? extends InstallationTask> getInstall() {

@@ -40,54 +40,57 @@ public class GrailsBuilderTask extends TaskDef {
     JavaPlugin java;
     Bear bear;
 
+    //todo
     public GrailsBuilderTask(GlobalContext global) {
+        super(new SingleTaskSupplier() {
+            @Override
+            public Task createNewSession(SessionContext $, Task parent, TaskDef def) {
+                final GrailsBuilderTask grailsTask = (GrailsBuilderTask) def;
+
+                return new Task<TaskDef>(parent, def, $) {
+                    @Override
+                    public GrailsBuildResult exec(SessionTaskRunner runner, Object input) {
+                        $.log("building Grails WAR, rev: %s...", $($.bear.realRevision));
+
+                        final String grailsExecPath = $(grailsTask.grails.grailsExecPath);
+
+                        String projectPath = $(grailsTask.grails.projectPath);
+
+                        final Script script = new Script($.sys)
+                            .cd(projectPath);
+
+                        if ($(grailsTask.grails.clean)) {
+                            script
+                                .add(newGrailsCommand(grailsExecPath).a("clean"));
+                        }
+
+                        final String warName = $(grailsTask.grails.releaseWarPath);
+
+                        script.add(
+                            newGrailsCommand(grailsExecPath).a(
+                                "war",
+                                warName));
+
+                        final CommandLineResult clResult = script.run();
+
+                        if(clResult.text.contains("Use --stacktrace to see the full trace")){
+                            clResult.setResult(Result.ERROR);
+                        }
+
+                        return new GrailsBuildResult(clResult.getResult(), $.joinPath(projectPath, warName));
+                    }
+
+                    private CommandLine newGrailsCommand(String grailsExecPath) {
+                        return $.sys.line()
+                            .setVar("JAVA_HOME", $(grailsTask.java.homePath))
+                            .a(grailsExecPath)
+                            .timeoutMs(600000);
+                    }
+                };
+            }
+        });
         grails = global.getPlugin(GrailsPlugin.class);
         java = global.getPlugin(JavaPlugin.class);
         bear = global.bear;
     }
-
-    @Override
-    public Task<TaskDef> newSession(SessionContext $, final Task parent) {
-        return new Task<TaskDef>(parent, this, $) {
-            @Override
-            public GrailsBuildResult exec(SessionTaskRunner runner, Object input) {
-                $.log("building Grails WAR, rev: %s...", $(bear.realRevision));
-
-                final String grailsExecPath = $(grails.grailsExecPath);
-
-                String projectPath = $(grails.projectPath);
-
-                final Script script = new Script($.sys)
-                    .cd(projectPath);
-
-                if ($(grails.clean)) {
-                    script
-                        .add(newGrailsCommand(grailsExecPath).a("clean"));
-                }
-
-                final String warName = $(grails.releaseWarPath);
-
-                script.add(
-                    newGrailsCommand(grailsExecPath).a(
-                        "war",
-                        warName));
-
-                final CommandLineResult clResult = script.run();
-
-                if(clResult.text.contains("Use --stacktrace to see the full trace")){
-                    clResult.setResult(Result.ERROR);
-                }
-
-                return new GrailsBuildResult(clResult.getResult(), $.joinPath(projectPath, warName));
-            }
-
-            private CommandLine newGrailsCommand(String grailsExecPath) {
-                return $.sys.line()
-                    .setVar("JAVA_HOME", $(java.homePath))
-                    .a(grailsExecPath)
-                    .timeoutMs(600000);
-            }
-        };
-    }
-
 }

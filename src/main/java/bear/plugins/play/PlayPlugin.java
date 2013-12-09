@@ -115,10 +115,10 @@ public class PlayPlugin extends ZippedToolPlugin {
 
     }
 
-    public final TaskDef<Task> dist = new TaskDef<Task>() {
+    public final TaskDef<Task> dist = new TaskDef<Task>(new TaskDef.SingleTaskSupplier<Task>() {
         @Override
-        protected Task newSession(SessionContext $, Task parent) {
-            return new Task<TaskDef>(parent, this, $) {
+        public Task createNewSession(SessionContext $, Task parent, TaskDef<Task> def) {
+            return new Task<TaskDef>(parent, def, $) {
 
                 @Override
                 protected TaskResult exec(SessionTaskRunner runner, Object input) {
@@ -149,13 +149,14 @@ public class PlayPlugin extends ZippedToolPlugin {
                     return new PlayDistResult(path);
                 }
             };
-        }
-    };
 
-    public final TaskDef<Task> build = new TaskDef<Task>() {
+        }
+    });
+
+    public final TaskDef<Task> build = new TaskDef<Task>(new TaskDef.SingleTaskSupplier<Task>() {
         @Override
-        protected Task newSession(SessionContext $, Task parent) {
-            return new Task<TaskDef>(parent, this, $) {
+        public Task createNewSession(SessionContext $, Task parent, TaskDef<Task> def) {
+            return new Task<TaskDef>(parent, def, $) {
 
                 @Override
                 protected TaskResult exec(SessionTaskRunner runner, Object input) {
@@ -194,12 +195,15 @@ public class PlayPlugin extends ZippedToolPlugin {
                 }
             };
         }
-    };
-
-    public final TaskDef<Task> start = new TaskDef<Task>() {
+    });
+    private void resetConsolePath(SessionContext $, String logPath) {
+        $.sys.chmod("u+rwx,g+rwx,o+rwx", false, logPath);
+        $.sys.resetFile(logPath, true);
+    }
+    public final TaskDef<Task> start = new TaskDef<Task>(new TaskDef.SingleTaskSupplier<Task>() {
         @Override
-        protected Task newSession(SessionContext $, final Task parent) {
-            return new Task<TaskDef>(parent, this, $) {
+        public Task createNewSession(SessionContext $, final Task parent, final TaskDef<Task> def) {
+            return new Task<TaskDef>(parent, def, $) {
                 @Override
                 protected TaskResult exec(SessionTaskRunner runner, Object input) {
                     $.log("starting the app (stage)...");
@@ -248,7 +252,7 @@ public class PlayPlugin extends ZippedToolPlugin {
                     );
 
                     r = $.runSession(
-                        upstart.create.singleTask().createNewSession($, parent),
+                        upstart.create.singleTaskSupplier().createNewSession($, parent, def),
                         services);
 
                     if (!r.ok()) return r;
@@ -292,7 +296,7 @@ public class PlayPlugin extends ZippedToolPlugin {
                             @Nonnull
                             public ConsoleCallbackResult progress(AbstractConsole.Terminal console, String buffer, String wholeText) {
                                 if (buffer.contains("Listening for HTTP on")) {
-//                                    logger.debug("OOOOOOOOOOOOPS - listening!");
+                                    logger.debug("OOOOOOOOOOOOPS - listening!");
 
                                     SessionContext.ui.info(new NoticeEventToUI($(bear.fullName),
                                         "started play instance on port " + port + ", release " + $(releases.session).getCurrentRelease().get().name()));
@@ -301,7 +305,7 @@ public class PlayPlugin extends ZippedToolPlugin {
                                 }
 
                                 if(buffer.contains("Oops, cannot start the server.")){
-//                                    logger.debug("OOOOOOOOOOOOPS - found");
+                                    logger.debug("OOOOOOOOOOOOPS - found");
                                     String message = "unable to start play instance on port " + port + ", release " + $(releases.session).getCurrentRelease().get().name();
                                     SessionContext.ui.error(new NoticeEventToUI($(bear.fullName),
                                         message));
@@ -332,13 +336,9 @@ public class PlayPlugin extends ZippedToolPlugin {
                     return format($(consoleLogPath), port);
                 }
             };
-        }
 
-        private void resetConsolePath(SessionContext $, String logPath) {
-            $.sys.chmod("u+rwx,g+rwx,o+rwx", false, logPath);
-            $.sys.resetFile(logPath, true);
         }
-    };
+    }) ;
 
 
     private String removeLastSemiColon(String s) {
@@ -357,10 +357,10 @@ public class PlayPlugin extends ZippedToolPlugin {
             helper.serviceCommand($.var(isSingle ? singleServiceName : multiServiceName), command), true);
     }
 
-    public final TaskDef<Task> stop = new TaskDef<Task>() {
+    public final TaskDef<Task> stop = new TaskDef<Task>(new TaskDef.SingleTaskSupplier<Task>() {
         @Override
-        protected Task newSession(SessionContext $, Task parent) {
-            return new Task<TaskDef>(parent, this, $) {
+        public Task createNewSession(SessionContext $, Task parent, TaskDef<Task> def) {
+            return new Task<TaskDef>(parent, def, $) {
 
                 @Override
                 protected TaskResult exec(SessionTaskRunner runner, Object input) {
@@ -381,13 +381,14 @@ public class PlayPlugin extends ZippedToolPlugin {
                     return TaskResult.OK;
                 }
             };
+
         }
-    };
+    }) ;
 
 
-    public final TaskDef<Task> watchStart = new TaskDef<Task>() {
+    public final TaskDef<Task> watchStart = new TaskDef<Task>(new TaskDef.SingleTaskSupplier<Task>() {
         @Override
-        protected Task newSession(SessionContext $, final Task parent) {
+        public Task createNewSession(SessionContext $, Task parent, TaskDef<Task> def) {
             return new Task<TaskDef>(parent, new TaskCallable() {
                 @Override
                 public TaskResult call(SessionContext $, Task task, Object input) throws Exception {
@@ -413,16 +414,16 @@ public class PlayPlugin extends ZippedToolPlugin {
                 }
             });
         }
-    };
+    });
 
     private void printCurrentReleases(SessionContext $) {
         logger.info("current releases:\n{}", $.var(releases.session).show());
     }
 
-    public final InstallationTaskDef<ZippedTool> install = new ZippedToolTaskDef<ZippedTool>() {
+    public final InstallationTaskDef<ZippedTool> install = new ZippedToolTaskDef<ZippedTool>(new TaskDef.SingleTaskSupplier() {
         @Override
-        public ZippedTool newSession(SessionContext $, final Task parent) {
-            return new ZippedTool(parent, this, $) {
+        public Task createNewSession(SessionContext $, Task parent, TaskDef def) {
+            return new ZippedTool(parent, (InstallationTaskDef) def, $) {
                 @Override
                 protected DependencyResult exec(SessionTaskRunner runner, Object input) {
                     clean();
@@ -448,8 +449,9 @@ public class PlayPlugin extends ZippedToolPlugin {
                     return "play help";
                 }
             };
+
         }
-    };
+    });
 
     @Override
     public DependencyResult checkPluginDependencies() {

@@ -29,7 +29,9 @@ import java.util.*;
 /**
  * @author Andrey Chaschev chaschev@gmail.com
  */
-public abstract class TaskDef<TASK extends Task> {
+
+
+public class TaskDef<TASK extends Task>{
     String name;
     public String description;
 
@@ -40,27 +42,32 @@ public abstract class TaskDef<TASK extends Task> {
     List<TaskDef> beforeTasks = new ArrayList<TaskDef>();
     List<TaskDef> afterTasks = new ArrayList<TaskDef>();
     List<TaskDef> dependsOnTasks = new ArrayList<TaskDef>();
-    private final Multitask<TASK> multitask;
+    private final MultitaskSupplier<TASK> multitaskSupplier;
 
     TaskDef<Task> rollback;
 
-    protected TaskDef(String name) {
-        this.name = name;
-        Multitask<TASK> m = null;
+    private final SingleTaskSupplier<TASK> singleTaskSupplier;
 
-        try {
-            m = newMultitask();
-        } catch (MultitaskNotImplementedException ignore) {
 
-        }
-
-        multitask = m;
+    public TaskDef(SingleTaskSupplier<TASK> singleTaskSupplier) {
+        this(null, singleTaskSupplier);
+        this.name = defaultName();
     }
 
+    public TaskDef(String name, SingleTaskSupplier<TASK> singleTaskSupplier) {
+        this(null, singleTaskSupplier, null);
+        this.name = name;
+    }
 
-    public TaskDef() {
-        this(null);
-        this.name = classNameToTaskName(getClass().getSimpleName()).toString();
+    public TaskDef(MultitaskSupplier multitaskSupplier) {
+        this(null, null, multitaskSupplier);
+        this.name = defaultName();
+    }
+
+    public TaskDef(String name, SingleTaskSupplier<TASK> singleTaskSupplier, MultitaskSupplier<TASK> multitaskSupplier) {
+        this.name = name;
+        this.singleTaskSupplier = singleTaskSupplier;
+        this.multitaskSupplier = multitaskSupplier;
     }
 
     private StringBuilder classNameToTaskName(String simpleName) {
@@ -82,7 +89,7 @@ public abstract class TaskDef<TASK extends Task> {
     private TASK createNewSession(SessionContext $, final Task parent){
         Preconditions.checkArgument(!isMultitask(), "task is not multi");
 
-        TASK task = newSession($, parent);
+        TASK task = singleTaskSupplier.createNewSession($, parent, this);
 
         task.wire($);
 
@@ -96,18 +103,10 @@ public abstract class TaskDef<TASK extends Task> {
         return TaskResult.OK;
     }
 
-    private static class MultitaskNotImplementedException extends RuntimeException{
-
-    }
-
-    protected Multitask<TASK> newMultitask(){
-        throw new MultitaskNotImplementedException();
-    }
-
     private List<TASK> createNewSessions(SessionContext $, final Task parent){
         Preconditions.checkArgument(isMultitask(), "task is multi");
 
-        List<TASK> tasks = multitask.createNewSessions($, parent);
+        List<TASK> tasks = multitaskSupplier.createNewSessions($, parent);
 
         for (TASK task : tasks) {
             task.wire($);
@@ -116,19 +115,17 @@ public abstract class TaskDef<TASK extends Task> {
         return tasks;
     }
 
-    protected TASK newSession(SessionContext $, final Task parent){
-        throw new UnsupportedOperationException("todo implement either this or newSessions");
-    }
-
-    public static interface TaskFactory<TASK extends Task>{
+    public static interface TaskSupplier<TASK extends Task>{
 
     }
 
-    public static interface SingleTask<TASK extends Task> extends TaskFactory<TASK>{
-        TASK createNewSession(SessionContext $, final Task parent);
+    public static interface SingleTaskSupplier<TASK extends Task> extends TaskSupplier<TASK> {
+        TASK createNewSession(SessionContext $, final Task parent, TaskDef<TASK> def);
+
+        public static final SingleTaskSupplier<Task> NOP = Tasks.newSingleTask(TaskCallable.NOP);
     }
 
-    public static interface Multitask<TASK extends Task> extends TaskFactory<TASK>{
+    public static interface MultitaskSupplier<TASK extends Task> extends TaskSupplier<TASK> {
         List<TASK> createNewSessions(SessionContext $, final Task parent);
         int size();
     }
@@ -141,21 +138,21 @@ public abstract class TaskDef<TASK extends Task> {
         }
     }
 
-    public SingleTask<TASK> singleTask(){
+    public SingleTaskSupplier<TASK> singleTaskSupplier(){
         Preconditions.checkArgument(!isMultitask(), "task is multi");
 
-        return new SingleTask<TASK>() {
+        return new SingleTaskSupplier<TASK>() {
             @Override
-            public TASK createNewSession(SessionContext $, Task parent) {
+            public TASK createNewSession(SessionContext $, Task parent, TaskDef<TASK> def) {
                 return TaskDef.this.createNewSession($, parent);
             }
         };
     }
 
-    public Multitask<TASK> multitask(){
+    public MultitaskSupplier<TASK> multitaskSupplier(){
         Preconditions.checkArgument(isMultitask(), "task is not multi");
 
-        return multitask;
+        return multitaskSupplier;
     }
 
     public boolean hasRole(Set<Role> roles) {
@@ -209,15 +206,12 @@ public abstract class TaskDef<TASK extends Task> {
         return this;
     }
 
-    public static final TaskDef EMPTY = new TaskDef() {
-        {
-            name = "EMPTY";
-        }
+    public static final TaskDef EMPTY = new TaskDef("EMPTY", new SingleTaskSupplier() {
         @Override
-        public Task<TaskDef> newSession(SessionContext $, final Task parent) {
+        public Task createNewSession(SessionContext $, Task parent, TaskDef def) {
             return Task.nop();
         }
-    };
+    });
 
     public Set<Role> getRoles() {
         return roles;
@@ -233,7 +227,7 @@ public abstract class TaskDef<TASK extends Task> {
     }
 
     public boolean isMultitask() {
-        return multitask != null;
+        return multitaskSupplier != null;
     }
 
     protected final Supplier<List<TaskDef<TASK>>> multiDefsSupplier = Suppliers.memoize(new Supplier<List<TaskDef<TASK>>>() {
@@ -243,26 +237,27 @@ public abstract class TaskDef<TASK extends Task> {
 
             final MutableSupplier<List<TASK>> supplier = new MutableSupplier<List<TASK>>();
 
-            Multitask<TASK> multitask = multitask();
+            MultitaskSupplier<TASK> multitaskSupplier = multitaskSupplier();
 
-            List<TaskDef<TASK>> taskDefs = new ArrayList<TaskDef<TASK>>(multitask.size());
+            List<TaskDef<TASK>> taskDefs = new ArrayList<TaskDef<TASK>>(multitaskSupplier.size());
 
-            for (int i = 0; i < multitask.size(); i++) {
+            for (int i = 0; i < multitaskSupplier.size(); i++) {
                 final int finalI = i;
-                taskDefs.add(new TaskDef<TASK>(){
+
+                taskDefs.add(new TaskDef<TASK>(new SingleTaskSupplier<TASK>() {
                     @Override
-                    protected TASK newSession(SessionContext $, Task parent) {
+                    public TASK createNewSession(SessionContext $, Task parent, TaskDef<TASK> def) {
                         if(!supplier.isFinalized()){
                             synchronized (supplier){
                                 if(!supplier.isFinalized()){
-                                    supplier.setInstance(enclosingTaskDef.multitask().createNewSessions($, parent)).makeFinal();
+                                    supplier.setInstance(enclosingTaskDef.multitaskSupplier().createNewSessions($, parent)).makeFinal();
                                 }
                             }
                         }
 
                         return supplier.get().get(finalI);
                     }
-                });
+                }));
             }
 
             return taskDefs;
@@ -279,4 +274,9 @@ public abstract class TaskDef<TASK extends Task> {
         this.rollback = rollback;
         return this;
     }
+
+    private String defaultName() {
+        return classNameToTaskName(getClass().getSimpleName()).toString();
+    }
+
 }

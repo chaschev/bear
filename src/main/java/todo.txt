@@ -48,6 +48,11 @@ top priority:
 -- (ok) mock server replies (inject mocked sys)
 - service interface: check live status on hosts
 
+- refactorings
+-- create tasks with lambdas
+-- return ticket (phase) on adding a taskdef
+-- Generics (later)
+
 - (ok) better rm
 - update git plugin for the release
 - ssh tests for servers to test connectivity and response

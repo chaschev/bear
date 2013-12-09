@@ -310,9 +310,9 @@ public class BearScript2 {
             scriptItem.assignVariables(global);
 
             if (!executableLines.isEmpty()) {
-                return new TaskDef<Task>(scriptItem.getScriptName()){
+                return new TaskDef<Task>(scriptItem.getScriptName(), new TaskDef.SingleTaskSupplier<Task>() {
                     @Override
-                    public Task newSession(SessionContext $, Task parent) {
+                    public Task createNewSession(SessionContext $, Task parent, TaskDef<Task> def) {
                         scriptItem.assignVariables($);
 
                         final Plugin currentPlugin = getPlugin(scriptItem.pluginName, shellContext);
@@ -343,7 +343,7 @@ public class BearScript2 {
 
                         return task;
                     }
-                };
+                });
             } else {
                 return TaskDef.EMPTY;
             }

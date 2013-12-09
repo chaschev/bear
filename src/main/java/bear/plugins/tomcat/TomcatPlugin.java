@@ -16,10 +16,10 @@
 
 package bear.plugins.tomcat;
 
+import bear.context.AbstractContext;
 import bear.context.Fun;
 import bear.core.GlobalContext;
 import bear.core.SessionContext;
-import bear.context.AbstractContext;
 import bear.plugins.ZippedToolPlugin;
 import bear.plugins.sh.RmInput;
 import bear.session.BearVariables;
@@ -63,7 +63,7 @@ public class TomcatPlugin extends ZippedToolPlugin {
         webapps = Variables.condition(bear.isUnix, webappsUnix, webappsWin);
         warPath = BearVariables.joinPath(webapps, warName);
 
-        distrWwwAddress.setDynamic(new Fun<String, AbstractContext>() {
+        distrWwwAddress.setDynamic(new Fun<AbstractContext, String>() {
             public String apply(AbstractContext $) {
                 String version = $.var(TomcatPlugin.this.version);
 
@@ -80,10 +80,10 @@ public class TomcatPlugin extends ZippedToolPlugin {
 
     public void initPlugin() {
         //screen recipe is taken from here http://stackoverflow.com/a/1628217/1851024
-        global.tasks.restartApp.addBeforeTask(new TaskDef() {
+        global.tasks.restartApp.addBeforeTask(new TaskDef<Task>(new TaskDef.SingleTaskSupplier<Task>() {
             @Override
-            public Task<TaskDef> newSession(SessionContext $, final Task parent) {
-                return new Task<TaskDef>(parent, this, $) {
+            public Task createNewSession(SessionContext $, Task parent, TaskDef def) {
+                return new Task<TaskDef>(parent, def, $) {
                     @Override
                     protected TaskResult exec(SessionTaskRunner runner, Object input) {
                         $.sys.rm(RmInput.newRm($(warCacheDirs)).sudo());
@@ -97,13 +97,13 @@ public class TomcatPlugin extends ZippedToolPlugin {
                     }
                 };
             }
-        });
+        }));
     }
 
-    public final InstallationTaskDef<ZippedTool> install = new ZippedToolTaskDef<ZippedTool>() {
+    public final InstallationTaskDef<ZippedTool> install = new ZippedToolTaskDef<ZippedTool>(new TaskDef.SingleTaskSupplier() {
         @Override
-        public ZippedTool newSession(SessionContext $, final Task parent) {
-            return new ZippedTool(parent, this, $) {
+        public Task createNewSession(SessionContext $, Task parent, TaskDef def) {
+            return new ZippedTool(parent, (InstallationTaskDef) def, $) {
                 @Override
                 protected DependencyResult exec(SessionTaskRunner runner, Object input) {
                     clean();
@@ -112,9 +112,6 @@ public class TomcatPlugin extends ZippedToolPlugin {
 
                     extractToHomeDir();
 
-//                    shortCut("tomcatStart", "startup.sh");
-//                    shortCut("tomcatStop", "shutdown.sh");
-//                    shortCut("tomcatVersion", "version.sh");
                     shortCut("catalina", "bin/catalina.sh");
 
                     DependencyResult result = verify();
@@ -137,9 +134,9 @@ public class TomcatPlugin extends ZippedToolPlugin {
                 }
             };
         }
-    };
+    });
 
-    public final DynamicVariable<String[]> warCacheDirs = Variables.dynamic(new Fun<String[], SessionContext>() {
+    public final DynamicVariable<String[]> warCacheDirs = Variables.dynamic(new Fun<SessionContext, String[]>() {
         public String[] apply(SessionContext $) {
             final String name = FilenameUtils.getBaseName($.var(warName));
             return new String[]{

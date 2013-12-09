@@ -2,8 +2,6 @@ package bear.plugins;
 
 import bear.core.GlobalContext;
 import bear.session.DynamicVariable;
-import bear.task.InstallationTask;
-import bear.task.InstallationTaskDef;
 import org.junit.Test;
 
 import static org.fest.assertions.api.Assertions.assertThat;
@@ -18,12 +16,7 @@ public class ZippedToolPluginTest {
     @Test
     public void testVars() throws Exception {
 
-        ZippedToolPlugin zip = new ZippedToolPlugin(g) {
-            @Override
-            public InstallationTaskDef<? extends InstallationTask> getInstall() {
-                throw new UnsupportedOperationException("todo .getInstall");
-            }
-        };
+        ZippedToolPlugin zip = new ZippedToolPlugin(g);
 
         zip.version.set("2.0");
         zip.toolname.set("my-tool");

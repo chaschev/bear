@@ -65,7 +65,7 @@ public class Variables {
     }
 
     public static DynamicVariable<Boolean> not(final DynamicVariable<Boolean> b) {
-        return bool("").setDynamic(new Fun<Boolean, AbstractContext>() {
+        return bool("").setDynamic(new Fun<AbstractContext, Boolean>() {
             public Boolean apply(AbstractContext $) {
                 return !$.varB(b);
             }
@@ -81,7 +81,7 @@ public class Variables {
     }
 
     public static <T, F> DynamicVariable<T> convert(final DynamicVariable<F> var, final Function<F, T> function) {
-        return dynamic(new Fun<T, AbstractContext>() {
+        return dynamic(new Fun<AbstractContext, T>() {
             @Override
             public T apply(AbstractContext $) {
                 return function.apply($.var(var));
@@ -90,7 +90,7 @@ public class Variables {
     }
 
     public static <T> DynamicVariable<Boolean> isEql(final DynamicVariable<T> variable, final String to) {
-        return dynamic(new Fun<Boolean, AbstractContext>() {
+        return dynamic(new Fun<AbstractContext, Boolean>() {
             public Boolean apply(AbstractContext $) {
                 final T v = $.var(variable);
                 return v == null ? to == null : String.valueOf(v).equals(to);
@@ -103,7 +103,7 @@ public class Variables {
     }
 
     public static <T> DynamicVariable<Boolean> isSet(String name, final DynamicVariable<T> variable) {
-        return dynamic(name, "", new Fun<Boolean, AbstractContext>() {
+        return dynamic(name, "", new Fun<AbstractContext, Boolean>() {
             public Boolean apply(AbstractContext $) {
                 return $.isSet(variable);
             }
@@ -115,7 +115,7 @@ public class Variables {
     }
 
     public static <T> DynamicVariable<T> condition(String name, final DynamicVariable<Boolean> condition, final DynamicVariable<T> trueVar, final DynamicVariable<T> falseVar) {
-        return dynamic(name, "", new Fun<T, AbstractContext>() {
+        return dynamic(name, "", new Fun<AbstractContext, T>() {
             public T apply(AbstractContext $) {
                 return $.varB(condition) ? $.var(trueVar) : $.var(falseVar);
             }
@@ -123,7 +123,7 @@ public class Variables {
     }
 
     public static <T> DynamicVariable<T> equalTo(final DynamicVariable<T> variable) {
-        return dynamic("", new Fun<T, AbstractContext>() {
+        return dynamic("", new Fun<AbstractContext, T>() {
             public T apply(AbstractContext $) {
                 return $.var(variable);
             }
@@ -131,7 +131,7 @@ public class Variables {
     }
 
     public static DynamicVariable<Boolean> and(final DynamicVariable... bools) {
-        return bool("").setDynamic(new Fun<Boolean, AbstractContext>() {
+        return bool("").setDynamic(new Fun<AbstractContext, Boolean>() {
             public Boolean apply(AbstractContext $) {
                 for (DynamicVariable b : bools) {
                     if (!$.varB(b)) return false;
@@ -143,7 +143,7 @@ public class Variables {
     }
 
     public static DynamicVariable<Boolean> or(String name, final DynamicVariable... bools) {
-        return bool("").setDynamic(new Fun<Boolean, AbstractContext>() {
+        return bool("").setDynamic(new Fun<AbstractContext, Boolean>() {
             public Boolean apply(AbstractContext $) {
                 for (DynamicVariable b : bools) {
                     if ($.varB(b)) return true;
@@ -155,7 +155,7 @@ public class Variables {
     }
 
     public static DynamicVariable<String> concat(final Object... varsAndStrings) {
-        return dynamic(new Fun<String, AbstractContext>() {
+        return dynamic(new Fun<AbstractContext, String>() {
             public String apply(AbstractContext $) {
                 return Variables.concat($, varsAndStrings);
             }
@@ -173,7 +173,7 @@ public class Variables {
     }
 
     public static DynamicVariable<List<String>> split(final DynamicVariable<? extends CharSequence> str, final Splitter splitter) {
-        return dynamic(new Fun<List<String>, AbstractContext>() {
+        return dynamic(new Fun<AbstractContext, List<String>>() {
             public List<String> apply(AbstractContext $) {
                 return splitter.splitToList($.var(str));
             }
@@ -181,7 +181,7 @@ public class Variables {
     }
 
     public static DynamicVariable<String> format(final String s, final Object... varsAndStrings){
-        return dynamic(new Fun<String, SessionContext>() {
+        return dynamic(new Fun<SessionContext, String>() {
             public String apply(SessionContext $) {
                 return String.format(s, resolveVars($, varsAndStrings));
             }
@@ -209,7 +209,7 @@ public class Variables {
         return new DynamicVariable<T>("").defaultTo(_default);
     }
 
-    public static <T> DynamicVariable<T> dynamic(Fun<T, ? extends AbstractContext> function) {
+    public static <T> DynamicVariable<T> dynamic(Fun<? extends AbstractContext, T> function) {
         return dynamic(null, "", function);
     }
 
@@ -225,11 +225,11 @@ public class Variables {
         return new DynamicVariable<T>(name, desc);
     }
 
-    public static <T> DynamicVariable<T> dynamic(String desc, Fun<T, ? extends AbstractContext> function) {
+    public static <T> DynamicVariable<T> dynamic(String desc, Fun<? extends AbstractContext, T> function) {
         return new DynamicVariable<T>((String) null, desc).setDynamic(function);
     }
 
-    public static <T> DynamicVariable<T> dynamic(String name, String desc, Fun<T, ? extends AbstractContext> function) {
+    public static <T> DynamicVariable<T> dynamic(String name, String desc, Fun<? extends AbstractContext, T> function) {
         return new DynamicVariable<T>(name, desc).setDynamic(function);
     }
 

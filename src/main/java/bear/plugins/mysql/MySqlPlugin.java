@@ -60,13 +60,13 @@ public class MySqlPlugin extends Plugin<Task, TaskDef<?>> {
         serverPackage = Variables.newVar("mysql55-server"),
         clientPackage = Variables.newVar("mysql55"),
         mysqlTempScriptName = strVar().defaultTo("temp.sql"),
-        mysqlTempScriptPath = Variables.dynamic(new Fun<String, SessionContext>() {
+        mysqlTempScriptPath = Variables.dynamic(new Fun<SessionContext, String>() {
             @Override
             public String apply(SessionContext $) {
                 return $.sys.joinPath($.var(bear.projectSharedPath), $.var(mysqlTempScriptName));
             }
         }),
-        dumpName = Variables.dynamic(new Fun<String, AbstractContext>() {
+        dumpName = Variables.dynamic(new Fun<AbstractContext, String>() {
             @Override
             public String apply(AbstractContext $) {
                 return String.format("dump_%s_%s.GMT_%s.sql",
@@ -74,13 +74,13 @@ public class MySqlPlugin extends Plugin<Task, TaskDef<?>> {
             }
         }),
         dumpsDirPath = BearVariables.joinPath(bear.projectSharedPath, "dumps"),
-        dumpPath = Variables.dynamic(new Fun<String, SessionContext>() {
+        dumpPath = Variables.dynamic(new Fun<SessionContext, String>() {
             public String apply(SessionContext $) {
                 return $.sys.joinPath($.var(dumpsDirPath), $.var(dumpName) + ".bz2");
             }
         });
 
-    public final DynamicVariable<VersionConstraint> getVersion = Variables.dynamic(new Fun<VersionConstraint, AbstractContext>() {
+    public final DynamicVariable<VersionConstraint> getVersion = Variables.dynamic(new Fun<AbstractContext, VersionConstraint>() {
         @Override
         public VersionConstraint apply(AbstractContext $) {
             return Versions.newVersionConstraint($.var(version));
@@ -91,10 +91,10 @@ public class MySqlPlugin extends Plugin<Task, TaskDef<?>> {
         super(global);
     }
 
-    public final InstallationTaskDef setup = new InstallationTaskDef() {
+    public final InstallationTaskDef setup = new InstallationTaskDef(new TaskDef.SingleTaskSupplier() {
         @Override
-        public InstallationTask<InstallationTaskDef> newSession(SessionContext $, final Task parent) {
-            return new InstallationTask<InstallationTaskDef>(parent, this, $) {
+        public Task createNewSession(SessionContext $, Task parent, TaskDef def) {
+            return new InstallationTask<InstallationTaskDef>(parent, (InstallationTaskDef) def, $) {
                 @Override
                 protected TaskResult exec(SessionTaskRunner runner, Object input) {
                     final Version version = computeInstalledClientVersion($.sys);
@@ -142,7 +142,7 @@ public class MySqlPlugin extends Plugin<Task, TaskDef<?>> {
                 }
             };
         }
-    };
+    }) ;
 
     private Version computeInstalledServerVersion(SessionTaskRunner runner) {
         final CommandLineResult r = runScript(runner, "select version();");
@@ -173,23 +173,23 @@ public class MySqlPlugin extends Plugin<Task, TaskDef<?>> {
     }
 
 
-    public final TaskDef getUsers = new TaskDef() {
+    public final TaskDef<Task> getUsers = new TaskDef<Task>(new TaskDef.SingleTaskSupplier<Task>() {
         @Override
-        public Task<TaskDef> newSession(SessionContext $, final Task parent) {
-            return new Task<TaskDef>(parent, this, $) {
+        public Task createNewSession(SessionContext $, Task parent, TaskDef def) {
+            return new Task<TaskDef>(parent, def, $) {
                 @Override
                 protected TaskResult exec(SessionTaskRunner runner, Object input) {
                     return runScript(runner, "SELECT User FROM mysql.user;");
                 }
             };
+
         }
-    };
+    }) ;
 
-    public final TaskDef runScript = new TaskDef() {
-
+    public final TaskDef<Task> runScript = new TaskDef<Task>(new TaskDef.SingleTaskSupplier<Task>() {
         @Override
-        public Task<TaskDef> newSession(SessionContext $, final Task parent) {
-            return new Task<TaskDef>(parent, this, $) {
+        public Task createNewSession(SessionContext $, Task parent, TaskDef def) {
+            return new Task<TaskDef>(parent, def, $) {
                 @Override
                 protected TaskResult exec(SessionTaskRunner runner, Object input) {
                     final String s = Question.freeQuestion("Enter sql to execute: ");
@@ -197,15 +197,14 @@ public class MySqlPlugin extends Plugin<Task, TaskDef<?>> {
                     return runScript(runner, s);
                 }
             };
+
         }
-    };
+    });
 
-    public final TaskDef createDump = new TaskDef() {
-
-
+    public final TaskDef<Task> createDump = new TaskDef<Task>(new TaskDef.SingleTaskSupplier<Task>() {
         @Override
-        public Task<TaskDef> newSession(SessionContext $, final Task parent) {
-            return new Task<TaskDef>(parent, this, $) {
+        public Task createNewSession(SessionContext $, Task parent, TaskDef def) {
+            return new Task<TaskDef>(parent, def, $) {
                 @Override
                 protected TaskResult exec(SessionTaskRunner runner, Object input) {
                     Question.freeQuestionWithOption("Enter a filename", $(dumpName), dumpName);
@@ -217,6 +216,7 @@ public class MySqlPlugin extends Plugin<Task, TaskDef<?>> {
                         .addSplit(String.format("mysqldump --user=%s -p %s", $(user), $(dbName)))
                         .pipe()
                         .addSplit("bzip2 --best")
+                        .timeoutForInstallation()
                         .redirectTo($(dumpPath))
                     );
 
@@ -224,12 +224,12 @@ public class MySqlPlugin extends Plugin<Task, TaskDef<?>> {
                 }
             };
         }
-    };
+    }) ;
 
-    public final TaskDef createAndFetchDump = new TaskDef() {
+    public final TaskDef createAndFetchDump = new TaskDef<Task>(new TaskDef.SingleTaskSupplier<Task>() {
         @Override
-        public Task<TaskDef> newSession(SessionContext $, final Task parent) {
-            return new Task<TaskDef>(parent, this, $) {
+        public Task createNewSession(SessionContext $, Task parent, TaskDef<Task> def) {
+            return new Task<TaskDef>(parent, def, $) {
                 @Override
                 protected TaskResult exec(SessionTaskRunner runner, Object input) {
                     runner.run(createDump);
@@ -240,25 +240,26 @@ public class MySqlPlugin extends Plugin<Task, TaskDef<?>> {
                 }
             };
         }
-    };
+    });
 
-    public final TaskDef restoreDump = new TaskDef() {
+    public final TaskDef restoreDump = new TaskDef<Task>(new TaskDef.SingleTaskSupplier<Task>() {
         @Override
-        public Task<TaskDef> newSession(SessionContext $, final Task parent) {
-            return new Task<TaskDef>(parent, this, $) {
+        public Task createNewSession(SessionContext $, Task parent, TaskDef<Task> def) {
+            return new Task<TaskDef>(parent, def, $) {
                 @Override
                 protected TaskResult exec(SessionTaskRunner runner, Object input) {
                     Question.freeQuestionWithOption("Enter a filepath", $(dumpName), dumpName);
 
-                    return $.sys.sendCommand($.sys.line()
-                        .addSplit(String.format("bzcat %s", $(dumpPath)))
-                        .pipe()
-                        .addSplit(String.format("mysql --user=%s -p %s", $(user), $(dbName)))
-                    );
+                    return $.sys.script().line()
+                        .addRaw("bzcat %s | mysql --user=%s -p %s", $(dumpPath), $(user), $(dbName))
+                        .timeoutForInstallation()
+                        .build().run()
+                    ;
                 }
             };
+
         }
-    };
+    });
 
 
     public CommandLineResult runScript(SessionTaskRunner runner, String sql) {

@@ -29,7 +29,7 @@ public class ReleasesPlugin extends Plugin {
     public final DynamicVariable<PendingRelease> pendingRelease = undefined();
 
     // not present when: there is no activation for pending release OR when there is no release
-    public final DynamicVariable<Optional<Release>> activatedRelease = dynamic(new Fun<Optional<Release>, AbstractContext>() {
+    public final DynamicVariable<Optional<Release>> activatedRelease = dynamic(new Fun<AbstractContext, Optional<Release>>() {
         @Override
         public Optional<Release> apply(AbstractContext $) {
             return $.var(session).getCurrentRelease();
@@ -41,7 +41,7 @@ public class ReleasesPlugin extends Plugin {
     public final DynamicVariable<String>
         dirName = newVar("releases"),
         currentDirName = newVar("current"),
-        releaseName = dynamic(new Fun<String, AbstractContext>() {
+        releaseName = dynamic(new Fun<AbstractContext, String>() {
             @Override
             public String apply(AbstractContext $) {
                 return RELEASE_FORMATTER.print(new DateTime()) + ".GMT";
@@ -61,7 +61,7 @@ public class ReleasesPlugin extends Plugin {
     public final DynamicVariable<Boolean>
         cleanPending = newVar(true);
 
-    public final DynamicVariable<Releases> session = dynamic(new Fun<Releases, SessionContext>() {
+    public final DynamicVariable<Releases> session = dynamic(new Fun<SessionContext, Releases>() {
         @Override
         public Releases apply(SessionContext $) {
             return $.wire(new Releases($, ReleasesPlugin.this)).load();

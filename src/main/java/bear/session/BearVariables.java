@@ -24,7 +24,7 @@ import bear.core.SessionContext;
  */
 public class BearVariables {
     public static DynamicVariable<String> joinPath(final Object... varsAndStrings) {
-        return Variables.dynamic(new Fun<String, SessionContext>() {
+        return Variables.dynamic(new Fun<SessionContext, String>() {
             public String apply(final SessionContext $) {
                 return joinAndResolvePath($, varsAndStrings);
             }

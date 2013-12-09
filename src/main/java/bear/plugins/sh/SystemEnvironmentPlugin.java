@@ -105,6 +105,14 @@ public abstract class SystemEnvironmentPlugin extends Plugin<SystemSession, Syst
     public static class SystemSessionDef extends TaskDef<SystemSession> {
         private SystemEnvironmentPlugin plugin;
 
+        public SystemSessionDef() {
+            super(new SingleTaskSupplier<SystemSession>() {
+                @Override
+                public SystemSession createNewSession(SessionContext $, Task parent, TaskDef<SystemSession> def) {
+                    return ((SystemSessionDef)def).plugin.newSession($, parent);
+                }
+            });
+        }
 
         void setPlugin(SystemEnvironmentPlugin plugin) {
             this.plugin = plugin;
@@ -113,12 +121,5 @@ public abstract class SystemEnvironmentPlugin extends Plugin<SystemSession, Syst
         public SystemEnvironmentPlugin getPlugin() {
             return plugin;
         }
-
-        @Override
-        public SystemSession newSession(SessionContext $, final Task parent) {
-            return plugin.newSession($, parent);
-        }
     }
-
-
 }

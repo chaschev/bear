@@ -21,7 +21,7 @@ import bear.session.DynamicVariable;
 /**
  * @author Andrey Chaschev chaschev@gmail.com
  */
-public abstract class VarFun<T, CONTEXT extends AbstractContext> implements Fun<T,CONTEXT> {
+public abstract class VarFun<T, CONTEXT extends AbstractContext> implements Fun<CONTEXT, T> {
     protected DynamicVariable<T> var;
 
     public VarFun() {

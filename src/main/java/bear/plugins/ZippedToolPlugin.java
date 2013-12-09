@@ -41,7 +41,7 @@ import static com.google.common.collect.Iterables.find;
 /**
  * A class that simplifies operations (i.e. installation) of tools like Maven, Grails, Play, Tomcat, etc
  */
-public abstract class ZippedToolPlugin extends Plugin<Task, TaskDef<?>> {
+public class ZippedToolPlugin extends Plugin<Task, TaskDef<?>> {
     public final DynamicVariable<String>
         version = dynamic("version of the tool, a string which is return by a tool identifying it's version"),
         toolname = dynamic("this will be the name of home folder, i.e. maven, jdk"),
@@ -65,8 +65,11 @@ public abstract class ZippedToolPlugin extends Plugin<Task, TaskDef<?>> {
         buildPath = concat(myDirPath, "/build");
     }
 
-    protected abstract class ZippedToolTaskDef<T extends ZippedTool> extends InstallationTaskDef<T>{
+    protected class ZippedToolTaskDef<T extends ZippedTool> extends InstallationTaskDef<T>{
 
+        public ZippedToolTaskDef(SingleTaskSupplier singleTaskSupplier) {
+            super(singleTaskSupplier);
+        }
     }
 
     protected abstract class ZippedTool extends InstallationTask<InstallationTaskDef> {

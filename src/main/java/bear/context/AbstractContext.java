@@ -107,7 +107,7 @@ public abstract class AbstractContext {
         return global;
     }
 
-    public VariablesLayer put(Nameable key, Fun<?,?> fun) {
+    public VariablesLayer put(Nameable key, Fun<?, ?> fun) {
         return put(key, dynamic(fun));
     }
 

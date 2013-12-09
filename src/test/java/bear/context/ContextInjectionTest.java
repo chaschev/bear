@@ -21,13 +21,13 @@ public class ContextInjectionTest {
 
         public final DynamicVariable<List>
 
-            explicitListInjector = dynamic(new Fun<List, InjectingContext<TestSessionContext>>() {
+            explicitListInjector = dynamic(new Fun<InjectingContext<TestSessionContext>, List>() {
             @Override
             public List apply(InjectingContext<TestSessionContext> $) {
                 return singletonList("explicitList");
             }
         }),
-            implicitList = dynamic(new Fun<List, InjectingContext<TestSessionContext>>() {
+            implicitList = dynamic(new Fun<InjectingContext<TestSessionContext>, List>() {
                 @Override
                 public List apply(InjectingContext<TestSessionContext> $) {
                     return singletonList("implicitList");
@@ -119,7 +119,7 @@ public class ContextInjectionTest {
     public void injection_DeclaredClass(){
         global.injectors.add(new InjectingVariable<Map<String, String>>()
             .restrictDeclaringClasses(AutoWired3.class)
-            .setDynamic(new Fun<Map<String, String>, InjectingContext<TestSessionContext>>() {
+            .setDynamic(new Fun<InjectingContext<TestSessionContext>, Map<String, String>>() {
                 @Override
                 public Map<String, String> apply(InjectingContext<TestSessionContext> $) {
                     if (!Map.class.isAssignableFrom($.field.getType())) {
@@ -137,7 +137,7 @@ public class ContextInjectionTest {
     public void injection_DeclaredType(){
         global.injectors.add(new InjectingVariable<Map<String, String>>()
             .restrictTypes(Map.class)
-            .setDynamic(new Fun<Map<String, String>, InjectingContext<TestSessionContext>>() {
+            .setDynamic(new Fun<InjectingContext<TestSessionContext>, Map<String, String>>() {
                 @Override
                 public Map<String, String> apply(InjectingContext<TestSessionContext> $) {
                     return sampleMap("injected");
@@ -160,7 +160,7 @@ public class ContextInjectionTest {
         assertThat(global.wire(new AutoWired3()).implicitList.get(0)).isEqualTo("overridden in global");
         assertThat($.wire(new AutoWired3()).implicitList.get(0)).isEqualTo("overridden in global");
 
-        $.put(global.bear.implicitList, new Fun<List, TestSessionContext>() {
+        $.put(global.bear.implicitList, new Fun<TestSessionContext, List>() {
             @Override
             public List apply(TestSessionContext $) {
                 return singletonList("overridden in $");

@@ -59,12 +59,12 @@ public class Bear extends BearApp<GlobalContext> {
     }
 
     public final DynamicVariable<Boolean>
-        isNativeUnix = dynamic(new Fun<Boolean, SessionContext>() {
+        isNativeUnix = dynamic(new Fun<SessionContext, Boolean>() {
         public Boolean apply(SessionContext $) {
             return $.sys.isNativeUnix();
         }
     }),
-        isUnix = dynamic(new Fun<Boolean, SessionContext>() {
+        isUnix = dynamic(new Fun<SessionContext, Boolean>() {
             public Boolean apply(SessionContext $) {
                 return $.sys.isUnix();
             }
@@ -81,7 +81,7 @@ public class Bear extends BearApp<GlobalContext> {
 
     taskName = strVar("A task to run").defaultTo("deploy");
 
-    public final DynamicVariable<TaskDef> task = dynamic(new Fun<TaskDef, SessionContext>() {
+    public final DynamicVariable<TaskDef> task = dynamic(new Fun<SessionContext, TaskDef>() {
         @Override
         public TaskDef apply(SessionContext $) {
             return (TaskDef) OpenBean.getFieldValue(global.tasks, $.var(taskName));
@@ -134,13 +134,13 @@ public class Bear extends BearApp<GlobalContext> {
 
     devEnvironment = enumConstant("devEnvironment", "Development environment", "dev", "test", "prod").defaultTo("prod"),
 
-    revision = strVar("Get head revision").setDynamic(new Fun<String, SessionContext>() {
+    revision = strVar("Get head revision").setDynamic(new Fun<SessionContext, String>() {
         public String apply(SessionContext $) {
             return vcs.apply($).head();
         }
     }),
 
-    realRevision = strVar("Update revision from vcs").setDynamic(new Fun<String, SessionContext>() {
+    realRevision = strVar("Update revision from vcs").setDynamic(new Fun<SessionContext, String>() {
         public String apply(SessionContext $) {
             final VCSSession vcsCLI = $.var(vcs);
 
@@ -173,7 +173,7 @@ public class Bear extends BearApp<GlobalContext> {
         speedUpBuild = and(not(productionDeployment), not(clean)),
         vcsAuthCache = dynamic(""),
         vcsPreferPrompt = dynamic(""),
-        isRemoteEnv = dynamic(new Fun<Boolean, SessionContext>() {
+        isRemoteEnv = dynamic(new Fun<SessionContext, Boolean>() {
             public Boolean apply(SessionContext $) {
                 return $.sys.isRemote();
             }
@@ -197,7 +197,7 @@ public class Bear extends BearApp<GlobalContext> {
     ;
 
     public final DynamicVariable<Stages> stages = new DynamicVariable<Stages>("List of stages. Stage is collection of servers with roles and auth defined for each of the server.");
-    public final DynamicVariable<Stage> getStage = dynamic(new Fun<Stage, GlobalContext>() {
+    public final DynamicVariable<Stage> getStage = dynamic(new Fun<GlobalContext, Stage>() {
         public Stage apply(GlobalContext $) {
             return findStage($);
         }
@@ -206,7 +206,7 @@ public class Bear extends BearApp<GlobalContext> {
     public final DynamicVariable<List<String>> activeHosts = undefined();
     public final DynamicVariable<List<String>> activeRoles = undefined();
 
-    public final DynamicVariable<Function<Stage, Collection<Address>>> addressesForStage = dynamic(new Fun<Function<Stage, Collection<Address>>, AbstractContext>() {
+    public final DynamicVariable<Function<Stage, Collection<Address>>> addressesForStage = dynamic(new Fun<AbstractContext, Function<Stage, Collection<Address>>>() {
         @Override
         public Function<Stage, Collection<Address>> apply(final AbstractContext $) {
             return new Function<Stage, Collection<Address>>() {
@@ -253,7 +253,7 @@ public class Bear extends BearApp<GlobalContext> {
         return stage;
     }
 
-    public final DynamicVariable<VCSSession> vcs = new DynamicVariable<VCSSession>("vcs", "VCS adapter").setDynamic(new Fun<VCSSession, SessionContext>() {
+    public final DynamicVariable<VCSSession> vcs = new DynamicVariable<VCSSession>("vcs", "VCS adapter").setDynamic(new Fun<SessionContext, VCSSession>() {
         public VCSSession apply(SessionContext $) {
             Class<? extends VcsCLIPlugin> vcsCLI = null;
 
@@ -271,7 +271,7 @@ public class Bear extends BearApp<GlobalContext> {
 
     public final DynamicVariable<File>
         scriptsDir = newVar(new File(".bear")),
-        globalPropertiesFile = dynamic(new Fun<File, SessionContext>() {
+        globalPropertiesFile = dynamic(new Fun<SessionContext, File>() {
             public File apply(SessionContext $) {
                 return new File($.var(scriptsDir), "global.properties");
             }
@@ -293,12 +293,12 @@ public class Bear extends BearApp<GlobalContext> {
         }
     }
 
-    public final DynamicVariable<FileNameGenerator> randomFilePath = dynamic(new Fun<FileNameGenerator, SessionContext>() {
+    public final DynamicVariable<FileNameGenerator> randomFilePath = dynamic(new Fun<SessionContext, FileNameGenerator>() {
         @Override
         public FileNameGenerator apply(SessionContext $) {return new FileNameGenerator($);}
     });
 
-    public final DynamicVariable<Predicate<String>> pathValidator = dynamic(new Fun<Predicate<String>, AbstractContext>() {
+    public final DynamicVariable<Predicate<String>> pathValidator = dynamic(new Fun<AbstractContext, Predicate<String>>() {
         @Override
         public Predicate<String> apply(AbstractContext $) {return DEFAULT_VALIDATOR;}
     });

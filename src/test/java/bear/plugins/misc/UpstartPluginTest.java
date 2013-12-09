@@ -18,7 +18,7 @@ public class UpstartPluginTest extends SessionTest{
 
     @Test
     public void testUpstart() throws Exception {
-        $.runner.runSession(upstart.create.singleTask().createNewSession($, sys),
+        $.runner.runSession(upstart.create.singleTaskSupplier().createNewSession($, sys, upstart.create),
             new UpstartServices(
                 Optional.of("my_scripts"),
                 Lists.newArrayList(

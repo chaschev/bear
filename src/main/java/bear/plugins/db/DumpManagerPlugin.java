@@ -24,7 +24,7 @@ public class DumpManagerPlugin extends Plugin {
         dbType = undefined(),
         sharedDumpsPath = concat(bear.toolsSharedDirPath, "/dumps"),
         sharedDbDumpsPath = concat(sharedDumpsPath, "/", dbType),
-        dumpName = dynamic(new Fun<String, AbstractContext>() {
+        dumpName = dynamic(new Fun<AbstractContext, String>() {
             @Override
             public String apply(AbstractContext $) {
                 return ReleasesPlugin.RELEASE_FORMATTER.print(new DateTime()) + ".GMT";
@@ -34,7 +34,7 @@ public class DumpManagerPlugin extends Plugin {
         dumpArchivePath = concat(dumpFolderPath, "/", dumpName, ".tar.gz"),
         dumpsJson = concat(sharedDbDumpsPath, "dumps.json");
 
-    public final DynamicVariable<DbDumpManager.DbService> dbService = dynamic(new Fun<DbDumpManager.DbService, SessionContext>() {
+    public final DynamicVariable<DbDumpManager.DbService> dbService = dynamic(new Fun<SessionContext, DbDumpManager.DbService>() {
         @Override
         public DbDumpManager.DbService apply(SessionContext $) {
             String s = $.var(dbType);
@@ -57,10 +57,10 @@ public class DumpManagerPlugin extends Plugin {
 
     @Override
     public InstallationTaskDef<? extends InstallationTask> getInstall() {
-        return new InstallationTaskDef<InstallationTask>() {
+        return new InstallationTaskDef<InstallationTask>(new TaskDef.SingleTaskSupplier() {
             @Override
-            protected InstallationTask newSession(SessionContext $, Task parent) {
-                return new InstallationTask<InstallationTaskDef>(parent, this, $){
+            public Task createNewSession(SessionContext $, Task parent, TaskDef def) {
+                return new InstallationTask<InstallationTaskDef>(parent, (InstallationTaskDef) def, $){
                     @Override
                     protected TaskResult exec(SessionTaskRunner runner, Object input) {
                         return $.sys.mkdirs($(sharedDbDumpsPath)).toTaskResult();
@@ -72,6 +72,6 @@ public class DumpManagerPlugin extends Plugin {
                     }
                 };
             }
-        };
+        });
     }
 }

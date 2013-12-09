@@ -39,16 +39,16 @@ public class Tasks {
         Preconditions.checkNotNull(bear);
     }
 
-    public final TaskDef restartApp = new TaskDef("Restart App") {
+    public final TaskDef restartApp = new TaskDef<Task>("Restart App", new TaskDef.SingleTaskSupplier<Task>() {
         @Override
-        public Task<TaskDef> newSession(SessionContext $, final Task parent) {
+        public Task createNewSession(SessionContext $, Task parent, TaskDef def) {
             return Task.nop();
         }
-    };
+    });
 
-    public final TaskDef setup = new TaskDef("Generic Setup") {
+    public final TaskDef setup = new TaskDef<Task>("Generic Setup", new TaskDef.SingleTaskSupplier<Task>() {
         @Override
-        public Task<TaskDef> newSession(SessionContext $, final Task parent) {
+        public Task createNewSession(SessionContext $, Task parent, TaskDef<Task> def) {
             return new Task<TaskDef>(parent, setup, $) {
                 @Override
                 protected TaskResult exec(SessionTaskRunner runner, Object input) {
@@ -80,10 +80,11 @@ public class Tasks {
                         Iterable<Plugin> plugins = global.getGlobalPlugins();
 
                         for (Plugin<Task, ? extends TaskDef> plugin : plugins) {
-                            if (plugin.getInstall().singleTask().createNewSession($, getParent()).asInstalledDependency().checkDeps().nok()) {
+                            InstallationTaskDef<? extends InstallationTask> installTask = plugin.getInstall();
+                            if (installTask.singleTaskSupplier().createNewSession($, getParent(), (TaskDef)installTask).asInstalledDependency().checkDeps().nok()) {
                                 if ($(bear.autoInstallPlugins)) {
                                     $.log("plugin %s was not installed. installing it...", plugin);
-                                    TaskResult run = runner.run(plugin.getInstall());
+                                    TaskResult run = runner.run(installTask);
                                     if (!run.ok()) {
                                         $.error("could not install %s:%n%s", plugin, run);
                                         break;
@@ -99,12 +100,12 @@ public class Tasks {
                 }
             };
         }
-    }.setSetupTask(true);
+    }).setSetupTask(true);
 
 
-    public final TaskDef vcsUpdate = new TaskDef() {
+    public final TaskDef vcsUpdate = new TaskDef<Task>(new TaskDef.SingleTaskSupplier<Task>() {
         @Override
-        public Task<TaskDef> newSession(SessionContext $, final Task parent) {
+        public Task createNewSession(SessionContext $, Task parent, TaskDef<Task> def) {
             return new Task<TaskDef>(parent, vcsUpdate, $) {
                 @Override
                 protected TaskResult exec(SessionTaskRunner runner, Object input) {
@@ -118,7 +119,7 @@ public class Tasks {
                 }
             };
         }
-    };
+    });
 
     public static TaskCallable<TaskDef> andThen(final TaskCallable<TaskDef>... callables) {
         int nullCount = 0;
@@ -184,5 +185,14 @@ public class Tasks {
         }
 
         return new TaskResult(ex);
+    }
+
+    public static TaskDef.SingleTaskSupplier<Task> newSingleTask(final TaskCallable<TaskDef> taskCallable) {
+        return new TaskDef.SingleTaskSupplier<Task>() {
+            @Override
+            public Task createNewSession(SessionContext $, Task parent, TaskDef<Task> def) {
+                return new Task(parent, taskCallable);
+            }
+        };
     }
 }

@@ -51,24 +51,25 @@ public class DeploymentPlugin extends Plugin {
             whenStarted
         };
 
-        public abstract class DeploymentStep<SELF extends DeploymentStep> extends TaskDef<Task> {
+        public abstract class DeploymentStep<SELF extends DeploymentStep>  {
             @Nullable
             protected TaskCallable<TaskDef> beforeCallable;
 
-            @Nullable
-            protected TaskCallable<TaskDef> taskCallable;
+            @Nullable protected TaskCallable<TaskDef> taskCallable;
 
             @Nullable
             protected TaskCallable<TaskDef> afterCallable;
 
+            protected DeploymentStep(final TaskCallable<TaskDef> taskCallable) {
+                this.taskCallable = taskCallable;
+            }
+
+            protected DeploymentStep() {
+            }
+
             public SELF setTaskCallable(TaskCallable<TaskDef> taskCallable) {
                 this.taskCallable = taskCallable;
                 return self();
-            }
-
-            @Override
-            protected Task newSession(SessionContext $, Task parent) {
-                return taskCallable == null ? Task.nop() : new Task(parent, taskCallable);
             }
 
             @SuppressWarnings("unchecked")
@@ -288,34 +289,25 @@ public class DeploymentPlugin extends Plugin {
             };
 
 
-            return new TaskDef<Task>() {
-                @Override
-                protected Multitask<Task> newMultitask() {
-                    final List<Task> tasks = new ArrayList<Task>();
-                    return new Multitask<Task>() {
-                        @Override
-                        public List<Task> createNewSessions(SessionContext $, Task parent) {
-                            for (DeploymentStep<?> deploymentStep : deploymentSteps) {
-                                addTask(tasks, parent, deploymentStep.beforeCallable);
-                                addTask(tasks, parent, deploymentStep.taskCallable);
-                                addTask(tasks, parent, deploymentStep.afterCallable);
-                            }
+            return new TaskDef<Task>(new TaskDef.MultitaskSupplier<Task>() {
+                final List<Task> tasks = new ArrayList<Task>();
 
-                            return tasks;
-                        }
-
-                        @Override
-                        public int size() {
-                            return tasks.size();
-                        }
-                    };
-                }
-            }.onRollback(new TaskDef<Task>() {
                 @Override
-                protected Task newSession(SessionContext $, Task parent) {
-                    return new Task<TaskDef>(parent, ifRollbackCallable);
+                public List<Task> createNewSessions(SessionContext $, Task parent) {
+                    for (DeploymentStep<?> deploymentStep : deploymentSteps) {
+                        addTask(tasks, parent, deploymentStep.beforeCallable);
+                        addTask(tasks, parent, deploymentStep.taskCallable);
+                        addTask(tasks, parent, deploymentStep.afterCallable);
+                    }
+
+                    return tasks;
                 }
-            });
+
+                @Override
+                public int size() {
+                    return tasks.size();
+                }
+            }).onRollback(new TaskDef<Task>(Tasks.newSingleTask(ifRollbackCallable)));
         }
 
         private void addTask(List<Task> tasks, Task parent, TaskCallable callable) {

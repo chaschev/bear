@@ -104,9 +104,10 @@ public class GlobalTaskRunner {
                                                 r.join(plugin.checkPluginDependencies());
 
                                                 if (!taskDef.isSetupTask()) {
-                                                    Dependency dependency = plugin.getInstall()
-                                                        .singleTask()
-                                                        .createNewSession($, $.currentTask)
+                                                    InstallationTaskDef<? extends InstallationTask> installTask = plugin.getInstall();
+                                                    Dependency dependency = installTask
+                                                        .singleTaskSupplier()
+                                                        .createNewSession($, $.currentTask, (TaskDef) installTask)
                                                         .asInstalledDependency();
 
                                                     result = $.runner.runSession(dependency);

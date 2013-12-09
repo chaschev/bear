@@ -391,10 +391,13 @@ public class GitCLIPlugin extends VcsCLIPlugin<Task, TaskDef<?>> {
     static class GitTaskDef extends TaskDef<GitCLIVCSSession> {
         private GitCLIPlugin git;
 
-
-        @Override
-        public GitCLIVCSSession newSession(SessionContext $, final Task parent) {
-            return git.newSession($, parent);
+        GitTaskDef() {
+            super(new SingleTaskSupplier<GitCLIVCSSession>() {
+                @Override
+                public GitCLIVCSSession createNewSession(SessionContext $, Task parent, TaskDef<GitCLIVCSSession> def) {
+                    return def.singleTaskSupplier().createNewSession($, parent, def);
+                }
+            });
         }
     }
 

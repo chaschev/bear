@@ -56,7 +56,7 @@ public class InjectingVariable<T> extends DynamicVariable<T> {
     }
 
     @Override
-    public InjectingVariable<T> setDynamic(Fun<T, ? extends AbstractContext> impl) {
+    public InjectingVariable<T> setDynamic(Fun<? extends AbstractContext, T> impl) {
         super.setDynamic(impl);
         return this;
     }

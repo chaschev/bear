@@ -58,10 +58,11 @@ public class GrailsPlugin extends ZippedToolPlugin {
     }
 
 
-    public final InstallationTaskDef<ZippedTool> install = new ZippedToolTaskDef<ZippedTool>() {
+    public final InstallationTaskDef<ZippedTool> install = new ZippedToolTaskDef<ZippedTool>(new TaskDef.SingleTaskSupplier<ZippedTool>(){
+
         @Override
-        public ZippedTool newSession(SessionContext $, final Task parent) {
-            return new ZippedTool(parent, this, $) {
+        public ZippedTool createNewSession(SessionContext $, Task parent, TaskDef<ZippedTool> def) {
+            return new ZippedTool(parent, (InstallationTaskDef) def, $) {
                 @Override
                 protected DependencyResult exec(SessionTaskRunner runner, Object input) {
                     clean();
@@ -88,8 +89,9 @@ public class GrailsPlugin extends ZippedToolPlugin {
                     return "grails --version";
                 }
             };
+
         }
-    };
+    });
 
     @Override
     public DependencyResult checkPluginDependencies() {

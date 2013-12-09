@@ -33,14 +33,14 @@ public class MavenPlugin extends ZippedToolPlugin {
         version.defaultTo("3.0.5", true);
         toolname.defaultTo("maven", true);
         toolDistrName.defaultTo("apache-maven", true);
-        distrFilename.setDynamic(new Fun<String, SessionContext>() {
+        distrFilename.setDynamic(new Fun<SessionContext, String>() {
             @Override
             public String apply(SessionContext $) {
                 return $.concat(versionName, "-bin.tar.gz");
             }
         });
 
-        distrWwwAddress.setDynamic(new Fun<String, SessionContext>() {
+        distrWwwAddress.setDynamic(new Fun<SessionContext, String>() {
             @Override
             public String apply(SessionContext $) {
                 return $.concat("http://apache-mirror.rbc.ru/pub/apache/maven/maven-3/", version,
@@ -49,10 +49,10 @@ public class MavenPlugin extends ZippedToolPlugin {
         });
     }
 
-    public final InstallationTaskDef<ZippedTool> install = new ZippedToolTaskDef<ZippedTool>() {
+    public final InstallationTaskDef<ZippedTool> install = new ZippedToolTaskDef<ZippedTool>(new TaskDef.SingleTaskSupplier() {
         @Override
-        public ZippedTool newSession(SessionContext $, final Task parent) {
-            return new ZippedTool(parent, this, $) {
+        public Task createNewSession(SessionContext $, Task parent, TaskDef def) {
+            return new ZippedTool(parent, (InstallationTaskDef) def, $) {
                 @Override
                 protected DependencyResult exec(SessionTaskRunner runner, Object input) {
                     clean();
@@ -79,7 +79,7 @@ public class MavenPlugin extends ZippedToolPlugin {
                 }
             };
         }
-    };
+    }) ;
 
 
     @Override
