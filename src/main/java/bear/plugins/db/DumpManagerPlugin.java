@@ -31,7 +31,7 @@ public class DumpManagerPlugin extends Plugin {
             }
         }).memoizeIn(GlobalContext.class),
         dumpFolderPath = concat(sharedDbDumpsPath, "/", dumpName),
-        dumpArchivePath = concat(dumpFolderPath, "/", dumpName, ".tar.gz"),
+        dumpArchivePath = concat(sharedDbDumpsPath, "/", dumpName, ".tar.gz"),
         dumpsJson = concat(sharedDbDumpsPath, "dumps.json");
 
     public final DynamicVariable<DbDumpManager.DbService> dbService = dynamic(new Fun<SessionContext, DbDumpManager.DbService>() {
@@ -41,7 +41,7 @@ public class DumpManagerPlugin extends Plugin {
 
             switch (DbType.valueOf(s)) {
                 case mongo:
-                    return new DbDumpManager.MongoDbService($);
+                    return $.wire(new MongoDbService($));
                 case mysql:
                     throw new UnsupportedOperationException("todo");
                 default:
@@ -57,7 +57,7 @@ public class DumpManagerPlugin extends Plugin {
 
     @Override
     public InstallationTaskDef<? extends InstallationTask> getInstall() {
-        return new InstallationTaskDef<InstallationTask>(new TaskDef.SingleTaskSupplier() {
+        return new InstallationTaskDef<InstallationTask>(new SingleTaskSupplier() {
             @Override
             public Task createNewSession(SessionContext $, Task parent, TaskDef def) {
                 return new InstallationTask<InstallationTaskDef>(parent, (InstallationTaskDef) def, $){

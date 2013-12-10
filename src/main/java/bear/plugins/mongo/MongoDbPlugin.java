@@ -62,7 +62,7 @@ public class MongoDbPlugin extends Plugin {
         shell = new MongoDbShellMode(MongoDbPlugin.this);
     }
 
-    public final InstallationTaskDef<InstallationTask> setup = new InstallationTaskDef<InstallationTask>(new TaskDef.SingleTaskSupplier() {
+    public final InstallationTaskDef<InstallationTask> setup = new InstallationTaskDef<InstallationTask>(new SingleTaskSupplier() {
         @Override
         public Task createNewSession(SessionContext $, Task parent, TaskDef def) {
             return new InstallationTask<InstallationTaskDef>(parent, setup, $) {

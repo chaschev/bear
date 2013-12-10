@@ -289,7 +289,7 @@ public class DeploymentPlugin extends Plugin {
             };
 
 
-            return new TaskDef<Task>(new TaskDef.MultitaskSupplier<Task>() {
+            return new TaskDef<Task>(new MultitaskSupplier<Task>() {
                 final List<Task> tasks = new ArrayList<Task>();
 
                 @Override

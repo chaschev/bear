@@ -80,7 +80,7 @@ public class TomcatPlugin extends ZippedToolPlugin {
 
     public void initPlugin() {
         //screen recipe is taken from here http://stackoverflow.com/a/1628217/1851024
-        global.tasks.restartApp.addBeforeTask(new TaskDef<Task>(new TaskDef.SingleTaskSupplier<Task>() {
+        global.tasks.restartApp.addBeforeTask(new TaskDef<Task>(new SingleTaskSupplier<Task>() {
             @Override
             public Task createNewSession(SessionContext $, Task parent, TaskDef def) {
                 return new Task<TaskDef>(parent, def, $) {
@@ -100,7 +100,7 @@ public class TomcatPlugin extends ZippedToolPlugin {
         }));
     }
 
-    public final InstallationTaskDef<ZippedTool> install = new ZippedToolTaskDef<ZippedTool>(new TaskDef.SingleTaskSupplier() {
+    public final InstallationTaskDef<ZippedTool> install = new ZippedToolTaskDef<ZippedTool>(new SingleTaskSupplier() {
         @Override
         public Task createNewSession(SessionContext $, Task parent, TaskDef def) {
             return new ZippedTool(parent, (InstallationTaskDef) def, $) {

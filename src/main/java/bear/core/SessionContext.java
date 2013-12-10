@@ -68,6 +68,40 @@ public class SessionContext extends AbstractContext {
     public final String id = randomId();
     protected Thread thread;
 
+    public SessionContext(GlobalContext global, Address address, SessionTaskRunner runner) {
+        super(global, address.getName());
+
+        ///this can be extracted into newContext(aClass, parent, Object... fields)
+        this.runner = runner;
+
+        global.wire(this);       //sets bear, global and the SystemEnvironment plugin =)
+        this.global = global;
+
+        layer.put(bear.sessionHostname, address.getName());
+        layer.put(bear.sessionAddress, address.getAddress());
+
+        this.address = wire(address);
+
+        ////////
+        // this can be extracted into init
+
+        sysDef = ((address instanceof SshAddress) ? remoteSysEnv : localSysEnv).getTaskDef();
+        sys = sysDef.singleTaskSupplier().createNewSession(this, null, sysDef);
+
+        this.setName(address.getName());
+
+        if (address instanceof SshAddress) {
+            SshAddress a = (SshAddress) address;
+
+            layer.putConst(bear.sshUsername, a.username);
+            layer.putConst(bear.sshPassword, a.password);
+        }
+
+        runner.set$(this);
+
+        currentTask = new Task<TaskDef>(null, TaskDef.ROOT, this);
+    }
+
     public static String randomId() {
         return RandomStringUtils.randomAlphanumeric(6);
     }
@@ -169,37 +203,7 @@ public class SessionContext extends AbstractContext {
         }
     }
 
-    public SessionContext(GlobalContext global, Address address, SessionTaskRunner runner) {
-        super(global, address.getName());
 
-        ///this can be extracted into newContext(aClass, parent, Object... fields)
-        this.runner = runner;
-
-        global.wire(this);       //sets bear, global and the SystemEnvironment plugin =)
-        this.global = global;
-
-        layer.put(bear.sessionHostname, address.getName());
-        layer.put(bear.sessionAddress, address.getAddress());
-
-        this.address = wire(address);
-
-        ////////
-        // this can be extracted into init
-
-        sysDef = ((address instanceof SshAddress) ? remoteSysEnv : localSysEnv).getTaskDef();
-        sys = sysDef.singleTaskSupplier().createNewSession(this, null, sysDef);
-
-        this.setName(address.getName());
-
-        if (address instanceof SshAddress) {
-            SshAddress a = (SshAddress) address;
-
-            layer.putConst(bear.sshUsername, a.username);
-            layer.putConst(bear.sshPassword, a.password);
-        }
-
-        runner.set$(this);
-    }
 
     public String joinPath(DynamicVariable<String> var, String path) {
         return sys.joinPath(var(var), path);

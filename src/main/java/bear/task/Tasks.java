@@ -39,14 +39,14 @@ public class Tasks {
         Preconditions.checkNotNull(bear);
     }
 
-    public final TaskDef restartApp = new TaskDef<Task>("Restart App", new TaskDef.SingleTaskSupplier<Task>() {
+    public final TaskDef restartApp = new TaskDef<Task>("Restart App", new SingleTaskSupplier<Task>() {
         @Override
         public Task createNewSession(SessionContext $, Task parent, TaskDef def) {
             return Task.nop();
         }
     });
 
-    public final TaskDef setup = new TaskDef<Task>("Generic Setup", new TaskDef.SingleTaskSupplier<Task>() {
+    public final TaskDef setup = new TaskDef<Task>("Generic Setup", new SingleTaskSupplier<Task>() {
         @Override
         public Task createNewSession(SessionContext $, Task parent, TaskDef<Task> def) {
             return new Task<TaskDef>(parent, setup, $) {
@@ -103,7 +103,7 @@ public class Tasks {
     }).setSetupTask(true);
 
 
-    public final TaskDef vcsUpdate = new TaskDef<Task>(new TaskDef.SingleTaskSupplier<Task>() {
+    public final TaskDef vcsUpdate = new TaskDef<Task>(new SingleTaskSupplier<Task>() {
         @Override
         public Task createNewSession(SessionContext $, Task parent, TaskDef<Task> def) {
             return new Task<TaskDef>(parent, vcsUpdate, $) {
@@ -187,11 +187,11 @@ public class Tasks {
         return new TaskResult(ex);
     }
 
-    public static TaskDef.SingleTaskSupplier<Task> newSingleTask(final TaskCallable<TaskDef> taskCallable) {
-        return new TaskDef.SingleTaskSupplier<Task>() {
+    public static SingleTaskSupplier<Task> newSingleTask(final TaskCallable<TaskDef> taskCallable) {
+        return new SingleTaskSupplier<Task>() {
             @Override
             public Task createNewSession(SessionContext $, Task parent, TaskDef<Task> def) {
-                return new Task(parent, taskCallable);
+                return new Task(parent,  taskCallable);
             }
         };
     }

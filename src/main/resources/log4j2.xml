@@ -13,7 +13,7 @@
             <AppenderRef ref="File"/>
         </Logger>
 
-        <Logger name="bear.core.BearScript2">
+        <Logger name="bear.core.BearScript">
             <AppenderRef ref="Console"/>
             <AppenderRef ref="File" />
         </Logger>

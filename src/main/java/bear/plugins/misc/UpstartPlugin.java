@@ -36,7 +36,7 @@ public class UpstartPlugin extends Plugin {
 
     }
 
-    public final TaskDef<Task> create = new TaskDef<Task>(new TaskDef.SingleTaskSupplier<Task>() {
+    public final TaskDef<Task> create = new TaskDef<Task>(new SingleTaskSupplier<Task>() {
         @Override
         public Task createNewSession(SessionContext $, Task parent, TaskDef<Task> def) {
             return new Task(parent, new TaskCallable() {

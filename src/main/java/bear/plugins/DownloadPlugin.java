@@ -117,7 +117,7 @@ public class DownloadPlugin extends Plugin{
         }
     }
 
-    public final TaskDef<Task> downloadTask = new TaskDef<Task>(new TaskDef.SingleTaskSupplier() {
+    public final TaskDef<Task> downloadTask = new TaskDef<Task>(new SingleTaskSupplier() {
         @Override
         public Task createNewSession(SessionContext $, Task parent, TaskDef def) {
             return new Task(parent, new TaskCallable<TaskDef>() {

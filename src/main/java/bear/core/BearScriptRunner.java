@@ -3,9 +3,11 @@ package bear.core;
 import bear.main.BearRunner2;
 import bear.main.Response;
 import bear.main.event.RMIEventToUI;
+import bear.main.phaser.Phase;
 import bear.plugins.Plugin;
 import bear.task.Task;
 import bear.task.TaskDef;
+import bear.task.TaskResult;
 import com.google.common.base.Function;
 import com.google.common.base.Supplier;
 import org.apache.logging.log4j.LogManager;
@@ -43,9 +45,9 @@ public class BearScriptRunner {
     /**
      * @param scriptSupplier A supplier for a script, i.e. a parser or a single item (at the moment a groovy script).
      */
-    public RunResponse exec(Supplier<BearScript2.BearScriptParseResult> scriptSupplier, boolean interactive) {
+    public RunResponse exec(Supplier<BearParserScriptSupplier.BearScriptParseResult> scriptSupplier, boolean interactive) {
 
-        final BearScript2.BearScriptParseResult parseResult = scriptSupplier.get();
+        final BearParserScriptSupplier.BearScriptParseResult parseResult = scriptSupplier.get();
 
         if (!parseResult.globalErrors.isEmpty()) {
             return new RunResponse(parseResult.globalErrors);
@@ -67,6 +69,15 @@ public class BearScriptRunner {
     }
 
     public RunResponse exec(List<TaskDef<Task>> taskList, boolean interactive) {
+        GridBuilder gridBuilder = new GridBuilder().addAll(taskList);
+
+        return exec(gridBuilder, interactive);
+    }
+
+    public RunResponse exec(GridBuilder gridBuilder, boolean interactive) {
+        List<Phase<TaskResult,BearScriptPhase>> phases = gridBuilder.build();
+
+
         if (interactive) {
             //this disable dependencies checks, verifications and installations
             global.putConst(bear.internalInteractiveRun, true);
@@ -76,9 +87,8 @@ public class BearScriptRunner {
 
         List<SessionContext> $s = preparationResult.getSessions();
 
-        GridBuilder gridBuilder = new GridBuilder().addAll(taskList);
 
-        GlobalTaskRunner globalTaskRunner = new GlobalTaskRunner(global, gridBuilder.build(), preparationResult);
+        GlobalTaskRunner globalTaskRunner = new GlobalTaskRunner(global, phases, preparationResult);
 
         gridBuilder.injectGlobalRunner(globalTaskRunner);
 
@@ -98,10 +108,10 @@ public class BearScriptRunner {
     }
 
     public static class RunResponse extends Response {
-        public List<BearScript2.ScriptError> errors;
+        public List<BearParserScriptSupplier.ScriptError> errors;
         GlobalTaskRunner globalRunner;
 
-        public RunResponse(List<BearScript2.ScriptError> errors) {
+        public RunResponse(List<BearParserScriptSupplier.ScriptError> errors) {
             this.errors = errors;
         }
 

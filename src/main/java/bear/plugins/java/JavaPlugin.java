@@ -36,7 +36,7 @@ public class JavaPlugin extends ZippedToolPlugin {
     public DynamicVariable<String>
         localDistrPath;
 
-    public final InstallationTaskDef<ZippedTool> install = new ZippedToolTaskDef<ZippedTool>(new TaskDef.SingleTaskSupplier() {
+    public final InstallationTaskDef<ZippedTool> install = new ZippedToolTaskDef<ZippedTool>(new SingleTaskSupplier() {
         @Override
         public Task createNewSession(SessionContext $, Task parent, TaskDef def) {
             return new ZippedTool(parent, (InstallationTaskDef) def, $) {

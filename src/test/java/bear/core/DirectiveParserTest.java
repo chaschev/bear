@@ -24,16 +24,16 @@ public class DirectiveParserTest {
 
         assertThat(p(":set var1 {\"value\":true, \"global\": true, \"save\":true}").params).contains(entry("value", true));
 
-        BearScript2.BearScriptDirective d1 = p(":set var1 {\"value\":\"val\", \"global\": true, \"save\":true}");
-        BearScript2.BearScriptDirective d2 = p(":set var2 {\"groovy\":\"expression\"}");
+        BearParserScriptSupplier.BearScriptDirective d1 = p(":set var1 {\"value\":\"val\", \"global\": true, \"save\":true}");
+        BearParserScriptSupplier.BearScriptDirective d2 = p(":set var2 {\"groovy\":\"expression\"}");
 
         assertThat(d1.params).contains(entry("value", "val"));
         assertThat(d2.params).contains(entry("groovy", "expression"));
 
         assertThat(new ScriptItem(Optional.of("var1"), "groovy", 0).addVariable("var1", d1).variables.get().values())
-            .contains(new BearScript2.ScriptSetVariable("var1", "val", null, true, false, true));
+            .contains(new BearParserScriptSupplier.ScriptSetVariable("var1", "val", null, true, false, true));
         assertThat(new ScriptItem(Optional.of("var2"), "groovy", 0).addVariable("var2", d2).variables.get().values())
-            .contains(new BearScript2.ScriptSetVariable("var2", null, "expression", false, false, false));
+            .contains(new BearParserScriptSupplier.ScriptSetVariable("var2", null, "expression", false, false, false));
 
         assertThat(p(":ref {}").directive).isEqualTo(":ref");
         assertThat(p(":ref {}").words).isEmpty();
@@ -43,7 +43,7 @@ public class DirectiveParserTest {
         assertThat(p("//!:use plugin groovy {\"name\":\"Bob\"}").params).contains(entry("name", "Bob"));
     }
 
-    private static BearScript2.BearScriptDirective p(String line) {
+    private static BearParserScriptSupplier.BearScriptDirective p(String line) {
         return new DirectiveParser().parse(line);
     }
 }

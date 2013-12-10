@@ -35,6 +35,19 @@ public class GridBuilder {
         return this;
     }
 
+    public Phase<TaskResult, BearScriptPhase> addSingle(SingleTaskSupplier<Task> supplier){
+        return _addTask(new TaskDef<Task>(supplier)).get(0);
+    }
+
+    public GridBuilder add(TaskCallable<TaskDef> callable){
+        return add(Tasks.newSingleTask(callable));
+    }
+
+    public GridBuilder add(SingleTaskSupplier<Task> supplier){
+        _addTask(new TaskDef<Task>(supplier)).get(0);
+        return this;
+    }
+
     public Phase<TaskResult, BearScriptPhase> addSingleTask(final TaskDef<Task> taskDef){
         Preconditions.checkArgument(!taskDef.isMultitask(), "expecting a single task");
 
@@ -180,7 +193,7 @@ public class GridBuilder {
 
     public List<Phase<TaskResult, BearScriptPhase>> build() {
         List<Phase<TaskResult, BearScriptPhase>> r = phases;
-        phases = null;
+//        phases = null;
         return r;
     }
 }

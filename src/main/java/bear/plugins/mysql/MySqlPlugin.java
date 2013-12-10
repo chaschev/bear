@@ -91,7 +91,7 @@ public class MySqlPlugin extends Plugin<Task, TaskDef<?>> {
         super(global);
     }
 
-    public final InstallationTaskDef setup = new InstallationTaskDef(new TaskDef.SingleTaskSupplier() {
+    public final InstallationTaskDef setup = new InstallationTaskDef(new SingleTaskSupplier() {
         @Override
         public Task createNewSession(SessionContext $, Task parent, TaskDef def) {
             return new InstallationTask<InstallationTaskDef>(parent, (InstallationTaskDef) def, $) {
@@ -173,7 +173,7 @@ public class MySqlPlugin extends Plugin<Task, TaskDef<?>> {
     }
 
 
-    public final TaskDef<Task> getUsers = new TaskDef<Task>(new TaskDef.SingleTaskSupplier<Task>() {
+    public final TaskDef<Task> getUsers = new TaskDef<Task>(new SingleTaskSupplier<Task>() {
         @Override
         public Task createNewSession(SessionContext $, Task parent, TaskDef def) {
             return new Task<TaskDef>(parent, def, $) {
@@ -186,7 +186,7 @@ public class MySqlPlugin extends Plugin<Task, TaskDef<?>> {
         }
     }) ;
 
-    public final TaskDef<Task> runScript = new TaskDef<Task>(new TaskDef.SingleTaskSupplier<Task>() {
+    public final TaskDef<Task> runScript = new TaskDef<Task>(new SingleTaskSupplier<Task>() {
         @Override
         public Task createNewSession(SessionContext $, Task parent, TaskDef def) {
             return new Task<TaskDef>(parent, def, $) {
@@ -201,7 +201,7 @@ public class MySqlPlugin extends Plugin<Task, TaskDef<?>> {
         }
     });
 
-    public final TaskDef<Task> createDump = new TaskDef<Task>(new TaskDef.SingleTaskSupplier<Task>() {
+    public final TaskDef<Task> createDump = new TaskDef<Task>(new SingleTaskSupplier<Task>() {
         @Override
         public Task createNewSession(SessionContext $, Task parent, TaskDef def) {
             return new Task<TaskDef>(parent, def, $) {
@@ -226,7 +226,7 @@ public class MySqlPlugin extends Plugin<Task, TaskDef<?>> {
         }
     }) ;
 
-    public final TaskDef createAndFetchDump = new TaskDef<Task>(new TaskDef.SingleTaskSupplier<Task>() {
+    public final TaskDef createAndFetchDump = new TaskDef<Task>(new SingleTaskSupplier<Task>() {
         @Override
         public Task createNewSession(SessionContext $, Task parent, TaskDef<Task> def) {
             return new Task<TaskDef>(parent, def, $) {
@@ -242,7 +242,7 @@ public class MySqlPlugin extends Plugin<Task, TaskDef<?>> {
         }
     });
 
-    public final TaskDef restoreDump = new TaskDef<Task>(new TaskDef.SingleTaskSupplier<Task>() {
+    public final TaskDef restoreDump = new TaskDef<Task>(new SingleTaskSupplier<Task>() {
         @Override
         public Task createNewSession(SessionContext $, Task parent, TaskDef<Task> def) {
             return new Task<TaskDef>(parent, def, $) {

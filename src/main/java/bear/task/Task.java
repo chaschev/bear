@@ -61,7 +61,7 @@ public class Task<TASK_DEF extends TaskDef> extends HavingContext<Task<TaskDef>,
         setExecutionContext(new TaskExecutionContext($, this));
     }
 
-    public Task(Task parent, TaskCallable taskCallable) {
+    public Task(Task parent, TaskCallable<TaskDef> taskCallable) {
         super(parent.$);
 
         this.taskContext = parent.taskContext.dup(this, null, parent);
@@ -158,7 +158,8 @@ public class Task<TASK_DEF extends TaskDef> extends HavingContext<Task<TaskDef>,
     }
 
     public boolean isRootTask() {
-        return getParent() == null;
+        Task<TaskDef> parent = getParent();
+        return parent == null || parent.getDefinition() == TaskDef.ROOT;
     }
 
     public TaskExecutionContext getExecutionContext() {

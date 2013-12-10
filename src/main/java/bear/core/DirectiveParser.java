@@ -22,7 +22,7 @@ class DirectiveParser {
         .put(":set", 1)   // :set varName(1) {value:xxx}
         .build();
 
-    public BearScript2.BearScriptDirective parse(String line){
+    public BearParserScriptSupplier.BearScriptDirective parse(String line){
         StringTokenizer tokenizer = new StringTokenizer(line);
 
         String directive = tokenizer.nextToken();
@@ -59,6 +59,6 @@ class DirectiveParser {
 
         Optional<String> name = params == null ? Optional.<String>absent() : fromNullable((String)params.get("name"));
 
-        return new BearScript2.BearScriptDirective(directive, name, words, params);
+        return new BearParserScriptSupplier.BearScriptDirective(directive, name, words, params);
     }
 }

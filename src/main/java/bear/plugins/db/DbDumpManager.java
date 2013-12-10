@@ -2,23 +2,19 @@ package bear.plugins.db;
 
 import bear.context.HavingContext;
 import bear.core.SessionContext;
-import bear.main.event.NoticeEventToUI;
-import bear.plugins.mongo.MongoDbPlugin;
-import bear.vcs.CommandLineResult;
 import chaschev.util.Exceptions;
+import com.bethecoder.table.ASCIITableHeader;
+import com.bethecoder.table.impl.SimpleTable;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectReader;
-import com.google.common.collect.ImmutableMap;
-import org.joda.time.DateTime;
 
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.Callable;
 
-import static bear.core.SessionContext.ui;
+import static com.bethecoder.table.ASCIITableHeader.h;
 
 /**
  * A simple db dump manager. Dumps are stored under a shared folder on either local machine or on the remote host (default).
@@ -53,7 +49,7 @@ public class DbDumpManager {
         DumpManagerPlugin plugin;
 
         final ObjectMapper mapper = new ObjectMapper();
-        private ObjectReader dumpInfoReader = mapper.reader();
+        private ObjectReader dumpInfoReader = mapper.reader(DB_DUMP_INFO_REF);
 
         public AbstractDbService(SessionContext $) {
             super($);
@@ -67,11 +63,24 @@ public class DbDumpManager {
         public abstract Class<? extends DbDumpInfo> getDbDumpInfoClass();
         public abstract Class<? extends E> getDumpableEntryClass();
 
+        public String printDumpInfo(List<DbDumpInfo> infos){
+            String[][] rows = new String[infos.size()][];
+
+            for (int i = 0; i < infos.size(); i++) {
+                DbDumpInfo info = infos.get(i);
+                rows[i] = new String[]{info.name, info.dbName, info.database, info.comment, info.finishedAt.toString(), "" +info.size};
+            }
+
+            return new SimpleTable().getTable(
+                new ASCIITableHeader[]{ h("Name"), h("Type"), h("DB"), h("Comment"), h("Created"), h("Size")},
+                rows);
+        }
+
         @Override
         public List<DbDumpInfo> listDumps() {
-            String s = $.sys.readString($(plugin.dumpsJson), null);
+            String s = $.sys.readString($(plugin.dumpsJson), "");
 
-            if(s==null){
+            if("".equals(s)){
                 return Collections.emptyList();
             }
 
@@ -113,137 +122,4 @@ public class DbDumpManager {
         }
     }
 
-    public static class MongoDbService extends AbstractDbService<MongoDumpableEntry>{
-        MongoDbPlugin mongoPlugin;
-
-
-
-        public MongoDbService(SessionContext $) {
-            super($);
-        }
-
-        @Override
-        public Class<? extends DbDumpInfo> getDbDumpInfoClass() {
-            return DbDumpInfo.class;
-        }
-
-        @Override
-        public Class<MongoDumpableEntry> getDumpableEntryClass() {
-            return MongoDumpableEntry.class;
-        }
-
-        @Override
-        public MongoDumpableEntry list(String dbName) {
-            $.plugin(MongoDbPlugin.class).runScript($, null);
-            throw new UnsupportedOperationException("todo");
-        }
-
-        @Override
-        public void restoreDump(final DbDumpInfo dbDumpInfo) {
-            $.withMap(
-                ImmutableMap.builder()
-                    .put(plugin.dumpName, dbDumpInfo.name)
-                    .build(),
-                new Callable<Object>() {
-                    @Override
-                    public Object call() throws Exception {
-                        $.sys.mkdirs($(plugin.dumpFolderPath));
-
-                        ui.info(new NoticeEventToUI("Mongo Restore", "Started mongo restore at " + $($.bear.sessionHostname)
-                            + " for dump " + dbDumpInfo.name));
-
-                        $.sys.script().line()
-                            .cd($(plugin.sharedDbDumpsPath))
-                            .addRaw("tar xvfz %s", $(plugin.dumpArchivePath))
-                            .timeoutForInstallation()
-                            .build()
-                            .run();
-
-                        CommandLineResult result = $.sys.script().line()
-                            .timeoutMin(24 * 60) //24h
-                            .addRaw("mongorestore  ", $(plugin.dumpFolderPath))
-                            .build()
-                            .run();
-
-                        ui.info(new NoticeEventToUI("Mongo Restore", "Finished mongo restore at " + $($.bear.sessionHostname)
-                            + ", dump " + dbDumpInfo.name));
-
-                        return null;
-                    }
-                }
-            );
-
-        }
-
-        @Override
-        public DbDumpInfo createDump(MongoDumpableEntry entry) {
-//            ReleasesPlugin.RELEASE_FORMATTER.
-            String dbName = entry.database;
-
-            $.sys.mkdirs($(plugin.dumpFolderPath));
-
-            ui.info(new NoticeEventToUI("Mongo Dump", "Started mongo dump at " + $($.bear.sessionHostname)));
-
-            DateTime startedAt = new DateTime();
-
-            CommandLineResult result = $.sys.script().line()
-                .timeoutMin(24 * 60) //24h
-                .addRaw("mongodump - | tar -cf | gzip > %s ", $(plugin.dumpArchivePath))
-                .build()
-                .run();
-
-            DateTime finishedAt = new DateTime();
-
-            ui.info(new NoticeEventToUI("Mongo Dump", "Mongo dump finished in " + $($.bear.sessionHostname)));
-
-            List<DbDumpInfo> dumpInfos = listDumps();
-
-            DbDumpInfo dbDumpInfo = new DbDumpInfo(
-                $(plugin.dumpName),
-                $(plugin.dbType),
-                dbName,
-                "",
-                startedAt,
-                finishedAt,
-                -1);
-
-            dumpInfos.add(dbDumpInfo);
-
-            saveDumpList(dumpInfos);
-
-            return dbDumpInfo;
-        }
-
-        @Override
-        public MongoDumpableEntry fromString(String entry) {
-            return new MongoDumpableEntry(entry);
-        }
-    }
-
-    public static class DbDumpInfo{
-        String name;
-        String dbName;
-
-        // i.e. mongo or mysql
-        String database;
-
-        // i.e. name of the collections
-        String comment;
-        DateTime startedAt;
-        DateTime finishedAt;
-        long size;
-
-        public DbDumpInfo() {
-        }
-
-        public DbDumpInfo(String name, String dbName, String database, String comment, DateTime startedAt, DateTime finishedAt, long size) {
-            this.name = name;
-            this.dbName = dbName;
-            this.database = database;
-            this.comment = comment;
-            this.startedAt = startedAt;
-            this.finishedAt = finishedAt;
-            this.size = size;
-        }
-    }
 }

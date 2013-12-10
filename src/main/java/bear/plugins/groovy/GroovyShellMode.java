@@ -54,6 +54,7 @@ public class GroovyShellMode extends PluginShellMode<GroovyShellPlugin> implemen
     private static final Logger logger = LoggerFactory.getLogger(GroovyShellMode.class);
     private static final org.apache.logging.log4j.Logger ui = LogManager.getLogger("fx");
     public static final Pattern SCRIPT_PATTERN = Pattern.compile(".*class.*extends.*Script.*", Pattern.MULTILINE | Pattern.DOTALL);
+    public static final Pattern GRID_PATTERN = Pattern.compile("class.*extends.*Grid", Pattern.MULTILINE | Pattern.DOTALL);
 
     private final Binding binding;
     private final GroovyShell shell;

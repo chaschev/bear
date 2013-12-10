@@ -12,7 +12,7 @@ import static org.fest.assertions.api.Assertions.assertThat;
 public class BearScriptTest {
     @Test
     public void testParse1(){
-        BearScript2.BearScriptParseResult parseResult = BearScript2.parseScript("" +
+        BearParserScriptSupplier.BearScriptParseResult parseResult = BearParserScriptSupplier.parseScript("" +
             ":use shell groovyShell\n" +
             ":set x='keke'\n" +
             "abc\n" +

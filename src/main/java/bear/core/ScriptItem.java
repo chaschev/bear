@@ -21,14 +21,14 @@ import static com.google.common.base.Predicates.not;
 * @author Andrey Chaschev chaschev@gmail.com
 */
 class ScriptItem {
-    public static final Predicate<BearScript2.ScriptSetVariable> IS_GLOBAL = fieldEquals("global", Boolean.TRUE);
+    public static final Predicate<BearParserScriptSupplier.ScriptSetVariable> IS_GLOBAL = fieldEquals("global", Boolean.TRUE);
 
     Optional<String> scriptName;
     int startsAtIndex;
     String pluginName;
     final List<String> lines;
 
-    Optional<HashMap<String, BearScript2.ScriptSetVariable>> variables = absent();
+    Optional<HashMap<String, BearParserScriptSupplier.ScriptSetVariable>> variables = absent();
 
     /**
      * For groovy global means that item will be wrapped into RunOnce and
@@ -73,13 +73,13 @@ class ScriptItem {
         return lines.isEmpty();
     }
 
-    public ScriptItem addVariable(String name, BearScript2.BearScriptDirective directive) {
+    public ScriptItem addVariable(String name, BearParserScriptSupplier.BearScriptDirective directive) {
 
         if(!variables.isPresent()){
-            variables = of(new HashMap<String, BearScript2.ScriptSetVariable>());
+            variables = of(new HashMap<String, BearParserScriptSupplier.ScriptSetVariable>());
         }
 
-        variables.get().put(name, new BearScript2.ScriptSetVariable(name, directive));
+        variables.get().put(name, new BearParserScriptSupplier.ScriptSetVariable(name, directive));
 
         return this;
     }
@@ -92,10 +92,10 @@ class ScriptItem {
         assignVars($, IS_GLOBAL);
     }
 
-    private void assignVars(AbstractContext $, Predicate<BearScript2.ScriptSetVariable> filter) {
+    private void assignVars(AbstractContext $, Predicate<BearParserScriptSupplier.ScriptSetVariable> filter) {
         if(variables.isPresent()){
-            for (Map.Entry<String, BearScript2.ScriptSetVariable> e : variables.get().entrySet()) {
-                BearScript2.ScriptSetVariable var = e.getValue();
+            for (Map.Entry<String, BearParserScriptSupplier.ScriptSetVariable> e : variables.get().entrySet()) {
+                BearParserScriptSupplier.ScriptSetVariable var = e.getValue();
 
                 if(var.remove){
                     $.removeConst(var.name);

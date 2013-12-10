@@ -115,7 +115,7 @@ public class PlayPlugin extends ZippedToolPlugin {
 
     }
 
-    public final TaskDef<Task> dist = new TaskDef<Task>(new TaskDef.SingleTaskSupplier<Task>() {
+    public final TaskDef<Task> dist = new TaskDef<Task>(new SingleTaskSupplier<Task>() {
         @Override
         public Task createNewSession(SessionContext $, Task parent, TaskDef<Task> def) {
             return new Task<TaskDef>(parent, def, $) {
@@ -153,7 +153,7 @@ public class PlayPlugin extends ZippedToolPlugin {
         }
     });
 
-    public final TaskDef<Task> build = new TaskDef<Task>(new TaskDef.SingleTaskSupplier<Task>() {
+    public final TaskDef<Task> build = new TaskDef<Task>(new SingleTaskSupplier<Task>() {
         @Override
         public Task createNewSession(SessionContext $, Task parent, TaskDef<Task> def) {
             return new Task<TaskDef>(parent, def, $) {
@@ -200,7 +200,7 @@ public class PlayPlugin extends ZippedToolPlugin {
         $.sys.chmod("u+rwx,g+rwx,o+rwx", false, logPath);
         $.sys.resetFile(logPath, true);
     }
-    public final TaskDef<Task> start = new TaskDef<Task>(new TaskDef.SingleTaskSupplier<Task>() {
+    public final TaskDef<Task> start = new TaskDef<Task>(new SingleTaskSupplier<Task>() {
         @Override
         public Task createNewSession(SessionContext $, final Task parent, final TaskDef<Task> def) {
             return new Task<TaskDef>(parent, def, $) {
@@ -357,7 +357,7 @@ public class PlayPlugin extends ZippedToolPlugin {
             helper.serviceCommand($.var(isSingle ? singleServiceName : multiServiceName), command), true);
     }
 
-    public final TaskDef<Task> stop = new TaskDef<Task>(new TaskDef.SingleTaskSupplier<Task>() {
+    public final TaskDef<Task> stop = new TaskDef<Task>(new SingleTaskSupplier<Task>() {
         @Override
         public Task createNewSession(SessionContext $, Task parent, TaskDef<Task> def) {
             return new Task<TaskDef>(parent, def, $) {
@@ -386,7 +386,7 @@ public class PlayPlugin extends ZippedToolPlugin {
     }) ;
 
 
-    public final TaskDef<Task> watchStart = new TaskDef<Task>(new TaskDef.SingleTaskSupplier<Task>() {
+    public final TaskDef<Task> watchStart = new TaskDef<Task>(new SingleTaskSupplier<Task>() {
         @Override
         public Task createNewSession(SessionContext $, Task parent, TaskDef<Task> def) {
             return new Task<TaskDef>(parent, new TaskCallable() {
@@ -420,7 +420,7 @@ public class PlayPlugin extends ZippedToolPlugin {
         logger.info("current releases:\n{}", $.var(releases.session).show());
     }
 
-    public final InstallationTaskDef<ZippedTool> install = new ZippedToolTaskDef<ZippedTool>(new TaskDef.SingleTaskSupplier() {
+    public final InstallationTaskDef<ZippedTool> install = new ZippedToolTaskDef<ZippedTool>(new SingleTaskSupplier() {
         @Override
         public Task createNewSession(SessionContext $, Task parent, TaskDef def) {
             return new ZippedTool(parent, (InstallationTaskDef) def, $) {

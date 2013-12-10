@@ -58,7 +58,7 @@ public class GrailsPlugin extends ZippedToolPlugin {
     }
 
 
-    public final InstallationTaskDef<ZippedTool> install = new ZippedToolTaskDef<ZippedTool>(new TaskDef.SingleTaskSupplier<ZippedTool>(){
+    public final InstallationTaskDef<ZippedTool> install = new ZippedToolTaskDef<ZippedTool>(new SingleTaskSupplier<ZippedTool>(){
 
         @Override
         public ZippedTool createNewSession(SessionContext $, Task parent, TaskDef<ZippedTool> def) {

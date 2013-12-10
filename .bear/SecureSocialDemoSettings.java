@@ -36,7 +36,7 @@ public class SecureSocialDemoSettings extends IBearSettings {
     DumpManagerPlugin dumpManager;
 
     public final DynamicVariable<String>
-        useDb = newVar("mysql"),
+        useDb = newVar("mongo"),
         serviceString = condition(isEql(useDb, "mysql"),
                 newVar("9998:service.SqlUserService"),
                 newVar("9998:service.MongoUserService"));
@@ -73,6 +73,8 @@ public class SecureSocialDemoSettings extends IBearSettings {
         bear.vcsBranchName.defaultTo("master");
 
         play.projectPath.setEqualTo(joinPath(bear.vcsBranchLocalPath, "samples/java/db-demo"));
+
+        dumpManager.dbType.setEqualTo(useDb);
 
         Stages stages = new Stages(global);
 

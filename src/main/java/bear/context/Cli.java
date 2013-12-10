@@ -17,10 +17,8 @@
 package bear.context;
 
 import bear.core.*;
-import bear.main.BearFX;
-import bear.main.BearMain;
-import bear.main.CompileManager;
-import bear.main.CompiledEntry;
+import bear.main.*;
+import bear.plugins.groovy.GroovyShellMode;
 import bear.plugins.groovy.GroovyShellPlugin;
 import bear.session.DynamicVariable;
 import bear.session.Question;
@@ -28,6 +26,7 @@ import chaschev.io.FileUtils;
 import chaschev.util.Exceptions;
 import com.google.common.base.*;
 import com.google.common.collect.Iterables;
+import groovy.lang.GroovyClassLoader;
 import org.apache.logging.log4j.LogManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -179,15 +178,33 @@ public class Cli extends AppCli<GlobalContext, Bear> {
         GlobalContext global = cli.global;
         File scriptFile = global.var(cli.script);
 
-        Supplier<BearScript2.BearScriptParseResult> supplier;
+        Supplier<BearParserScriptSupplier.BearScriptParseResult> supplier;
+
+        BearScriptRunner bearScriptRunner = new BearScriptRunner(global, null, settings);
+
+        BearScriptRunner.RunResponse response;
 
         if(scriptFile.getName().endsWith(".groovy")){
-            supplier = new BearScript2.GroovyScriptSupplier(global, scriptFile);
-        } else {
-            supplier = new BearScript2.ParserScriptSupplier(global.getPlugin(GroovyShellPlugin.class), FileUtils.readFileToString(scriptFile));
-        }
+            String script = FileUtils.readFileToString(scriptFile);
+            if(GroovyShellMode.GRID_PATTERN.matcher(script).find()){
+                GroovyClassLoader gcl = new GroovyClassLoader();
+                Class clazz = gcl.parseClass(scriptFile);
+                Grid grid = (Grid) clazz.newInstance();
+                grid.setBuilder(new GridBuilder());
+                global.wire(grid);
 
-        BearScriptRunner.RunResponse response = new BearScriptRunner(global, null, settings).exec(supplier, true);
+                grid.addPhases();
+
+                response = bearScriptRunner.exec(grid.getBuilder(), true);
+            }else{
+                response = bearScriptRunner.exec(new GroovyScriptSupplier(global, scriptFile), true);
+            }
+        } else {
+            supplier = new BearParserScriptSupplier(global.getPlugin(GroovyShellPlugin.class),
+                FileUtils.readFileToString(scriptFile));
+
+            response = bearScriptRunner.exec(supplier, true);
+        }
 
         GlobalTaskRunner runner = response.getGlobalRunner();
 

@@ -18,6 +18,7 @@ package bear.plugins.grails;
 
 import bear.core.SessionContext;
 import bear.task.SessionTaskRunner;
+import bear.task.SingleTaskSupplier;
 import bear.vcs.CommandLineResult;
 import bear.plugins.sh.CommandLine;
 import bear.plugins.sh.Script;

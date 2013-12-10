@@ -119,7 +119,7 @@ public class FXConf extends Cli {
         IBearSettings settings = newSettings(settingsName);
 
         return new BearScriptRunner(getGlobal(), null, settings)
-            .exec(new BearScript2.ParserScriptSupplier(null, bearScript), true);
+            .exec(new BearParserScriptSupplier(null, bearScript), true);
     }
 
     public Response interpret(String command, String uiContextS) throws Exception {
@@ -284,12 +284,12 @@ public class FXConf extends Cli {
             Callable<BearScriptRunner.MessageResponse> execScriptCallable = new Callable<BearScriptRunner.MessageResponse>() {
                 @Override
                 public BearScriptRunner.MessageResponse call() throws Exception {
-                    Supplier<BearScript2.BearScriptParseResult> supplier;
+                    Supplier<BearParserScriptSupplier.BearScriptParseResult> supplier;
 
                     if(uiContext.script.endsWith(".groovy")){
-                        supplier = new BearScript2.GroovyScriptSupplier(global, command, Optional.fromNullable(uiContext.script));
+                        supplier = new GroovyScriptSupplier(global, command, Optional.fromNullable(uiContext.script));
                     } else {
-                        supplier = new BearScript2.ParserScriptSupplier(currentShellPlugin, command);
+                        supplier = new BearParserScriptSupplier(currentShellPlugin, command);
                     }
 
                     new BearScriptRunner(getGlobal(), currentShellPlugin, settings).exec(supplier, true);

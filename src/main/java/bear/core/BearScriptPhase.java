@@ -31,7 +31,7 @@ public class BearScriptPhase {
 
     final GroupDivider<SessionContext> groupDivider;
 
-    public final long startedAtMs = System.currentTimeMillis();
+    protected long startedAtMs;
 
     int partiesCount = -1;
 
@@ -47,6 +47,8 @@ public class BearScriptPhase {
     public void init(List<SessionContext> $s){
         groupDivider.init($s);
         this.partiesCount = $s.size();
+        startedAtMs = System.currentTimeMillis(); //possibly wrong
+
     }
 
     public String getName() {

@@ -1,10 +1,10 @@
 package bear.core;
 
 import bear.main.event.TextConsoleEventToUI;
+import bear.main.phaser.OnceEnteredCallable;
 import bear.plugins.Plugin;
 import bear.plugins.groovy.GroovyShellPlugin;
-import bear.task.Task;
-import bear.task.TaskDef;
+import bear.task.*;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
@@ -12,9 +12,12 @@ import com.google.common.collect.Collections2;
 import groovy.lang.GroovyShell;
 import org.apache.commons.lang3.StringUtils;
 import org.reflections.Reflections;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.Callable;
 
 import static com.google.common.collect.Lists.newArrayList;
 import static org.apache.commons.lang3.StringUtils.substringAfter;
@@ -24,12 +27,30 @@ import static org.apache.commons.lang3.StringUtils.substringBefore;
  * Scope: SESSION.
  */
 class BearScriptItemConverter {
+    private static final Logger logger = LoggerFactory.getLogger(BearScriptItemConverter.class);
 
     private final GlobalContext global;
-    List<BearScript2.ScriptError> errors = new ArrayList<BearScript2.ScriptError>();
+    List<BearParserScriptSupplier.ScriptError> errors = new ArrayList<BearParserScriptSupplier.ScriptError>();
 
     public BearScriptItemConverter(GlobalContext global) {
         this.global = global;
+    }
+
+    public static Task<TaskDef> wrapIntoGlobalTask(final SessionContext $, final Task parent, final Task<?> task) {
+
+        return new Task<TaskDef>(new TaskContext<TaskDef>(null, parent, $), new TaskCallable() {
+            final OnceEnteredCallable<TaskResult> onceEnteredCallable = new OnceEnteredCallable<TaskResult>();
+
+            @Override
+            public TaskResult call(final SessionContext $, Task taskContext, Object input) throws Exception{
+                return onceEnteredCallable.runOnce(new Callable<TaskResult>() {
+                    @Override
+                    public TaskResult call() throws Exception {
+                        return $.runner.runSession(task);
+                    }
+                }).get();
+            }
+        });
     }
 
     /**
@@ -57,7 +78,7 @@ class BearScriptItemConverter {
         scriptItem.assignVariables(global);
 
         if (!executableLines.isEmpty()) {
-            return new TaskDef<Task>(scriptItem.getScriptName(), new TaskDef.SingleTaskSupplier<Task>() {
+            return new TaskDef<Task>(scriptItem.getScriptName(), new SingleTaskSupplier<Task>() {
                 @Override
                 public Task createNewSession(SessionContext $, Task parent, TaskDef<Task> def) {
                     scriptItem.assignVariables($);
@@ -68,7 +89,7 @@ class BearScriptItemConverter {
                         String line = directivesLines.get(i);
                         String firstWord = StringUtils.substringBetween(line, ":", " ");
 
-                        errors.add(new BearScript2.ScriptError(
+                        errors.add(new BearParserScriptSupplier.ScriptError(
                             line,
                             scriptItem.startsAtIndex + i, "unknown command: " + firstWord));
                     }
@@ -85,7 +106,7 @@ class BearScriptItemConverter {
                     }
 
                     if(scriptItem.global){
-                        return BearScript2.wrapIntoGlobalTask($, parent, task);
+                        return wrapIntoGlobalTask($, parent, task);
                     }
 
                     return task;
@@ -105,7 +126,7 @@ class BearScriptItemConverter {
 
         GroovyShell shell = new GroovyShell(global.getPlugin(GroovyShellPlugin.class).getShell().getLocalBinding());
 
-        BearScript2.logger.info("evaluating: '{}'...", expression);
+        logger.info("evaluating: '{}'...", expression);
 
         Object o = shell.evaluate(expression);
 
@@ -128,12 +149,12 @@ class BearScriptItemConverter {
             }));
 
         if (matchingClasses.isEmpty()) {
-            BearScript2.ui.warn(new TextConsoleEventToUI("shell", "no plugins found for '<i>" + pluginName + "</i>'\n"));
+            BearParserScriptSupplier.ui.warn(new TextConsoleEventToUI("shell", "no plugins found for '<i>" + pluginName + "</i>'\n"));
             throw new RuntimeException("no plugins found for '" + pluginName + "'");
         }
 
         if (matchingClasses.size() > 1) {
-            BearScript2.ui.warn(new TextConsoleEventToUI("shell", "1+ plugins found for '<i>" + pluginName + "</i>': " + matchingClasses + "\n"));
+            BearParserScriptSupplier.ui.warn(new TextConsoleEventToUI("shell", "1+ plugins found for '<i>" + pluginName + "</i>': " + matchingClasses + "\n"));
             throw new RuntimeException("1+ plugins found for '" + pluginName + "': " + pluginName);
         }
 

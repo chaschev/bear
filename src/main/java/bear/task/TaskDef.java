@@ -119,17 +119,6 @@ public class TaskDef<TASK extends Task>{
 
     }
 
-    public static interface SingleTaskSupplier<TASK extends Task> extends TaskSupplier<TASK> {
-        TASK createNewSession(SessionContext $, final Task parent, TaskDef<TASK> def);
-
-        public static final SingleTaskSupplier<Task> NOP = Tasks.newSingleTask(TaskCallable.NOP);
-    }
-
-    public static interface MultitaskSupplier<TASK extends Task> extends TaskSupplier<TASK> {
-        List<TASK> createNewSessions(SessionContext $, final Task parent);
-        int size();
-    }
-
     public List<TASK> createNewSessionsAsList(SessionContext $, final Task parent){
         if(isMultitask()){
             return createNewSessions($, parent);
@@ -206,12 +195,9 @@ public class TaskDef<TASK extends Task>{
         return this;
     }
 
-    public static final TaskDef EMPTY = new TaskDef("EMPTY", new SingleTaskSupplier() {
-        @Override
-        public Task createNewSession(SessionContext $, Task parent, TaskDef def) {
-            return Task.nop();
-        }
-    });
+    public static final TaskDef EMPTY = new TaskDef<Task>("EMPTY", SingleTaskSupplier.NOP);
+
+    public static final TaskDef ROOT = new TaskDef<Task>("ROOT", SingleTaskSupplier.NOP);
 
     public Set<Role> getRoles() {
         return roles;

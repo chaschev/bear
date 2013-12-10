@@ -171,20 +171,16 @@ public class VariablesLayer extends HavingContext<Variables, AbstractContext> {
     }
 
     public <T> T get(DynamicVariable<T> var) {
-        if(var.memoizeIn() == $.getClass()){
-            return atomicMemoize(var);
-        }
-
         return (T) getNoTemplates(var, UNDEFINED);
     }
 
-    private <T> T atomicMemoize(DynamicVariable<T> var) {
+    private <T> T atomicMemoize(DynamicVariable<?> var, String varName, Object _default) {
         SettableFuture<T> future = new SettableFuture<T>();
         Object o = constants.putIfAbsent(var.name, future);
         boolean iAmTheOwner = o == null;
         if(iAmTheOwner){
             try {
-                T result = (T) getNoTemplates(var, UNDEFINED, true);
+                T result = (T) getByVarName(var, varName, _default, this, true);
                 future.set(result);
                 return result;
             } catch (Exception e) {
@@ -232,13 +228,9 @@ public class VariablesLayer extends HavingContext<Variables, AbstractContext> {
     }
 
     protected Object getNoTemplates(DynamicVariable<?> var, Object _default) {
-        return getNoTemplates(var, _default, false);
-    }
-
-    protected Object getNoTemplates(DynamicVariable<?> var, Object _default, boolean memoization) {
         String varName = var.name();
 
-        return getByVarName(var, varName, _default, this, memoization);
+        return getByVarName(var, varName, _default, this, false);
     }
 
     /**
@@ -255,6 +247,11 @@ public class VariablesLayer extends HavingContext<Variables, AbstractContext> {
         @Nullable DynamicVariable<?> var, @Nullable String varName, Object _default,
         VariablesLayer initialLayer, boolean memoization) {
         Preconditions.checkArgument(var != null || varName != null, "they can't both be null!");
+
+
+        if(!memoization && var != null && var.memoizeIn() == $.getClass()){
+            return atomicMemoize(var, varName, _default);
+        }
 
 //        if(this == initialLayer){
 //            logger.debug("{}: evaluating :{}...", name, varName);
@@ -314,6 +311,10 @@ public class VariablesLayer extends HavingContext<Variables, AbstractContext> {
 
             thisLayerResult = chooseDefined(r.apply($), _default);
             logger.debug("{}: :{} <- {} (overridden var)", name, varName, thisLayerResult);
+        }
+
+        if(thisLayerResult == UNDEFINED){
+            throw new Fun.UndefinedException(":"+varName+ " is not defined");
         }
 
         return thisLayerResult;
@@ -542,7 +543,12 @@ public class VariablesLayer extends HavingContext<Variables, AbstractContext> {
                     oldValues.put(stringKey, oldValue);
                 }
             }else{
-                Object oldValue = constants.put(stringKey, value);
+                Object oldValue;
+                if(value == null){
+                    oldValue = constants.remove(stringKey);
+                }else{
+                    oldValue = constants.put(stringKey, value);
+                }
                 if(returnOldValues){
                     oldValues.put(stringKey, oldValue);
                 }
