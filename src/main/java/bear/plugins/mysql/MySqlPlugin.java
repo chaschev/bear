@@ -104,7 +104,7 @@ public class MySqlPlugin extends Plugin<Task, TaskDef<?>> {
                     TaskResult r = TaskResult.OK;
 
                     if (!installedVersionOk) {
-                        $.sys.sendCommand($.sys.newCommandLine().sudo().addSplit("rpm -Uvh http://mirror.webtatic.com/yum/el6/latest.rpm"));
+                        $.sys.sendCommand($.sys.line().sudo().addSplit("rpm -Uvh http://mirror.webtatic.com/yum/el6/latest.rpm"));
                         r = Tasks.and(r, $.sys.getPackageManager().installPackage(new PackageInfo($(clientPackage))));
                     }
 
@@ -114,24 +114,17 @@ public class MySqlPlugin extends Plugin<Task, TaskDef<?>> {
                         r = Tasks.and(r, $.sys.getPackageManager().installPackage(new PackageInfo($(serverPackage))));
                     }
 
-                    $.sys.sendCommand($.sys.newCommandLine().timeoutSec(30).sudo().addSplit("service mysqld start"));
+                    $.sys.script()
+                    .line().sudo().addRaw("service mysqld start").build()
+                    .line().sudo().addRaw("mysqladmin -u %s password '%s'", $(adminUser), $(adminPassword)).build()
+                    .line().sudo().addRaw("mysqladmin -u %s -h %s password '%s'", $(adminUser), $(bear.sessionHostname), $(adminPassword));
 
-                    $.sys.sendCommand($.sys.newCommandLine().sudo().addSplit(MessageFormat.format("mysqladmin -u {0} password", $(adminUser))).addRaw("'" + $(adminPassword) + "'"));
-                    $.sys.sendCommand($.sys.newCommandLine().sudo().addSplit(MessageFormat.format("mysqladmin -u {0} -h {1} password",
-                        $(adminUser), $(getBear().sessionHostname))).addRaw("'" + $(adminPassword) + "'"));
-
-                    final String createDatabaseSql = MessageFormat.format(
-                        "CREATE DATABASE {0};\n" +
+                    final String createDatabaseSql = MessageFormat.format("" +
+                            "CREATE DATABASE {0};\n" +
                             "GRANT ALL PRIVILEGES ON {0}.* TO {1}@localhost IDENTIFIED BY '{2}';\n",
-                        $(dbName),
-                        $(user),
-                        $(password)
-                    );
+                        $(dbName), $(user), $(password));
 
-                    r = Tasks.and(r, runScript(runner, createDatabaseSql,
-                        $(adminUser),
-                        $(adminPassword)
-                    ));
+                    r = Tasks.and(r, runScript(runner, createDatabaseSql, $(adminUser), $(adminPassword)));
 
                     return r;
                 }
@@ -275,7 +268,7 @@ public class MySqlPlugin extends Plugin<Task, TaskDef<?>> {
         return sys.sendCommand(sys.newCommandLine().stty().a("mysql", "-u", user, "-p").redirectFrom(filePath));
     }
 
-    private static ConsoleCallback mysqlPasswordCallback(final String pw) {
+    public static ConsoleCallback passwordCallback(final String pw) {
         return new ConsoleCallback(){
             @Override
             @Nonnull

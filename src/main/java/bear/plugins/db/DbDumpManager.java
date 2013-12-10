@@ -9,6 +9,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectReader;
+import com.fasterxml.jackson.databind.ObjectWriter;
 
 import java.io.IOException;
 import java.util.Collections;
@@ -50,6 +51,7 @@ public class DbDumpManager {
 
         final ObjectMapper mapper = new ObjectMapper();
         private ObjectReader dumpInfoReader = mapper.reader(DB_DUMP_INFO_REF);
+        private ObjectWriter dumpInfoWriter = mapper.writerWithDefaultPrettyPrinter();
 
         public AbstractDbService(SessionContext $) {
             super($);
@@ -68,7 +70,7 @@ public class DbDumpManager {
 
             for (int i = 0; i < infos.size(); i++) {
                 DbDumpInfo info = infos.get(i);
-                rows[i] = new String[]{info.name, info.dbName, info.database, info.comment, info.finishedAt.toString(), "" +info.size};
+                rows[i] = new String[]{info.name, info.dbName, info.database, info.comment, info.finishedAt.toString(), info.getSizeAsString()};
             }
 
             return new SimpleTable().getTable(
@@ -93,12 +95,33 @@ public class DbDumpManager {
 
         public void saveDumpList(List<DbDumpInfo> list) {
             try {
-                $.sys.writeString($(plugin.dumpsJson), mapper.writeValueAsString(list));
+                $.sys.writeString($(plugin.dumpsJson), dumpInfoWriter.writeValueAsString(list));
             } catch (JsonProcessingException e) {
                 throw Exceptions.runtime(e);
             }
         }
 
+    }
+
+    public static class SqlDumpableEntry implements DumpableEntry{
+        String database;
+
+        public SqlDumpableEntry() {
+        }
+
+        public SqlDumpableEntry(String database) {
+            this.database = database;
+        }
+
+        @Override
+        public String name() {
+            return database;
+        }
+
+        @Override
+        public String asString() {
+            return database;
+        }
     }
 
     public static class MongoDumpableEntry implements DumpableEntry{

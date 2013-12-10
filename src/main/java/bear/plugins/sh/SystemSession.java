@@ -30,9 +30,11 @@ import chaschev.lang.Predicates2;
 import chaschev.util.Exceptions;
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
+import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
+import org.apache.commons.lang3.StringUtils;
 import org.eclipse.aether.version.InvalidVersionSpecificationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -323,6 +325,20 @@ public abstract class SystemSession extends Task<SystemEnvironmentPlugin.SystemS
 
     public CommandLineResult resetFile(String logPath, boolean sudo) {
         return script().line().sudo(sudo).sshCallback($).addRaw("cat /dev/null >| ").a(logPath).build().run();
+    }
+
+    public String fileSize(FileSizeInput input){
+        String capture = capture(String.format("du -s%s '%s'", input.humanReadable ? "h" : "b", input.path), input.sudo);
+
+        if(capture == null) return null;
+
+        return StringUtils.substringBefore(capture, "\t").trim();
+    }
+
+    public long fileSizeAsLong(FileSizeInput input){
+        Preconditions.checkArgument(!input.humanReadable, "humanReadable must be off for decimal value");
+
+        return Long.parseLong(fileSize(input));
     }
 
     //TODO this should be temporary and redesigned

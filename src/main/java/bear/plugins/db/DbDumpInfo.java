@@ -1,5 +1,7 @@
 package bear.plugins.db;
 
+import chaschev.io.FileUtils;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.datatype.joda.ser.DateTimeSerializer;
 import org.joda.time.DateTime;
@@ -64,6 +66,11 @@ public class DbDumpInfo {
 
     public long getSize() {
         return size;
+    }
+
+    @JsonIgnore
+    public String getSizeAsString(){
+        return FileUtils.humanReadableByteCount(size).toString(1);
     }
 
     @Override

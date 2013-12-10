@@ -18,8 +18,6 @@ import static bear.plugins.sh.RmInput.newRm;
 * @author Andrey Chaschev chaschev@gmail.com
 */
 public class MongoDbService extends DbDumpManager.AbstractDbService<DbDumpManager.MongoDumpableEntry> {
-    MongoDbPlugin mongoPlugin;
-
     public MongoDbService(SessionContext $) {
         super($);
     }

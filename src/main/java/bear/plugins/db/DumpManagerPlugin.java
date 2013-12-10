@@ -43,7 +43,7 @@ public class DumpManagerPlugin extends Plugin {
                 case mongo:
                     return $.wire(new MongoDbService($));
                 case mysql:
-                    throw new UnsupportedOperationException("todo");
+                    return $.wire(new MysqlDbService($));
                 default:
                     throw new UnsupportedOperationException("unsupported: " + s);
             }

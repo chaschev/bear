@@ -36,7 +36,7 @@ public class SecureSocialDemoSettings extends IBearSettings {
     DumpManagerPlugin dumpManager;
 
     public final DynamicVariable<String>
-        useDb = newVar("mongo"),
+        useDb = newVar("mysql"),
         serviceString = condition(isEql(useDb, "mysql"),
                 newVar("9998:service.SqlUserService"),
                 newVar("9998:service.MongoUserService"));
