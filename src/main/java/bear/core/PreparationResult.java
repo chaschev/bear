@@ -20,14 +20,14 @@ import java.util.List;
 
 public class PreparationResult {
     private final List<SessionContext> $s;
-    protected IBearSettings bearSettings;
+    protected BearProject bearSettings;
 
 
     public PreparationResult(List<SessionContext> $s) {
         this.$s = $s;
     }
 
-    public PreparationResult(List<SessionContext> $s, IBearSettings bearSettings) {
+    public PreparationResult(List<SessionContext> $s, BearProject bearSettings) {
         this.$s = $s;
         this.bearSettings = bearSettings;
     }
@@ -36,7 +36,7 @@ public class PreparationResult {
         return $s;
     }
 
-    public IBearSettings getBearSettings() {
+    public BearProject getBearSettings() {
         return bearSettings;
     }
 }

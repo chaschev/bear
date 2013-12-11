@@ -1,6 +1,5 @@
 package bear.core;
 
-import bear.context.Cli;
 import bear.main.event.NewPhaseConsoleEventToUI;
 import bear.main.event.PhasePartyFinishedEventToUI;
 import bear.main.phaser.Phase;
@@ -14,9 +13,11 @@ import chaschev.util.Exceptions;
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 import static bear.core.SessionContext.ui;
 
@@ -28,6 +29,9 @@ public class GridBuilder {
     final MutableSupplier<GlobalTaskRunner> globalRunner = new MutableSupplier<GlobalTaskRunner>();
 
     List<Phase<TaskResult, BearScriptPhase>> phases = new ArrayList<Phase<TaskResult, BearScriptPhase>>();
+    private Map<Object, Object> variables;
+
+    protected BearProject project;
 
     public GridBuilder add(final TaskDef<Task> taskDef){
         _addTask(taskDef);
@@ -146,7 +150,7 @@ public class GridBuilder {
                             } catch (PartyResultException e) {
                                 throw e;
                             } catch (Throwable e) {
-                                Cli.logger.warn("", e);
+                                BearMain.logger.warn("", e);
                                 result = new TaskResult(e);
 
                                 $.executionContext.rootExecutionContext.getDefaultValue().taskResult = result;
@@ -158,11 +162,11 @@ public class GridBuilder {
                                     phase.getPhase().addArrival($, duration, result);
                                     $.executionContext.rootExecutionContext.fireExternalModification();
 
-                                    Cli.ui.info(new PhasePartyFinishedEventToUI($.getName(), duration, result));
+                                    BearMain.ui.info(new PhasePartyFinishedEventToUI($.getName(), duration, result));
 
                                     $.whenSessionComplete(globalRunner.get());
                                 } catch (Exception e) {
-                                    Cli.logger.warn("", e);
+                                    BearMain.logger.warn("", e);
                                 }
                             }
                         }
@@ -195,5 +199,41 @@ public class GridBuilder {
         List<Phase<TaskResult, BearScriptPhase>> r = phases;
 //        phases = null;
         return r;
+    }
+
+    public GridBuilder withVars(Map<Object, Object> variables) {
+        this.variables = Collections.unmodifiableMap(variables);
+
+        return this;
+    }
+
+    protected BearMain bearMain;
+
+    public void launchUI() {
+        throw new UnsupportedOperationException("todo");
+    }
+
+    public void run() {
+        run(false);
+    }
+
+    public void run(boolean shutdown) {
+        if(bearMain == null){
+            try {
+                bearMain = new BearMain(GlobalContext.getInstance())
+
+                    .configure();
+
+              } catch (IOException e) {
+                throw Exceptions.runtime(e);
+            }
+        }
+
+        BearMain.run(project, this, variables, shutdown);
+    }
+
+    public void init(BearProject<?> project) {
+        this.project = project;
+
     }
 }

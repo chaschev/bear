@@ -1,6 +1,7 @@
 package bear.plugins;
 
 import bear.core.GlobalContext;
+import bear.core.GlobalContextTest;
 import bear.session.DynamicVariable;
 import org.junit.Test;
 
@@ -11,7 +12,7 @@ import static org.fest.assertions.api.Assertions.assertThat;
  */
 public class ZippedToolPluginTest {
 
-    private GlobalContext g = GlobalContext.newForTests();
+    private GlobalContext g = GlobalContextTest.newGlobal();
 
     @Test
     public void testVars() throws Exception {

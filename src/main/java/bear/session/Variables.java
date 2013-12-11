@@ -69,7 +69,7 @@ public class Variables {
             public Boolean apply(AbstractContext $) {
                 return !$.varB(b);
             }
-        });
+        }).temp();
     }
 
     public static <T> DynamicVariable<T> undefined() {
@@ -86,7 +86,7 @@ public class Variables {
             public T apply(AbstractContext $) {
                 return function.apply($.var(var));
             }
-        });
+        }).temp();
     }
 
     public static <T> DynamicVariable<Boolean> isEql(final DynamicVariable<T> variable, final String to) {
@@ -95,7 +95,7 @@ public class Variables {
                 final T v = $.var(variable);
                 return v == null ? to == null : String.valueOf(v).equals(to);
             }
-        });
+        }).temp();
     }
 
     public static <T> DynamicVariable<Boolean> isSet(final DynamicVariable<T> var) {
@@ -107,7 +107,7 @@ public class Variables {
             public Boolean apply(AbstractContext $) {
                 return $.isSet(variable);
             }
-        });
+        }).temp();
     }
 
     public static <T> DynamicVariable<T> condition(final DynamicVariable<Boolean> condition, final DynamicVariable<T> trueVar, final DynamicVariable<T> falseVar) {
@@ -119,7 +119,7 @@ public class Variables {
             public T apply(AbstractContext $) {
                 return $.varB(condition) ? $.var(trueVar) : $.var(falseVar);
             }
-        });
+        }).temp().temp();
     }
 
     public static <T> DynamicVariable<T> equalTo(final DynamicVariable<T> variable) {
@@ -127,7 +127,7 @@ public class Variables {
             public T apply(AbstractContext $) {
                 return $.var(variable);
             }
-        });
+        }).temp();
     }
 
     public static DynamicVariable<Boolean> and(final DynamicVariable... bools) {
@@ -139,7 +139,7 @@ public class Variables {
 
                 return true;
             }
-        });
+        }).temp();
     }
 
     public static DynamicVariable<Boolean> or(String name, final DynamicVariable... bools) {
@@ -159,7 +159,7 @@ public class Variables {
             public String apply(AbstractContext $) {
                 return Variables.concat($, varsAndStrings);
             }
-        });
+        }).temp();
     }
 
     public static String concat(AbstractContext $, Object... varsAndStrings) {
@@ -177,7 +177,7 @@ public class Variables {
             public List<String> apply(AbstractContext $) {
                 return splitter.splitToList($.var(str));
             }
-        });
+        }).temp();
     }
 
     public static DynamicVariable<String> format(final String s, final Object... varsAndStrings){
@@ -185,7 +185,7 @@ public class Variables {
             public String apply(SessionContext $) {
                 return String.format(s, resolveVars($, varsAndStrings));
             }
-        });
+        }).temp();
     }
 
     public static Object[] resolveVars(AbstractContext $, Object... varsAndStrings) {

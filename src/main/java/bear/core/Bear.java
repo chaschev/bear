@@ -73,11 +73,11 @@ public class Bear extends BearApp<GlobalContext> {
     public final DynamicVariable<String>
 
 
-    applicationsPath = condition(isNativeUnix, newVar("/var/lib"), newVar("c:")),
+    applicationsPath = condition(isNativeUnix, newVar("/var/lib").temp(), newVar("c:").temp()),
 
     bearPath = joinPath(applicationsPath, "bear"),
 
-    sysLogsPath = condition(isNativeUnix, newVar("/var/log"), (DynamicVariable) undefined()),
+    sysLogsPath = condition(isNativeUnix, newVar("/var/log").temp(), (DynamicVariable) undefined()),
 
     taskName = strVar("A task to run").defaultTo("deploy");
 
@@ -96,7 +96,7 @@ public class Bear extends BearApp<GlobalContext> {
                 String username  = $.getProperty($.concat(sessionHostname, ".username"));
 
                 if(username == null){
-                    username = $.getProperty(var.name);
+                    username = $.getProperty(var.name());
                 }
 
                 return username;
@@ -108,7 +108,7 @@ public class Bear extends BearApp<GlobalContext> {
                 String username = $.getGlobal().getProperty($.concat(sessionHostname, ".password"));
 
                 if (username == null) {
-                    username = $.getGlobal().getProperty(var.name);
+                    username = $.getGlobal().getProperty(var.name());
                 }
 
                 return username;

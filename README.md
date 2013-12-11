@@ -11,13 +11,13 @@ Bear is in it's early development stages now. Questions, concerns? Just drop me 
 | Git, MongoDB and MySQL plugins              | Finished.      |
 | Install as services (Upstart)               | Finished.      | 
 | Play! Framework single-host deployment      | Finished.      | 
-| Parametrize deployment (use mongo or mysql) | Finished.      |
+| Parametrize deployment for demo (mongo or mysql) | Finished.      |
 | CLI version                                 | Finished.      |
-| Test deployment rollbacks and db dumps      | In progress... |
-| Play! Framework three-hosts deployment      | In progress... |
-| Grails/Tomcat demo deployment               |                |
-| Node.js demo deployment                     |                |
-| Refactoring, simplifying API                |                |
+| Test deployment rollbacks and db dumps      | Finished.      |
+| Play! Framework three-hosts deployment      |                |
+| Grails/Tomcat demo deployment               | In progress... |
+| Node.js demo deployment                     | TBD            |
+| Refactoring, simplifying API                | In progress... |
 | Unit test coverage                          |                |
 | UI bugfixing                                |                |
 | Installer                                   |                |
@@ -33,6 +33,18 @@ Bear is in it's early development stages now. Questions, concerns? Just drop me 
 | Run via a Maven Plugin                      |                |
 | Support JDK 6 for CLI, JDK 7 for GUI        |                | 
 | Deployments to Heroku, AWS, GCE, Azure, Rackspace |      ?       |
+
+### Bear Highlights
+
+* Syntax completion in IDEs, static types and OOP approach for tasks, enum-like variables prevent typos
+* Dynamic scripting with Groovy (@CompileStatic for strict Java-like mode)
+* Debugging in IDEs and script unit-testing
+* Fast execution, parallel execution framework
+* Desktop UI app to monitor running tasks (Twitter Bootstrap 3)
+* Scripts can be edited in UI and in IDEs (by importing through Maven)
+* Lambda-based configuration, session/global context for variables
+* (planned) Ruby, JavaScript and Python support.
+* Takes some of the ideas from Capistrano
 
 ### Bear Script
 

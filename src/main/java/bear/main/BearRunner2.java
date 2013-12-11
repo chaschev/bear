@@ -24,13 +24,13 @@ import com.google.common.base.Preconditions;
 * @author Andrey Chaschev chaschev@gmail.com
 */
 public class BearRunner2 {
-    private IBearSettings bearSettings;
+    private BearProject bearSettings;
     private GlobalContextFactory factory;
     private GlobalContext global;
 
     private boolean shutdownAfterRun;
 
-    public BearRunner2(IBearSettings bearSettings,  GlobalContextFactory factory) {
+    public BearRunner2(BearProject bearSettings,  GlobalContextFactory factory) {
         try {
             this.bearSettings = bearSettings;
             this.factory = factory;

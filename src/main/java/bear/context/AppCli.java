@@ -1,7 +1,7 @@
 package bear.context;
 
 import bear.core.BearApp;
-import bear.main.BearMain;
+import bear.core.BearMain;
 import bear.session.DynamicVariable;
 import chaschev.util.JOptOptions;
 import com.google.common.base.Preconditions;
@@ -24,7 +24,7 @@ import static com.google.common.collect.Lists.newArrayList;
 /**
  * @author Andrey Chaschev chaschev@gmail.com
  */
-public class AppCli<GLOBAL extends AppGlobalContext<GLOBAL, BEAR_APP>, BEAR_APP extends BearApp<GLOBAL>> extends HavingContext<Cli, GLOBAL> {
+public class AppCli<GLOBAL extends AppGlobalContext<GLOBAL, BEAR_APP>, BEAR_APP extends BearApp<GLOBAL>> extends HavingContext<BearMain, GLOBAL> {
     protected final BEAR_APP bear;
 
     public final DynamicVariable<File>
@@ -47,7 +47,7 @@ public class AppCli<GLOBAL extends AppGlobalContext<GLOBAL, BEAR_APP>, BEAR_APP 
         this.args = args;
         this.global = $;
 
-        appConfigDir = convert(newVar(".bear"), TO_FILE);
+        appConfigDir = convert(newVar(".bear").temp(), TO_FILE);
         scriptsDir = equalTo(appConfigDir);
         propertiesFile = convert(concat(appConfigDir, "/settings.properties"), TO_FILE);
         buildDir = convert(concat(scriptsDir, "/classes"), TO_FILE);

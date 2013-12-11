@@ -16,6 +16,7 @@ import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
 import java.util.List;
+import java.util.Map;
 
 import static com.google.common.collect.Lists.newArrayList;
 import static com.google.common.collect.Lists.transform;
@@ -31,11 +32,12 @@ public class BearScriptRunner {
     Bear bear;
 
     final Plugin initialPlugin;
-    final IBearSettings settings;
+    final BearProject settings;
 
     private GlobalContextFactory factory = GlobalContextFactory.INSTANCE;
+    private Map<Object, Object> variables;
 
-    public BearScriptRunner(GlobalContext global, Plugin currentPlugin, IBearSettings settings) {
+    public BearScriptRunner(GlobalContext global, Plugin currentPlugin, BearProject settings) {
         this.global = global;
         this.initialPlugin = currentPlugin;
         this.settings = settings;
@@ -83,6 +85,11 @@ public class BearScriptRunner {
             global.putConst(bear.internalInteractiveRun, true);
         }
 
+        Map<Object, Object> savedVariables = null;
+        if(variables != null){
+            savedVariables = global.putMap(variables);
+        }
+
         PreparationResult preparationResult = new BearRunner2(settings, factory).createRunContext();
 
         List<SessionContext> $s = preparationResult.getSessions();
@@ -96,7 +103,11 @@ public class BearScriptRunner {
 
         globalTaskRunner.startParties(global.localExecutor);
 
-        return new RunResponse(globalTaskRunner, getHosts(preparationResult.getSessions()));
+        RunResponse runResponse = new RunResponse(globalTaskRunner, getHosts(preparationResult.getSessions()));
+
+        runResponse.savedVariables = savedVariables;
+
+        return runResponse;
     }
 
     public static List<RunResponse.Host> getHosts(List<SessionContext> $s) {
@@ -107,9 +118,15 @@ public class BearScriptRunner {
         });
     }
 
+    public BearScriptRunner withVars(Map<Object, Object> variables) {
+        this.variables = variables;
+        return this;
+    }
+
     public static class RunResponse extends Response {
         public List<BearParserScriptSupplier.ScriptError> errors;
         GlobalTaskRunner globalRunner;
+        private Map<Object, Object> savedVariables;
 
         public RunResponse(List<BearParserScriptSupplier.ScriptError> errors) {
             this.errors = errors;
@@ -134,6 +151,10 @@ public class BearScriptRunner {
 
         public GlobalTaskRunner getGlobalRunner() {
             return globalRunner;
+        }
+
+        public Map<Object, Object> getSavedVariables() {
+            return savedVariables;
         }
     }
 

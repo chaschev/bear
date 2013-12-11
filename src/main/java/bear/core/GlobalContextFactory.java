@@ -45,11 +45,7 @@ public class GlobalContextFactory {
         }
     }
 
-    public void init(IBearSettings bearSettings) {
-        if (globalVarsInitPhase != null) {
-            globalVarsInitPhase.setVars(global.getLayer());
-        }
-
+    public void initPluginsAndWire(BearProject project) {
         if (userRegisteredPlugins != null) {
             for (Class<? extends Plugin<Task, TaskDef<?>>> aClass : userRegisteredPlugins) {
                 global.addPlugin(aClass);
@@ -58,15 +54,15 @@ public class GlobalContextFactory {
             global.initPlugins();
         }
 
-        global.wire(bearSettings);
-//        DependencyInjection.inject(bearSettings, global);
+        global.wire(project);
+//        DependencyInjection.inject(project, global);
     }
 
     public static interface GlobalVarsInitPhase {
         void setVars(VariablesLayer vars);
     }
 
-    public GlobalVarsInitPhase globalVarsInitPhase;
+//    public GlobalVarsInitPhase globalVarsInitPhase;
 
     private final List<Class<? extends Plugin<Task, TaskDef<?>>>> userRegisteredPlugins = new ArrayList<Class<? extends Plugin<Task, TaskDef<?>>>>();
 

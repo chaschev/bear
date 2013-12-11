@@ -16,6 +16,7 @@
 
 package bear.main;
 
+import bear.context.CompilationResult;
 import org.apache.commons.lang3.ArrayUtils;
 
 import java.io.File;
@@ -40,5 +41,5 @@ public abstract class Compiler {
         return ArrayUtils.contains(extensions, extension);
     }
 
-    public abstract FXConf.CompilationResult compile();
+    public abstract CompilationResult compile();
 }

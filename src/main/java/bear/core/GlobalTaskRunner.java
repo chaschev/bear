@@ -32,7 +32,7 @@ public class GlobalTaskRunner {
     private static final Logger logger = LoggerFactory.getLogger(GlobalTaskRunner.class);
 
     private final Bear bear;
-    private final IBearSettings bearSettings;
+    private final BearProject bearSettings;
 
     List<TaskDef<Task>> taskDefs;
     private final List<SessionContext> $s;
@@ -192,7 +192,7 @@ public class GlobalTaskRunner {
         return startedAtMs;
     }
 
-    public IBearSettings getBearSettings() {
+    public BearProject getBearSettings() {
         return bearSettings;
     }
 

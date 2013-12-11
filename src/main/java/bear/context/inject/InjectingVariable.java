@@ -13,6 +13,10 @@ public class InjectingVariable<T> extends DynamicVariable<T> {
     protected InjectingScope[] restrictedDeclaringClasses;
     protected InjectingScope[] restrictedTypes;
 
+    {
+        name = "InjectingVariable";
+    }
+
     //restrict declared classes to, OR logic
     public InjectingScope[] getDeclaredClassScope(){
         return restrictedDeclaringClasses;

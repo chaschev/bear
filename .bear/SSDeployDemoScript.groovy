@@ -1,4 +1,4 @@
-import bear.core.IBearSettings
+import bear.core.BearProject
 import bear.core.SessionContext
 import bear.task.Task
 import bear.task.TaskDef
@@ -14,7 +14,7 @@ class SSDeployDemoScript extends bear.main.Script {
         _.putConst(bear.vcsBranchName, 'master')
         _.putConst(bear.clean, false)
 
-        final IBearSettings settings = task.getGlobalRunner().getBearSettings()
+        final BearProject settings = task.getGlobalRunner().getBearSettings()
 
         _.putConst(settings.useDb, 'mongo')
 

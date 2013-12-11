@@ -169,13 +169,4 @@ public class SessionTaskRunner extends HavingContext<SessionTaskRunner, SessionC
 
         return result;
     }
-
-    public void runRollback(TaskDef<Task> taskDef) {
-        logger.warn("ADD ROLLBACK");
-//        for (Task task : taskDef.createNewSessionsAsList($, $.getCurrentTask())) {
-//
-//        }
-//
-//        task.createNewSession($, $.getCurrentTask()).onRollback();
-    }
 }

@@ -30,6 +30,10 @@ import java.util.List;
  */
 public class DynamicVariable<T> implements Nameable<T> {
 
+    public static final String NOT_SET = "__NOT_SET";
+    public static final String TEMP_VAR = "TEMP_VAR";
+
+
     public static abstract class ChangeListener<T>{
         public abstract void changedValue(DynamicVariable<T> var, T oldValue, T newValue);
         public void changedDynamic(DynamicVariable<T> var, Fun<? extends AbstractContext, T> oldFun, Fun<? extends AbstractContext, T> newFun){}
@@ -42,8 +46,8 @@ public class DynamicVariable<T> implements Nameable<T> {
     public boolean frozen;
 
     @Nonnull
-    public String name;
-    public String desc;
+    protected String name;
+    protected String desc;
 
     protected Fun<? extends AbstractContext, T> fun;
 
@@ -58,12 +62,12 @@ public class DynamicVariable<T> implements Nameable<T> {
     }
 
     public DynamicVariable() {
-        this.name = "-";
+        this.name = NOT_SET;
         this.desc = "";
     }
 
     public DynamicVariable(String desc) {
-        this.name = "-";
+        this.name = NOT_SET;
         this.desc = desc;
     }
 
@@ -85,7 +89,7 @@ public class DynamicVariable<T> implements Nameable<T> {
     }
 
     @Override
-    public String name() {
+    public final String name() {
         return name;
     }
 
@@ -271,4 +275,19 @@ public class DynamicVariable<T> implements Nameable<T> {
         this.memoizeIn = memoizeIn;
         return this;
     }
+
+    public boolean isNameSet(){
+        return name != null && !NOT_SET.equals(name);
+    }
+
+    public boolean isTemp(){
+        return name == TEMP_VAR;
+    }
+
+    public DynamicVariable<T> temp() {
+        name = TEMP_VAR;
+        return this;
+    }
+
+
 }

@@ -72,7 +72,7 @@ public class Stage {
     }
 
     //todo move this out of here
-    public PreparationResult prepareToRun2(IBearSettings bearSettings) {
+    public PreparationResult prepareToRun2(BearProject bearSettings) {
         Collection<Address> addresses = global.var(global.bear.addressesForStage).apply(this);
 
         List<SessionContext> $s = new ArrayList<SessionContext>();

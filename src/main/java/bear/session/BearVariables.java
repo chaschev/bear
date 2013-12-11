@@ -28,7 +28,7 @@ public class BearVariables {
             public String apply(final SessionContext $) {
                 return joinAndResolvePath($, varsAndStrings);
             }
-        });
+        }).temp();
     }
 
     public static String joinAndResolvePath(SessionContext $, Object... varsAndStrings) {

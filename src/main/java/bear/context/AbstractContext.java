@@ -136,9 +136,12 @@ public abstract class AbstractContext {
     }
 
     public <T> T wire(T object) {
+        DependencyInjection.nameVars(object, global == null ? (AppGlobalContext) this : global);
+
         if(injectingContext != null){
             return injectingContext.wire(object);
         }
+
 
         throw new IllegalStateException();
     }
@@ -297,6 +300,10 @@ public abstract class AbstractContext {
 
     public boolean isUndefined(DynamicVariable var) {
         return !isDefined(var);
+    }
+
+    public Map<Object, Object> putMap(Map<Object, Object> constantsAndVars) {
+        return layer.putMap(constantsAndVars, true);
     }
 
     public <R> R withMap(Map<Object, Object> constantsAndVars, Callable<R> callable) {

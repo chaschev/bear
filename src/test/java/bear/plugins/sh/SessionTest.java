@@ -3,6 +3,7 @@ package bear.plugins.sh;
 import bear.console.AbstractConsoleCommand;
 import bear.context.HavingContext;
 import bear.core.GlobalContext;
+import bear.core.GlobalContextTest;
 import bear.core.SessionContext;
 import bear.session.Result;
 import bear.session.SshAddress;
@@ -44,7 +45,7 @@ public class SessionTest extends HavingContext<SessionTest, SessionContext>{
 
     public SessionTest() {
         super(null);
-        g = GlobalContext.newForTests();
+        g = GlobalContextTest.newGlobal();
 
         g.put("bear.sshUsername", "user");
         g.put("bear.sshPassword", "pass");

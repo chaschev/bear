@@ -16,8 +16,7 @@
 
 package bear.main;
 
-import bear.core.IBearSettings;
-import chaschev.util.Exceptions;
+import bear.context.JavaCompilationResult;
 import com.google.common.base.Function;
 import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableList;
@@ -32,8 +31,6 @@ import javax.tools.JavaCompiler;
 import javax.tools.ToolProvider;
 import java.io.File;
 import java.io.FileFilter;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -41,7 +38,6 @@ import java.util.List;
 
 import static com.google.common.collect.Lists.newArrayList;
 import static com.google.common.collect.Lists.newArrayListWithExpectedSize;
-import static org.apache.commons.io.FilenameUtils.getBaseName;
 
 /**
 * @author Andrey Chaschev chaschev@gmail.com
@@ -59,35 +55,36 @@ public class JavaCompiler2 extends Compiler {
         return new String[]{"java"};
     }
 
-    public FXConf.CompilationResult compile() {
-        final List<File> filesList = compileScripts(sourcesDir);
-
-        try {
-            classLoader = new URLClassLoader(new URL[]{buildDir.toURI().toURL()}, getClass().getClassLoader());
-        } catch (MalformedURLException e) {
-            throw Exceptions.runtime(e);
-        }
-
-        FXConf.CompilationResult result = new FXConf.CompilationResult();
-
-        for (File file : filesList) {
-            try {
-                Class aClass = (Class) classLoader.loadClass(getBaseName(file.getName()));
-
-                if (Script.class.isAssignableFrom(aClass)) {
-                    result.scriptClasses.add(new CompiledEntry(aClass, file, "java"));
-                } else if (IBearSettings.class.isAssignableFrom(aClass)) {
-                    result.settingsClasses.add(new CompiledEntry(aClass, file, "java"));
-                }
-
-            } catch (ClassNotFoundException e) {
-                throw Exceptions.runtime(e);
-            }
-        }
-
-        result.timestamp = System.currentTimeMillis();
-
-        return result;
+    public JavaCompilationResult compile() {
+        throw new UnsupportedOperationException("remove Java");
+//        final List<File> filesList = compileScripts(sourcesDir);
+//
+//        try {
+//            classLoader = new URLClassLoader(new URL[]{buildDir.toURI().toURL()}, getClass().getClassLoader());
+//        } catch (MalformedURLException e) {
+//            throw Exceptions.runtime(e);
+//        }
+//
+//        JavaCompilationResult result = new JavaCompilationResult();
+//
+//        for (File file : filesList) {
+//            try {
+//                Class aClass = (Class) classLoader.loadClass(getBaseName(file.getName()));
+//
+//                if (Script.class.isAssignableFrom(aClass)) {
+//                    result.scriptClasses.add(new CompiledEntry(aClass, file, "java"));
+//                } else if (BearProject.class.isAssignableFrom(aClass)) {
+//                    result.settingsClasses.add(new CompiledEntry(aClass, file, "java"));
+//                }
+//
+//            } catch (ClassNotFoundException e) {
+//                throw Exceptions.runtime(e);
+//            }
+//        }
+//
+//        result.timestamp = System.currentTimeMillis();
+//
+//        return result;
     }
 
     public List<File> compileScripts(File sourcesDir) {

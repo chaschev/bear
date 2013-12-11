@@ -16,7 +16,7 @@
 
 package bear.plugins.groovy;
 
-import bear.context.Cli;
+import bear.core.BearMain;
 import bear.core.GlobalContext;
 import bear.core.SessionContext;
 import bear.core.Stage;
@@ -215,7 +215,7 @@ public class GroovyShellMode extends PluginShellMode<GroovyShellPlugin> implemen
         return binding;
     }
 
-    public void set$(Cli configurator) {
+    public void set$(BearMain configurator) {
         binding.setVariable("_", configurator);
     }
 

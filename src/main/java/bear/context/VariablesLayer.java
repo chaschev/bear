@@ -176,7 +176,7 @@ public class VariablesLayer extends HavingContext<Variables, AbstractContext> {
 
     private <T> T atomicMemoize(DynamicVariable<?> var, String varName, Object _default) {
         SettableFuture<T> future = new SettableFuture<T>();
-        Object o = constants.putIfAbsent(var.name, future);
+        Object o = constants.putIfAbsent(var.name(), future);
         boolean iAmTheOwner = o == null;
         if(iAmTheOwner){
             try {
@@ -247,6 +247,7 @@ public class VariablesLayer extends HavingContext<Variables, AbstractContext> {
         @Nullable DynamicVariable<?> var, @Nullable String varName, Object _default,
         VariablesLayer initialLayer, boolean memoization) {
         Preconditions.checkArgument(var != null || varName != null, "they can't both be null!");
+        Preconditions.checkArgument(var == null || var.isNameSet(), "var must have name set");
 
 
         if(!memoization && var != null && var.memoizeIn() == $.getClass()){
@@ -433,7 +434,7 @@ public class VariablesLayer extends HavingContext<Variables, AbstractContext> {
                 DynamicVariable<Object> variable = layer.getVariable(varName);
 
                 if (variable != null) {
-                    setField(field, object, layer, variable.name);
+                    setField(field, object, layer, variable.name());
 
                     continue;
                 }

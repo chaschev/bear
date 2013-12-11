@@ -209,8 +209,4 @@ public class GlobalContext extends AppGlobalContext<GlobalContext, Bear> {
     public GlobalContext getGlobal() {
         return this;
     }
-
-    public static GlobalContext newForTests(){
-        return new GlobalContext();
-    }
 }

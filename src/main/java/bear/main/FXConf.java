@@ -16,7 +16,7 @@
 
 package bear.main;
 
-import bear.context.Cli;
+import bear.core.BearMain;
 import bear.core.*;
 import bear.main.event.LogEventToUI;
 import bear.main.event.NoticeEventToUI;
@@ -51,6 +51,7 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.IOException;
 import java.io.StringWriter;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -63,7 +64,7 @@ import static java.util.Collections.singletonList;
 /**
  * @author Andrey Chaschev chaschev@gmail.com
  */
-public class FXConf extends Cli {
+public class FXConf extends BearMain {
     private static final Logger logger = LoggerFactory.getLogger(FXConf.class);
     private static final org.apache.logging.log4j.Logger ui = LogManager.getLogger("ui");
 
@@ -74,31 +75,31 @@ public class FXConf extends Cli {
     }
 
     protected String getScriptText() throws IOException {
-        return FileUtils.readFileToString($(script));
+        return compileManager.findClass($(script)).get().getText();
     }
 
     public String getSettingsText() throws IOException {
-        return FileUtils.readFileToString($(settingsFile));
+        return FileUtils.readFileToString($(projectFile));
     }
 
     public String[] getScriptNames() {
-        return getNames(compileManager.lastCompilationResult.scriptClasses);
+        return new String[]{"todo"};
     }
 
     public String[] getSettingsNames() {
-        return getNames(compileManager.lastCompilationResult.settingsClasses);
+        return getNames(new ArrayList(compileManager.lastCompilationResult.getEntries()));
     }
 
     public String getFileText(String className) {
-        return compileManager.findClass(className).getText();
+        return compileManager.findClass(className).get().getText();
     }
 
     public void saveFileText(String className, String text) {
-        compileManager.findClass(className).saveText(text);
+        compileManager.findClass(className).get().saveText(text);
     }
 
     public String getSelectedSettings() {
-        return FilenameUtils.getBaseName($(settingsFile).getName());
+        return FilenameUtils.getBaseName($(projectFile).getName());
     }
 
     public Response run(String uiContextS) throws Exception {
@@ -116,7 +117,7 @@ public class FXConf extends Cli {
     }
 
     public Response runWithScript(String bearScript, String settingsName) throws Exception {
-        IBearSettings settings = newSettings(settingsName);
+        BearProject settings = newProject(new File(settingsName));
 
         return new BearScriptRunner(getGlobal(), null, settings)
             .exec(new BearParserScriptSupplier(null, bearScript), true);
@@ -279,7 +280,7 @@ public class FXConf extends Cli {
 
             final BearScriptRunner.UIContext uiContext = mapper.fromJSON(uiContextS, BearScriptRunner.UIContext.class);
 
-            final IBearSettings settings = newSettings(uiContext.settingsName);
+            final BearProject project = newProject(uiContext.settingsName);
 
             Callable<BearScriptRunner.MessageResponse> execScriptCallable = new Callable<BearScriptRunner.MessageResponse>() {
                 @Override
@@ -292,7 +293,7 @@ public class FXConf extends Cli {
                         supplier = new BearParserScriptSupplier(currentShellPlugin, command);
                     }
 
-                    new BearScriptRunner(getGlobal(), currentShellPlugin, settings).exec(supplier, true);
+                    new BearScriptRunner(getGlobal(), currentShellPlugin, project).exec(supplier, true);
 
                     return new BearScriptRunner.MessageResponse("started script execution");
                 }

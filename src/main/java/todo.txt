@@ -52,6 +52,11 @@ top priority:
 -- create tasks with lambdas
 -- return ticket (phase) on adding a taskdef
 -- Generics (later)
+- list vars, categorize vars
+- email plugin
+- sms plugin?
+- password management (can't always store a password in a local file)
+
 
 - (ok) better rm
 - update git plugin for the release
