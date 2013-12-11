@@ -16,7 +16,10 @@
 
 package bear.main;
 
+import bear.core.BearProject;
+import bear.core.GlobalContextFactory;
 import chaschev.lang.OpenBean;
+import chaschev.lang.reflect.ConstructorDesc;
 import chaschev.util.Exceptions;
 import org.apache.commons.io.FileUtils;
 
@@ -58,7 +61,22 @@ public class CompiledEntry {
     }
 
     public Object newInstance(Object... params){
-        return OpenBean.newInstance(aClass, params);
+        ConstructorDesc<?> desc = OpenBean.getConstructorDesc(aClass, params);
+
+        if(desc == null && BearProject.class.isAssignableFrom(aClass)){
+            try {
+                Object obj = aClass.newInstance();
+
+                OpenBean.setField(obj, "factory", GlobalContextFactory.INSTANCE);
+                OpenBean.setField(obj, "global", GlobalContextFactory.INSTANCE.getGlobal());
+
+                return obj;
+            } catch (Exception e) {
+                throw Exceptions.runtime(e);
+            }
+        }
+
+        return desc.newInstance(params);
     }
 
     @Override

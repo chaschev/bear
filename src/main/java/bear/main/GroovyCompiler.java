@@ -57,10 +57,6 @@ public class GroovyCompiler extends Compiler {
 
         final GroovyClassLoader gcl = compileScripts(sourcesDir);
 
-        Class[] classes = gcl.getLoadedClasses();
-
-      final Map<String, CompiledEntry> simpleNameMap = new HashMap<String, CompiledEntry>();
-
         final long now = System.currentTimeMillis();
 
         return new CompilationResult() {
@@ -108,6 +104,8 @@ public class GroovyCompiler extends Compiler {
                 }
 
                 Class aClass = gcl.parseClass(source);
+
+                logger.info("compiling {}...", aClass);
 
                 CompiledEntry e = new CompiledEntry(aClass, file, "groovy");
 

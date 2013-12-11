@@ -1,5 +1,8 @@
 package examples
 
+import bear.console.ConsoleCallback
+import bear.console.ConsoleCallbackResult
+import bear.context.Fun
 import bear.core.*
 import bear.plugins.db.DbDumpInfo
 import bear.plugins.db.DbDumpManager
@@ -19,9 +22,12 @@ import bear.vcs.GitCLIPlugin
 
 import java.util.regex.Pattern
 
+import static bear.plugins.db.DumpManagerPlugin.DbType.mysql
 import static bear.session.BearVariables.joinPath
-import static bear.session.Variables.*
+import static bear.session.Variables.dynamic
+import static bear.session.Variables.newVar
 import static bear.task.TaskResult.OK
+
 /**
  * @author Andrey Chaschev chaschev@gmail.com
  */
@@ -33,15 +39,18 @@ public class SecureSocialDemoProject extends BearProject<SecureSocialDemoProject
     Bear bear;
     GitCLIPlugin git;
     PlayPlugin play;
-    MongoDbPlugin mongo;
-    MySqlPlugin mysql;
+    MongoDbPlugin mongoPlugin;
+    MySqlPlugin mysqlPlugin;
     DeploymentPlugin deployment;
     DumpManagerPlugin dumpManager;
 
-    public final DynamicVariable<String> useDb = newVar("mysql"),
-                                         serviceString = condition(isEql(useDb, "mysql"),
-                                             newVar("9998:service.SqlUserService"),
-                                             newVar("9998:service.MongoUserService"));
+    public final DynamicVariable<String> useDb = newVar(mysql.toString()),
+//                                         serviceString = condition(isEql(useDb, "mysql"),
+//                                             newVar("9998:service.SqlUserService"),
+//                                             newVar("9998:service.MongoUserService"))
+        serviceString = dynamic({_ -> _.var(useDb) == 'mysql' ? '9998:service.SqlUserService' : '9998:service.MongoUserService'} as Fun)
+        ;
+    ;
 
     public TaskDef<Task> deployProject;
 
@@ -63,7 +72,29 @@ public class SecureSocialDemoProject extends BearProject<SecureSocialDemoProject
         return OK
     } as TaskCallable<TaskDef>);
 
-    private TaskResult updateDbConf(SessionContext _)
+    GridBuilder testCapturesGrid = new GridBuilder()
+        .add({ SessionContext _, Task task, Object input ->
+        def callback = {console, buffer, wholeText ->
+            println "HEY!! ${buffer}";
+
+            return ConsoleCallbackResult.CONTINUE;
+        } as ConsoleCallback
+
+        println "HEY-STEP 0!!"
+        def pwd = _.sys.capture("pwd", callback)
+        println "expected pwd: '${pwd}'"
+
+        for(int i = 0;i<100;i++){
+            println "HEY-STEP ${i+1}!!"
+            def s = _.sys.capture("pwd", callback)
+
+            if(!pwd.equals(s)){
+                throw new RuntimeException("expecting '${pwd}', found: '${s}', step: ${i + 1}");
+            }
+        }
+    } as TaskCallable<TaskDef>);
+
+        private TaskResult updateDbConf(SessionContext _)
     {
         String pluginsPath = _.var(play.projectPath) + "/conf/play.plugins";
 
@@ -133,27 +164,20 @@ public class SecureSocialDemoProject extends BearProject<SecureSocialDemoProject
     }
 
     def mysqlVars = [
-        (useDb): "mysql",
+        (useDb): mysql.toString(),
         'd': 's'
     ];
 
     static main(def args)
     {
-
-        //same as
-        //BearMain -VsecureSocialDemoProject.useDb=mysql -VbearMain.project=SecureSocialDemoProject
         def demo = new SecureSocialDemoProject()
-        def file = demo.main().propertiesFile
 
         demo
-            .set(file, new File(".bear/test.properties"))
-
-        demo.configure()
+            .set(demo.main().propertiesFile, new File(".bear/test.properties"))
+            .configure()
             .dumpSampleGrid
             .withVars(demo.mysqlVars)
             .run();
 
     }
-
-
 }

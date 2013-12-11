@@ -280,7 +280,7 @@ public class DynamicVariable<T> implements Nameable<T> {
         return name != null && !NOT_SET.equals(name);
     }
 
-    public boolean isTemp(){
+    public boolean isTemporal(){
         return name == TEMP_VAR;
     }
 

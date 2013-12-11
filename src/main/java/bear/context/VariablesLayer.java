@@ -205,6 +205,8 @@ public class VariablesLayer extends HavingContext<Variables, AbstractContext> {
     }
 
     public Object getConstant(Object obj, boolean memoization) {
+        if(obj == DynamicVariable.TEMP_VAR) return null;
+
         Object o = constants.get(obj);
 
         if(o instanceof Future){
@@ -261,12 +263,14 @@ public class VariablesLayer extends HavingContext<Variables, AbstractContext> {
         final Object thisLayerResult;
 
         //first check if var was overridden in this layer
+        // don't check temp vars for constants
+        if(var == null || !var.isTemporal()){
+            Object o = varName == null ? null : getConstant(varName, memoization);
 
-        Object o = varName == null ? null : getConstant(varName, memoization);
-
-        if(o != null){
-            logger.debug("{}: :{} -> {} (const)", name, varName, o);
-            return o;
+            if(o != null){
+                logger.debug("{}: :{} -> {} (const)", name, varName, o);
+                return o;
+            }
         }
 
         DynamicVariable<?> r = varName == null ? null : variables.get(varName);

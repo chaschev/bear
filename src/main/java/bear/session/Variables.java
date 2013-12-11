@@ -119,7 +119,7 @@ public class Variables {
             public T apply(AbstractContext $) {
                 return $.varB(condition) ? $.var(trueVar) : $.var(falseVar);
             }
-        }).temp().temp();
+        }).temp();
     }
 
     public static <T> DynamicVariable<T> equalTo(final DynamicVariable<T> variable) {

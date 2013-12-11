@@ -214,7 +214,7 @@ public class GridBuilder {
     }
 
     public void run() {
-        run(false);
+        run(true);
     }
 
     public void run(boolean shutdown) {

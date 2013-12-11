@@ -51,6 +51,7 @@ public class BearMain extends AppCli<GlobalContext, Bear> {
 
     public final DynamicVariable<String> project = newVar(".bear/BearSettings.java");
     public final DynamicVariable<File> projectFile = convert(project, TO_FILE);
+    public final DynamicVariable<String> projectClass = newVar("BearSettings");
     public final DynamicVariable<String> script = undefined();
 
     public final DynamicVariable<Properties>
@@ -121,31 +122,43 @@ public class BearMain extends AppCli<GlobalContext, Bear> {
     }
 
     public BearProject newProject() {
-        return newProject($(projectFile));
+        File file = $(projectFile);
+
+        if(!compileManager.findClass(file).isPresent()){
+            return newProject($(projectClass));
+        }else{
+            return newProject(file);
+        }
     }
 
     public BearProject newProject(String className) {
         try {
-            return newProject(compileManager.findClass(className));
+            Optional<CompiledEntry> entry = compileManager.findClass(className);
+
+            if(!entry.isPresent()){
+                Preconditions.checkArgument(entry.isPresent(), "class %s not found", className);
+            }
+
+            return newProject(entry.get());
         } catch (Exception e) {
             throw Exceptions.runtime(e);
         }
     }
 
-    public BearProject newProject(File bearProject) {
+    public BearProject newProject(File bearProjectFile) {
         try {
-            final Optional<CompiledEntry> settingsEntry = compileManager.findClass(bearProject);
+            final Optional<CompiledEntry> settingsEntry = compileManager.findClass(bearProjectFile);
 
-            Preconditions.checkArgument(settingsEntry.isPresent(), "%s not found", bearProject);
+            Preconditions.checkArgument(settingsEntry.isPresent(), "%s not found", bearProjectFile);
 
-            return newProject(settingsEntry);
+            return newProject(settingsEntry.get());
         } catch (Exception e) {
             throw Exceptions.runtime(e);
         }
     }
 
-    protected BearProject newProject(Optional<CompiledEntry> settingsEntry) throws Exception {
-        BearProject settings = (BearProject) settingsEntry.get().newInstance(factory);
+    protected BearProject newProject(CompiledEntry entry) throws Exception {
+        BearProject settings = (BearProject) entry.newInstance(factory);
 
         settings.loadProperties($(newRunProperties));
         DependencyInjection.nameVars(settings, global);
@@ -166,7 +179,7 @@ public class BearMain extends AppCli<GlobalContext, Bear> {
     }
 
     /**
-     * -VbearMain.script=.bear/testCaptures.bear -VbearMain.settings=.bear/SecureSocialDemoSettings.java -VbearMain.propertiesFile=.bear/test.properties
+     * -VbearMain.appConfigDir=src/main/groovy/examples -VbearMain.buildDir=.bear/classes -VbearMain.script=dumpSampleGrid -VbearMain.projectClass=SecureSocialDemoProject -VbearMain.propertiesFile=.bear/test.properties
      */
     public static void main(String[] args) throws Exception {
         BearMain bearMain = new BearMain(GlobalContext.getInstance(), args)
@@ -252,7 +265,7 @@ public class BearMain extends AppCli<GlobalContext, Bear> {
     public static void shutdown(GlobalContext global) throws InterruptedException {
         global.shutdown();
 
-        Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
+        new Thread(new Runnable() {
             @Override
             public void run() {
                 try {
@@ -272,7 +285,7 @@ public class BearMain extends AppCli<GlobalContext, Bear> {
                     e1.printStackTrace();
                 }
             }
-        }, "shutdown"));
+        }, "shutdown monitor");
     }
 
     public static StringBuilder threadDump() {
@@ -283,9 +296,14 @@ public class BearMain extends AppCli<GlobalContext, Bear> {
         for (Map.Entry<Thread, StackTraceElement[]> e : map.entrySet()) {
             Thread thread = e.getKey();
 
-            sb.append(thread.getName()).append(" ").append(thread.getId())
-                .append("\tat ").append(e.getValue()[0])
+            StackTraceElement[] elements = e.getValue();
+            StackTraceElement el = elements == null || elements.length == 0 ? null : elements[0];
+
+            sb.append(thread.getName());
+            if(el != null){
+                sb.append("\tat ").append(el)
                 .append("\n");
+            }
         }
 
         sb.append("\n\n");
@@ -295,7 +313,7 @@ public class BearMain extends AppCli<GlobalContext, Bear> {
         for (Map.Entry<Thread, StackTraceElement[]> entry : map.entrySet()) {
             Thread thread = entry.getKey();
             StackTraceElement[] stack = entry.getValue();
-            sb.append(thread.getName()).append(" ").append(thread.getId()).append("\n");
+            sb.append(thread.getName()).append(", id=").append(thread.getId()).append("\n");
             e.setStackTrace(stack);
             sb.append(Throwables.getStackTraceAsString(e));
             sb.append("\n");

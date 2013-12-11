@@ -55,7 +55,6 @@ public class GlobalContextFactory {
         }
 
         global.wire(project);
-//        DependencyInjection.inject(project, global);
     }
 
     public static interface GlobalVarsInitPhase {
