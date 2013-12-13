@@ -9,7 +9,7 @@
         </File>
     </Appenders>
     <Loggers>
-        <Logger name="net.schmizz" level="warn">
+        <Logger name="net.schmizz" level="info">
             <AppenderRef ref="File"/>
         </Logger>
 

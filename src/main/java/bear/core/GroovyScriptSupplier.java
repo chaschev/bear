@@ -20,7 +20,7 @@ public class GroovyScriptSupplier implements Supplier<BearParserScriptSupplier.B
     private final BearParserScriptSupplier.BearScriptParseResult parseResult;
 
     public GroovyScriptSupplier(GlobalContext global, String groovyScript, Optional<String> scriptName) {
-        GroovyShellPlugin groovy = global.getPlugin(GroovyShellPlugin.class);
+        GroovyShellPlugin groovy = global.plugin(GroovyShellPlugin.class);
 
         this.parseResult = new BearParserScriptSupplier.BearScriptParseResult(
             Lists.newArrayList(
@@ -32,7 +32,7 @@ public class GroovyScriptSupplier implements Supplier<BearParserScriptSupplier.B
 
     public GroovyScriptSupplier(GlobalContext global, File file) {
         try {
-            GroovyShellPlugin groovy = global.getPlugin(GroovyShellPlugin.class);
+            GroovyShellPlugin groovy = global.plugin(GroovyShellPlugin.class);
 
             this.parseResult = new BearParserScriptSupplier.BearScriptParseResult(
                 Lists.newArrayList(

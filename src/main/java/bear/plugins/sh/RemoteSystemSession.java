@@ -39,10 +39,12 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import static bear.plugins.sh.CopyOperationInput.mv;
+
 /**
 * @author Andrey Chaschev chaschev@gmail.com
 */
-class RemoteSystemSession extends SystemSession {
+public class RemoteSystemSession extends SystemSession {
     private static final Logger logger = LoggerFactory.getLogger(RemoteSystemSession.class);
 
     private final GlobalContext global;
@@ -303,9 +305,13 @@ class RemoteSystemSession extends SystemSession {
         try {
 
             if (files.length == 1) {
+                logger.info("transferring {} to {}", files[0], dest);
+
                 transfer.upload(new FileSystemFile(files[0]), dest);
             } else {
                 for (File file : files) {
+                    logger.info("transferring {} to {}", file, dest);
+
                     transfer.upload(new FileSystemFile(file), dest + "/" + file.getName());
                 }
             }
@@ -358,7 +364,8 @@ class RemoteSystemSession extends SystemSession {
     }
 
     @Override
-    protected Result copyOperation(String src, String dest, SystemEnvironmentPlugin.CopyCommandType type, boolean folder, @Nullable String owner) {
+    @Deprecated
+    protected Result copyOperation(String src, String dest, CopyCommandType type, boolean folder, @Nullable String owner) {
         final CommandLine line = newCommandLine();
 
         switch (type) {
@@ -428,8 +435,16 @@ class RemoteSystemSession extends SystemSession {
     }
 
     @Override
-    public Result writeStringAs(WriteStringInput input) {
+    public WriteStringResult writeString(WriteStringInput input) {
         try {
+            if(input.ifDiffers){
+                String s = $.sys.readString(input.getFullPath(), "");
+
+                if(input.text.equals(s)) {
+                    return new WriteStringResult(Result.OK, false);
+                }
+            }
+
             final File tempFile = File.createTempFile("bear", "upload");
             FileUtils.writeStringToFile(tempFile, input.text, IOUtils.UTF8.name());
             String remoteTempPath = tempFile.getName();
@@ -438,29 +453,13 @@ class RemoteSystemSession extends SystemSession {
 
             tempFile.delete();
 
-            Script script = script();
+            CommandLineResult move = $.sys.move(mv(remoteTempPath, input.path)
+                .withPermissions(input.permissions)
+                .withUser(input.user)
+                .sudo(input.sudo)
+                .callback(input.callback));
 
-            CommandLine line = script.line();
-
-            if(input.sudo){
-                line.sudo();
-            }else{
-                line.stty();
-            }
-
-            line.a("mv", remoteTempPath, input.path);
-
-            if(input.user.isPresent()){
-                line.addRaw(" && chown " + input.user.get() +" ").a(input.path);
-            }
-
-            if(input.permissions.isPresent()){
-                line.addRaw(" && chmod " + input.permissions.get() +" ").a(input.path);
-            }
-
-            CommandLineResult run = run(script.callback(SystemEnvironmentPlugin.println($.var(getBear().sshPassword))));
-
-            return run.getResult();
+            return new WriteStringResult(move.getResult(), true);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -498,27 +497,16 @@ class RemoteSystemSession extends SystemSession {
 
     @Override
     public String readLink(String path) {
-        return script().line().a("readlink", path).build().run().throwIfError().text.trim();
+        String result = script().line().a("readlink", path).build().run().throwIfError().text.trim();
+
+        return Strings.emptyToNull(result);
     }
 
     @Override
     public CommandLine rmLineImpl(RmInput rm, CommandLine line) {
         rm.validate();
 
-        if (rm.cd != null) {
-            line.cd(rm.cd);
-        }
-
-        if(rm.sudo && rm.callback == null){
-            rm.callback = $.sshCallback();
-        }
-
-        if(rm.callback != null){
-            line.sudoOrStty(rm.sudo);
-            line.setCallback(rm.callback);
-        }
-
-        return line.addRaw("rm").a(rm.recursive ? rm.force ? "-rf" : "-r" : "-f" ).a(rm.paths);
+        return rm.forLine(line, $).addRaw("rm").a(rm.recursive ? (rm.force ? "-rf" : "-r") : "-f" ).a(rm.paths);
     }
 
     @Override

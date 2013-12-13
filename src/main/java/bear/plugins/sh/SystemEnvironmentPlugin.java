@@ -37,10 +37,6 @@ public abstract class SystemEnvironmentPlugin extends Plugin<SystemSession, Syst
 
     private int defaultTimeout = 5000;
 
-    public enum CopyCommandType {
-        COPY, LINK, MOVE
-    }
-
     protected SystemEnvironmentPlugin(GlobalContext global, String name) {
         super(global, new SystemSessionDef());
         taskDefMixin.setPlugin(this);

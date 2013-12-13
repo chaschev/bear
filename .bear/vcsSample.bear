@@ -7,4 +7,4 @@ pwd
 :set groovyShell.sendToHosts=true
 
 logger.info("hi from groovy!");
-logger.info("git: {}", global.getPlugin(bear.vcs.GitCLIPlugin));
+logger.info("git: {}", global.plugin(bear.vcs.GitCLIPlugin));

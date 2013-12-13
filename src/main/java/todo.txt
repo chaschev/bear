@@ -57,14 +57,16 @@ top priority:
 - sms plugin?
 - password management (can't always store a password in a local file)
 
-
+- cover contextes with unit tests, rewrite and add feature: atomically memoize in global, calculate in $
 - (ok) better rm
 - update git plugin for the release
 - ssh tests for servers to test connectivity and response
 - (ok) FileWatcher
 -- secure social demo for 3 hosts/single mysql
 -- computer demo for 3 hosts/mongodb cluster
--- node.js demo
+-- node.js demo: https://github.com/jedireza/drywall, https://github.com/jaredhanson/passport, https://github.com/madhums/node-express-mongoose-demo
+-- django demo: https://github.com/omab/python-social-auth
+-- RoR: https://github.com/binarylogic/authlogic/tree/master, https://github.com/technoweenie/restful-authentication/tree/master,
 -- grails demo
 -- (ok) reference phases from scripts
 -- deploy mysql & test
@@ -165,8 +167,9 @@ features:
 - fix weird error messages when errors occur
 - make DynVars similar to JavaFX properties
 - validation step: validation [ validate(closure) ]
-- upstart plugin
-- play plugin
+- (ok) upstart plugin
+- (ok) play plugin
+- monit plugin: http://clock.co.uk/tech-blogs/deploying-nodejs-apps
 - maven plugin
 - verify vcs installation via plugin verification
 - test: vars from console

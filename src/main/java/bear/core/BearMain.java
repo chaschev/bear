@@ -85,7 +85,7 @@ public class BearMain extends AppCli<GlobalContext, Bear> {
 
         $.localCtx().log("configuring Bear with default settings...");
 
-        global.getPlugin(GroovyShellPlugin.class).getShell().set$(this);
+        global.plugin(GroovyShellPlugin.class).getShell().set$(this);
 
         build();
 

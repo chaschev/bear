@@ -2,13 +2,22 @@ package bear.plugins.sh;
 
 import bear.console.ConsoleCallback;
 import bear.core.Bear;
+import bear.core.SessionContext;
+import bear.vcs.CommandLineResult;
+import com.google.common.base.Optional;
+
+import javax.annotation.Nonnull;
 
 /**
 * @author Andrey Chaschev chaschev@gmail.com
 */
 public class CommandInput<SELF extends CommandInput>{
+    protected long timeoutMs = -1;
     protected boolean sudo;
-    protected String cd;
+    protected boolean recursive = true;
+
+    @Nonnull
+    protected Optional<String> cd = Optional.absent();
     protected ConsoleCallback callback;
 
     CommandInput() {
@@ -19,18 +28,60 @@ public class CommandInput<SELF extends CommandInput>{
         return self();
     }
 
-    public SELF cd(String cd) {
-        this.cd = cd;
+    public SELF sudo(boolean b) {
+        this.sudo = b;
         return self();
     }
 
-    protected SELF self(){
+    public SELF cd(String cd) {
+        this.cd = Optional.of(cd);
+        return self();
+    }
+
+    protected final SELF self(){
         return (SELF) this;
     }
 
-    public CommandInput<SELF> callback(ConsoleCallback callback) {
+    protected CommandLine<? extends CommandLineResult, ?> newLine(SessionContext $) {
+        return newLine($, true);
+    }
+
+    protected CommandLine<? extends CommandLineResult, ?> newLine(SessionContext $, boolean useSshCallback){
+        CommandLine line = $.sys.script().line();
+
+        if(isTimeoutSet()){
+            line.timeoutMs(timeoutMs);
+        }
+
+        return forLine(line, $, useSshCallback);
+    }
+
+    protected CommandLine<? extends CommandLineResult, ?> forLine(CommandLine line, SessionContext $) {
+        return forLine(line, $, true);
+    }
+
+    protected CommandLine<? extends CommandLineResult, ?> forLine(CommandLine line, SessionContext $, boolean useSshCallback) {
+        if(cd.isPresent()){
+            line.cd(cd.get());
+        }
+
+        if(useSshCallback && sudo && callback == null){
+            callback = $.sshCallback();
+        }
+
+        if(sudo){
+            line.sudo();
+        }else
+        if(callback != null){
+            line.stty();
+        }
+
+        return line;
+    }
+
+    public SELF callback(ConsoleCallback callback) {
         this.callback = callback;
-        return this;
+        return self();
     }
 
     public void validate(){
@@ -43,6 +94,10 @@ public class CommandInput<SELF extends CommandInput>{
         }
     }
 
+    protected boolean isTimeoutSet(){
+        return timeoutMs != -1;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -52,16 +107,36 @@ public class CommandInput<SELF extends CommandInput>{
 
         if (sudo != that.sudo) return false;
         if (callback != null ? !callback.equals(that.callback) : that.callback != null) return false;
-        if (cd != null ? !cd.equals(that.cd) : that.cd != null) return false;
+        if (!cd.equals(that.cd)) return false;
 
         return true;
+    }
+
+    //todo might need to hide this
+    public SELF nonRecursive() {
+        recursive = false;
+        return self();
     }
 
     @Override
     public int hashCode() {
         int result = (sudo ? 1 : 0);
-        result = 31 * result + (cd != null ? cd.hashCode() : 0);
+        result = 31 * result + cd.hashCode();
         result = 31 * result + (callback != null ? callback.hashCode() : 0);
         return result;
+    }
+
+    public SELF timeoutMs(int timeoutMs) {
+        this.timeoutMs = timeoutMs;
+
+        return self();
+    }
+
+    public SELF timeoutSec(int timeoutSec) {
+        return timeoutMs(1000 * timeoutSec);
+    }
+
+    public SELF timeoutMin(int timeoutMin) {
+        return timeoutSec(60 * timeoutMin);
     }
 }

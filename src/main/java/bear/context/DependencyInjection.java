@@ -118,7 +118,7 @@ public class DependencyInjection {
                     field.set(obj, global.plugins);
                 } else
                 if(Plugin.class.isAssignableFrom(fieldClass)){
-                    field.set(obj, global.getPlugin(fieldClass));
+                    field.set(obj, global.plugin(fieldClass));
                 } else {
                     String fieldName = field.getName();
 

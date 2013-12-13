@@ -158,7 +158,7 @@ public class GitCLIPlugin extends VcsCLIPlugin<Task, TaskDef<?>> {
 
             List<String> args = new ArrayList<String>();
 
-            if ($.isSet(getBear().vcsBranchName)) {
+            if ($.isSet(bear.vcsBranchName)) {
                 addAll(args, "-b", $(getBear().vcsBranchURI));
             }
 
@@ -175,7 +175,7 @@ public class GitCLIPlugin extends VcsCLIPlugin<Task, TaskDef<?>> {
             script
                 .line()
                 .stty().a(git).a("clone", verbose()).a(args)
-                .a($(getBear().repositoryURI), destination).build()
+                .a($(bear.repositoryURI), destination).build()
                 .line()
                 .stty()
                 .cd(destination)

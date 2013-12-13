@@ -4,8 +4,8 @@ import bear.core.GlobalContext;
 import bear.core.SessionContext;
 import bear.plugins.Plugin;
 import bear.plugins.sh.WriteStringInput;
+import bear.plugins.sh.WriteStringResult;
 import bear.session.DynamicVariable;
-import bear.session.Result;
 import bear.session.Variables;
 import bear.task.*;
 import com.google.common.base.Optional;
@@ -39,7 +39,7 @@ public class UpstartPlugin extends Plugin {
     public final TaskDef<Task> create = new TaskDef<Task>(new SingleTaskSupplier<Task>() {
         @Override
         public Task createNewSession(SessionContext $, Task parent, TaskDef<Task> def) {
-            return new Task(parent, new TaskCallable() {
+            return new Task(parent, new TaskCallable<TaskDef>() {
                 @Override
                 public TaskResult call(SessionContext $, Task task, Object input) throws Exception {
                     UpstartServices upstartServices = (UpstartServices) input;
@@ -63,7 +63,9 @@ public class UpstartPlugin extends Plugin {
                                 "#!upstart\n" +
                                 "description \"" + service.description + "\"\n" +
                                 "author      \"bear\"\n" +
-                                (service.dir.isPresent() ? "chdir " + service.dir.get() : "") +
+                                field(service.dir, "chdir") +
+                                field(service.user, "setuid") +
+                                field(service.group, "setgid") +
                                 "\n" +
                                 "start on runlevel " + $.var(startOn) + "\n" +
                                 "stop on runlevel " + $.var(stopOn) + "\n" +
@@ -74,14 +76,10 @@ public class UpstartPlugin extends Plugin {
                                 "respawn limit 5 60\n" +
                                 "\n" +
                                 "script\n" +
-                                "    " + service.script +"\n" +
+                                "    " + service.script + "\n" +
                                 "end script";
 
-                        Result result = $.sys.writeStringAs(new WriteStringInput("/etc/init/" + service.name + ".conf", text, true, Optional.<String>absent(), of("u+x,g+x,o+x")));
-
-                        if(!result.ok()){
-                            return result.toTaskResult();
-                        }
+                        return $.sys.writeString(WriteStringInput.str("/etc/init/" + service.name + ".conf", text).sudo().withPermissions("u+x,g+x,o+x").ifDiffers());
                     }
 
                     Optional<String> groupName = upstartServices.groupName;
@@ -97,10 +95,10 @@ public class UpstartPlugin extends Plugin {
 //                                text += "sudo service " + service.name + " " + command + "\n";
                             }
 
-                            Result r = $.sys.writeStringAs(new WriteStringInput("/usr/bin/" + scriptName, text, true, Optional.<String>absent(), of("u+x,g+x,o+x")));
+                            WriteStringResult r = $.sys.writeString(new WriteStringInput("/usr/bin/" + scriptName, text, true, Optional.<String>absent(), of("u+x,g+x,o+x")));
 
                             if(!r.ok()){
-                                return r.toTaskResult();
+                                return r;
                             }
                         }
                     }
@@ -110,6 +108,10 @@ public class UpstartPlugin extends Plugin {
             });
         }
     });
+
+    private static String field(Optional<String> field, String name) {
+        return (field.isPresent() ? name +" " + field.get() + "\n" : "");
+    }
 
     @Override
     public InstallationTaskDef<? extends InstallationTask> getInstall() {

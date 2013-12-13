@@ -25,6 +25,9 @@ import com.google.common.base.Preconditions;
 
 import java.util.Arrays;
 
+import static bear.plugins.sh.DirsInput.mk;
+import static bear.plugins.sh.DirsInput.perm;
+
 
 /**
  * @author Andrey Chaschev chaschev@gmail.com
@@ -60,20 +63,18 @@ public class Tasks {
                         $(bear.toolsInstallDirPath)
                     };
 
-                    //todo sudo
-                    $.sys.mkdirs(dirs);
-
                     final String sshUser = $(bear.sshUsername);
                     final String appUser = $(bear.appUsername);
 
-                    //todo sudo
-                    $.sys.chown(sshUser + "." + sshUser, true, dirs);
-                    //todo sudo
-                    $.sys.chmod("g+w", true, dirs);
+                    $.sys.mkdirs(mk(dirs).sudo().withPermissions("g+w").withUser(sshUser + "." + sshUser));
+
+
+//                    $.sys.chown(sshUser + "." + sshUser, true, dirs);
+//                    $.sys.chmod("g+w", true, dirs);
 
                     if (!appUser.equals(sshUser)) {
-                        //todo sudo
-                        $.sys.chown(appUser + "." + appUser, true, $(bear.appLogsPath));
+                        //this part might be changed
+                        $.sys.permissions(perm($(bear.appLogsPath)).sudo().withUser(appUser + "." + appUser));
                     }
 
                     if ($(bear.autoInstallPlugins) || $(bear.verifyPlugins)) {
@@ -187,11 +188,11 @@ public class Tasks {
         return new TaskResult(ex);
     }
 
-    public static SingleTaskSupplier<Task> newSingleTask(final TaskCallable<TaskDef> taskCallable) {
-        return new SingleTaskSupplier<Task>() {
+    public static <TASK extends Task> SingleTaskSupplier<TASK> newSingleTask(final TaskCallable<TaskDef> taskCallable) {
+        return new SingleTaskSupplier<TASK>() {
             @Override
-            public Task createNewSession(SessionContext $, Task parent, TaskDef<Task> def) {
-                return new Task(parent,  taskCallable);
+            public TASK createNewSession(SessionContext $, Task parent, TaskDef<TASK> def) {
+                return (TASK) new Task(parent,  taskCallable);
             }
         };
     }

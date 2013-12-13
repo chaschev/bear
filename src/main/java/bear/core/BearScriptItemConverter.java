@@ -124,7 +124,7 @@ class BearScriptItemConverter {
         String varName = substringBefore(command, "=");
         String expression = substringAfter(command, "=");
 
-        GroovyShell shell = new GroovyShell(global.getPlugin(GroovyShellPlugin.class).getShell().getLocalBinding());
+        GroovyShell shell = new GroovyShell(global.plugin(GroovyShellPlugin.class).getShell().getLocalBinding());
 
         logger.info("evaluating: '{}'...", expression);
 
@@ -158,7 +158,7 @@ class BearScriptItemConverter {
             throw new RuntimeException("1+ plugins found for '" + pluginName + "': " + pluginName);
         }
 
-        return global.getPlugin(matchingClasses.get(0));
+        return global.plugin(matchingClasses.get(0));
     }
 
     private List<Class<? extends Plugin>> pluginList;

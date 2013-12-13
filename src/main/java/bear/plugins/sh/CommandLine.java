@@ -155,17 +155,17 @@ public abstract class CommandLine<T extends CommandLineResult, SCRIPT extends Sc
         return this;
     }
 
-    public CommandLine<T, SCRIPT> timeoutMs(int timeoutMs) {
+    public CommandLine<T, SCRIPT> timeoutMs(long timeoutMs) {
         this.timeoutMs = timeoutMs;
 
         return this;
     }
 
-    public CommandLine<T, SCRIPT> timeoutSec(int timeoutSec) {
+    public CommandLine<T, SCRIPT> timeoutSec(long timeoutSec) {
         return timeoutMs(1000 * timeoutSec);
     }
 
-    public CommandLine<T, SCRIPT> timeoutMin(int timeoutMin) {
+    public CommandLine<T, SCRIPT> timeoutMin(long timeoutMin) {
         return timeoutSec(60 * timeoutMin);
     }
 

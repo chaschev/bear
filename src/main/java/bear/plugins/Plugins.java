@@ -26,11 +26,13 @@ import bear.task.Task;
 import bear.task.TaskDef;
 import chaschev.lang.OpenBean;
 import chaschev.util.Exceptions;
+import com.google.common.base.Optional;
 import com.google.common.base.Predicates;
 import com.google.common.collect.Iterables;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nonnull;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
@@ -80,6 +82,8 @@ public class Plugins {
             plugin.initPlugin();
         }
     }
+
+
 
     protected static class PluginBuilder{
         protected List<Class<?>> pluginClasses = new ArrayList<Class<?>>();
@@ -204,19 +208,24 @@ public class Plugins {
         return shortcutsPluginMap.get(s);
     }
 
-    public Plugin get(Class<? extends Plugin> aClass){
+    public <T extends Plugin> T get(Class<T> aClass){
         final Plugin plugin = pluginMap.get(aClass);
 
         if(plugin == null){
             throw new RuntimeException("plugin " + aClass.getSimpleName() + " has not been loaded yet");
         }
 
-        return plugin;
+        return (T) plugin;
+    }
+
+    @Nonnull
+    public <T extends Plugin> Optional<T> getOptional(Class<T> pluginClass) {
+        return Optional.fromNullable((T)pluginMap.get(pluginClass));
     }
 
     public <T extends Plugin> Task<TaskDef> getSessionContext(Class<T> aClass, SessionContext $, Task<?> parent){
         try {
-            final T plugin = globalContext.getPlugin(aClass);
+            final T plugin = globalContext.plugin(aClass);
 
             Task task = plugin.newSession($, parent);
 

@@ -20,6 +20,7 @@ import bear.plugins.sh.CommandLine;
 import bear.plugins.sh.Script;
 import bear.core.SessionContext;
 import bear.session.Result;
+import bear.vcs.CommandLineResult;
 import com.google.common.base.Predicate;
 import com.google.common.base.Predicates;
 
@@ -158,7 +159,10 @@ public class Dependency extends Task<TaskDef> {
 
         @Override
         public boolean check() {
-            return matcher.apply(script.timeoutSec(30).run().text);
+            CommandLineResult run = script.timeoutSec(30).run();
+
+            return run.ok() && matcher.apply(run.text);
+
         }
 
         @Override

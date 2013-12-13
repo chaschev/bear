@@ -46,10 +46,11 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static bear.plugins.sh.SystemEnvironmentPlugin.sshPassword;
+import static bear.plugins.sh.CaptureInput.cap;
 
 /**
-* @author Andrey Chaschev chaschev@gmail.com
-*/
+ * @author Andrey Chaschev chaschev@gmail.com
+ */
 public abstract class SystemSession extends Task<SystemEnvironmentPlugin.SystemSessionDef> implements AbstractConsole {
     private static final Logger logger = LoggerFactory.getLogger(SystemSession.class);
     public static final Splitter LINE_SPLITTER = Splitter.on("\n").trimResults();
@@ -64,7 +65,7 @@ public abstract class SystemSession extends Task<SystemEnvironmentPlugin.SystemS
 
     protected abstract <T extends CommandLineResult> T sendCommandImpl(AbstractConsoleCommand<T> command);
 
-   @Override
+    @Override
     public <T extends CommandLineResult> T sendCommand(AbstractConsoleCommand<T> command) {
         Task<?> task = $.getCurrentTask();
 
@@ -113,13 +114,13 @@ public abstract class SystemSession extends Task<SystemEnvironmentPlugin.SystemS
         return plainScript(text, false);
     }
 
-    public Script plainScript(String text, boolean sudo){
+    public Script plainScript(String text, boolean sudo) {
         CommandLine line = new Script(this)
             .line();
 
-        if(sudo){
+        if (sudo) {
             line.sudo();
-        }else{
+        } else {
             line.stty();
         }
 
@@ -153,6 +154,10 @@ public abstract class SystemSession extends Task<SystemEnvironmentPlugin.SystemS
         return captureResult(s, callback).throwIfError().text;
     }
 
+    public String capture(CaptureInput cap) {
+        return captureResult(cap).throwIfError().text;
+    }
+
     public CommandLineResult captureResult(String s, ConsoleCallback callback) {
         return captureResult(s, false, callback);
     }
@@ -165,25 +170,20 @@ public abstract class SystemSession extends Task<SystemEnvironmentPlugin.SystemS
         return captureResult(s, sudo, sudo ? sshPassword($) : null);
     }
 
-    protected CommandLineResult captureResult(String s, boolean sudo, ConsoleCallback callback) {
-        CommandLine line = line();
-
-        if(sudo){
-            line.sudo();
-        }else
-        if(callback != null){
-            line.stty();
-        }
-
-        return sendCommand(line.addRaw(s));
+    public CommandLineResult captureResult(String s, boolean sudo, ConsoleCallback callback) {
+        return captureResult(cap(s).sudo(sudo).callback(callback));
     }
 
-    public Script addRmLine(Script script, RmInput rm){
+    public CommandLineResult captureResult(CaptureInput input) {
+        return sendCommand(input.newLine($).addRaw(input.text));
+    }
+
+    public Script addRmLine(Script script, RmInput rm) {
         addRmLine(script.line(), rm);
         return script;
     }
 
-    CommandLine addRmLine(CommandLine line, RmInput rm){
+    CommandLine addRmLine(CommandLine line, RmInput rm) {
         return rmLineImpl(rm, line);
     }
 
@@ -205,17 +205,49 @@ public abstract class SystemSession extends Task<SystemEnvironmentPlugin.SystemS
 
     public abstract Result upload(String dest, File... files);
 
+
     public abstract Result mkdirs(String... dirs);
 
-    protected abstract Result copyOperation(String src, String dest, SystemEnvironmentPlugin.CopyCommandType type, boolean folder, String owner);
+    public CommandLineResult mkdirs(DirsInput mkdirs) {
+        CommandLine line = mkdirs.newLine($)
+            .addRaw("mkdir")
+            .a("-p");
 
+        if (mkdirs.permissions.isPresent()) {
+            line.addRaw(" -m " + mkdirs.permissions.get() + " ");
+        }
+
+        line.a(mkdirs.dirs);
+
+        if (mkdirs.user.isPresent()) {
+            line.addRaw(" && sudo chown "+mkdirs.user.get() + " ").a(mkdirs.dirs);
+        }
+
+        return sendCommand(line);
+
+    }
+
+    @Deprecated
+    protected abstract Result copyOperation(String src, String dest, CopyCommandType type, boolean folder, String owner);
+
+    public CommandLineResult permissions(DirsInput input) {
+        CommandLine line = input.newLine($);
+
+        input.addPermissions(line, true, input.dirs);
+
+        return sendCommand(line);
+    }
+
+    @Deprecated
     public abstract Result chown(String user, boolean recursive, String... dest);
 
+    @Deprecated
     public abstract Result chmod(String octal, boolean recursive, String... files);
 
+    @Deprecated
     public abstract Result writeString(String path, String s);
 
-    public abstract Result writeStringAs(WriteStringInput input);
+    public abstract WriteStringResult writeString(WriteStringInput input);
 
     public abstract String readString(String path, String _default);
 
@@ -223,32 +255,67 @@ public abstract class SystemSession extends Task<SystemEnvironmentPlugin.SystemS
 
     public abstract String readLink(String path);
 
-    public CommandLineResult rm(RmInput rm){
+    public CommandLineResult rm(RmInput rm) {
         return rmLineImpl(rm, script().line()).build().run();
     }
 
+    public CommandLineResult move(CopyOperationInput input) {
+        return copy(input);
+    }
+
+    public CommandLineResult link(CopyOperationInput input) {
+        return copy(input);
+    }
+
+    public CommandLineResult copy(CopyOperationInput input) {
+        CommandLine<? extends CommandLineResult, ?> line = input.newLine($);
+
+        switch (input.type) {
+            case COPY:
+                line.addRaw("cp ").addRaw(input.recursive ? "-R " : "").a(input.src, input.dest);
+                break;
+            case LINK:
+                line.addRaw("rm ").a(input.dest).addRaw("; ");
+                input.forLine(line, $, false).addRaw("ln -s").a(input.src, input.dest);
+                break;
+            case MOVE:
+                line.addRaw("mv ").a(input.src, input.dest);
+                break;
+        }
+
+        input.addPermissions(line, input.dest);
+
+        return sendCommand(line);
+    }
+
+    @Deprecated
     public Result copy(String src, String dest) {
         return copy(src, dest, null);
     }
 
+    @Deprecated
     public Result copy(String src, String dest, String owner) {
-        return copyOperation(src, dest, SystemEnvironmentPlugin.CopyCommandType.COPY, false, owner);
+        return copyOperation(src, dest, CopyCommandType.COPY, false, owner);
     }
 
+    @Deprecated
     public Result move(String src, String dest) {
         return move(src, dest, null);
     }
 
+    @Deprecated
     public Result move(String src, String dest, String owner) {
-        return copyOperation(src, dest, SystemEnvironmentPlugin.CopyCommandType.MOVE, false, owner);
+        return copyOperation(src, dest, CopyCommandType.MOVE, false, owner);
     }
 
+    @Deprecated
     public Result link(String src, String dest) {
         return link(src, dest, null);
     }
 
+    @Deprecated
     public Result link(String src, String dest, @Nullable String owner) {
-        return copyOperation(src, dest, SystemEnvironmentPlugin.CopyCommandType.LINK, false, owner);
+        return copyOperation(src, dest, CopyCommandType.LINK, false, owner);
     }
 
     public Set<Role> getRoles() {
@@ -315,7 +382,7 @@ public abstract class SystemSession extends Task<SystemEnvironmentPlugin.SystemS
         return scp(dest, args, fullPaths);
     }
 
-    public List<String> lsAbs(final String path){
+    public List<String> lsAbs(final String path) {
         return Lists.newArrayList(Lists.transform(ls(path), new Function<String, String>() {
             public String apply(String s) {
                 return path + "/" + s;
@@ -327,26 +394,26 @@ public abstract class SystemSession extends Task<SystemEnvironmentPlugin.SystemS
         return script().line().sudo(sudo).sshCallback($).addRaw("cat /dev/null >| ").a(logPath).build().run();
     }
 
-    public String fileSize(FileSizeInput input){
+    public String fileSize(FileSizeInput input) {
         String capture = capture(String.format("du -s%s '%s'", input.humanReadable ? "h" : "b", input.path), input.sudo);
 
-        if(capture == null) return null;
+        if (capture == null) return null;
 
         return StringUtils.substringBefore(capture, "\t").trim();
     }
 
-    public long fileSizeAsLong(FileSizeInput input){
+    public long fileSizeAsLong(FileSizeInput input) {
         Preconditions.checkArgument(!input.humanReadable, "humanReadable must be off for decimal value");
 
         return Long.parseLong(fileSize(input));
     }
 
     //TODO this should be temporary and redesigned
-    public static interface OSHelper{
+    public static interface OSHelper {
         String serviceCommand(String service, String command);
     }
 
-    public static class OSInfo{
+    public static class OSInfo {
         public final UnixFlavour unixFlavour;
         public final UnixSubFlavour unixSubFlavour;
         public final org.eclipse.aether.version.Version version;
@@ -357,7 +424,7 @@ public abstract class SystemSession extends Task<SystemEnvironmentPlugin.SystemS
             this.unixSubFlavour = unixSubFlavour;
             this.version = version;
 
-            switch (unixFlavour){
+            switch (unixFlavour) {
                 case CENTOS:
                     osHelper = new OSHelper() {
                         @Override
@@ -366,7 +433,8 @@ public abstract class SystemSession extends Task<SystemEnvironmentPlugin.SystemS
                         }
                     };
                     break;
-                default: throw new UnsupportedOperationException();
+                default:
+                    throw new UnsupportedOperationException();
             }
         }
 
@@ -395,19 +463,18 @@ public abstract class SystemSession extends Task<SystemEnvironmentPlugin.SystemS
             String versionLine = Iterables.find(LINE_SPLITTER.split(text), Predicates2.contains("CentOS"));
             Matcher matcher = Pattern.compile("release\\s+([^\\s]+)").matcher(versionLine);
 
-            if(!matcher.find()){
+            if (!matcher.find()) {
                 throw new RuntimeException("could not parse OS version: " + versionLine);
             }
 
             try {
-                 version = Versions.VERSION_SCHEME.parseVersion(matcher.group(1));
+                version = Versions.VERSION_SCHEME.parseVersion(matcher.group(1));
             } catch (InvalidVersionSpecificationException e) {
                 throw Exceptions.runtime(e);
             }
-        }else
-        if (text.contains("Ubuntu")) {
+        } else if (text.contains("Ubuntu")) {
             throw new UnsupportedOperationException("todo support Ubuntu!");
-        }else{
+        } else {
             throw new UnsupportedOperationException("todo support: " + text);
         }
 
@@ -475,5 +542,5 @@ public abstract class SystemSession extends Task<SystemEnvironmentPlugin.SystemS
         throw new UnsupportedOperationException("todo .exec");
     }
 
-    public abstract boolean isRemote() ;
+    public abstract boolean isRemote();
 }

@@ -19,10 +19,12 @@ package bear.plugins;
 import bear.core.GlobalContext;
 import bear.core.SessionContext;
 import bear.plugins.java.JavaPlugin;
+import bear.plugins.sh.CommandLine;
 import bear.plugins.sh.Script;
 import bear.session.DynamicVariable;
 import bear.task.*;
 import bear.vcs.CommandLineResult;
+import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
 
@@ -95,8 +97,17 @@ public class ZippedToolPlugin extends Plugin<Task, TaskDef<?>> {
         public Dependency asInstalledDependency() {
             final Dependency dep = new Dependency($(toolDistrName) + " installation", $);
 
+            CommandLine line = $.sys.line();
+            Optional<JavaPlugin> java = global.getPlugin(JavaPlugin.class);
+
+            if(java.isPresent()){
+                line.setVar("JAVA_HOME", $(java.get().homePath));
+            }
+
+            line.addRaw(createVersionCommandLine());
+
             dep.add(dep.new Command(
-                $.sys.line().setVar("JAVA_HOME", $(global.getPlugin(JavaPlugin.class).homePath)).addRaw(createVersionCommandLine()),
+                line,
                 new Predicate<CharSequence>() {
                     @Override
                     public boolean apply(CharSequence s) {
@@ -175,12 +186,13 @@ public class ZippedToolPlugin extends Plugin<Task, TaskDef<?>> {
 
             $.sys.addRmLine(script, newRm($(homePath), $(currentVersionPath)).sudo());
 
+            //todo change to static api
             script
                 .line().sudo().addRaw("mkdir -p %s", $(homePath)).build()
                 .line().sudo().addRaw("mv %s %s", $(buildPath) + "/" + $(versionName) + "/*", $(homePath)).build()
                 .line().sudo().addRaw("ln -s %s %s", $(homePath), $(currentVersionPath)).build()
                 .line().sudo().addRaw("chmod -R g+r,o+r %s", $(homeParentPath)).build()
-                .line().sudo().addRaw("chmod u+x,g+x,o+x %s/bin/*", $(homeParentPath)).build()
+                .line().sudo().addRaw("chmod u+x,g+x,o+x %s/bin/*", $(homePath)).build()
                 .callback($.sshCallback());
 
             script.run();

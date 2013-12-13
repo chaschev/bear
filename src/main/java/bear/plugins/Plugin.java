@@ -100,7 +100,7 @@ public abstract class Plugin<TASK extends Task, TASK_DEF extends TaskDef<? exten
     }
 
     protected void require(DependencyResult r, Class<? extends Plugin<Task, ? extends TaskDef>> pluginClass) {
-        final Plugin<Task, ? extends TaskDef> plugin = global.getPlugin(pluginClass);
+        final Plugin<Task, ? extends TaskDef> plugin = global.plugin(pluginClass);
 
         if(plugin == null){
             r.add(plugin.getClass().getSimpleName() + " plugin is required");

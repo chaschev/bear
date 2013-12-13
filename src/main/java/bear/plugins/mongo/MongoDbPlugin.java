@@ -77,7 +77,7 @@ public class MongoDbPlugin extends Plugin {
                     TaskResult r = TaskResult.OK;
 
                     if (!clientVersionOk || !serverVersionOk) {
-                        $.sys.writeStringAs(new WriteStringInput("/etc/yum.repos.d/mongodb.repo", "" +
+                        $.sys.writeString(new WriteStringInput("/etc/yum.repos.d/mongodb.repo", "" +
                             "[mongodb]\n" +
                             "name=MongoDB Repository\n" +
                             "baseurl=" + $(repo).get($.sys.getOsInfo().unixSubFlavour) + "\n" +

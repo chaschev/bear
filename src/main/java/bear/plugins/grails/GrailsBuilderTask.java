@@ -90,8 +90,8 @@ public class GrailsBuilderTask extends TaskDef {
                 };
             }
         });
-        grails = global.getPlugin(GrailsPlugin.class);
-        java = global.getPlugin(JavaPlugin.class);
+        grails = global.plugin(GrailsPlugin.class);
+        java = global.plugin(JavaPlugin.class);
         bear = global.bear;
     }
 }

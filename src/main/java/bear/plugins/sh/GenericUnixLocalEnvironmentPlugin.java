@@ -217,7 +217,7 @@ public class GenericUnixLocalEnvironmentPlugin extends SystemEnvironmentPlugin {
             }
 
             @Override
-            public Result writeStringAs(WriteStringInput input) {
+            public WriteStringResult writeString(WriteStringInput input) {
                 throw new UnsupportedOperationException("todo .writeStringAs");
             }
 

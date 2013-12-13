@@ -9,7 +9,6 @@ import bear.plugins.misc.Releases;
 import bear.plugins.misc.ReleasesPlugin;
 import bear.task.*;
 import com.google.common.base.Optional;
-import com.google.common.base.Preconditions;
 import com.google.common.util.concurrent.ListenableFuture;
 
 import javax.annotation.Nullable;
@@ -171,7 +170,7 @@ public class DeploymentPlugin extends Plugin {
                 beforeCallable = new TaskCallable<TaskDef>() {
                     @Override
                     public TaskResult call(SessionContext $, Task<TaskDef> task, Object input) throws Exception {
-                        ReleasesPlugin releases = $.getGlobal().getPlugin(ReleasesPlugin.class);
+                        ReleasesPlugin releases = $.getGlobal().plugin(ReleasesPlugin.class);
                         PendingRelease pendingRelease = $.var(releases.pendingRelease);
 
                         if (pendingRelease != null) {
@@ -289,6 +288,14 @@ public class DeploymentPlugin extends Plugin {
             };
 
 
+            int size = 0;
+            for (DeploymentStep deploymentStep : deploymentSteps) {
+                if(deploymentStep.beforeCallable != null) size++;
+                if(deploymentStep.taskCallable != null) size++;
+                if(deploymentStep.afterCallable != null) size++;
+            }
+
+            final int finalSize = size;
             return new TaskDef<Task>(new MultitaskSupplier<Task>() {
                 final List<Task> tasks = new ArrayList<Task>();
 
@@ -305,18 +312,17 @@ public class DeploymentPlugin extends Plugin {
 
                 @Override
                 public int size() {
-                    return tasks.size();
+                    return finalSize;
                 }
             }).onRollback(new TaskDef<Task>(Tasks.newSingleTask(ifRollbackCallable)));
         }
 
         private void addTask(List<Task> tasks, Task parent, TaskCallable callable) {
-            Task<TaskDef> task;
-            task = callable == null ? Task.nop() : new Task<TaskDef>(parent, callable);
+            Task<TaskDef> task = callable == null ? null : new Task<TaskDef>(parent, callable);
 
-            Preconditions.checkNotNull(task, "nop() must be instead of null");
-
-            tasks.add(task);
+            if(task!=null){
+                tasks.add(task);
+            }
         }
     }
 

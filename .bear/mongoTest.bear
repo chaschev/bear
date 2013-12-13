@@ -15,7 +15,7 @@ import bear.plugins.mongo.MongoDbPlugin
 
 def _ = ((SessionContext)_);
 
-def mongo = _.getGlobal().getPlugin(MongoDbPlugin);
+def mongo = _.getGlobal().plugin(MongoDbPlugin);
 
 mongo.dbName.defaultTo("test")
 

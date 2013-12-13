@@ -11,16 +11,10 @@ import java.util.Arrays;
 */
 public class RmInput extends CommandInput<RmInput> {
     protected final String[] paths;
-    protected boolean recursive = true;
     protected boolean force = true;
 
     public RmInput(String... paths) {
         this.paths = paths;
-    }
-
-   public RmInput nonRecursive() {
-        recursive = false;
-        return this;
     }
 
     public RmInput force(boolean force) {
@@ -37,8 +31,8 @@ public class RmInput extends CommandInput<RmInput> {
         super.validate();
 
         for (String path : paths) {
-            if(cd != null && !cd.equals(".")){
-                path = FilenameUtils.normalize(cd + "/" + path, true);
+            if(cd.isPresent() && !cd.get().equals(".")){
+                path = FilenameUtils.normalize(cd.get() + "/" + path, true);
             }
 
             path = FilenameUtils.normalize(path, true);
@@ -80,7 +74,7 @@ public class RmInput extends CommandInput<RmInput> {
         final StringBuilder sb = new StringBuilder("RmInput{");
         sb.append("paths=").append(Arrays.toString(paths));
         sb.append(", sudo=").append(sudo);
-        sb.append(", cd=").append(cd);
+        if(cd.isPresent()) sb.append(", cd=").append(cd.get());
         sb.append(", recursive=").append(recursive);
         sb.append(", force=").append(force);
         sb.append('}');

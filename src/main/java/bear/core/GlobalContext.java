@@ -30,12 +30,14 @@ import bear.task.SessionTaskRunner;
 import bear.task.Task;
 import bear.task.TaskDef;
 import bear.task.Tasks;
+import com.google.common.base.Optional;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.ListeningScheduledExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nonnull;
 import java.util.Collection;
 import java.util.concurrent.*;
 
@@ -165,15 +167,13 @@ public class GlobalContext extends AppGlobalContext<GlobalContext, Bear> {
         }
     }
 
-    public <T extends Plugin> T getPlugin(Class<T> pluginClass) {
-        return (T) plugins.get(pluginClass);
-//        InjectingVariable variable = Iterables.getFirst(injectors.findForDeclaredType(pluginClass), null);
-//
-//        if(variable == null){
-//            throw new RuntimeException("plugin not found: " + pluginClass.getSimpleName());
-//        }
-//
-//        return (T) var(variable);
+    @Nonnull
+    public <T extends Plugin> Optional<T> getPlugin(Class<T> pluginClass) {
+        return plugins.getOptional(pluginClass);
+    }
+
+    public <T extends Plugin> T plugin(Class<T> pluginClass) {
+        return plugins.get(pluginClass);
     }
 
     public <T extends Plugin> Task<TaskDef> newPluginSession(Class<T> pluginClass, SessionContext $, Task<?> parentTask) {

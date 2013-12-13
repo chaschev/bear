@@ -4,36 +4,6 @@ Bear is a lightweight deployment tool for Java. It's primary task are builds and
 
 Bear is in it's early development stages now. Questions, concerns? Just drop me a line at chaschev@gmail.com.
 
-### Road Map for Release 1.0a1 (for CentOS 6.4)
-
-| Step                                        | State          | 
-| ------------------------------------------- |:--------------:|
-| Git, MongoDB and MySQL plugins              | Finished.      |
-| Install as services (Upstart)               | Finished.      | 
-| Play! Framework single-host deployment      | Finished.      | 
-| Parametrize deployment for demo (mongo or mysql) | Finished.      |
-| CLI version                                 | Finished.      |
-| Test deployment rollbacks and db dumps      | Finished.      |
-| Play! Framework three-hosts deployment      |                |
-| Grails/Tomcat demo deployment               | In progress... |
-| Node.js demo deployment                     | TBD            |
-| Refactoring, simplifying API                | In progress... |
-| Unit test coverage                          |                |
-| UI bugfixing                                |                |
-| Installer                                   |                |
-| Refactoring, simplifying API                |                |
-
-
-
-### Road Map for Release 1.0a2 (+ Ubuntu Server, Cloud)
-
-| Step                                        | State          | 
-| ------------------------------------------- |:--------------:|
-| Support Debian/Ubuntu Server                |                |
-| Run via a Maven Plugin                      |                |
-| Support JDK 6 for CLI, JDK 7 for GUI        |                | 
-| Deployments to Heroku, AWS, GCE, Azure, Rackspace |      ?       |
-
 ### Bear Highlights
 
 * Syntax completion in IDEs, static types and OOP approach for tasks, enum-like variables prevent typos
@@ -46,65 +16,34 @@ Bear is in it's early development stages now. Questions, concerns? Just drop me 
 * (planned) Ruby, JavaScript and Python support.
 * Takes some of the ideas from Capistrano
 
-### Bear Script
+### Road Map for Release 1.0a1 (for CentOS 6.4)
 
-Below is an a example of a Bear script. Scripts are a work in progress and about to change.
+| Step                                         | State          |
+| -------------------------------------------- |:--------------:|
+| Git, MongoDB and MySQL plugins               | Finished.      |
+| Install as services (Upstart)                | Finished.      |
+| Play! Framework single-host deployment       | Finished.      |
+| Parametrize demo deployment (mongo or mysql) | Finished.      |
+| CLI version                                  | Finished.      |
+| Test deployment rollbacks and db dumps       | Finished.      |
+| Node.js demo deployment                      | In progress... |
+| Play! Framework three-hosts deployment       |                |
+| Grails/Tomcat demo deployment                |                |
+| Refactoring, simplifying API                 | In progress... |
+| Unit test coverage                           |                |
+| UI bugfixing                                 |                |
+| Installer                                    |                |
+| Refactoring, simplifying API                 |                |
 
-```ruby
 
-# use a preconfigured stage of three machines
-:set stage='three'
+### Road Map for Release 1.0a2 (+ Ubuntu Server, Cloud)
 
-# switch to the groovy shell mode
-# lines below will be treated as Groovy expressions
-:use shell groovy
-
-# this is how you invoke tasks. Code completion is supported in the UI.
-# mosts of the tasks are predefined in plugins (i.e. in Grails plugin)
-# task is usually a sequence of shell commands
-
-:run {"task": "tasks.deploy"}
-:run {"task": "tasks.restartApp"}
-
-# switch to remote sh mode (distributed)
-:use shell remote
-ls -ltr /var/lib/myApp
-
-# switch to sql mode (distributed)
-:use shell mysql
-show tables;
-
-# switch to groovy (not distributed, command is run locally)
-:use shell groovy
-:set groovy.sendToHosts=false
-
-frame = javax.swing.JFrame("close me!")
-frame.add(javax.swing.JButton("click me!"))
-frame.setSize(200, 100)
-frame.visible = true
-
-# run a mongodb script example
-
-:use shell groovy {"name": "mongoTest"}
-:set mongoDb.dbName {"value":"test"}
-
-import bear.core.SessionContext
-import bear.plugins.mongo.MongoDbPlugin
-
-# this will enable code completion in IDE
-def _ = ((SessionContext)_);
-
-def mongo = _.getGlobal().getPlugin(MongoDbPlugin);
-
-mongo.dbName.defaultTo("test")
-
-def r = mongo.runScript(_, """
-db = db.getSiblingDB('test');
-printjson(db.system.users.find());
-""")
-
-ui.info("result: {}", r)
-```
+| Step                                              | State          |
+| ------------------------------------------------- |:--------------:|
+| Support Debian/Ubuntu Server                      |                |
+| Run via a Maven Plugin                            |                |
+| Support JDK 6 for CLI, JDK 7 for GUI              |                |
+| Deployments to Heroku, AWS, GCE, Azure, Rackspace |      ?       |
 
 ### Configuration Sample
 

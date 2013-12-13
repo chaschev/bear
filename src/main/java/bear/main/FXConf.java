@@ -181,7 +181,7 @@ public class FXConf extends BearMain {
             logger.info("writing POM to {}...", file.getAbsolutePath());
 
             CharStreams.write(
-                bear.getGlobal().getPlugin(PomPlugin.class).generate(),
+                bear.getGlobal().plugin(PomPlugin.class).generate(),
                 Files.newWriterSupplier(file, Charsets.UTF_8)
             );
 
@@ -313,7 +313,7 @@ public class FXConf extends BearMain {
         }
 
         private void switchToPlugin(Class<? extends Plugin> aClass) {
-            this.currentShellPlugin = global.getPlugin(aClass);
+            this.currentShellPlugin = global.plugin(aClass);
         }
 
         public String completeCode(String script, int caretPos) {

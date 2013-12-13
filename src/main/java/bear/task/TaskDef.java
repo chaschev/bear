@@ -48,6 +48,9 @@ public class TaskDef<TASK extends Task>{
 
     private final SingleTaskSupplier<TASK> singleTaskSupplier;
 
+    public TaskDef(TaskCallable<TaskDef> callable) {
+        this(Tasks.<TASK>newSingleTask(callable));
+    }
 
     public TaskDef(SingleTaskSupplier<TASK> singleTaskSupplier) {
         this(null, singleTaskSupplier);

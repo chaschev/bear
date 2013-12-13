@@ -301,7 +301,7 @@ public class SessionContext extends AbstractContext {
     }
 
     public <T extends Plugin> T plugin(Class<T> pluginClass) {
-        return getGlobal().getPlugin(pluginClass);
+        return getGlobal().plugin(pluginClass);
     }
 
     public TaskResult runSession(Task<?> taskSession) {

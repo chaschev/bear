@@ -5,6 +5,9 @@ import com.google.common.base.Optional;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+import static com.google.common.base.Optional.absent;
+import static com.google.common.base.Optional.of;
+
 /**
 * @author Andrey Chaschev chaschev@gmail.com
 */
@@ -13,8 +16,10 @@ public class UpstartService {
     String description;
     String script;
     String custom;
+    Optional<String> user = absent();
+    Optional<String> group = absent();
 
-    Optional<String> dir = Optional.absent();
+    Optional<String> dir = absent();
 
     Map<String, String> exportVars = new LinkedHashMap<String, String>();
 
@@ -29,17 +34,18 @@ public class UpstartService {
         return this;
     }
 
-    public static void main(String[] args) {
-
+    public UpstartService setUser(String user) {
+        this.user = of(user);
+        return this;
     }
 
-    public static String[] toSimpleNames(Class... classes){
-        String[] names = new String[classes.length];
+    public UpstartService setGroup(String group) {
+        this.group = of(group);
+        return this;
+    }
 
-        for (int i = 0; i < classes.length; i++) {
-            names[i] = classes[i].getSimpleName();
-        }
-
-        return names;
+    public UpstartService exportVar(String name, String value){
+        exportVars.put(name, value);
+        return this;
     }
 }

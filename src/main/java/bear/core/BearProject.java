@@ -198,5 +198,13 @@ public abstract class BearProject<SELF extends BearProject> {
     }
 
 
+    public GridBuilder newGrid() {
+        GridBuilder gb = new GridBuilder();
+
+        gb.project = this;
+        gb.bearMain = main();
+
+        return gb;
+    }
 }
 
