@@ -64,14 +64,14 @@ top priority:
 - (ok) FileWatcher
 -- secure social demo for 3 hosts/single mysql
 -- computer demo for 3 hosts/mongodb cluster
--- node.js demo: https://github.com/jedireza/drywall, https://github.com/jaredhanson/passport, https://github.com/madhums/node-express-mongoose-demo
+-- (ok) node.js demo: https://github.com/jedireza/drywall, https://github.com/jaredhanson/passport, https://github.com/madhums/node-express-mongoose-demo
 -- django demo: https://github.com/omab/python-social-auth
 -- RoR: https://github.com/binarylogic/authlogic/tree/master, https://github.com/technoweenie/restful-authentication/tree/master,
 -- grails demo
 -- (ok) reference phases from scripts
--- deploy mysql & test
--- deploy mongodb & test
--- run via scripts
+-- (ok) deploy mysql & test
+-- (ok) deploy mongodb & test
+-- (ok) run via scripts
 - refactor to be used with simplest builders
 - :run {"task":"tasks.setup"}
 - too many inputs for setting vars (how should I set a var in Groovy/ GroovyScript/bear, what is the file I am in?)

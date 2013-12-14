@@ -16,13 +16,17 @@
 
 package bear.plugins.nodejs;
 
+import bear.console.AbstractConsole;
+import bear.console.ConsoleCallback;
+import bear.console.ConsoleCallbackResult;
+import bear.console.ConsoleCallbackResultType;
 import bear.context.AbstractContext;
 import bear.context.Fun;
 import bear.core.GlobalContext;
 import bear.core.SessionContext;
-import bear.plugins.misc.PendingRelease;
-import bear.plugins.misc.Release;
-import bear.plugins.misc.UpstartService;
+import bear.main.event.NoticeEventToUI;
+import bear.plugins.misc.*;
+import bear.plugins.play.ConfigureServiceInput;
 import bear.plugins.play.ServerToolPlugin;
 import bear.session.DynamicVariable;
 import bear.session.Variables;
@@ -31,13 +35,16 @@ import chaschev.util.Exceptions;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.google.common.base.Function;
 import com.google.common.base.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
+import static bear.core.SessionContext.ui;
 import static bear.plugins.sh.CaptureInput.cap;
 import static bear.plugins.sh.CopyOperationInput.cp;
 import static bear.session.Variables.*;
@@ -58,8 +65,7 @@ public class NodeJsPlugin extends ServerToolPlugin {
         appEnv = newVar("production"),
         env = newVar("production"),
         user = equalTo(bear.sshUsername),
-        stderrLogPath = concat(instanceLogsPath, "/", env, ".err.log"),
-        stdoutLogPath = concat(instanceLogsPath,"/", env, ".out.log"),
+        consoleLogPath = concat(instanceLogsPath, "/", env, ".log"),
         execPath = equalTo(toolname)
             ;
 
@@ -81,6 +87,7 @@ public class NodeJsPlugin extends ServerToolPlugin {
         versionName.setEqualTo(concat(toolDistrName, "-v", version, "-linux-x64").temp());
         distrFilename.setEqualTo(concat(versionName, ".tar.gz").temp());
         distrWwwAddress.setEqualTo(Variables.format("http://nodejs.org/dist/v%s/%s", version, distrFilename));
+        instancePorts.defaultTo("3000");
 
         appName.setEqualTo(dynamic(new Fun<AbstractContext, String>() {
             @Override
@@ -92,38 +99,77 @@ public class NodeJsPlugin extends ServerToolPlugin {
         appCommand = newVar("index.js");
     }
 
+    public final DynamicVariable<Function<String, String>> simpleGruntUpstart = dynamic(new Fun<SessionContext, Function<String, String>>() {
+        @Override
+        public Function<String, String> apply(final SessionContext $) {
+            return new Function<String, String>() {
+                @Override
+                public String apply(String port) {
+                    String logPath = consoleLogPath(port, $);
+
+                    resetConsolePath($, logPath);
+
+                    return String.format("exec grunt >%s 2>&1", logPath);
+                }
+            };
+        }
+    });
 
     @Override
     public void initPlugin() {
         super.initPlugin();
-        instancePath.setEqualTo(concat(releases.currentReleaseLinkPath, "/instances/play-%s"));
+
+        createScriptText.setDynamic(new Fun<SessionContext, Function<String, String>>() {
+            @Override
+            public Function<String, String> apply(final SessionContext $) {
+                return new Function<String, String>() {
+                    @Override
+                    public String apply(String port) {
+                        String releasePath = $.var(releases.activatedRelease).get().path;
+
+                        final String logPath = consoleLogPath(port, $);
+
+                        resetConsolePath($, logPath);
+
+                        // from from http://ivarprudnikov.com/node-js-as-serivce-with-upstart-on-centos/
+                        return "exec su -s /bin/sh -c 'exec \"$0\" \"$@\"' " + $.var(user) + " -- " + $.var(execPath) + ' ' + releasePath + '/' + $.var(appCommand) + " >" + logPath + " 2>&1";
+                    }
+                };
+            }
+        });
+        
+        configureService.setDynamic(new Fun<SessionContext, Function<ConfigureServiceInput, Void>>() {
+            @Override
+            public Function<ConfigureServiceInput, Void> apply(final SessionContext $) {
+                return new Function<ConfigureServiceInput, Void>() {
+                    @Override
+                    public Void apply(ConfigureServiceInput input) {
+                        input.service
+//                            .setUser($.var(user))
+                            .cd($.var(releases.activatedRelease).get().path)
+                            .exportVar("NODE_ENV", $.var(env))
+                            .exportVar("PORT", input.port + "");
+                        
+                        return null;
+                    }
+                };
+            }
+        });
     }
 
-    @Override
-    protected void configureService(UpstartService upstartService, SessionContext $, String port) {
-        upstartService
-            .setUser($.var(user))
-            .exportVar("NODE_ENV", $.var(env))
-            .exportVar("PORT", port + "");
+    public String consoleLogPath(String port, SessionContext $) {
+        return format($.var(consoleLogPath), port);
     }
 
-    @Override
-    protected String createScriptText(SessionContext $, String port) {
-        String path = $.var(releases.activatedRelease).get().path;
 
-        return "exec " + $.var(execPath) + " " + path + "/" + $.var(appCommand) + " 2>> " +
-            format($.var(stderrLogPath), port) +
-            " 1>> " +
-            format($.var(stdoutLogPath), port);
-    }
-
+    //copied from play
+    //todo extract common things
     @Override
-    protected void spawnStartWatchDogs(SessionContext $, List<String> ports) {
-/*
+    protected void spawnStartWatchDogs(final SessionContext $, List<String> ports) {
         final WatchDogGroup watchDogGroup = new WatchDogGroup(ports.size(), watchStartDogGroup);
 
         for (final String port : ports) {
-            String consolePath = lo($, port);
+            String consolePath = consoleLogPath(port, $);
 
             // to make sure there are no old start entries
             resetConsolePath($, consolePath);
@@ -131,24 +177,45 @@ public class NodeJsPlugin extends ServerToolPlugin {
             WatchDogRunnable runnable = new WatchDogRunnable($, watchDog, new WatchDogInput(
                 consolePath, false, new ConsoleCallback() {
                 @Override
-                @Nonnull
-                public ConsoleCallbackResult progress(AbstractConsole.Terminal console, String buffer, String wholeText) {
-                    if (buffer.contains("Listening for HTTP on")) {
-//                                    logger.debug("OOOOOOOOOOOOPS - listening!");
-
-                        SessionContext.ui.info(new NoticeEventToUI($.var(bear.fullName),
-                            "started play instance on port " + port + ", release " + $.var(releases.session).getCurrentRelease().get().name()));
-
-                        return new ConsoleCallbackResult(ConsoleCallbackResultType.DONE, null);
-                    }
-
-                    if(buffer.contains("Oops, cannot start the server.")){
-//                                    logger.debug("OOOOOOOOOOOOPS - found");
+                public ConsoleCallbackResult progress(final AbstractConsole.Terminal console, String buffer, String wholeText) {
+                    //todo these parts are all common, extract!!
+                    if(buffer.contains("app crashed - waiting for file") ||   //nodemon message
+                        buffer.contains("throw er; // Unhandled 'error' event")
+                        ){
                         String message = "unable to start play instance on port " + port + ", release " + $.var(releases.session).getCurrentRelease().get().name();
-                        SessionContext.ui.error(new NoticeEventToUI($.var(bear.fullName),
-                            message));
+                        ui.error(newNotice(message, $));
+
+                        logger.error(message);
 
                         return new ConsoleCallbackResult(ConsoleCallbackResultType.EXCEPTION, message);
+                    }
+
+                    if( buffer.contains("Failed to load c++ bson extension") ||
+                            buffer.contains("connect 3.0") ||
+                            buffer.contains("starting `node")
+                        ){
+                       $.getGlobal().scheduler.schedule(new Runnable() {
+                           @Override
+                           public void run() {
+                               String message = "seem to have started after timeout, node instance on port " + port + ", release " + $.var(releases.session).getCurrentRelease().get().name();
+
+                               logger.info(message);
+                               ui.info(newNotice(message, $));
+
+                               console.finishWithResult(new ConsoleCallbackResult(ConsoleCallbackResultType.DONE, message));
+                           }
+                       }, 5, TimeUnit.SECONDS);
+                    }
+
+                    if (buffer.contains("Express app started on port")) {
+
+                        String message = "started node instance on port " + port + ", release " + $.var(releases.session).getCurrentRelease().get().name();
+
+                        ui.info(newNotice(message, $));
+
+                        logger.info(message);
+
+                        return new ConsoleCallbackResult(ConsoleCallbackResultType.DONE, message);
                     }
 
                     return ConsoleCallbackResult.CONTINUE;
@@ -163,8 +230,10 @@ public class NodeJsPlugin extends ServerToolPlugin {
         watchDogGroup.startThreads();
 
         watchDogGroup.scheduleForcedShutdown($.getGlobal().scheduler, $.var(bear.appStartTimeoutSec), TimeUnit.SECONDS);
-*/
+    }
 
+    private NoticeEventToUI newNotice(String message, SessionContext $) {
+        return new NoticeEventToUI($.var(bear.fullName), message);
     }
 
     public final TaskDef<Task> build = new TaskDef<Task>(new SingleTaskSupplier<Task>() {
@@ -238,8 +307,6 @@ public class NodeJsPlugin extends ServerToolPlugin {
     public InstallationTaskDef<? extends InstallationTask> getInstall() {
         return install;
     }
-
-
 
     private static String getString(JsonNode node, String field, String _default) {
         JsonNode name = node.get(field);

@@ -142,6 +142,13 @@ public abstract class AbstractConsole extends bear.console.AbstractConsole.Termi
         return this;
     }
 
+    @Override
+    public void finishWithResult(ConsoleCallbackResult callbackResult){
+        lastCallbackResult = callbackResult;
+        stopStreamCopiersGracefully();
+        IOUtils.closeQuietly(shutdownTrigger);
+    }
+
     public void stopStreamCopiersGracefully() {
 //        logger.debug("OOOOOOOOOOOOPS - stopStreamCopiersGracefully");
 

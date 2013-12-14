@@ -54,6 +54,10 @@ public class Stages {
         return this;
     }
 
+    public Stages addSimple(String name, String csvHosts) {
+        return add(new Stage(name).addHosts(hosts(csvHosts)));
+    }
+
     public List<Stage> getStages() {
         return stages;
     }

@@ -33,6 +33,7 @@ import com.google.common.base.Splitter;
 import com.google.common.collect.PeekingIterator;
 import org.joda.time.DateTime;
 import org.joda.time.format.DateTimeFormat;
+import org.joda.time.format.DateTimeFormatter;
 
 import javax.annotation.Nonnull;
 import java.util.ArrayList;
@@ -403,6 +404,8 @@ public class GitCLIPlugin extends VcsCLIPlugin<Task, TaskDef<?>> {
     }
 
     private static class LogParserFunction implements Function<String, VcsLogInfo> {
+        public static final DateTimeFormatter GIT_DATE_FORMAT = DateTimeFormat.forPattern("EEE MMM dd HH:mm:ss yyyy Z");
+
         public VcsLogInfo apply(String s) {
             List<VcsLogInfo.LogEntry> entries = new ArrayList<VcsLogInfo.LogEntry>();
 
@@ -425,9 +428,10 @@ public class GitCLIPlugin extends VcsCLIPlugin<Task, TaskDef<?>> {
 
                 if(revision == null) break;
 
+                while(it.hasNext() && !it.peek().contains("Author: ")) it.next();
                 String author = substringAfter(it.next(), "Author: ");
-                DateTime date = DateTime.parse(substringAfter(it.next(), "Date: ").trim(),
-                    DateTimeFormat.forPattern("EEE MMM dd HH:mm:ss yyyy Z"));
+                String stringDate = substringAfter(it.next(), "Date: ").trim();
+                DateTime date = DateTime.parse(stringDate, GIT_DATE_FORMAT);
 
                 it.next(); //empty line
 

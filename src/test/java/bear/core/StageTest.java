@@ -90,13 +90,9 @@ public class StageTest {
     private Stages sample1() {
         Stages stages = new Stages(global);
 
-        stages
-            .add(new Stage("1")
-                .addHosts(stages.hosts("vm1, vm2, vm3")))
-            .add(new Stage("2")
-                .addHosts(stages.hosts("vm1, vm2, vm3, vm4")))
-            .add(new Stage("3")
-                .addHosts(stages.hosts("vm2")))
+        stages.addSimple("1", "vm1, vm2, vm3")
+            .addSimple("2", "vm1, vm2, vm3, vm4")
+            .addSimple("3", "vm2")
         ;
 
         stages

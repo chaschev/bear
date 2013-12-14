@@ -173,6 +173,9 @@ public class Task<TASK_DEF extends TaskDef> extends HavingContext<Task<TaskDef>,
         taskContext.phaseParty = party;
         taskContext.grid = (ComputingGrid) party.grid;
         taskContext.globalRunner = globalTaskRunner;
+        $ = party.getColumn();
+        taskContext.executionContext.set$($);
+        taskContext.$ = $;
     }
 
     public TASK_DEF getDefinition() {

@@ -22,6 +22,7 @@ public class GitCLIPluginTest {
             "    fix javascript\n" +
             "\n" +
             "commit 6977225cbac9d59d48eb56edf5d4f00fc8373bc1\n" +
+            "Merge: 526e42f 6298b8c\n" +
             "Author: Jeff Brown <jeff@jeffandbetsy.net>\n" +
             "Date:   Thu Jun 21 15:56:50 2012 -0600\n" +
             "\n" +

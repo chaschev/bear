@@ -16,6 +16,7 @@
 
 package bear.plugins.play;
 
+import bear.context.Fun;
 import bear.core.GlobalContext;
 import bear.core.SessionContext;
 import bear.plugins.ZippedToolPlugin;
@@ -25,6 +26,7 @@ import bear.session.DynamicVariable;
 import bear.session.Variables;
 import bear.task.*;
 import bear.vcs.CommandLineResult;
+import com.google.common.base.Function;
 import com.google.common.base.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,9 +36,6 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import static bear.session.Variables.*;
-import static com.google.common.base.Predicates.containsPattern;
-import static com.google.common.base.Predicates.not;
-import static com.google.common.collect.Iterables.tryFind;
 import static java.lang.String.format;
 
 /**
@@ -60,6 +59,47 @@ public abstract class ServerToolPlugin extends ZippedToolPlugin {
         singleServiceName = equalTo(bear.name),
         groupName = equalTo(bear.name);
 
+
+    public final DynamicVariable<Function<ConfigureServiceInput, Void>> configureService = dynamic(new Fun<SessionContext, Function<ConfigureServiceInput, Void>>() {
+        @Override
+        public Function<ConfigureServiceInput, Void> apply(final SessionContext $) {
+            return null;
+        }
+    });
+
+    public final DynamicVariable<Function<String, String>> createScriptText = undefined();
+
+    public final DynamicVariable<UpstartServices> customUpstart = dynamic(new Fun<SessionContext, UpstartServices>() {
+        @Override
+        public UpstartServices apply(SessionContext $) {
+            List<String> ports = $.var(portsSplit);
+
+            boolean single = ports.size() == 1;
+
+            List<UpstartService> serviceList = new ArrayList<UpstartService>(ports.size());
+
+            for (String port : ports) {
+                $.sys.mkdirs(instancePath(port, $), format($.var(instanceLogsPath), port));
+
+                String scriptText = $.var(createScriptText).apply(port);
+
+                UpstartService upstartService = new UpstartService(
+                    single ? $.var(singleServiceName) : format($.var(multiServiceName), port),
+                    $.var(bear.fullName),
+                    scriptText
+                );
+
+                serviceList.add(upstartService.cd(instancePath(port, $)));
+
+                $.var(configureService).apply(new ConfigureServiceInput(port, upstartService));
+            }
+
+            return new UpstartServices(
+                single ? Optional.<String>absent() : Optional.of($.var(groupName)),
+                serviceList
+            );
+        }
+    });
 
     public final DynamicVariable<WatchDogGroup>
         watchStartDogGroup = newVar(null);
@@ -86,7 +126,7 @@ public abstract class ServerToolPlugin extends ZippedToolPlugin {
         instancePath.setEqualTo(concat(releases.currentReleaseLinkPath, "/instances/", toolname, "-%s"));
     }
 
-    protected void resetConsolePath(SessionContext $, String logPath) {
+    public void resetConsolePath(SessionContext $, String logPath) {
         $.sys.chmod("u+rwx,g+rwx,o+rwx", false, logPath);
         $.sys.resetFile(logPath, true);
     }
@@ -113,43 +153,16 @@ public abstract class ServerToolPlugin extends ZippedToolPlugin {
                         return TaskResult.error("there is no release to start!");
                     }
 
-                    final List<String> ports = $(portsSplit);
+                    UpstartServices services = $(customUpstart);
 
-                    boolean single = ports.size() == 1;
-
-                    List<UpstartService> serviceList = new ArrayList<UpstartService>(ports.size());
-
-                    TaskResult r;
-
-                    for (String port : ports) {
-                        $.sys.mkdirs(instancePath(port), format($(instanceLogsPath), port));
-
-                        String scriptText = createScriptText($, port);
-
-                        UpstartService upstartService = new UpstartService(
-                            single ? $(singleServiceName) : format($(multiServiceName), port),
-                            $(bear.fullName),
-                            scriptText
-                        );
-
-                        serviceList.add(upstartService.cd(instancePath(port)));
-
-                        configureService(upstartService, $, port);
-                    }
-
-                    UpstartServices services = new UpstartServices(
-                        single ? Optional.<String>absent() : Optional.of($(groupName)),
-                        serviceList
-                    );
-
-                    r = $.runSession(
+                    TaskResult r = $.runSession(
                         upstart.create.singleTaskSupplier().createNewSession($, parent, def),
                         services);
 
                     if (!r.ok()) return r;
 
                     if ($(useWatchDog)) {
-                        spawnStartWatchDogs($, ports);
+                        spawnStartWatchDogs($, $(portsSplit));
                     }
 
                     r = serviceCommand($, "start");
@@ -158,31 +171,16 @@ public abstract class ServerToolPlugin extends ZippedToolPlugin {
 
                     return r;
                 }
-
-                private Optional<String> getExecPath(Release release) {
-                    String capture = $.sys.capture("ls -w 1 " + release.path + "/" + $(appName) + "/bin/*");
-
-                    Optional<String> execPath = tryFind(LINE_SPLITTER.split(
-                        capture.trim()), not(containsPattern("\\.bat$")));
-
-                    if (!execPath.isPresent()) {
-                        throw new RuntimeException("could not find a jar, dir content: " + capture);
-                    }
-
-                    return execPath;
-                }
-
-                private String instancePath(String port) {
-                    return format($(instancePath), port);
-                }
             };
-
         }
     }) ;
 
-    protected abstract void configureService(UpstartService upstartService, SessionContext $, String port);
+    public String instancePath(String port, SessionContext $) {
+        return format($.var(instancePath), port);
+    }
 
-    protected abstract String createScriptText(SessionContext $, String port);
+    // todo extract common things
+    // from this abstract method
 
     protected abstract void spawnStartWatchDogs(final SessionContext $, List<String> ports) ;
 

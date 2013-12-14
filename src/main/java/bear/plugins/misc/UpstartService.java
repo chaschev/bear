@@ -48,4 +48,8 @@ public class UpstartService {
         exportVars.put(name, value);
         return this;
     }
+
+    public String dir(){
+        return dir.get();
+    }
 }

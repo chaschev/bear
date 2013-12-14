@@ -272,7 +272,10 @@ public abstract class SystemSession extends Task<SystemEnvironmentPlugin.SystemS
 
         switch (input.type) {
             case COPY:
-                line.addRaw("cp ").addRaw(input.recursive ? "-R " : "").a(input.src, input.dest);
+                line.addRaw("cp ")
+                    .addRaw(input.recursive ? "-R " : "")
+                    .addRaw(input.force ? "-f " : "")
+                    .a(input.src, input.dest);
                 break;
             case LINK:
                 line.addRaw("rm ").a(input.dest).addRaw("; ");
@@ -510,7 +513,7 @@ public abstract class SystemSession extends Task<SystemEnvironmentPlugin.SystemS
 
                     public CommandLineResult installPackage(String packageName, String desc) {
                         final CommandLineResult result = sendCommand(
-                            line().timeoutMin(30).sudo().a(command(), "install", packageName, "-y"));
+                            line().timeoutForInstallation().sudo().a(command(), "install", packageName, "-y"));
 
                         final String text = result.text;
 

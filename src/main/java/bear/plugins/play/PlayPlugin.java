@@ -20,16 +20,21 @@ import bear.console.AbstractConsole;
 import bear.console.ConsoleCallback;
 import bear.console.ConsoleCallbackResult;
 import bear.console.ConsoleCallbackResultType;
+import bear.context.Fun;
 import bear.core.GlobalContext;
 import bear.core.SessionContext;
 import bear.main.event.NoticeEventToUI;
 import bear.plugins.java.JavaPlugin;
-import bear.plugins.misc.*;
+import bear.plugins.misc.PendingRelease;
+import bear.plugins.misc.WatchDogGroup;
+import bear.plugins.misc.WatchDogInput;
+import bear.plugins.misc.WatchDogRunnable;
 import bear.plugins.sh.Script;
 import bear.session.DynamicVariable;
 import bear.session.Variables;
 import bear.task.*;
 import bear.vcs.CommandLineResult;
+import com.google.common.base.Function;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -61,6 +66,24 @@ public class PlayPlugin extends ServerToolPlugin {
         toolname.defaultTo("play", true);
         distrFilename.setEqualTo(concat(versionName, ".zip").temp());
         distrWwwAddress.setEqualTo(Variables.format("http://downloads.typesafe.com/play/%s/%s", version, distrFilename));
+
+        createScriptText.setDynamic(new Fun<SessionContext, Function<String, String>>() {
+            @Override
+            public Function<String, String> apply(final SessionContext $) {
+                return new Function<String, String>() {
+                    @Override
+                    public String apply( String port) {
+                        String consolePath = consoleLogPath($, port);
+
+                        // good thing to do before any restart
+                        resetConsolePath($, consolePath);
+
+                        return $.sys.script().line().addRaw("" +
+                            "exec " + $.var(releaseExecPath) + " -Dhttp.port=" + port + " 2>&1 >" + consolePath).build().asTextScript();
+                    }
+                };
+            }
+        });
     }
 
     @Override
@@ -68,12 +91,6 @@ public class PlayPlugin extends ServerToolPlugin {
         super.initPlugin();
         instancePath.setEqualTo(concat(releases.currentReleaseLinkPath, "/instances/play-%s"));
     }
-
-    @Override
-    protected void configureService(UpstartService upstartService, SessionContext $, String port) {
-
-    }
-
 
     public final TaskDef<Task> build = new TaskDef<Task>(new SingleTaskSupplier<Task>() {
         @Override
@@ -175,17 +192,6 @@ public class PlayPlugin extends ServerToolPlugin {
     @Override
     public InstallationTaskDef<? extends InstallationTask> getInstall() {
         return install;
-    }
-
-    @Override
-    protected String createScriptText(SessionContext $, String port) {
-        String consolePath = consoleLogPath($, port);
-
-        // good thing to do before any restart
-        resetConsolePath($, consolePath);
-
-        return $.sys.script().line().addRaw("" +
-            "exec " + $.var(releaseExecPath) + " -Dhttp.port=" + port + " 2>&1 >" + consolePath).build().asTextScript();
     }
 
     @Override

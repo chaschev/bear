@@ -14,13 +14,13 @@ import bear.vcs.GitCLIPlugin
 import com.google.common.base.Function
 
 import static bear.plugins.db.DumpManagerPlugin.DbType.mongo
-import static bear.plugins.sh.CopyOperationInput.mv
+import static bear.plugins.sh.CopyOperationInput.cp
 import static bear.task.TaskResult.OK
 /**
  * @author Andrey Chaschev chaschev@gmail.com
  */
 
-public class DrywallDemoProject extends BearProject<DrywallDemoProject> {
+public class NodeExpressMongooseDemoProject extends BearProject<NodeExpressMongooseDemoProject> {
     // these are the plugins which are injected
     Bear bear;
     GitCLIPlugin git;
@@ -32,34 +32,26 @@ public class DrywallDemoProject extends BearProject<DrywallDemoProject> {
 
     public TaskDef<Task> deployProject;
 
-    TaskDef<Task> copyConfiguration = new TaskDef<Task>({ SessionContext _, Task<TaskDef> task, Object input ->
-        final String dir = _.var(releases.pendingRelease).path
-
-        if(!_.sys.exists(dir + "/config.js")){
-            _.sys.move(mv("config.example.js", "config.js").cd(dir)).throwIfError();
-        }
-
-        OK
-
-    } as TaskCallable<TaskDef>);
-
     @Override
     protected GlobalContext configureMe(GlobalContextFactory factory) throws Exception
     {
         nodeJs.version.set("0.10.22");
+        nodeJs.appCommand.set("server.js")
+        nodeJs.projectPath.setEqualTo(bear.vcsBranchLocalPath);
 
         bear.vcsBranchName.defaultTo("master");
 
         dumpManager.dbType.set(mongo.toString());
 
-        nodeJs.projectPath.setEqualTo(bear.vcsBranchLocalPath);
+        nodeJs.configureService.setDynamic({ SessionContext _ ->
+            return { ConfigureServiceInput input ->
+                input.service
+                    .cd(_.var(releases.activatedRelease).get().path)
+                    .exportVar("PORT", input.port + "");
 
-        //todo ugly?
-        nodeJs.configureService.setDynamic({SessionContext _ ->
-            {ConfigureServiceInput input -> input.service.cd(_.var(releases.activatedRelease).get().path) } as Function
+                return null;
+            } as Function;
         } as Fun);
-
-        nodeJs.createScriptText.setEqualTo(nodeJs.simpleGruntUpstart);
 
         bear.stages.defaultTo(new Stages(global)
             .addSimple("one", "vm01")
@@ -82,41 +74,48 @@ public class DrywallDemoProject extends BearProject<DrywallDemoProject> {
         return global;
     }
 
+    TaskDef<Task> copyConfiguration = new TaskDef<Task>({ SessionContext _, task, Object input ->
+        final String dir = _.var(releases.pendingRelease).path + "/config"
+
+        _.sys.copy(cp("config.example.js", "config.js").cd(dir).force()).throwIfError();
+        _.sys.copy(cp("imager.example.js", "imager.js").cd(dir).force()).throwIfError();
+
+        OK
+    } as TaskCallable);
+
     @Override
     GridBuilder defaultGrid()
     {
         return newGrid().add(deployProject);
     }
 
+    // main, can be run directly from an IDE
     static main(def args)
     {
-        def demo = new DrywallDemoProject()
-
-        deploy(demo)
+        deploy(new NodeExpressMongooseDemoProject())
     }
 
-    private static void deploy(DrywallDemoProject demo)
+    // deploy script
+    static deploy(NodeExpressMongooseDemoProject demo)
     {
         demo
-            .set(demo.main().propertiesFile, new File(".bear/drywall.properties"))
+            .set(demo.main().propertiesFile, new File(".bear/express-demo.properties"))
             .configure()
             .newGrid()
             .add(demo.deployProject)
             .run()
     }
 
-    private static void setup(DrywallDemoProject demo)
+    // setup script
+    static setup(NodeExpressMongooseDemoProject demo)
     {
         demo
-            .set(demo.main().propertiesFile, new File(".bear/drywall.properties"))
+            .set(demo.main().propertiesFile, new File(".bear/express-demo.properties"))
             .configure()
             .set(demo.bear.verifyPlugins, true)
             .set(demo.bear.autoInstallPlugins, true)
             .set(demo.bear.checkDependencies, true)
             .newGrid()
-            .add({ SessionContext _, Task task, Object input ->
-                _.sys.packageManager.installPackage("ImageMagick")
-            } as TaskCallable<TaskDef>)
             .add(demo.global.tasks.setup)
             .run()
     }

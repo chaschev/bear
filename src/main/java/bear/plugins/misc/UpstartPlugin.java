@@ -17,7 +17,7 @@ import static com.google.common.base.Optional.of;
 
 /**
  * TODO: could be updated by using this example: https://github.com/yyuu/capistrano-upstart/
- *
+ * http://serverfault.com/questions/291546/centos-6-and-upstart
  * http://stackoverflow.com/questions/4335343/upstart-logging-output-enabled
  * example: https://gist.github.com/leon/2204773, exec start-stop-daemon --pidfile ${HOME}/RUNNING_PID --chuid $USER:$GROUP --exec ${HOME}/target/universal/stage/bin/${APP} --background --start -- -Dconfig.resource=$CONFIG -Dhttp.port=$PORT -Dhttp.address=$ADDRESS $EXTRA
  */
@@ -26,9 +26,14 @@ import static com.google.common.base.Optional.of;
  * @author Andrey Chaschev chaschev@gmail.com
  */
 public class UpstartPlugin extends Plugin {
+
+    // from http://ivarprudnikov.com/node-js-as-serivce-with-upstart-on-centos/
     public final DynamicVariable<String>
-        startOn = Variables.newVar("[2345]"),
-        stopOn = Variables.newVar("[016]");
+        startOn = Variables.newVar("started network"),
+        stopOn = Variables.newVar("stopping network")
+//        startOn = Variables.newVar("runlevel [2345]"),
+//        stopOn = Variables.newVar("runlevel [016]")
+            ;
 
 
     public UpstartPlugin(GlobalContext global) {
@@ -67,8 +72,8 @@ public class UpstartPlugin extends Plugin {
                                 field(service.user, "setuid") +
                                 field(service.group, "setgid") +
                                 "\n" +
-                                "start on runlevel " + $.var(startOn) + "\n" +
-                                "stop on runlevel " + $.var(stopOn) + "\n" +
+                                "start on " + $.var(startOn) + "\n" +
+                                "stop on " + $.var(stopOn) + "\n" +
                                 "\n" +
                                 "# exports\n" +
                                 sb.toString() + "\n" +
@@ -79,7 +84,7 @@ public class UpstartPlugin extends Plugin {
                                 "    " + service.script + "\n" +
                                 "end script";
 
-                        return $.sys.writeString(WriteStringInput.str("/etc/init/" + service.name + ".conf", text).sudo().withPermissions("u+x,g+x,o+x").ifDiffers());
+                        $.sys.writeString(WriteStringInput.str("/etc/init/" + service.name + ".conf", text).sudo().withPermissions("u+x,g+x,o+x").ifDiffers());
                     }
 
                     Optional<String> groupName = upstartServices.groupName;

@@ -27,6 +27,8 @@ public interface AbstractConsole {
         public void println(String s){
             print(s + "\n");
         }
+
+        public abstract void finishWithResult(ConsoleCallbackResult callbackResult);
     }
 
     /**

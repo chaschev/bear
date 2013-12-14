@@ -14,6 +14,7 @@ import javax.annotation.Nonnull;
 public class CommandInput<SELF extends CommandInput>{
     protected long timeoutMs = -1;
     protected boolean sudo;
+    protected boolean force;
     protected boolean recursive = true;
 
     @Nonnull
@@ -138,5 +139,10 @@ public class CommandInput<SELF extends CommandInput>{
 
     public SELF timeoutMin(int timeoutMin) {
         return timeoutSec(60 * timeoutMin);
+    }
+
+    public SELF force() {
+        force = true;
+        return self();
     }
 }
