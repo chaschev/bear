@@ -118,6 +118,11 @@ public class TaskDef<TASK extends Task>{
         return tasks;
     }
 
+    public TaskDef<TASK> setName(String name) {
+        this.name = name;
+        return this;
+    }
+
     public static interface TaskSupplier<TASK extends Task>{
 
     }

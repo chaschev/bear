@@ -28,10 +28,7 @@ import bear.task.TaskResult;
 import bear.vcs.CommandLineResult;
 import chaschev.lang.Predicates2;
 import chaschev.util.Exceptions;
-import com.google.common.base.Function;
-import com.google.common.base.Joiner;
-import com.google.common.base.Preconditions;
-import com.google.common.base.Splitter;
+import com.google.common.base.*;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import org.apache.commons.lang3.StringUtils;
@@ -45,8 +42,8 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static bear.plugins.sh.SystemEnvironmentPlugin.sshPassword;
 import static bear.plugins.sh.CaptureInput.cap;
+import static bear.plugins.sh.SystemEnvironmentPlugin.sshPassword;
 
 /**
  * @author Andrey Chaschev chaschev@gmail.com
@@ -233,7 +230,7 @@ public abstract class SystemSession extends Task<SystemEnvironmentPlugin.SystemS
     public CommandLineResult permissions(DirsInput input) {
         CommandLine line = input.newLine($);
 
-        input.addPermissions(line, true, input.dirs);
+        input.addPermissions(line, false, input.dirs);
 
         return sendCommand(line);
     }
@@ -263,6 +260,7 @@ public abstract class SystemSession extends Task<SystemEnvironmentPlugin.SystemS
         return copy(input);
     }
 
+    //make it link(dest).toSource(path)
     public CommandLineResult link(CopyOperationInput input) {
         return copy(input);
     }
@@ -286,7 +284,9 @@ public abstract class SystemSession extends Task<SystemEnvironmentPlugin.SystemS
                 break;
         }
 
-        input.addPermissions(line, input.dest);
+        if(input.hasPermissions()){
+            input.addSudoPermissions(line,input.dest);
+        }
 
         return sendCommand(line);
     }
@@ -358,7 +358,10 @@ public abstract class SystemSession extends Task<SystemEnvironmentPlugin.SystemS
 
     public abstract void zip(String dest, Collection<String> paths);
 
-    public abstract void unzip(String file, @Nullable String destDir);
+
+    public UnzipCommand unzip(String zipPath){
+        return new UnzipCommand($, zipPath);
+    }
 
     public abstract String newTempDir();
 

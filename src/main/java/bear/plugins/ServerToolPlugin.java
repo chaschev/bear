@@ -14,13 +14,15 @@
  * limitations under the License.
  */
 
-package bear.plugins.play;
+package bear.plugins;
 
 import bear.context.Fun;
+import bear.core.Env;
 import bear.core.GlobalContext;
 import bear.core.SessionContext;
-import bear.plugins.ZippedToolPlugin;
+import bear.main.event.NoticeEventToUI;
 import bear.plugins.misc.*;
+import bear.plugins.play.ConfigureServiceInput;
 import bear.plugins.sh.SystemSession;
 import bear.session.DynamicVariable;
 import bear.session.Variables;
@@ -49,16 +51,25 @@ public abstract class ServerToolPlugin extends ZippedToolPlugin {
     protected ReleasesPlugin releases;
 
     public final DynamicVariable<String>
-        projectPath = dynamic("Project root dir"),
+        projectPath = equalTo(bear.vcsBranchLocalPath).desc("Project root dir"),
         execName = concat(toolname, condition(bear.isNativeUnix, newVar("").temp(), newVar(".bat").temp()).desc("'play' or 'play.bat'")),
-        instancePath = newVar(""),
+        instancePath = undefined(),
         instanceLogsPath = concat(bear.appLogsPath, "/", toolname, "-%s"),
         appName = concat(toolname, "-app"),
         instancePorts = newVar("9000"),
+        user = equalTo(bear.sshUsername),
+        group = equalTo(bear.sshUsername),
+        userWithGroup = concat(user, ".", group),
         multiServiceName = concat(bear.name, "_%s"),
         singleServiceName = equalTo(bear.name),
-        groupName = equalTo(bear.name);
+        groupName = equalTo(bear.name),
+        envString = newVar("production"),
+        consoleLogPath = concat(instanceLogsPath, "/", envString, ".log"),
+        execPath = equalTo(toolname);
 
+    public final DynamicVariable<Env> env = convert(envString, toEnum(Env.class));
+
+    public final DynamicVariable<Boolean> useUpstart = newVar(true);
 
     public final DynamicVariable<Function<ConfigureServiceInput, Void>> configureService = dynamic(new Fun<SessionContext, Function<ConfigureServiceInput, Void>>() {
         @Override
@@ -87,7 +98,7 @@ public abstract class ServerToolPlugin extends ZippedToolPlugin {
                     single ? $.var(singleServiceName) : format($.var(multiServiceName), port),
                     $.var(bear.fullName),
                     scriptText
-                );
+                ).setUser($.var(user));
 
                 serviceList.add(upstartService.cd(instancePath(port, $)));
 
@@ -132,11 +143,17 @@ public abstract class ServerToolPlugin extends ZippedToolPlugin {
     }
 
     protected CommandLineResult serviceCommand(SessionContext $, String command) {
-        boolean isSingle = $.var(portsSplit).size() == 1;
+        List<String> ports = $.var(portsSplit);
+        boolean isSingle = ports.size() == 1;
         SystemSession.OSHelper helper = $.sys.getOsInfo().getHelper();
 
-        return $.sys.captureResult(
-            helper.serviceCommand($.var(isSingle ? singleServiceName : multiServiceName), command), true);
+        for (String port : ports) {
+            $.sys.captureResult(
+                helper.serviceCommand(format($.var(isSingle ? singleServiceName : multiServiceName), port), command), true)
+                .throwIfError();
+        }
+
+        return CommandLineResult.OK;
     }
 
     public final TaskDef<Task> start = new TaskDef<Task>(new SingleTaskSupplier<Task>() {
@@ -149,17 +166,21 @@ public abstract class ServerToolPlugin extends ZippedToolPlugin {
 
                     Optional<Release> optionalRelease = $.var(releases.activatedRelease);
 
-                    if(!optionalRelease.isPresent()){
+                    if (!optionalRelease.isPresent()) {
                         return TaskResult.error("there is no release to start!");
                     }
 
-                    UpstartServices services = $(customUpstart);
+                    TaskResult r;
 
-                    TaskResult r = $.runSession(
-                        upstart.create.singleTaskSupplier().createNewSession($, parent, def),
-                        services);
+                    if ($(bear.insideInstallation) && $(useUpstart)) {
+                        UpstartServices services = $(customUpstart);
 
-                    if (!r.ok()) return r;
+                        r = $.runSession(
+                            upstart.create.singleTaskSupplier().createNewSession($, parent, def),
+                            services);
+
+                        if (!r.ok()) return r;
+                    }
 
                     if ($(useWatchDog)) {
                         spawnStartWatchDogs($, $(portsSplit));
@@ -173,16 +194,20 @@ public abstract class ServerToolPlugin extends ZippedToolPlugin {
                 }
             };
         }
-    }) ;
+    });
 
     public String instancePath(String port, SessionContext $) {
-        return format($.var(instancePath), port);
+        return path(instancePath, port, $);
+    }
+
+    public String path(DynamicVariable<String> pathVar, String port, SessionContext $) {
+        return format($.var(pathVar), port);
     }
 
     // todo extract common things
     // from this abstract method
 
-    protected abstract void spawnStartWatchDogs(final SessionContext $, List<String> ports) ;
+    protected abstract void spawnStartWatchDogs(final SessionContext $, List<String> ports);
 
     public final TaskDef<Task> stop = new TaskDef<Task>(new SingleTaskSupplier<Task>() {
         @Override
@@ -210,7 +235,7 @@ public abstract class ServerToolPlugin extends ZippedToolPlugin {
             };
 
         }
-    }) ;
+    });
 
 
     public final TaskDef<Task> watchStart = new TaskDef<Task>(new SingleTaskSupplier<Task>() {
@@ -227,9 +252,9 @@ public abstract class ServerToolPlugin extends ZippedToolPlugin {
 
                         boolean awaitOk = watchDogGroup.latch().await($.var(startupTimeoutMs), TimeUnit.MILLISECONDS);
 
-                        if(awaitOk){
-                            r  = watchDogGroup.getResult();
-                        }else{
+                        if (awaitOk) {
+                            r = watchDogGroup.getResult();
+                        } else {
                             r = TaskResult.error(watchDogGroup.latch().getCount() + " instances did not start in " +
                                 TimeUnit.MILLISECONDS.toSeconds($.var(startupTimeoutMs)) + " seconds");
                         }
@@ -245,5 +270,13 @@ public abstract class ServerToolPlugin extends ZippedToolPlugin {
 
     private void printCurrentReleases(SessionContext $) {
         logger.info("current releases:\n{}", $.var(releases.session).show());
+    }
+
+    public String consoleLogPath(String port, SessionContext $) {
+        return format($.var(consoleLogPath), port);
+    }
+
+    protected NoticeEventToUI newNotice(String message, SessionContext $) {
+        return new NoticeEventToUI($.var(bear.fullName), message);
     }
 }

@@ -26,4 +26,9 @@ public class TextConsoleEventToUI extends ConsoleEventToUI {
         super(console, "textAdded");
         this.textAdded = textAdded;
     }
+
+    @Override
+    public String getFormattedMessage() {
+        return "textAdded:" + textAdded;
+    }
 }

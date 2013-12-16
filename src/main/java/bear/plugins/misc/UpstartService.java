@@ -15,7 +15,7 @@ public class UpstartService {
     String name;
     String description;
     String script;
-    String custom;
+    Optional<String> custom = absent();
     Optional<String> user = absent();
     Optional<String> group = absent();
 
@@ -44,6 +44,10 @@ public class UpstartService {
         return this;
     }
 
+    public void setCustom(String custom) {
+        this.custom = of(custom);
+    }
+
     public UpstartService exportVar(String name, String value){
         exportVars.put(name, value);
         return this;
@@ -52,4 +56,6 @@ public class UpstartService {
     public String dir(){
         return dir.get();
     }
+
+
 }

@@ -47,9 +47,9 @@ public class SessionTest extends HavingContext<SessionTest, SessionContext>{
         super(null);
         g = GlobalContextTest.newGlobal();
 
-        g.put("bear.sshUsername", "user");
-        g.put("bear.sshPassword", "pass");
-        g.put("bear.name", "unitTests");
+        g.put(g.bear.sshUsername, "user");
+        g.put(g.bear.sshPassword, "pass");
+        g.put(g.bear.name, "unitTests");
 
         SessionTaskRunner runner = new SessionTaskRunner(null, g);
         $ = new SessionContext(g, new SshAddress("u", "p", "host"), runner);

@@ -25,7 +25,6 @@ import net.schmizz.sshj.xfer.FileSystemFile;
 import net.schmizz.sshj.xfer.scp.SCPFileTransfer;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -241,23 +240,6 @@ public class RemoteSystemSession extends SystemSession {
     @Override
     public void zip(String dest, Collection<String> paths) {
         throw new UnsupportedOperationException("todo GenericUnixRemoteEnvironment.zip");
-    }
-
-    @Override
-    public void unzip(String file, @Nullable String destDir) {
-        final CommandLine line = newCommandLine()
-            .a("unzip");
-
-        if (destDir != null) {
-            line.a("-d", destDir);
-        } else {
-            line.a("-d", StringUtils.substringBeforeLast(file, "/")
-            );
-        }
-
-        line.a("-o", file);
-
-        sendCommand(line);
     }
 
     @Override

@@ -31,4 +31,9 @@ public class PhasePartyFinishedEventToUI extends ConsoleEventToUI {
         this.duration = duration;
         this.result = result;
     }
+
+    @Override
+    public String getFormattedMessage() {
+        return "phasePartyFinished, result=" + result + ", duration: " + String.format("%.2fs", duration *1.0 / 1000);
+    }
 }

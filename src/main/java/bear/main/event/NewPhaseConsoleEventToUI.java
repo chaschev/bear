@@ -34,7 +34,10 @@ public class NewPhaseConsoleEventToUI extends ConsoleEventToUI implements EventW
         this.phaseId = phaseId;
     }
 
-
+    @Override
+    public String getFormattedMessage() {
+        return "ui: newPhase, id=" + id + ", phaseId=" + phaseId;
+    }
 
     public String getId() {
         return id;

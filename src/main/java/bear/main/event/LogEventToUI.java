@@ -22,4 +22,9 @@ public class LogEventToUI extends TextConsoleEventToUI {
         this.textAdded = message;
         this.level = level;
     }
+
+    @Override
+    public String getFormattedMessage() {
+        return "log=" + textAdded;
+    }
 }

@@ -1,6 +1,7 @@
 package bear.plugins.sh;
 
 import bear.console.ConsoleCallback;
+import bear.context.HavingContext;
 import bear.core.Bear;
 import bear.core.SessionContext;
 import bear.vcs.CommandLineResult;
@@ -11,7 +12,9 @@ import javax.annotation.Nonnull;
 /**
 * @author Andrey Chaschev chaschev@gmail.com
 */
-public class CommandInput<SELF extends CommandInput>{
+public abstract class CommandInput<SELF extends CommandInput> extends HavingContext<SELF, SessionContext> {
+    private volatile boolean builderMethodCalled;
+
     protected long timeoutMs = -1;
     protected boolean sudo;
     protected boolean force;
@@ -22,6 +25,11 @@ public class CommandInput<SELF extends CommandInput>{
     protected ConsoleCallback callback;
 
     CommandInput() {
+        super(null);
+    }
+
+    CommandInput(SessionContext $) {
+        super($);
     }
 
     public SELF sudo() {
@@ -32,6 +40,11 @@ public class CommandInput<SELF extends CommandInput>{
     public SELF sudo(boolean b) {
         this.sudo = b;
         return self();
+    }
+
+    public CommandLineResult run(){
+        builderMethodCalled = true;
+        return null;
     }
 
     public SELF cd(String cd) {
@@ -144,5 +157,27 @@ public class CommandInput<SELF extends CommandInput>{
     public SELF force() {
         force = true;
         return self();
+    }
+
+    public CommandLine asLine(){
+        builderMethodCalled = true;
+        return null;
+    }
+
+    @Override
+    protected final void finalize() throws Throwable {
+        if(!builderMethodCalled){
+            CommandLine line = asLine();
+            String s;
+
+            if(line != null){
+                s = line.asText(false);
+            }else{
+                s = getClass().getSimpleName();
+            }
+            SessionContext.logger.error("command was created but was not used: " + s);
+        }
+
+        super.finalize();
     }
 }

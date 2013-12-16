@@ -38,4 +38,9 @@ public class TaskConsoleEventToUI extends ConsoleEventToUI implements EventWithI
     public String getId() {
         return id;
     }
+
+    @Override
+    public String getFormattedMessage() {
+        return "task: " + task;
+    }
 }

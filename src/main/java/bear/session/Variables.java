@@ -49,6 +49,17 @@ public class Variables {
             return Boolean.valueOf(input);
         }
     };
+
+    public static <T extends Enum<T>> Function<String, T> toEnum(final Class<T> tClass){
+        return new Function<String, T>() {
+            @Override
+            public T apply(String input) {
+                return Enum.valueOf(tClass, input);
+            }
+        };
+    }
+
+
     public static final Splitter LINE_SPLITTER = Splitter.on("\n").trimResults();
 
     protected static final Map<Class, Function<String, ?>> CONVERTERS;

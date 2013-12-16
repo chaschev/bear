@@ -1,5 +1,7 @@
 package bear.core;
 
+import bear.main.BearFX;
+import bear.main.ThresholdRangeFilter;
 import bear.main.event.NewPhaseConsoleEventToUI;
 import bear.main.event.PhasePartyFinishedEventToUI;
 import bear.main.phaser.Phase;
@@ -12,6 +14,11 @@ import chaschev.lang.MutableSupplier;
 import chaschev.util.Exceptions;
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.core.Appender;
+import org.apache.logging.log4j.core.appender.FileAppender;
+import org.apache.logging.log4j.core.layout.PatternLayout;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -112,6 +119,7 @@ public class GridBuilder {
                                     for (Plugin<Task, TaskDef<?>> plugin : $.getGlobal().getGlobalPlugins()) {
                                         r.join(plugin.checkPluginDependencies());
 
+                                        //todo replace with insideInstallation? - no!
                                         if (!taskDef.isSetupTask()) {
                                             InstallationTaskDef<? extends InstallationTask> installTask = plugin.getInstall();
 
@@ -211,6 +219,53 @@ public class GridBuilder {
 
     public void launchUI() {
         throw new UnsupportedOperationException("todo");
+    }
+
+    public void runCli() {
+        Appender fxAppDebug =
+            FileAppender.createAppender(
+                ".bear/logs/ui-cli-debug.log",
+                null,
+                null,
+                "fxAppDebug",
+                null,
+                null,
+                null,
+                PatternLayout.createLayout("%d{HH:mm:ss.S} %c{1.} - %msg%n", null, null, null, null),
+                ThresholdRangeFilter.createFilter("DEBUG", "INFO", null, null),
+                null,
+                null,
+                null
+            );
+
+        Appender fxAppInfo =
+            FileAppender.createAppender(
+                ".bear/logs/ui-cli.log",
+                null,
+                null,
+                "fxAppInfo",
+                null,
+                null,
+                null,
+                PatternLayout.createLayout("%d{HH:mm:ss.S} %c{1.} - %msg%n", null, null, null, null),
+                ThresholdRangeFilter.createFilter("INFO", "OFF", null, null),
+                null,
+                null,
+                null
+            );
+
+        BearFX.addLog4jAppender("root", fxAppInfo, null, null);
+        BearFX.addLog4jAppender("fx", fxAppDebug, null, null);
+
+        LoggerFactory.getLogger(BearFX.class).debug("MUST NOT BE SEEN started the Bear - -1!");
+        LoggerFactory.getLogger("fx").info("started the Bear - 0!");
+        LoggerFactory.getLogger("fx").warn("started the Bear - 1!");
+        LoggerFactory.getLogger("root").warn("started the Bear - 2!");
+        LoggerFactory.getLogger(BearFX.class).warn("started the Bear - 3!");
+        LogManager.getLogger(BearFX.class).warn("started the Bear - 4!");
+        LoggerFactory.getLogger("fx").debug("started the Bear - 5!");
+
+        run();
     }
 
     public void run() {

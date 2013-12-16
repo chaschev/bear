@@ -44,6 +44,8 @@ public class DbDumpManager {
         DbDumpInfo createDump(String entry);
 
         E fromString(String entry);
+
+        String printDumpInfo(List<DbDumpInfo> infos);
     }
 
     public static abstract class AbstractDbService<E extends DumpableEntry> extends HavingContext<AbstractDbService, SessionContext> implements DbService<E>{
@@ -65,6 +67,7 @@ public class DbDumpManager {
         public abstract Class<? extends DbDumpInfo> getDbDumpInfoClass();
         public abstract Class<? extends E> getDumpableEntryClass();
 
+        @Override
         public String printDumpInfo(List<DbDumpInfo> infos){
             String[][] rows = new String[infos.size()][];
 

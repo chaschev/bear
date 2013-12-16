@@ -13,6 +13,7 @@ import com.google.common.base.Preconditions;
 
 import java.util.Map;
 
+import static bear.plugins.sh.WriteStringInput.str;
 import static com.google.common.base.Optional.of;
 
 /**
@@ -69,8 +70,6 @@ public class UpstartPlugin extends Plugin {
                                 "description \"" + service.description + "\"\n" +
                                 "author      \"bear\"\n" +
                                 field(service.dir, "chdir") +
-                                field(service.user, "setuid") +
-                                field(service.group, "setgid") +
                                 "\n" +
                                 "start on " + $.var(startOn) + "\n" +
                                 "stop on " + $.var(stopOn) + "\n" +
@@ -82,22 +81,23 @@ public class UpstartPlugin extends Plugin {
                                 "\n" +
                                 "script\n" +
                                 "    " + service.script + "\n" +
-                                "end script";
+                                "end script\n" +
+                                section(service.custom)
+                            ;
 
-                        $.sys.writeString(WriteStringInput.str("/etc/init/" + service.name + ".conf", text).sudo().withPermissions("u+x,g+x,o+x").ifDiffers());
+                        $.sys.writeString(str("/etc/init/" + service.name + ".conf", text).sudo().withPermissions("u+x,g+x,o+x").ifDiffers());
                     }
 
                     Optional<String> groupName = upstartServices.groupName;
 
                     if(groupName.isPresent()){
                         for(String command : new String[]{"start", "stop", "status", "restart"}){
-                            String scriptName = groupName.get() + "_" + command;
+                            String scriptName = groupName.get() + "-" + command;
 
                             String text = "";
 
                             for (UpstartService service : upstartServices.services) {
-                                text += "sudo " + $.sys.getOsInfo().getHelper().serviceCommand(service.name, command);
-//                                text += "sudo service " + service.name + " " + command + "\n";
+                                text += "sudo " + $.sys.getOsInfo().getHelper().serviceCommand(service.name, command) + "\n";
                             }
 
                             WriteStringResult r = $.sys.writeString(new WriteStringInput("/usr/bin/" + scriptName, text, true, Optional.<String>absent(), of("u+x,g+x,o+x")));
@@ -116,6 +116,10 @@ public class UpstartPlugin extends Plugin {
 
     private static String field(Optional<String> field, String name) {
         return (field.isPresent() ? name +" " + field.get() + "\n" : "");
+    }
+
+    private static String section(Optional<String> field) {
+        return (field.isPresent() ? field.get() + "\n" : "");
     }
 
     @Override

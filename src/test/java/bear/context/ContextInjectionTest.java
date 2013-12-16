@@ -160,12 +160,12 @@ public class ContextInjectionTest {
         assertThat(global.wire(new AutoWired3()).implicitList.get(0)).isEqualTo("overridden in global");
         assertThat($.wire(new AutoWired3()).implicitList.get(0)).isEqualTo("overridden in global");
 
-        $.put(global.bear.implicitList, new Fun<TestSessionContext, List>() {
+        $.put(global.bear.implicitList, dynamic(new Fun<TestSessionContext, List>() {
             @Override
             public List apply(TestSessionContext $) {
                 return singletonList("overridden in $");
             }
-        });
+        }).temp());
 
         assertThat($.wire(new AutoWired3()).implicitList.get(0)).isEqualTo("overridden in $");
         assertThat(global.wire(new AutoWired3()).implicitList.get(0)).isEqualTo("overridden in global");

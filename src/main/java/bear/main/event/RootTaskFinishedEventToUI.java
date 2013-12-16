@@ -30,4 +30,9 @@ public class RootTaskFinishedEventToUI extends ConsoleEventToUI {
         this.result = result;
         this.duration = duration;
     }
+
+    @Override
+    public String getFormattedMessage() {
+        return "rootTaskFinished, result=" + result + ", duration: " + String.format("%.2fs", duration *1.0 / 1000);
+    }
 }

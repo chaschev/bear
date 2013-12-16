@@ -183,6 +183,7 @@ public class Bear extends BearApp<GlobalContext> {
         checkDependencies = not(interactiveRun),
         verifyPlugins = equalTo(checkDependencies),
         autoInstallPlugins = newVar(false),
+        insideInstallation = newVar(false),
         verbose = newVar(false)
     ;
 

@@ -49,12 +49,14 @@ public class Tasks {
         }
     });
 
-    public final TaskDef setup = new TaskDef<Task>("Generic Setup", new SingleTaskSupplier<Task>() {
+    public final InstallationTaskDef setup = new InstallationTaskDef<InstallationTask>(new SingleTaskSupplier<Task>() {
         @Override
         public Task createNewSession(SessionContext $, Task parent, TaskDef<Task> def) {
             return new Task<TaskDef>(parent, setup, $) {
                 @Override
                 protected TaskResult exec(SessionTaskRunner runner, Object input) {
+                    $.putConst(bear.insideInstallation, true);
+
                     final String[] dirs = {
                         $(bear.applicationPath), $(bear.vcsCheckoutPath),
                         $(bear.bearPath),
@@ -101,7 +103,8 @@ public class Tasks {
                 }
             };
         }
-    }).setSetupTask(true);
+    })  .setName("Generic Setup")
+        .setSetupTask(true);
 
 
     public final TaskDef vcsUpdate = new TaskDef<Task>(new SingleTaskSupplier<Task>() {

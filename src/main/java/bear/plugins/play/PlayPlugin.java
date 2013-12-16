@@ -23,7 +23,7 @@ import bear.console.ConsoleCallbackResultType;
 import bear.context.Fun;
 import bear.core.GlobalContext;
 import bear.core.SessionContext;
-import bear.main.event.NoticeEventToUI;
+import bear.plugins.ServerToolPlugin;
 import bear.plugins.java.JavaPlugin;
 import bear.plugins.misc.PendingRelease;
 import bear.plugins.misc.WatchDogGroup;
@@ -44,7 +44,6 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import static bear.session.Variables.*;
-import static java.lang.String.format;
 
 /**
  * @author Andrey Chaschev chaschev@gmail.com
@@ -73,7 +72,7 @@ public class PlayPlugin extends ServerToolPlugin {
                 return new Function<String, String>() {
                     @Override
                     public String apply( String port) {
-                        String consolePath = consoleLogPath($, port);
+                        String consolePath = consoleLogPath(port, $);
 
                         // good thing to do before any restart
                         resetConsolePath($, consolePath);
@@ -86,17 +85,10 @@ public class PlayPlugin extends ServerToolPlugin {
         });
     }
 
-    @Override
-    public void initPlugin() {
-        super.initPlugin();
-        instancePath.setEqualTo(concat(releases.currentReleaseLinkPath, "/instances/play-%s"));
-    }
-
     public final TaskDef<Task> build = new TaskDef<Task>(new SingleTaskSupplier<Task>() {
         @Override
         public Task createNewSession(SessionContext $, Task parent, TaskDef<Task> def) {
             return new Task<TaskDef>(parent, def, $) {
-
                 @Override
                 protected TaskResult exec(SessionTaskRunner runner, Object input) {
                     $.log("building the project (stage)...");
@@ -135,17 +127,6 @@ public class PlayPlugin extends ServerToolPlugin {
     });
 
 
-    private String consoleLogPath(SessionContext $, String port) {
-        return format($.var(consoleLogPath), port);
-    }
-
-    private String removeLastSemiColon(String s) {
-        if (s.endsWith(";")) {
-            return s.substring(0, s.length() - 1);
-        }
-
-        return s;
-    }
 
     private void printCurrentReleases(SessionContext $) {
         logger.info("current releases:\n{}", $.var(releases.session).show());
@@ -199,7 +180,7 @@ public class PlayPlugin extends ServerToolPlugin {
         final WatchDogGroup watchDogGroup = new WatchDogGroup(ports.size(), watchStartDogGroup);
 
         for (final String port : ports) {
-            String consolePath = consoleLogPath($, port);
+            String consolePath = consoleLogPath(port, $);
 
             // to make sure there are no old start entries
             resetConsolePath($, consolePath);
@@ -210,19 +191,14 @@ public class PlayPlugin extends ServerToolPlugin {
                 @Nonnull
                 public ConsoleCallbackResult progress(AbstractConsole.Terminal console, String buffer, String wholeText) {
                     if (buffer.contains("Listening for HTTP on")) {
-//                                    logger.debug("OOOOOOOOOOOOPS - listening!");
-
-                        SessionContext.ui.info(new NoticeEventToUI($.var(bear.fullName),
-                            "started play instance on port " + port + ", release " + $.var(releases.session).getCurrentRelease().get().name()));
+                        SessionContext.ui.info(newNotice("started play instance on port " + port + ", release " + $.var(releases.session).getCurrentRelease().get().name(), $));
 
                         return new ConsoleCallbackResult(ConsoleCallbackResultType.DONE, null);
                     }
 
                     if(buffer.contains("Oops, cannot start the server.")){
-//                                    logger.debug("OOOOOOOOOOOOPS - found");
                         String message = "unable to start play instance on port " + port + ", release " + $.var(releases.session).getCurrentRelease().get().name();
-                        SessionContext.ui.error(new NoticeEventToUI($.var(bear.fullName),
-                            message));
+                        SessionContext.ui.error(newNotice(message, $));
 
                         return new ConsoleCallbackResult(ConsoleCallbackResultType.EXCEPTION, message);
                     }

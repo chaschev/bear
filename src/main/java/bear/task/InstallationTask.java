@@ -22,11 +22,28 @@ import bear.core.SessionContext;
 * @author Andrey Chaschev chaschev@gmail.com
 */
 public abstract class InstallationTask<TASK_DEF extends InstallationTaskDef> extends Task<TASK_DEF> {
+    private boolean wasInsideInstallationBefore;
+
     public InstallationTask(Task<TaskDef> parent, TASK_DEF def, SessionContext $) {
         super(parent, def, $);
     }
 
     public abstract Dependency asInstalledDependency();
+
+    @Override
+    protected void beforeExec() {
+        wasInsideInstallationBefore = $.var(getBear().insideInstallation);
+        if(!wasInsideInstallationBefore){
+            $.put(getBear().insideInstallation, true);
+        }
+    }
+
+    @Override
+    protected void afterExec() {
+        if(!wasInsideInstallationBefore){
+            $.removeConst(getBear().insideInstallation);
+        }
+    }
 
     private static final InstallationTask<?> NOP_TASK = new InstallationTask<InstallationTaskDef>(null, null, null) {
         @Override

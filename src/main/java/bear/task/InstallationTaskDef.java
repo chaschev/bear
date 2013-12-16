@@ -32,4 +32,16 @@ public class InstallationTaskDef<TASK extends InstallationTask> extends TaskDef<
     public InstallationTaskDef(SingleTaskSupplier singleTaskSupplier) {
         super(singleTaskSupplier);
     }
+
+    @Override
+    public InstallationTaskDef<TASK> setName(String name) {
+        super.setName(name);
+        return this;
+    }
+
+    @Override
+    public InstallationTaskDef<TASK> setSetupTask(boolean setupTask) {
+        super.setSetupTask(setupTask);
+        return this;
+    }
 }

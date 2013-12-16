@@ -24,10 +24,9 @@ import bear.context.AbstractContext;
 import bear.context.Fun;
 import bear.core.GlobalContext;
 import bear.core.SessionContext;
-import bear.main.event.NoticeEventToUI;
 import bear.plugins.misc.*;
 import bear.plugins.play.ConfigureServiceInput;
-import bear.plugins.play.ServerToolPlugin;
+import bear.plugins.ServerToolPlugin;
 import bear.session.DynamicVariable;
 import bear.session.Variables;
 import bear.task.*;
@@ -48,7 +47,6 @@ import static bear.core.SessionContext.ui;
 import static bear.plugins.sh.CaptureInput.cap;
 import static bear.plugins.sh.CopyOperationInput.cp;
 import static bear.session.Variables.*;
-import static java.lang.String.format;
 
 /**
  * Starting Node.js apps on specific ports: http://stackoverflow.com/questions/18008620/node-js-express-js-app-only-works-on-port-3000.
@@ -62,11 +60,8 @@ public class NodeJsPlugin extends ServerToolPlugin {
 
     public final DynamicVariable<String>
         appCommand,
-        appEnv = newVar("production"),
-        env = newVar("production"),
-        user = equalTo(bear.sshUsername),
-        consoleLogPath = concat(instanceLogsPath, "/", env, ".log"),
-        execPath = equalTo(toolname)
+        appEnv = newVar("production")
+
             ;
 
     public final DynamicVariable<ObjectNode> packageJson = dynamic(new Fun<SessionContext, ObjectNode>() {
@@ -145,9 +140,9 @@ public class NodeJsPlugin extends ServerToolPlugin {
                     @Override
                     public Void apply(ConfigureServiceInput input) {
                         input.service
-//                            .setUser($.var(user))
+                            .setUser($.var(user))
                             .cd($.var(releases.activatedRelease).get().path)
-                            .exportVar("NODE_ENV", $.var(env))
+                            .exportVar("NODE_ENV", $.var(env).name())
                             .exportVar("PORT", input.port + "");
                         
                         return null;
@@ -155,10 +150,6 @@ public class NodeJsPlugin extends ServerToolPlugin {
                 };
             }
         });
-    }
-
-    public String consoleLogPath(String port, SessionContext $) {
-        return format($.var(consoleLogPath), port);
     }
 
 
@@ -190,6 +181,7 @@ public class NodeJsPlugin extends ServerToolPlugin {
                         return new ConsoleCallbackResult(ConsoleCallbackResultType.EXCEPTION, message);
                     }
 
+                    //I found no message indicating that Node started
                     if( buffer.contains("Failed to load c++ bson extension") ||
                             buffer.contains("connect 3.0") ||
                             buffer.contains("starting `node")
@@ -232,10 +224,6 @@ public class NodeJsPlugin extends ServerToolPlugin {
         watchDogGroup.scheduleForcedShutdown($.getGlobal().scheduler, $.var(bear.appStartTimeoutSec), TimeUnit.SECONDS);
     }
 
-    private NoticeEventToUI newNotice(String message, SessionContext $) {
-        return new NoticeEventToUI($.var(bear.fullName), message);
-    }
-
     public final TaskDef<Task> build = new TaskDef<Task>(new SingleTaskSupplier<Task>() {
         @Override
         public Task createNewSession(SessionContext $, Task parent, TaskDef<Task> def) {
@@ -250,6 +238,7 @@ public class NodeJsPlugin extends ServerToolPlugin {
 
                     $.sys.copy(cp($.var(projectPath) + "/*", pendingRelease.path));
 
+                    //this will be the previous active release
                     if(activeRelease.isPresent()){
                         $.sys.copy(cp(activeRelease.get().path + "/node_modules", pendingRelease.path)).throwIfError();
                     }

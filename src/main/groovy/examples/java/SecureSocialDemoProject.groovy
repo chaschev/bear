@@ -1,6 +1,5 @@
 package examples.java
-import bear.console.ConsoleCallback
-import bear.console.ConsoleCallbackResult
+
 import bear.context.Fun
 import bear.core.*
 import bear.plugins.db.DbDumpInfo
@@ -52,59 +51,6 @@ public class SecureSocialDemoProject extends BearProject<SecureSocialDemoProject
     ;
 
     public TaskDef<Task> deployProject;
-
-    GridBuilder dumpSampleGrid = new GridBuilder()
-        .add({ SessionContext _, Task task, Object input ->
-
-        final DbDumpManager.DbService dumpService = _.var(dumpManager.dbService)
-
-        final DbDumpInfo dump = dumpService.createDump("ss_demo")
-
-        final List<DbDumpInfo> dumps = dumpService.listDumps()
-
-        println "created dump $dump, rolling back to ${dumps[0]}"
-
-        dumpService.restoreDump(dumps[0])
-
-        println dumpService.printDumpInfo(dumpService.listDumps())
-
-        return OK
-    } as TaskCallable<TaskDef>);
-
-    GridBuilder testCapturesGrid = new GridBuilder()
-        .add({ SessionContext _, Task task, Object input ->
-        def callback = {console, buffer, wholeText ->
-            println "HEY!! ${buffer}";
-
-            return ConsoleCallbackResult.CONTINUE;
-        } as ConsoleCallback
-
-        println "HEY-STEP 0!!"
-        def pwd = _.sys.capture("pwd", callback)
-        println "expected pwd: '${pwd}'"
-
-        for(int i = 0;i<100;i++){
-            println "HEY-STEP ${i+1}!!"
-            def s = _.sys.capture("pwd", callback)
-
-            if(!pwd.equals(s)){
-                throw new RuntimeException("expecting '${pwd}', found: '${s}', step: ${i + 1}");
-            }
-        }
-    } as TaskCallable<TaskDef>);
-
-        private TaskResult updateDbConf(SessionContext _)
-    {
-        String pluginsPath = _.var(play.projectPath) + "/conf/play.plugins";
-
-        String plugins = _.sys.readString(pluginsPath, null);
-
-        plugins = DB_LINE_PATTERN
-            .matcher(plugins)
-            .replaceFirst(_.var(serviceString));
-
-        return _.sys.writeString(str(pluginsPath, plugins));
-    }
 
     @Override
     protected GlobalContext configureMe(GlobalContextFactory factory) throws Exception
@@ -167,6 +113,36 @@ public class SecureSocialDemoProject extends BearProject<SecureSocialDemoProject
             .dumpSampleGrid
             .withVars(demo.mysqlVars)
             .run();
+    }
 
+    GridBuilder dumpSampleGrid = new GridBuilder()
+        .add({ SessionContext _, Task task, Object input ->
+
+        final DbDumpManager.DbService dumpService = _.var(dumpManager.dbService)
+
+        final DbDumpInfo dump = dumpService.createDump("ss_demo")
+
+        final List<DbDumpInfo> dumps = dumpService.listDumps()
+
+        println "created dump $dump, rolling back to ${dumps[0]}"
+
+        dumpService.restoreDump(dumps[0])
+
+        println dumpService.printDumpInfo(dumpService.listDumps())
+
+        return OK
+    } as TaskCallable<TaskDef>);
+
+    private TaskResult updateDbConf(SessionContext _)
+    {
+        String pluginsPath = _.var(play.projectPath) + "/conf/play.plugins";
+
+        String plugins = _.sys.readString(pluginsPath, null);
+
+        plugins = DB_LINE_PATTERN
+            .matcher(plugins)
+            .replaceFirst(_.var(serviceString));
+
+        return _.sys.writeString(str(pluginsPath, plugins));
     }
 }

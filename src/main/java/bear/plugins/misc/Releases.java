@@ -41,6 +41,7 @@ import java.util.*;
 
 import static bear.plugins.sh.RmInput.newRm;
 import static com.bethecoder.table.ASCIITableHeader.h;
+import static com.google.common.base.Optional.fromNullable;
 
 /**
  * Releases are saved as JSON cache in root releases folders.
@@ -146,7 +147,7 @@ public class Releases extends HavingContext<Releases, SessionContext>{
 
         sort();
 
-        return Optional.fromNullable(folderMap.get(folder));
+        return fromNullable(folderMap.get(folder));
     }
 
     public Releases load(){
@@ -423,9 +424,9 @@ public class Releases extends HavingContext<Releases, SessionContext>{
 
             table.add(new String[]{
                 release.name(),
-                    String.valueOf(Optional.fromNullable(release.branchInfo.author).or(release.log.lastAuthor())),
+                    String.valueOf(fromNullable(release.log.lastAuthor()).or(fromNullable(release.branchInfo.author)).or("<not entry>")),
                     release.branchInfo.revision,
-                    release.log.lastComment(),
+                    release.log.firstComment().replace("\n", " "),
                     release.status
             });
         }

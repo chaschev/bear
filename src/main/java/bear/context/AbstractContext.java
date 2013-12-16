@@ -34,14 +34,13 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.Callable;
 
-import static bear.session.Variables.dynamic;
 import static bear.session.Variables.getConverter;
 
 /**
 * @author Andrey Chaschev chaschev@gmail.com
 */
 public abstract class AbstractContext {
-    private static final Logger logger = LoggerFactory.getLogger(AbstractContext.class);
+    public static final Logger logger = LoggerFactory.getLogger(AbstractContext.class);
 
     protected VariablesLayer layer;
     protected AbstractContext parent;
@@ -111,12 +110,16 @@ public abstract class AbstractContext {
         return global;
     }
 
-    public VariablesLayer put(Nameable key, Fun<?, ?> fun) {
-        return put(key, dynamic(fun));
+    public <T> AbstractContext put(DynamicVariable<T> key, T value) {
+        layer.putConst(key, value);
+
+        return this;
     }
 
-    public VariablesLayer put(Nameable key, DynamicVariable value) {
-        return layer.put(key, value);
+    public <T> AbstractContext put(DynamicVariable<T> key, DynamicVariable<T> value) {
+        layer.put(key, value);
+
+        return this;
     }
 
     public VariablesLayer put(String key, DynamicVariable value) {
@@ -127,16 +130,8 @@ public abstract class AbstractContext {
         return layer.put(value);
     }
 
-    public VariablesLayer put(Nameable key, String value) {
-        return layer.put(key, value);
-    }
-
     public VariablesLayer put(Nameable key, boolean b) {
         return layer.putB(key, b);
-    }
-
-    public VariablesLayer put(Object key, Object value) {
-        return layer.putConstObj(key, value);
     }
 
     public <T> T wire(T object) {

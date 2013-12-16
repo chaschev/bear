@@ -182,6 +182,18 @@ public class GlobalTaskRunner {
         public String getRootTask() {
             return rootTask.getName();
         }
+
+        @Override
+        public String toString() {
+            final StringBuilder sb = new StringBuilder("Stats{");
+            sb.append("partiesArrived=").append(partiesArrived);
+            sb.append(", partiesOk=").append(partiesOk);
+            sb.append(", partiesPending=").append(partiesPending);
+            sb.append(", partiesFailed=").append(partiesFailed);
+            sb.append(", partiesCount=").append(partiesCount);
+            sb.append('}');
+            return sb.toString();
+        }
     }
 
     public GlobalContext getGlobal() {

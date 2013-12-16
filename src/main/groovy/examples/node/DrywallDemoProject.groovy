@@ -32,7 +32,7 @@ public class DrywallDemoProject extends BearProject<DrywallDemoProject> {
 
     public TaskDef<Task> deployProject;
 
-    TaskDef<Task> copyConfiguration = new TaskDef<Task>({ SessionContext _, Task<TaskDef> task, Object input ->
+    def copyConfiguration = new TaskDef<Task>({ SessionContext _, Task<TaskDef> task, Object input ->
         final String dir = _.var(releases.pendingRelease).path
 
         if(!_.sys.exists(dir + "/config.js")){
@@ -40,7 +40,6 @@ public class DrywallDemoProject extends BearProject<DrywallDemoProject> {
         }
 
         OK
-
     } as TaskCallable<TaskDef>);
 
     @Override

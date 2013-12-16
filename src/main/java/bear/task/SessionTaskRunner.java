@@ -153,7 +153,8 @@ public class SessionTaskRunner extends HavingContext<SessionTaskRunner, SessionC
     public TaskResult runSession(Task<?> taskSession, Object input) {
         TaskResult result = TaskResult.OK;
 
-        //todo this line might be needed to be removed if dep checks below use their session
+        // todo this line was added for dep checks and might be needed to be removed
+        // if dep checks below use their session
         $.setCurrentTask(taskSession);
 
         if($(bear.checkDependencies)){
@@ -162,9 +163,10 @@ public class SessionTaskRunner extends HavingContext<SessionTaskRunner, SessionC
 
         $.setCurrentTask(taskSession);
 
-
         if(result.ok()){
+            taskSession.beforeExec();
             result = taskSession.run(this, input);
+            taskSession.afterExec();
         }
 
         return result;

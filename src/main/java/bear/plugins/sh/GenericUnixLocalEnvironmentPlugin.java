@@ -35,7 +35,6 @@ import org.apache.tools.ant.types.ZipFileSet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
@@ -106,11 +105,6 @@ public class GenericUnixLocalEnvironmentPlugin extends SystemEnvironmentPlugin {
                 }
 
                 zip.execute();
-            }
-
-            @Override
-            public void unzip(String file, @Nullable String destDir) {
-                throw new UnsupportedOperationException("todo GenericUnixLocalEnvironment.unzip");
             }
 
             @Override

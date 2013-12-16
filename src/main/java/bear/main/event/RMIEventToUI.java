@@ -40,4 +40,9 @@ public class RMIEventToUI extends EventToUI {
 
         jsonArrayOfParams = mapper.toJSON(Lists.newArrayList(params));
     }
+
+    @Override
+    public String getFormattedMessage() {
+        return "ui: RMI call to " + bean + "." + method + "(" + jsonArrayOfParams + ")";
+    }
 }

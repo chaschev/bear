@@ -104,6 +104,14 @@ public class Task<TASK_DEF extends TaskDef> extends HavingContext<Task<TaskDef>,
         return result;
     }
 
+    protected void beforeExec(){
+
+    }
+
+    protected void afterExec(){
+
+    }
+
     protected TaskResult exec(SessionTaskRunner runner, Object input) {
         throw new UnsupportedOperationException("todo: implement or use nop() task or set callable!");
     }

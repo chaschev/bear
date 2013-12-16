@@ -35,4 +35,9 @@ public class PhaseFinishedEventToUI extends EventToUI {
         this.groups = groups;
         this.phaseName = phaseName;
     }
+
+    @Override
+    public String getFormattedMessage() {
+        return "phaseFinished: '" + phaseName + "', groups="+ groups.size() + ", duration: " + String.format("%.2fs", duration * 1.0 / 1000);
+    }
 }

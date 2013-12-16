@@ -28,9 +28,9 @@ Bear is in it's early development stages now. Questions, concerns? Just drop me 
 | Test deployment rollbacks and db dumps       | Finished.      |
 | Node.js demo deployment - Drywall            | Finished.      |
 | Node.js demo deployment - ExpressMongoose    | Finished.      |
-| Grails/Tomcat demo deployment                | In Progress... |
+| Grails/Tomcat demo deployment                | Finished.      |
 | Play! Framework three-hosts deployment       |                |
-| Node.js three-hosts deployment               |                |
+| Node.js three-hosts deployment               | In progress... |
 | Refactoring, simplifying API                 | In progress... |
 | Unit test coverage                           |                |
 | UI bugfixing                                 |                |
@@ -57,7 +57,7 @@ Each deployment project consists of basically these parts:
 
 Deployment project examples are available under the [examples folder][examplesFolder].
 
-* [node-express-mongoose-demo][NodeExpressMongooseDemoProject] Stack: Node.js, Express, MongoDB.
+* [node-express-mongoose-demo deployment][NodeExpressMongooseDemoProject] Stack: Node.js, Express, MongoDB.
 * [Secure Social deployment][SecureSocialDemoProject] Stack: Java, Play! Framework 2, MySQL/MongoDB, Secure Social.
 
 [NodeExpressMongooseDemoProject]: https://github.com/chaschev/bear/blob/master/src/main/groovy/examples/node/NodeExpressMongooseDemoProject.groovy

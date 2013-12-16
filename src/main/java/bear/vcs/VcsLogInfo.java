@@ -35,9 +35,22 @@ public final class VcsLogInfo extends CommandLineResult {
         return last.comment;
     }
 
+    public String firstComment() {
+        LogEntry first = firstEntry();
+
+        if(first == null) return "no log entries";
+
+        return first.comment;
+    }
+
     private LogEntry lastEntry() {
         if(entries.isEmpty()) return null;
         return entries.get(entries.size() - 1);
+    }
+
+    private LogEntry firstEntry() {
+        if(entries.isEmpty()) return null;
+        return entries.get(0);
     }
 
     public String lastAuthor() {
@@ -46,6 +59,14 @@ public final class VcsLogInfo extends CommandLineResult {
         if(last == null) return "no log entries";
 
         return last.author;
+    }
+
+    public String firstAuthor() {
+        LogEntry first = firstEntry();
+
+        if(first == null) return "no log entries";
+
+        return first.author;
     }
 
     public static class LogEntry{

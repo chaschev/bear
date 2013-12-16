@@ -36,4 +36,9 @@ public class CommandConsoleEventToUI extends ConsoleEventToUI implements EventWi
     public String getId() {
         return id;
     }
+
+    @Override
+    public String getFormattedMessage() {
+        return "`" + command + "`";
+    }
 }

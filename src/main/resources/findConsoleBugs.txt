@@ -1,0 +1,30 @@
+//    static {
+//        final PrintStream stream = new PrintStream(new FileOutputStream(".bear/logs/test.log"){
+//            @Override
+//            void print(char[] s)
+//            {
+//                super.print(s)
+//                if(new String(s).contains("fx")){
+//                    println "ok"
+//                }
+//            }
+//
+//            @Override
+//            void write(int b)
+//            {
+//                super.write(b)
+//            }
+//
+//            @Override
+//            void write(byte[] buf, int off, int len)
+//            {
+//                super.write(buf, off, len)
+//                if(new String(buf, off, len).contains("fx - null")){
+//                    println "ok"
+//                }
+//            }
+//        });
+//
+//        System.setOut(stream);
+//
+//    }

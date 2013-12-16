@@ -13,4 +13,9 @@ public class NoticeEventToUI extends EventToUI {
         this.title = title;
         this.message = message;
     }
+
+    @Override
+    public String getFormattedMessage() {
+        return "[[[NOTICE]]]: " + title + ", " + message;
+    }
 }

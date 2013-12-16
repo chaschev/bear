@@ -1,5 +1,6 @@
 package bear.plugins.sh;
 
+import bear.core.SessionContext;
 import bear.vcs.CommandLineResult;
 import com.google.common.base.Optional;
 
@@ -11,6 +12,13 @@ import static com.google.common.base.Optional.of;
 public class PermissionsCommandInput<SELF extends CommandInput> extends CommandInput<SELF> {
     protected Optional<String> user = Optional.absent();
     protected Optional<String> permissions = Optional.absent();
+
+    public PermissionsCommandInput() {
+    }
+
+    public PermissionsCommandInput(SessionContext $) {
+        super($);
+    }
 
     public SELF withPermissions(String permissions){
         this.permissions = of(permissions);
@@ -33,23 +41,31 @@ public class PermissionsCommandInput<SELF extends CommandInput> extends CommandI
     }
 
     public SELF addPermissions(CommandLine<? extends CommandLineResult, ?> line, String... dest) {
-        return addPermissions(line, false, dest);
+        return addPermissions(line, true, dest);
     }
 
-    public SELF addPermissions(CommandLine<? extends CommandLineResult, ?> line, boolean stillEmpty, String... paths) {
+    public SELF addPermissions(CommandLine<? extends CommandLineResult, ?> line, boolean needsChainAdd, String... paths) {
         if (this.permissions.isPresent()) {
-            if(!stillEmpty) line.addRaw(" && ");
+            if(needsChainAdd) line.addRaw(" && ");
 
             line.addRaw("chmod " + (this.recursive ? "-R " : "") + this.permissions.get() + " ").a(paths);
 
-            stillEmpty = false;
+            needsChainAdd = false;
         }
 
         if(this.user.isPresent()){
-            if(!stillEmpty) line.addRaw(" && ");
+            if(needsChainAdd) line.addRaw(" && ");
             line.addRaw("chown " + (this.recursive ? "-R ":"") + this.user.get() + " ").a(paths);
         }
 
         return self();
+    }
+
+    public boolean hasPermissions() {
+        return permissions.isPresent() || user.isPresent();
+    }
+
+    public SELF addSudoPermissions(CommandLine<? extends CommandLineResult, ?> line, String... dest) {
+        return addPermissions(line.addRaw(" && sudo "), false, dest);
     }
 }

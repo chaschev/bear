@@ -29,4 +29,9 @@ public class GlobalStatusEventToUI extends EventToUI {
 
         this.stats = stats;
     }
+
+    @Override
+    public String getFormattedMessage() {
+        return "global stats: " + stats;
+    }
 }
