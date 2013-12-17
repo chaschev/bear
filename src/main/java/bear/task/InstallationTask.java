@@ -32,16 +32,16 @@ public abstract class InstallationTask<TASK_DEF extends InstallationTaskDef> ext
 
     @Override
     protected void beforeExec() {
-        wasInsideInstallationBefore = $.var(getBear().insideInstallation);
+        wasInsideInstallationBefore = $.var(getBear().installationInProgress);
         if(!wasInsideInstallationBefore){
-            $.put(getBear().insideInstallation, true);
+            $.put(getBear().installationInProgress, true);
         }
     }
 
     @Override
     protected void afterExec() {
         if(!wasInsideInstallationBefore){
-            $.removeConst(getBear().insideInstallation);
+            $.removeConst(getBear().installationInProgress);
         }
     }
 
@@ -52,7 +52,7 @@ public abstract class InstallationTask<TASK_DEF extends InstallationTaskDef> ext
         }
 
         @Override
-        protected TaskResult exec(SessionTaskRunner runner, Object input) {
+        protected TaskResult exec(SessionRunner runner, Object input) {
             return TaskResult.OK;
         }
     };

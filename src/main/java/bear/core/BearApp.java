@@ -36,7 +36,7 @@ public class BearApp<GLOBAL extends AppGlobalContext> extends HavingContext<Bear
 
     public void setGlobal(GLOBAL global) {
         this.global = global;
-        this.$ = global;
+        this.set$(global);
         DependencyInjection.nameVars(this, global);
     }
 }

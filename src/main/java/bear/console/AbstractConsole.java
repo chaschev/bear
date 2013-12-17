@@ -29,6 +29,8 @@ public interface AbstractConsole {
         }
 
         public abstract void finishWithResult(ConsoleCallbackResult callbackResult);
+
+        public abstract boolean isDone();
     }
 
     /**

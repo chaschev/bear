@@ -22,7 +22,7 @@ import bear.console.ConsoleCallback;
 import bear.core.Role;
 import bear.core.SessionContext;
 import bear.session.*;
-import bear.task.SessionTaskRunner;
+import bear.task.SessionRunner;
 import bear.task.Task;
 import bear.task.TaskResult;
 import bear.vcs.CommandLineResult;
@@ -544,7 +544,7 @@ public abstract class SystemSession extends Task<SystemEnvironmentPlugin.SystemS
         }
     }
 
-    protected TaskResult exec(SessionTaskRunner runner, Object input) {
+    protected TaskResult exec(SessionRunner runner, Object input) {
         throw new UnsupportedOperationException("todo .exec");
     }
 

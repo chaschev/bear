@@ -62,7 +62,7 @@ public class DumpManagerPlugin extends Plugin {
             public Task createNewSession(SessionContext $, Task parent, TaskDef def) {
                 return new InstallationTask<InstallationTaskDef>(parent, (InstallationTaskDef) def, $){
                     @Override
-                    protected TaskResult exec(SessionTaskRunner runner, Object input) {
+                    protected TaskResult exec(SessionRunner runner, Object input) {
                         return $.sys.mkdirs($(sharedDbDumpsPath)).toTaskResult();
                     }
 

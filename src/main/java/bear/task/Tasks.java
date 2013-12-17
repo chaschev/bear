@@ -54,8 +54,8 @@ public class Tasks {
         public Task createNewSession(SessionContext $, Task parent, TaskDef<Task> def) {
             return new Task<TaskDef>(parent, setup, $) {
                 @Override
-                protected TaskResult exec(SessionTaskRunner runner, Object input) {
-                    $.putConst(bear.insideInstallation, true);
+                protected TaskResult exec(SessionRunner runner, Object input) {
+                    $.putConst(bear.installationInProgress, true);
 
                     final String[] dirs = {
                         $(bear.applicationPath), $(bear.vcsCheckoutPath),
@@ -112,7 +112,7 @@ public class Tasks {
         public Task createNewSession(SessionContext $, Task parent, TaskDef<Task> def) {
             return new Task<TaskDef>(parent, vcsUpdate, $) {
                 @Override
-                protected TaskResult exec(SessionTaskRunner runner, Object input) {
+                protected TaskResult exec(SessionRunner runner, Object input) {
                     $.log("updating the project, please wait...");
 
                     if (!$.sys.exists($(bear.vcsBranchLocalPath))) {

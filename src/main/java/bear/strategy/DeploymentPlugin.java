@@ -296,11 +296,11 @@ public class DeploymentPlugin extends Plugin {
             }
 
             final int finalSize = size;
-            return new TaskDef<Task>(new MultitaskSupplier<Task>() {
-                final List<Task> tasks = new ArrayList<Task>();
-
+            return new TaskDef<Task>("deployment builder task", new MultitaskSupplier<Task>() {
                 @Override
                 public List<Task> createNewSessions(SessionContext $, Task parent) {
+                    final List<Task> tasks = new ArrayList<Task>();
+
                     for (DeploymentStep<?> deploymentStep : deploymentSteps) {
                         addTask(tasks, parent, deploymentStep.beforeCallable);
                         addTask(tasks, parent, deploymentStep.taskCallable);

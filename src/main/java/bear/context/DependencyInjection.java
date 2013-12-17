@@ -21,8 +21,10 @@ import bear.core.GlobalContext;
 import bear.core.SessionContext;
 import bear.plugins.Plugin;
 import bear.plugins.Plugins;
-import bear.session.DynamicVariable;
 import bear.plugins.sh.SystemEnvironmentPlugin;
+import bear.session.DynamicVariable;
+import bear.task.Task;
+import bear.task.TaskDef;
 import bear.task.Tasks;
 import chaschev.lang.OpenBean;
 import com.google.common.base.Preconditions;
@@ -43,6 +45,17 @@ public class DependencyInjection {
 
         try {
             for (Field field : fields) {
+                if(TaskDef.class.isAssignableFrom(field.getType())){
+                    TaskDef<Task> taskDef = (TaskDef<Task>) field.get(obj);
+
+                    if(taskDef!=null){
+                        taskDef.setName("task def " + shortName(aClass, className, field));
+                    }
+
+                    continue;
+                }
+
+
                 if (!DynamicVariable.class.isAssignableFrom(field.getType())) {
                     continue;
                 }

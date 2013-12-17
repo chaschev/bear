@@ -53,7 +53,7 @@ public class SessionContext extends AbstractContext {
     public GenericUnixLocalEnvironmentPlugin localSysEnv;
     public GenericUnixRemoteEnvironmentPlugin remoteSysEnv;
     public final SystemSession sys;
-    public final SessionTaskRunner runner;
+    public final SessionRunner runner;
     public Bear bear;
     public Address address;
 //    protected CompositeTaskRunContext taskRunContext;
@@ -68,7 +68,7 @@ public class SessionContext extends AbstractContext {
     public final String id = randomId();
     protected Thread thread;
 
-    public SessionContext(GlobalContext global, Address address, SessionTaskRunner runner) {
+    public SessionContext(GlobalContext global, Address address, SessionRunner runner) {
         super(global, address.getName());
 
         ///this can be extracted into newContext(aClass, parent, Object... fields)
@@ -257,6 +257,8 @@ public class SessionContext extends AbstractContext {
     }
 
     public void setCurrentTask(Task<?> currentTask) {
+        Task.wrongThreadCheck(currentTask.$());
+
         if(currentTask.isRootTask()){
             executionContext.rootExecutionContext.defaultTo(currentTask.getExecutionContext());
         }
@@ -279,7 +281,7 @@ public class SessionContext extends AbstractContext {
         return sys;
     }
 
-    public SessionTaskRunner getRunner() {
+    public SessionRunner getRunner() {
         return runner;
     }
 
@@ -289,7 +291,8 @@ public class SessionContext extends AbstractContext {
     }
 
     public String getName() {
-        return sys.getName();
+        String name = sys == null ? null : sys.getName();
+        return name == null ? this.name : name;
     }
 
     public String concat(Object... varsAndStrings) {

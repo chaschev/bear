@@ -52,6 +52,8 @@ public class TaskExecutionContext extends ExecContext<TaskExecutionContext> {
         super($, getParentContext(task));
         this.task = task;
 
+        Task.wrongThreadCheck($);
+
 //        selfEntry = new TaskExecutionEntry(task.getParentEntry(), task);
     }
 
@@ -63,13 +65,8 @@ public class TaskExecutionContext extends ExecContext<TaskExecutionContext> {
         return parent.getExecutionContext();
     }
 
+    //null when there is an exception
     protected ExecContext findEntryByTask(Task<? extends TaskDef> task) {
-//        for (ExecutionEntry e : executionEntries) {
-//            if (e instanceof TaskExecutionEntry) {
-//                if (((TaskExecutionEntry) e).task == task) return e;
-//            }
-//        }
-
         for (ExecContext e : execEntries) {
             if (e instanceof TaskExecutionContext) {
                 TaskExecutionContext context = (TaskExecutionContext) e;
@@ -103,7 +100,10 @@ public class TaskExecutionContext extends ExecContext<TaskExecutionContext> {
     }
 
     public void onEndSubTask(Task<? extends TaskDef> task, TaskResult result) {
-        findEntryByTask(task).onEnd(result);
+        ExecContext entry = findEntryByTask(task);
+        if(entry != null){
+            entry.onEnd(result);
+        }
     }
 
     public <T extends CommandLineResult> void addNewCommand(AbstractConsoleCommand<T> command) {
@@ -138,10 +138,17 @@ public class TaskExecutionContext extends ExecContext<TaskExecutionContext> {
         return !getFirstEntry().isPresent();
     }
 
+    @Override
+    public boolean hasStarted(){
+        return getFirstEntry().isPresent();
+    }
+
     public DateTime getStartedAt() {
         Optional<ExecContext> e = getFirstEntry();
 
-        if (e.isPresent()) return e.get().getStartedAt();
+        if (e.isPresent()) {
+            return e.get().getStartedAt();
+        }
 
         throw new IllegalStateException("not started");
     }
@@ -149,7 +156,7 @@ public class TaskExecutionContext extends ExecContext<TaskExecutionContext> {
     public long getDuration() {
         Optional<ExecContext> firstEntry = getFirstEntry();
 
-        if (!firstEntry.isPresent()) {
+        if (!firstEntry.isPresent() || !firstEntry.get().hasStarted()) {
             return 0;
         }
 
@@ -159,7 +166,9 @@ public class TaskExecutionContext extends ExecContext<TaskExecutionContext> {
 
         finishedAt = finishedAt == null ? new DateTime() : finishedAt;
 
-        return finishedAt.getMillis() - firstEntry.get().getFinishedAt().getMillis();
+
+
+        return finishedAt.getMillis() - firstEntry.get().getStartedAt().getMillis();
     }
 
     public boolean isRunning() {

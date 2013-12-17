@@ -14,17 +14,15 @@
  * limitations under the License.
  */
 
-package bear.plugins.play;
+package bear.plugins.java;
 
 import bear.console.AbstractConsole;
 import bear.console.ConsoleCallback;
 import bear.console.ConsoleCallbackResult;
-import bear.console.ConsoleCallbackResultType;
 import bear.context.Fun;
 import bear.core.GlobalContext;
 import bear.core.SessionContext;
 import bear.plugins.ServerToolPlugin;
-import bear.plugins.java.JavaPlugin;
 import bear.plugins.misc.PendingRelease;
 import bear.plugins.misc.WatchDogGroup;
 import bear.plugins.misc.WatchDogInput;
@@ -90,7 +88,7 @@ public class PlayPlugin extends ServerToolPlugin {
         public Task createNewSession(SessionContext $, Task parent, TaskDef<Task> def) {
             return new Task<TaskDef>(parent, def, $) {
                 @Override
-                protected TaskResult exec(SessionTaskRunner runner, Object input) {
+                protected TaskResult exec(SessionRunner runner, Object input) {
                     $.log("building the project (stage)...");
 
                     CommandLineResult result;
@@ -137,7 +135,7 @@ public class PlayPlugin extends ServerToolPlugin {
         public Task createNewSession(SessionContext $, Task parent, TaskDef def) {
             return new ZippedTool(parent, (InstallationTaskDef) def, $) {
                 @Override
-                protected DependencyResult exec(SessionTaskRunner runner, Object input) {
+                protected DependencyResult exec(SessionRunner runner, Object input) {
                     clean();
 
                     download();
@@ -191,16 +189,11 @@ public class PlayPlugin extends ServerToolPlugin {
                 @Nonnull
                 public ConsoleCallbackResult progress(AbstractConsole.Terminal console, String buffer, String wholeText) {
                     if (buffer.contains("Listening for HTTP on")) {
-                        SessionContext.ui.info(newNotice("started play instance on port " + port + ", release " + $.var(releases.session).getCurrentRelease().get().name(), $));
-
-                        return new ConsoleCallbackResult(ConsoleCallbackResultType.DONE, null);
+                        return startedResult($, port);
                     }
 
                     if(buffer.contains("Oops, cannot start the server.")){
-                        String message = "unable to start play instance on port " + port + ", release " + $.var(releases.session).getCurrentRelease().get().name();
-                        SessionContext.ui.error(newNotice(message, $));
-
-                        return new ConsoleCallbackResult(ConsoleCallbackResultType.EXCEPTION, message);
+                        return notStartedResult($, port);
                     }
 
                     return ConsoleCallbackResult.CONTINUE;

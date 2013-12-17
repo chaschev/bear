@@ -20,7 +20,7 @@ import bear.core.SessionContext;
 import bear.plugins.CommandInterpreter;
 import bear.plugins.Plugin;
 import bear.plugins.PluginShellMode;
-import bear.task.SessionTaskRunner;
+import bear.task.SessionRunner;
 import bear.task.Task;
 import bear.task.TaskDef;
 import bear.task.TaskResult;
@@ -36,7 +36,7 @@ public class ShShellMode extends PluginShellMode implements CommandInterpreter {
     public Task interpret(final String command, SessionContext $, Task parent, TaskDef taskDef){
         return new Task<TaskDef>(parent, taskDef, $) {
             @Override
-            protected TaskResult exec(SessionTaskRunner runner, Object input) {
+            protected TaskResult exec(SessionRunner runner, Object input) {
                 return $.sys.script()
                     .timeoutSec(60)
                     .line().addRaw(command).build()

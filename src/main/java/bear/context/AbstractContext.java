@@ -47,7 +47,7 @@ public abstract class AbstractContext {
     protected AppGlobalContext global;
     protected Properties properties = new Properties();
     protected final InjectingContext<?> injectingContext;
-    String name;
+    protected String name;
 
     protected AbstractContext(VariablesLayer layer) {
         this(layer, null);
@@ -75,6 +75,10 @@ public abstract class AbstractContext {
         injectingContext = this instanceof InjectingContext ? null : new InjectingContext(this);
     }
 
+    public <T> T varByName(String name){
+        return (T) var(name, Fun.UNDEFINED);
+    }
+
     public <T> T var(Nameable<T> var){
         return var(layer.getVariable(var));
     }
@@ -87,15 +91,11 @@ public abstract class AbstractContext {
         return layer.get(var);
     }
 
-    public <T> T var(DynamicVariable<T> varName, T _default) {
-        return layer.get(varName, _default);
-    }
-
     public boolean varB(DynamicVariable<Boolean> var) {
         return layer.get(var);
     }
 
-    public <T> T var(String varName, T _default) {
+    <T> T var(String varName, T _default) {
         return layer.get(varName, _default);
     }
 
@@ -151,7 +151,7 @@ public abstract class AbstractContext {
     }
 
     public String getName() {
-        return layer.getName();
+        return name;
     }
 
     public VariablesLayer getLayer() {
@@ -213,9 +213,6 @@ public abstract class AbstractContext {
         return layer.getConstant(obj);
     }
 
-    public <T> T get(DynamicVariable<T> var, T _default) {
-        return layer.get(var, _default);
-    }
 
     public <T> DynamicVariable<T> getVariable(Nameable<T> name) {
         return layer.getVariable(name);
@@ -315,6 +312,16 @@ public abstract class AbstractContext {
         } finally {
             layer.putMap(savedEntries);
         }
+    }
+
+    @Override
+    public String toString() {
+        final StringBuilder sb = new StringBuilder("Context{");
+        sb.append("name='").append(name).append('\'');
+        sb.append(", constants=").append(layer.constants.size());
+        sb.append(", vars=").append(layer.variables.size());
+        sb.append('}');
+        return sb.toString();
     }
 }
 

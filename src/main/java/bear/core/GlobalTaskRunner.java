@@ -119,7 +119,7 @@ public class GlobalTaskRunner {
         return new GroupDivider<SessionContext>(Stage.SESSION_ID, new Function<SessionContext, String>() {
             public String apply(SessionContext $) {
                 DynamicVariable<Task> task = $.getExecutionContext().currentTask;
-                return task.isUndefined() ? null : task.getDefaultValue().getId();
+                return task.isUndefined() || task.getDefaultValue() == null ? null : task.getDefaultValue().getId();
             }
         }, new Function<SessionContext, String>() {
             @Override

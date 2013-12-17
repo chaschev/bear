@@ -41,7 +41,7 @@ public class JavaPlugin extends ZippedToolPlugin {
         public Task createNewSession(SessionContext $, Task parent, TaskDef def) {
             return new ZippedTool(parent, (InstallationTaskDef) def, $) {
                 @Override
-                protected DependencyResult exec(SessionTaskRunner runner, Object input) {
+                protected DependencyResult exec(SessionRunner runner, Object input) {
                     clean();
 
                     final File localDFile = new File(global.localCtx.var(localDistrPath));

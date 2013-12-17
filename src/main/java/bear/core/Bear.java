@@ -183,7 +183,7 @@ public class Bear extends BearApp<GlobalContext> {
         checkDependencies = not(interactiveRun),
         verifyPlugins = equalTo(checkDependencies),
         autoInstallPlugins = newVar(false),
-        insideInstallation = newVar(false),
+        installationInProgress = newVar(false),
         verbose = newVar(false)
     ;
 
@@ -193,7 +193,7 @@ public class Bear extends BearApp<GlobalContext> {
         buildTimeoutMs = newVar((int) MINUTES.toMillis(10)),
         installationTimeoutMs = newVar((int) MINUTES.toMillis(60)),
         defaultTimeout = equalTo(buildTimeoutMs),
-        appStartTimeoutSec = newVar(120),
+        appStartTimeoutSec = newVar(240),
         appWaitOthersTimeoutSec = newVar(120)
     ;
 

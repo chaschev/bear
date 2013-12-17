@@ -17,6 +17,7 @@
 package bear.context;
 
 import bear.session.DynamicVariable;
+import bear.task.Task;
 
 /**
  * @author Andrey Chaschev chaschev@gmail.com
@@ -27,11 +28,8 @@ public class HavingContext<CHILD, CONTEXT extends AbstractContext> {
     protected CONTEXT $;
 
     public HavingContext(CONTEXT $) {
+        Task.wrongThreadCheck($);
         this.$ = $;
-    }
-
-    public HavingContext(Object $) {
-        this.$ = (CONTEXT) $;
     }
 
     public <T> T $(DynamicVariable<T> varName) {
@@ -40,16 +38,13 @@ public class HavingContext<CHILD, CONTEXT extends AbstractContext> {
     }
 
     public CHILD set$(CONTEXT $) {
+        Task.wrongThreadCheck($);
         this.$ = $;
         return (CHILD) this;
     }
 
-    public CHILD set$(Object $) {
-        this.$ = (CONTEXT) $;
-        return (CHILD) this;
-    }
-
     public CONTEXT $() {
+        Task.wrongThreadCheck($);
         return $;
     }
 }

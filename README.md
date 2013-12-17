@@ -1,6 +1,6 @@
 # Welcome the Bear!
 
-Bear is a lightweight deployment tool for Java. It's primary task are builds and remote deploys of anything to your hosts. At the moment Tomcat, Grails and Maven are supported. Bear first started as a Capistrano clone, but then grew into a different project.
+Bear is a lightweight deployment tool for Java. It's primary task are builds and deploys of applications to remote hosts. Bear first started as a Capistrano clone, but then grew into a different project.
 
 Bear is in it's early development stages now. Questions, concerns? Just drop me a line at chaschev@gmail.com.
 
@@ -12,8 +12,8 @@ Bear is in it's early development stages now. Questions, concerns? Just drop me 
 * Fast execution, parallel execution framework
 * Desktop UI app to monitor running tasks (Twitter Bootstrap 3)
 * Scripts can be edited in UI and in IDEs (by importing through Maven)
-* Lambda-based configuration, session/global context for variables
-* (planned) Ruby, JavaScript and Python support.
+* Lambda-based configuration, session/global evaluation context for variables
+* (planned) JavaScript, Ruby and Python support
 * Takes some of the ideas from Capistrano
 
 ### Road Map for Release 1.0a1 (for CentOS 6.4)
@@ -29,23 +29,30 @@ Bear is in it's early development stages now. Questions, concerns? Just drop me 
 | Node.js demo deployment - Drywall            | Finished.      |
 | Node.js demo deployment - ExpressMongoose    | Finished.      |
 | Grails/Tomcat demo deployment                | Finished.      |
-| Play! Framework three-hosts deployment       |                |
-| Node.js three-hosts deployment               | In progress... |
+| Play! Framework three-hosts deployment       | In progress... |
+| Node.js three-hosts deployment               | Finished.      |
 | Refactoring, simplifying API                 | In progress... |
-| Unit test coverage                           |                |
-| UI bugfixing                                 |                |
 | Installer                                    |                |
+| UI bugfixing                                 |                |
+| Implementing TODOs                           |                |
+| Unit test coverage                           |                |
 | Refactoring, simplifying API                 |                |
 
 
-### Road Map for Release 1.0a2 (+ Ubuntu Server, Cloud)
+### Road Map for Release 1.0a2 (+ Ubuntu Server, localhost, Cloud)
 
 | Step                                              | State          |
 | ------------------------------------------------- |:--------------:|
+| Quick Start tutorial                              |                |
 | Support Debian/Ubuntu Server                      |                |
+| Support localhost                                 |                |
+| JavaScript, sample project                        |                |
+| Ruby, RoR demo, sample project                    |                |
+| Python & sample project & demo                    |                |
+| Deployments to Heroku, AWS, GCE, Azure, Rackspace |                |
 | Run via a Maven Plugin                            |                |
 | Support JDK 6 for CLI, JDK 7 for GUI              |                |
-| Deployments to Heroku, AWS, GCE, Azure, Rackspace |      ?       |
+| Documentation                                     |                |
 
 ### Project Samples
 
@@ -61,7 +68,8 @@ Deployment project examples are available under the [examples folder][examplesFo
 * [Secure Social deployment][SecureSocialDemoProject] Stack: Java, Play! Framework 2, MySQL/MongoDB, Secure Social.
 
 [NodeExpressMongooseDemoProject]: https://github.com/chaschev/bear/blob/master/src/main/groovy/examples/node/NodeExpressMongooseDemoProject.groovy
-[SecureSocialDemoProject]: https://github.com/chaschev/bear/blob/master/src/main/groovy/examples/java/SecureSocialDemoProject.groovy 
+[SecureSocialDemoProject]: https://github.com/chaschev/bear/blob/master/src/main/groovy/examples/java/SecureSocialDemoProject.groovy
+[examplesFolder]: https://github.com/chaschev/bear/tree/master/src/main/groovy/examples
 
 
 ```properties
@@ -184,7 +192,6 @@ public class NodeExpressMongooseDemoProject extends BearProject<NodeExpressMongo
 
 There are also grids. Grid is an execution table for the tasks. It is a parallel framework which allows syncing tasks execution, communicating, sharing their results (i.e. a file downloaded). Any task is run inside a grid and can be synchronized by getting a Future for some other cell in a grid. If your tasks a simple and you don't need syncing, grid cold be seen as an array for your tasks.
 
-[examplesFolder]: https://github.com/chaschev/bear/tree/master/src/main/groovy/examples
 
 ### Bear UI
 

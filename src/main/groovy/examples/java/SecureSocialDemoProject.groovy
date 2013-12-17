@@ -9,7 +9,7 @@ import bear.plugins.java.JavaPlugin
 import bear.plugins.maven.MavenPlugin
 import bear.plugins.mongo.MongoDbPlugin
 import bear.plugins.mysql.MySqlPlugin
-import bear.plugins.play.PlayPlugin
+import bear.plugins.java.PlayPlugin
 import bear.session.DynamicVariable
 import bear.strategy.DeploymentPlugin
 import bear.task.Task

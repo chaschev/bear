@@ -19,14 +19,13 @@ package bear.plugins.java;
 import bear.console.AbstractConsole;
 import bear.console.ConsoleCallback;
 import bear.console.ConsoleCallbackResult;
-import bear.console.ConsoleCallbackResultType;
 import bear.context.AbstractContext;
 import bear.context.Fun;
 import bear.core.GlobalContext;
 import bear.core.SessionContext;
+import bear.plugins.ConfigureServiceInput;
 import bear.plugins.ServerToolPlugin;
 import bear.plugins.misc.*;
-import bear.plugins.play.ConfigureServiceInput;
 import bear.session.DynamicVariable;
 import bear.session.Variables;
 import bear.task.*;
@@ -37,7 +36,6 @@ import java.text.MessageFormat;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import static bear.core.SessionContext.ui;
 import static bear.plugins.sh.CopyOperationInput.cp;
 import static bear.plugins.sh.CopyOperationInput.ln;
 import static bear.plugins.sh.DirsInput.dirs;
@@ -144,23 +142,11 @@ public class TomcatPlugin extends ServerToolPlugin {
                     //todo these parts are all common, extract!!
                     //todo add real crash messages
                     if(buffer.contains("app crashed - waiting for file") ){
-                        String message = "unable to start tomcat instance on port " + port + ", release " + $.var(releases.session).getCurrentRelease().get().name();
-
-                        ui.error(newNotice(message, $));
-
-                        logger.error(message);
-
-                        return new ConsoleCallbackResult(ConsoleCallbackResultType.EXCEPTION, message);
+                        return notStartedResult($, port);
                     }
 
                     if (buffer.contains("Server startup in")) {
-                        String message = "started node instance on port " + port + ", release " + $.var(releases.session).getCurrentRelease().get().name();
-
-                        ui.info(newNotice(message, $));
-
-                        logger.info(message);
-
-                        return new ConsoleCallbackResult(ConsoleCallbackResultType.DONE, message);
+                        return startedResult($, port);
                     }
 
                     return ConsoleCallbackResult.CONTINUE;
@@ -202,7 +188,7 @@ public class TomcatPlugin extends ServerToolPlugin {
         public Task createNewSession(SessionContext $, final Task parent, final TaskDef def) {
             return new ZippedTool(parent, (InstallationTaskDef) def, $) {
                 @Override
-                protected DependencyResult exec(SessionTaskRunner runner, Object input) {
+                protected DependencyResult exec(SessionRunner runner, Object input) {
                     clean();
 
                     download();
@@ -213,19 +199,7 @@ public class TomcatPlugin extends ServerToolPlugin {
 
                     DependencyResult result = verify();
 
-//                    $.sys.move($(webappsPath)+"/ROOT", $(webappsPath)+"/conf");
-
                     String serverXmlAsString = $.sys.readString($(homePath) + "/conf/server.xml", null);
-
-                    //<Server port="8005" shutdown="SHUTDOWN">
-                    // <Connector port="8009" protocol="AJP/1.3" redirectPort="8443" />
-                    // <Connector port="8080" protocol="HTTP/1.1"
-//                    connectionTimeout="20000"
-//                    redirectPort="8443" />
-                    // <Connector port="8080" protocol="HTTP/1.1"
-//                    connectionTimeout="20000"
-//                    redirectPort="8443" />
-
 
                     List<String> ports = $.var(portsSplit);
 
@@ -339,14 +313,6 @@ public class TomcatPlugin extends ServerToolPlugin {
             }
         };
     }
-
-    public final DynamicVariable<String[]> warCacheDirs = Variables.dynamic(new Fun<SessionContext, String[]>() {
-        public String[] apply(SessionContext $) {
-            final String name = FilenameUtils.getBaseName($.var(warName));
-            return new String[]{ $.sys.joinPath($.var(webappsPath), name) };
-        }
-    });
-
 
     @Override
     public InstallationTaskDef<ZippedTool> getInstall() {

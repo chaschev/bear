@@ -9,7 +9,7 @@ import bear.plugins.java.TomcatPlugin
 import bear.plugins.maven.MavenPlugin
 import bear.plugins.misc.UpstartPlugin
 import bear.plugins.mysql.MySqlPlugin
-import bear.plugins.play.ConfigureServiceInput
+import bear.plugins.ConfigureServiceInput
 import bear.strategy.DeploymentPlugin
 import bear.task.Task
 import bear.task.TaskCallable

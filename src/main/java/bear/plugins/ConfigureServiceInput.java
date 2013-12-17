@@ -1,4 +1,4 @@
-package bear.plugins.play;
+package bear.plugins;
 
 import bear.plugins.misc.UpstartService;
 

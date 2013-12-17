@@ -84,12 +84,12 @@ public class GroupDivider<ENTRY> {
 
         for (int i = 0; i < arrivedEntries.size(); i++) {
             ArrivedEntry<ENTRY> arrivedEntry = arrivedEntries.get(i);
-            ENTRY entry = arrivedEntry.entry;
+            ENTRY entry = arrivedEntry == null ? null : arrivedEntry.entry;
 
             if (entry == null) {
                 convertedEntries[i] = null;
 
-                if (nullGroup == null) {
+                if (nullGroup == null || arrivedEntry == null) {
                     nullGroup = newGroupByIndex(i);
                     nullGroup.text = null;
                 } else {
@@ -149,7 +149,7 @@ public class GroupDivider<ENTRY> {
 
     private EqualityGroup newGroupByIndex(int index) {
         ArrivedEntry<ENTRY> arrivedEntry = arrivedEntries.get(index);
-        ENTRY input = arrivedEntry.entry;
+        ENTRY input = arrivedEntry == null ? null : arrivedEntry.entry;
 
         return new EqualityGroup(
             input == null ? null : arrivedEntry.entryId,

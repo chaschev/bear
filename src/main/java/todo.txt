@@ -18,8 +18,7 @@ top priority:
 - (ok) commenting option for the directives: //!:
 - (ok) ui: adapt this theme: https://github.com/onokumus/Bootstrap-Admin-Template
 - (ok) noty for notices
-- autosize for code area ?
-- sample app:
+- ui: autosize for code area ?
 - quick setup task recipe (i.e. [new empty bear script], :run (rename :ref) {task: 'tasks.setup'}   at the moment its _.runner.run(_.getGlobal().tasks.setup, )
 -- (ok) mongo plugin
 - (ok) bug: sendAllFinishedResults sends result only for the whole run
@@ -48,6 +47,7 @@ top priority:
 -- (ok) mock server replies (inject mocked sys)
 - service interface: check live status on hosts
 
+- add default methods for projects: start, stop, rollbackTo
 - refactorings
 -- chain operations: $.sys.rm(dir1, dir2).sudo().noForce().run()
 -- (ok) create tasks with lambdas
@@ -58,13 +58,16 @@ top priority:
 - sms plugin?
 - password management (can't always store a password in a local file)
 
-- cover contextes with unit tests, rewrite and add feature: atomically memoize in global, calculate in $
+- download maven dependencies & add to a classpath when running baseCL -> MavenCL -> ProjectCL
+
+- add pulse meters for services
+- builder must be a field to be able to switch a command
+- cover contexts with unit tests, rewrite and add feature: atomically memoize in global, calculate in $
 - (ok) better rm
 - update git plugin for the release
 - ssh tests for servers to test connectivity and response
 - (ok) FileWatcher
 -- secure social demo for 3 hosts/single mysql
--- computer demo for 3 hosts/mongodb cluster
 -- (ok) node.js demo: https://github.com/jedireza/drywall, https://github.com/jaredhanson/passport, https://github.com/madhums/node-express-mongoose-demo
 -- django demo: https://github.com/omab/python-social-auth
 -- RoR: https://github.com/binarylogic/authlogic/tree/master, https://github.com/technoweenie/restful-authentication/tree/master,
@@ -77,6 +80,10 @@ top priority:
 - :run {"task":"tasks.setup"}
 - too many inputs for setting vars (how should I set a var in Groovy/ GroovyScript/bear, what is the file I am in?)
 - polish code
+- quick start:
+-- check how to open a new sample project with idea when creating installation
+-- connectivity test
+-- test different auth methods
 - create unit tests coverage plan
 - ui: check if it's easy to send prompt - ok
 - nice grid textual/ui representation!:

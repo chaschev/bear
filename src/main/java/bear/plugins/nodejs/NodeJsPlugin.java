@@ -19,14 +19,13 @@ package bear.plugins.nodejs;
 import bear.console.AbstractConsole;
 import bear.console.ConsoleCallback;
 import bear.console.ConsoleCallbackResult;
-import bear.console.ConsoleCallbackResultType;
 import bear.context.AbstractContext;
 import bear.context.Fun;
 import bear.core.GlobalContext;
 import bear.core.SessionContext;
-import bear.plugins.misc.*;
-import bear.plugins.play.ConfigureServiceInput;
 import bear.plugins.ServerToolPlugin;
+import bear.plugins.misc.*;
+import bear.plugins.ConfigureServiceInput;
 import bear.session.DynamicVariable;
 import bear.session.Variables;
 import bear.task.*;
@@ -36,14 +35,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.base.Function;
 import com.google.common.base.Optional;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import static bear.core.SessionContext.ui;
 import static bear.plugins.sh.CaptureInput.cap;
 import static bear.plugins.sh.CopyOperationInput.cp;
 import static bear.session.Variables.*;
@@ -54,7 +50,6 @@ import static bear.session.Variables.*;
  * @author Andrey Chaschev chaschev@gmail.com
  */
 public class NodeJsPlugin extends ServerToolPlugin {
-    public static final Logger logger = LoggerFactory.getLogger(NodeJsPlugin.class);
 
     public static final ObjectMapper mapper = new ObjectMapper();
 
@@ -171,14 +166,9 @@ public class NodeJsPlugin extends ServerToolPlugin {
                 public ConsoleCallbackResult progress(final AbstractConsole.Terminal console, String buffer, String wholeText) {
                     //todo these parts are all common, extract!!
                     if(buffer.contains("app crashed - waiting for file") ||   //nodemon message
-                        buffer.contains("throw er; // Unhandled 'error' event")
-                        ){
-                        String message = "unable to start play instance on port " + port + ", release " + $.var(releases.session).getCurrentRelease().get().name();
-                        ui.error(newNotice(message, $));
+                        buffer.contains("throw er; // Unhandled 'error' event")){
 
-                        logger.error(message);
-
-                        return new ConsoleCallbackResult(ConsoleCallbackResultType.EXCEPTION, message);
+                        return notStartedResult($, port);
                     }
 
                     //I found no message indicating that Node started
@@ -186,28 +176,11 @@ public class NodeJsPlugin extends ServerToolPlugin {
                             buffer.contains("connect 3.0") ||
                             buffer.contains("starting `node")
                         ){
-                       $.getGlobal().scheduler.schedule(new Runnable() {
-                           @Override
-                           public void run() {
-                               String message = "seem to have started after timeout, node instance on port " + port + ", release " + $.var(releases.session).getCurrentRelease().get().name();
-
-                               logger.info(message);
-                               ui.info(newNotice(message, $));
-
-                               console.finishWithResult(new ConsoleCallbackResult(ConsoleCallbackResultType.DONE, message));
-                           }
-                       }, 5, TimeUnit.SECONDS);
+                        seemsHaveStarted(console, $, port);
                     }
 
                     if (buffer.contains("Express app started on port")) {
-
-                        String message = "started node instance on port " + port + ", release " + $.var(releases.session).getCurrentRelease().get().name();
-
-                        ui.info(newNotice(message, $));
-
-                        logger.info(message);
-
-                        return new ConsoleCallbackResult(ConsoleCallbackResultType.DONE, message);
+                        return startedResult($, port);
                     }
 
                     return ConsoleCallbackResult.CONTINUE;
@@ -230,7 +203,7 @@ public class NodeJsPlugin extends ServerToolPlugin {
             return new Task<TaskDef>(parent, def, $) {
 
                 @Override
-                protected TaskResult exec(SessionTaskRunner runner, Object input) {
+                protected TaskResult exec(SessionRunner runner, Object input) {
                     $.log("building the Node.js project ...");
 
                     PendingRelease pendingRelease = $.var(releases.pendingRelease);
@@ -254,7 +227,7 @@ public class NodeJsPlugin extends ServerToolPlugin {
         public Task createNewSession(SessionContext $, Task parent, TaskDef def) {
             return new ZippedTool(parent, (InstallationTaskDef) def, $) {
                 @Override
-                protected DependencyResult exec(SessionTaskRunner runner, Object input) {
+                protected DependencyResult exec(SessionRunner runner, Object input) {
                     clean();
 
                     download();

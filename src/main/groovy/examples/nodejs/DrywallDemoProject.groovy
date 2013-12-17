@@ -1,11 +1,11 @@
-package examples.node
+package examples.nodejs
 import bear.context.Fun
 import bear.core.*
 import bear.plugins.db.DumpManagerPlugin
 import bear.plugins.misc.ReleasesPlugin
 import bear.plugins.mongo.MongoDbPlugin
 import bear.plugins.nodejs.NodeJsPlugin
-import bear.plugins.play.ConfigureServiceInput
+import bear.plugins.ConfigureServiceInput
 import bear.strategy.DeploymentPlugin
 import bear.task.Task
 import bear.task.TaskCallable
@@ -22,13 +22,13 @@ import static bear.task.TaskResult.OK
 
 public class DrywallDemoProject extends BearProject<DrywallDemoProject> {
     // these are the plugins which are injected
-    Bear bear;
-    GitCLIPlugin git;
-    NodeJsPlugin nodeJs;
-    MongoDbPlugin mongoPlugin;
-    DeploymentPlugin deployment;
-    ReleasesPlugin releases;
-    DumpManagerPlugin dumpManager;
+    Bear bear
+    GitCLIPlugin git
+    NodeJsPlugin nodeJs
+    MongoDbPlugin mongoPlugin
+    DeploymentPlugin deployment
+    ReleasesPlugin releases
+    DumpManagerPlugin dumpManager
 
     public TaskDef<Task> deployProject;
 
@@ -46,12 +46,12 @@ public class DrywallDemoProject extends BearProject<DrywallDemoProject> {
     protected GlobalContext configureMe(GlobalContextFactory factory) throws Exception
     {
         nodeJs.version.set("0.10.22");
-
+        nodeJs.projectPath.setEqualTo(bear.vcsBranchLocalPath);
         bear.vcsBranchName.defaultTo("master");
 
-        dumpManager.dbType.set(mongo.toString());
+        nodeJs.instancePorts.set("3000")
 
-        nodeJs.projectPath.setEqualTo(bear.vcsBranchLocalPath);
+        dumpManager.dbType.set(mongo.toString());
 
         //todo ugly?
         nodeJs.configureService.setDynamic({SessionContext _ ->
@@ -89,33 +89,35 @@ public class DrywallDemoProject extends BearProject<DrywallDemoProject> {
 
     static main(def args)
     {
-        def demo = new DrywallDemoProject()
-
-        deploy(demo)
+        deploy()
     }
 
-    private static void deploy(DrywallDemoProject demo)
+    private static void deploy()
     {
+        def demo = new DrywallDemoProject()
+
         demo
             .set(demo.main().propertiesFile, new File(".bear/drywall.properties"))
             .configure()
+            .set(demo.bear.stage, "three")
             .newGrid()
             .add(demo.deployProject)
             .run()
     }
 
-    private static void setup(DrywallDemoProject demo)
+    private static void setup()
     {
+        def demo = new DrywallDemoProject()
+
         demo
             .set(demo.main().propertiesFile, new File(".bear/drywall.properties"))
             .configure()
+            .set(demo.bear.stage, "three")
             .set(demo.bear.verifyPlugins, true)
             .set(demo.bear.autoInstallPlugins, true)
             .set(demo.bear.checkDependencies, true)
             .newGrid()
-            .add({ SessionContext _, Task task, Object input ->
-                _.sys.packageManager.installPackage("ImageMagick")
-            } as TaskCallable<TaskDef>)
+            .add({ _, task, i -> _.sys.packageManager.installPackage("ImageMagick"); OK } as TaskCallable<TaskDef>)
             .add(demo.global.tasks.setup)
             .run()
     }

@@ -63,6 +63,8 @@ public abstract class AbstractConsole extends bear.console.AbstractConsole.Termi
     List<MarkedBuffer> buffers = new ArrayList<MarkedBuffer>();
     List<Future> futures = new ArrayList<Future>();
 
+    protected volatile boolean finished = false;
+
     protected volatile transient ConsoleCallbackResult lastCallbackResult;
     protected volatile transient ConsoleCallbackResult lastError;
 
@@ -147,10 +149,21 @@ public abstract class AbstractConsole extends bear.console.AbstractConsole.Termi
         lastCallbackResult = callbackResult;
         stopStreamCopiersGracefully();
         IOUtils.closeQuietly(shutdownTrigger);
+
+        if(callbackResult.type.isError()){
+            lastError = callbackResult;
+        }
+    }
+
+    @Override
+    public boolean isDone(){
+        return finished;
     }
 
     public void stopStreamCopiersGracefully() {
 //        logger.debug("OOOOOOOOOOOOPS - stopStreamCopiersGracefully");
+
+        finished = true;
 
         for (MyStreamCopier copier : copiers) {
             copier.stop();
@@ -167,7 +180,6 @@ public abstract class AbstractConsole extends bear.console.AbstractConsole.Termi
             if (!future.isDone()) {
                 future.cancel(true);
             }
-
         }
     }
 

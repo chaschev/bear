@@ -16,13 +16,16 @@
 
 package bear.plugins;
 
+import bear.console.AbstractConsole;
+import bear.console.ConsoleCallbackResult;
+import bear.console.ConsoleCallbackResultType;
 import bear.context.Fun;
 import bear.core.Env;
 import bear.core.GlobalContext;
 import bear.core.SessionContext;
 import bear.main.event.NoticeEventToUI;
 import bear.plugins.misc.*;
-import bear.plugins.play.ConfigureServiceInput;
+import bear.plugins.nodejs.NodeJsPlugin;
 import bear.plugins.sh.SystemSession;
 import bear.session.DynamicVariable;
 import bear.session.Variables;
@@ -30,13 +33,14 @@ import bear.task.*;
 import bear.vcs.CommandLineResult;
 import com.google.common.base.Function;
 import com.google.common.base.Optional;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.LogManager;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import static bear.core.SessionContext.ui;
 import static bear.session.Variables.*;
 import static java.lang.String.format;
 
@@ -44,7 +48,7 @@ import static java.lang.String.format;
  * @author Andrey Chaschev chaschev@gmail.com
  */
 public abstract class ServerToolPlugin extends ZippedToolPlugin {
-    public static final Logger logger = LoggerFactory.getLogger(ServerToolPlugin.class);
+    public static final org.apache.logging.log4j.Logger logger = LogManager.getLogger(NodeJsPlugin.class);
 
     protected UpstartPlugin upstart;
     protected FileWatchDogPlugin watchDog;
@@ -161,7 +165,7 @@ public abstract class ServerToolPlugin extends ZippedToolPlugin {
         public Task createNewSession(SessionContext $, final Task parent, final TaskDef<Task> def) {
             return new Task<TaskDef>(parent, def, $) {
                 @Override
-                protected TaskResult exec(SessionTaskRunner runner, Object input) {
+                protected TaskResult exec(SessionRunner runner, Object input) {
                     $.log("starting the {} app...", $(toolname));
 
                     Optional<Release> optionalRelease = $.var(releases.activatedRelease);
@@ -172,7 +176,9 @@ public abstract class ServerToolPlugin extends ZippedToolPlugin {
 
                     TaskResult r;
 
-                    if ($(bear.insideInstallation) && $(useUpstart)) {
+                    //bear.installationInProgress is for tomcat
+                    //useUpstart is for other plugins
+                    if ($(bear.installationInProgress) || $(useUpstart)) {
                         UpstartServices services = $(customUpstart);
 
                         r = $.runSession(
@@ -215,7 +221,7 @@ public abstract class ServerToolPlugin extends ZippedToolPlugin {
             return new Task<TaskDef>(parent, def, $) {
 
                 @Override
-                protected TaskResult exec(SessionTaskRunner runner, Object input) {
+                protected TaskResult exec(SessionRunner runner, Object input) {
                     $.log("stopping the app (stage)...");
 
                     CommandLineResult r;
@@ -236,7 +242,6 @@ public abstract class ServerToolPlugin extends ZippedToolPlugin {
 
         }
     });
-
 
     public final TaskDef<Task> watchStart = new TaskDef<Task>(new SingleTaskSupplier<Task>() {
         @Override
@@ -278,5 +283,47 @@ public abstract class ServerToolPlugin extends ZippedToolPlugin {
 
     protected NoticeEventToUI newNotice(String message, SessionContext $) {
         return new NoticeEventToUI($.var(bear.fullName), message);
+    }
+
+    protected String newStartedMessage(SessionContext $, String port) {
+        return "started instance at " +
+            $.getName() +":" + port + ", release " + ", release " + $.var(releases.session).getCurrentRelease().get().name();
+    }
+
+    protected String sendMessage(Level level, String message, SessionContext $) {
+        logger.log(level, message);
+        ui.log(level, newNotice(message, $));
+
+        return message;
+    }
+
+    protected String newSeemToHaveStartedMessage(SessionContext $, String port) {
+        return "seem to have started after timeout, node instance at " +
+            $.getName() + ":" + port + ", release " + $.var(releases.session).getCurrentRelease().get().name();
+    }
+
+    protected String newCantStartMessage(SessionContext $, String port) {
+        return "unable to start instance at " +
+            $.getName() +":" + port + ", release " + $.var(releases.session).getCurrentRelease().get().name();
+    }
+
+    protected ConsoleCallbackResult notStartedResult(SessionContext $, String port) {
+        return new ConsoleCallbackResult(ConsoleCallbackResultType.EXCEPTION, sendMessage(Level.ERROR, newCantStartMessage($, port), $));
+    }
+
+    protected void seemsHaveStarted(final AbstractConsole.Terminal console, final SessionContext $, final String port) {
+        $.getGlobal().scheduler.schedule(new Runnable() {
+            @Override
+            public void run() {
+                if(!console.isDone()){
+                    console.finishWithResult(new ConsoleCallbackResult(ConsoleCallbackResultType.DONE,
+                        sendMessage(Level.INFO, newSeemToHaveStartedMessage($, port), $)));
+                }
+            }
+        }, 5, TimeUnit.SECONDS);
+    }
+
+    protected ConsoleCallbackResult startedResult(SessionContext $, String port) {
+        return new ConsoleCallbackResult(ConsoleCallbackResultType.DONE, sendMessage(Level.INFO, newStartedMessage($, port), $));
     }
 }

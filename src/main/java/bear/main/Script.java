@@ -18,7 +18,7 @@ package bear.main;
 
 import bear.context.Var;
 import bear.core.*;
-import bear.task.SessionTaskRunner;
+import bear.task.SessionRunner;
 import bear.task.Task;
 import bear.task.TaskResult;
 import org.apache.logging.log4j.LogManager;
@@ -45,7 +45,7 @@ public class Script {
 
     public GlobalContext global;
     public Bear bear;
-    public SessionTaskRunner runner;
+    public SessionRunner runner;
 
     @Var(skipWiring = true)
     public final String id = SessionContext.randomId();

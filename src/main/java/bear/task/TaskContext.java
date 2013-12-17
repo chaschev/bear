@@ -1,5 +1,6 @@
 package bear.task;
 
+import bear.context.HavingContext;
 import bear.core.Bear;
 import bear.core.BearScriptPhase;
 import bear.core.GlobalTaskRunner;
@@ -13,14 +14,13 @@ import javax.annotation.Nullable;
 /**
 * @author Andrey Chaschev chaschev@gmail.com
 */
-public class TaskContext<TASK_DEF extends TaskDef> {
+public class TaskContext<TASK_DEF extends TaskDef> extends HavingContext<TaskContext<TASK_DEF>, SessionContext>{
     Task me;
 
     @Nullable
     Task parent;
-    SessionContext $;
     TASK_DEF definition;
-    SessionTaskRunner runner;
+    SessionRunner runner;
     ComputingGrid<SessionContext, BearScriptPhase> grid;
     Phase<?, BearScriptPhase> phase;
     Bear bear;
@@ -30,21 +30,21 @@ public class TaskContext<TASK_DEF extends TaskDef> {
     GlobalTaskRunner globalRunner;
 
     public TaskContext(Task me, Task parent, SessionContext $) {
+        super($);
         this.me = me;
         this.parent = parent;
-        this.$ = $;
     }
 
     public TaskContext(Task me, Task parent, SessionContext $, TASK_DEF definition) {
+        super($);
         this.me = me;
         this.parent = parent;
-        this.$ = $;
         this.definition = definition;
     }
 
-    public TaskContext(Task parent, SessionContext $, SessionTaskRunner runner, Task me, TASK_DEF definition, ComputingGrid<SessionContext, BearScriptPhase> grid, Phase<?, BearScriptPhase> phase, Bear bear, PhaseParty<SessionContext, BearScriptPhase> phaseParty, TaskExecutionContext executionContext) {
+    public TaskContext(Task parent, SessionContext $, SessionRunner runner, Task me, TASK_DEF definition, ComputingGrid<SessionContext, BearScriptPhase> grid, Phase<?, BearScriptPhase> phase, Bear bear, PhaseParty<SessionContext, BearScriptPhase> phaseParty, TaskExecutionContext executionContext) {
+        super($);
         this.parent = parent;
-        this.$ = $;
         this.runner = runner;
         this.me = me;
         this.definition = definition;

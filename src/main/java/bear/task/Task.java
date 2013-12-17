@@ -31,6 +31,8 @@ import bear.vcs.CommandLineResult;
 import chaschev.util.Exceptions;
 import com.google.common.base.Preconditions;
 import com.google.common.util.concurrent.ListenableFuture;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
 import java.util.List;
@@ -45,6 +47,8 @@ import static bear.session.Variables.newVar;
  * @author Andrey Chaschev chaschev@gmail.com
  */
 public class Task<TASK_DEF extends TaskDef> extends HavingContext<Task<TaskDef>, SessionContext> {
+    private static final Logger logger = LoggerFactory.getLogger(Task.class);
+
     private Dependencies dependencies = new Dependencies();
 
     private final String id = SessionContext.randomId();
@@ -53,7 +57,7 @@ public class Task<TASK_DEF extends TaskDef> extends HavingContext<Task<TaskDef>,
     protected final TaskContext<TASK_DEF> taskContext;
 
     public Task(TaskContext<TASK_DEF> taskContext, TaskCallable taskCallable) {
-        super(taskContext.$);
+        super(taskContext.$());
         taskContext.me = this;
         this.taskContext = taskContext;
         this.taskCallable = taskCallable;
@@ -61,10 +65,10 @@ public class Task<TASK_DEF extends TaskDef> extends HavingContext<Task<TaskDef>,
         setExecutionContext(new TaskExecutionContext($, this));
     }
 
-    public Task(Task parent, TaskCallable<TaskDef> taskCallable) {
+    public Task(Task<TaskDef> parent, TaskCallable<TaskDef> taskCallable) {
         super(parent.$);
 
-        this.taskContext = parent.taskContext.dup(this, null, parent);
+        this.taskContext = (TaskContext)parent.taskContext.dup(this, null, parent);
         this.taskCallable = taskCallable;
 
         setExecutionContext(new TaskExecutionContext($, this));
@@ -78,7 +82,7 @@ public class Task<TASK_DEF extends TaskDef> extends HavingContext<Task<TaskDef>,
         setExecutionContext(new TaskExecutionContext($, this));
     }
 
-    public TaskResult run(SessionTaskRunner runner, Object input) {
+    public TaskResult run(SessionRunner runner, Object input) {
         if (getParent() != null) {
             getParent().getExecutionContext().addNewSubTask(this);
         }
@@ -112,13 +116,13 @@ public class Task<TASK_DEF extends TaskDef> extends HavingContext<Task<TaskDef>,
 
     }
 
-    protected TaskResult exec(SessionTaskRunner runner, Object input) {
+    protected TaskResult exec(SessionRunner runner, Object input) {
         throw new UnsupportedOperationException("todo: implement or use nop() task or set callable!");
     }
 
     private static final Task<TaskDef> NOP_TASK = new Task<TaskDef>(null, null, null) {
         @Override
-        protected TaskResult exec(SessionTaskRunner runner, Object input) {
+        protected TaskResult exec(SessionRunner runner, Object input) {
             return TaskResult.OK;
         }
     };
@@ -137,9 +141,8 @@ public class Task<TASK_DEF extends TaskDef> extends HavingContext<Task<TaskDef>,
 
     @Override
     public String toString() {
-        return getDefinition() == null ? getClass().getSimpleName() :
-
-            getDefinition().getDisplayName();
+        String defName = getDefinition() == null ? getClass().getSimpleName() : getDefinition().getDisplayName();
+        return defName + " (" + $.getName() + ")";
     }
 
     public Task<TASK_DEF> addDependency(Dependency... dependencies) {
@@ -181,9 +184,9 @@ public class Task<TASK_DEF extends TaskDef> extends HavingContext<Task<TaskDef>,
         taskContext.phaseParty = party;
         taskContext.grid = (ComputingGrid) party.grid;
         taskContext.globalRunner = globalTaskRunner;
-        $ = party.getColumn();
+        set$(party.getColumn());
         taskContext.executionContext.set$($);
-        taskContext.$ = $;
+        taskContext.set$($);
     }
 
     public TASK_DEF getDefinition() {
@@ -195,7 +198,15 @@ public class Task<TASK_DEF extends TaskDef> extends HavingContext<Task<TaskDef>,
     }
 
     public void setExecutionContext(TaskExecutionContext executionContext) {
+        wrongThreadCheck(executionContext.$());
         taskContext.executionContext = executionContext;
+    }
+
+    public static void wrongThreadCheck(AbstractContext $) {
+        if($!= null && "vm01".equals($.getName()) && "vm02".equals(Thread.currentThread().getName())){
+            logger.error("wrong thread", new Exception());
+            throw new RuntimeException();
+        }
     }
 
     public String getId() {
@@ -210,11 +221,11 @@ public class Task<TASK_DEF extends TaskDef> extends HavingContext<Task<TaskDef>,
         taskContext.bear = bear;
     }
 
-    public SessionTaskRunner getRunner() {
+    public SessionRunner getRunner() {
         return taskContext.runner;
     }
 
-    public void setRunner(SessionTaskRunner runner) {
+    public void setRunner(SessionRunner runner) {
         taskContext.runner = runner;
     }
 

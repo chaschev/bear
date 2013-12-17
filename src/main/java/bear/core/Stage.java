@@ -78,7 +78,7 @@ public class Stage {
         List<SessionContext> $s = new ArrayList<SessionContext>();
 
         for (Address address : addresses) {
-            final SessionTaskRunner runner = new SessionTaskRunner(null, global);
+            final SessionRunner runner = new SessionRunner(null, global);
 
             SessionContext $ = new SessionContext(global, address, runner);
 
@@ -91,8 +91,7 @@ public class Stage {
             execContext.textAppended.addListener(new DynamicVariable.ChangeListener<String>() {
                 public void changedValue(DynamicVariable<String> var, String oldValue, String newValue) {
                     if (StringUtils.isNotEmpty(newValue)) {
-                        ui.info(
-                            new TextConsoleEventToUI($.getName(), newValue)
+                        ui.info(new TextConsoleEventToUI($.getName(), newValue)
                                 .setParentId(execContext.currentCommand.getDefaultValue().command.id)
                         );
                     }

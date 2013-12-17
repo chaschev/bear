@@ -96,7 +96,7 @@ public class MySqlPlugin extends Plugin<Task, TaskDef<?>> {
         public Task createNewSession(SessionContext $, Task parent, TaskDef def) {
             return new InstallationTask<InstallationTaskDef>(parent, (InstallationTaskDef) def, $) {
                 @Override
-                protected TaskResult exec(SessionTaskRunner runner, Object input) {
+                protected TaskResult exec(SessionRunner runner, Object input) {
                     final Version version = computeInstalledClientVersion($.sys);
 
                     final boolean installedVersionOk = version != null && $(getVersion).containsVersion(version);
@@ -137,7 +137,7 @@ public class MySqlPlugin extends Plugin<Task, TaskDef<?>> {
         }
     }) ;
 
-    private Version computeInstalledServerVersion(SessionTaskRunner runner) {
+    private Version computeInstalledServerVersion(SessionRunner runner) {
         final CommandLineResult r = runScript(runner, "select version();");
 
         if (r.getResult().nok() || StringUtils.isBlank(r.text)) {
@@ -171,7 +171,7 @@ public class MySqlPlugin extends Plugin<Task, TaskDef<?>> {
         public Task createNewSession(SessionContext $, Task parent, TaskDef def) {
             return new Task<TaskDef>(parent, def, $) {
                 @Override
-                protected TaskResult exec(SessionTaskRunner runner, Object input) {
+                protected TaskResult exec(SessionRunner runner, Object input) {
                     return runScript(runner, "SELECT User FROM mysql.user;");
                 }
             };
@@ -184,7 +184,7 @@ public class MySqlPlugin extends Plugin<Task, TaskDef<?>> {
         public Task createNewSession(SessionContext $, Task parent, TaskDef def) {
             return new Task<TaskDef>(parent, def, $) {
                 @Override
-                protected TaskResult exec(SessionTaskRunner runner, Object input) {
+                protected TaskResult exec(SessionRunner runner, Object input) {
                     final String s = Question.freeQuestion("Enter sql to execute: ");
 
                     return runScript(runner, s);
@@ -199,7 +199,7 @@ public class MySqlPlugin extends Plugin<Task, TaskDef<?>> {
         public Task createNewSession(SessionContext $, Task parent, TaskDef def) {
             return new Task<TaskDef>(parent, def, $) {
                 @Override
-                protected TaskResult exec(SessionTaskRunner runner, Object input) {
+                protected TaskResult exec(SessionRunner runner, Object input) {
                     Question.freeQuestionWithOption("Enter a filename", $(dumpName), dumpName);
 
                     $.sys.mkdirs($(dumpsDirPath));
@@ -224,7 +224,7 @@ public class MySqlPlugin extends Plugin<Task, TaskDef<?>> {
         public Task createNewSession(SessionContext $, Task parent, TaskDef<Task> def) {
             return new Task<TaskDef>(parent, def, $) {
                 @Override
-                protected TaskResult exec(SessionTaskRunner runner, Object input) {
+                protected TaskResult exec(SessionRunner runner, Object input) {
                     runner.run(createDump);
 
                     $.sys.download($(dumpPath));
@@ -240,7 +240,7 @@ public class MySqlPlugin extends Plugin<Task, TaskDef<?>> {
         public Task createNewSession(SessionContext $, Task parent, TaskDef<Task> def) {
             return new Task<TaskDef>(parent, def, $) {
                 @Override
-                protected TaskResult exec(SessionTaskRunner runner, Object input) {
+                protected TaskResult exec(SessionRunner runner, Object input) {
                     Question.freeQuestionWithOption("Enter a filepath", $(dumpName), dumpName);
 
                     return $.sys.script().line()
@@ -255,11 +255,11 @@ public class MySqlPlugin extends Plugin<Task, TaskDef<?>> {
     });
 
 
-    public CommandLineResult runScript(SessionTaskRunner runner, String sql) {
+    public CommandLineResult runScript(SessionRunner runner, String sql) {
         return runScript(runner, sql, runner.$(user), runner.$(password));
     }
 
-    public CommandLineResult runScript(SessionTaskRunner runner, String sql, String user, final String pw) {
+    public CommandLineResult runScript(SessionRunner runner, String sql, String user, final String pw) {
         final String filePath = runner.$(mysqlTempScriptPath);
 
         final SystemSession sys = runner.$().sys;

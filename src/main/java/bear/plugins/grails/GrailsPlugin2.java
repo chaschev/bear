@@ -67,7 +67,7 @@ public class GrailsPlugin2 extends ServerToolPlugin {
             return new Task<TaskDef>(parent, def, $) {
 
                 @Override
-                protected TaskResult exec(SessionTaskRunner runner, Object input) {
+                protected TaskResult exec(SessionRunner runner, Object input) {
                     $.log("building the Grails project ...");
 
                     PendingRelease pendingRelease = $.var(releases.pendingRelease);
@@ -117,7 +117,7 @@ public class GrailsPlugin2 extends ServerToolPlugin {
         public ZippedTool createNewSession(SessionContext $, Task parent, TaskDef<ZippedTool> def) {
             return new ZippedTool(parent, (InstallationTaskDef) def, $) {
                 @Override
-                protected DependencyResult exec(SessionTaskRunner runner, Object input) {
+                protected DependencyResult exec(SessionRunner runner, Object input) {
                     clean();
 
                     download();

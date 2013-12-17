@@ -8,7 +8,7 @@ import bear.core.SessionContext;
 import bear.session.Result;
 import bear.session.SshAddress;
 import bear.session.Versions;
-import bear.task.SessionTaskRunner;
+import bear.task.SessionRunner;
 import bear.vcs.CommandLineResult;
 import chaschev.util.Exceptions;
 import org.eclipse.aether.version.InvalidVersionSpecificationException;
@@ -51,7 +51,7 @@ public class SessionTest extends HavingContext<SessionTest, SessionContext>{
         g.put(g.bear.sshPassword, "pass");
         g.put(g.bear.name, "unitTests");
 
-        SessionTaskRunner runner = new SessionTaskRunner(null, g);
+        SessionRunner runner = new SessionRunner(null, g);
         $ = new SessionContext(g, new SshAddress("u", "p", "host"), runner);
 
         runner.set$($);

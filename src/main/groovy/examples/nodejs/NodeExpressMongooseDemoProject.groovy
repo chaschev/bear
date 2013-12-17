@@ -1,11 +1,11 @@
-package examples.node
+package examples.nodejs
 import bear.context.Fun
 import bear.core.*
 import bear.plugins.db.DumpManagerPlugin
 import bear.plugins.misc.ReleasesPlugin
 import bear.plugins.mongo.MongoDbPlugin
 import bear.plugins.nodejs.NodeJsPlugin
-import bear.plugins.play.ConfigureServiceInput
+import bear.plugins.ConfigureServiceInput
 import bear.strategy.DeploymentPlugin
 import bear.task.Task
 import bear.task.TaskCallable
@@ -38,6 +38,8 @@ public class NodeExpressMongooseDemoProject extends BearProject<NodeExpressMongo
         nodeJs.version.set("0.10.22");
         nodeJs.appCommand.set("server.js")
         nodeJs.projectPath.setEqualTo(bear.vcsBranchLocalPath);
+
+        nodeJs.instancePorts.set("5000, 5001")
 
         bear.vcsBranchName.defaultTo("master");
 
@@ -92,26 +94,31 @@ public class NodeExpressMongooseDemoProject extends BearProject<NodeExpressMongo
     // main, can be run directly from an IDE
     static main(def args)
     {
-        deploy(new NodeExpressMongooseDemoProject())
+        deploy()
     }
 
     // deploy script
-    static deploy(NodeExpressMongooseDemoProject demo)
+    static deploy()
     {
+        def demo = new NodeExpressMongooseDemoProject()
         demo
             .set(demo.main().propertiesFile, new File(".bear/express-demo.properties"))
             .configure()
+            .set(demo.bear.stage, "three")
             .newGrid()
             .add(demo.deployProject)
             .run()
     }
 
     // setup script
-    static setup(NodeExpressMongooseDemoProject demo)
+    static setup()
     {
+        def demo = new NodeExpressMongooseDemoProject()
+
         demo
             .set(demo.main().propertiesFile, new File(".bear/express-demo.properties"))
             .configure()
+            .set(demo.bear.stage, "three")
             .set(demo.bear.verifyPlugins, true)
             .set(demo.bear.autoInstallPlugins, true)
             .set(demo.bear.checkDependencies, true)

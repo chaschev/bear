@@ -30,10 +30,27 @@ import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
 import static bear.context.Fun.UNDEFINED;
 
+/**
+ * Todo refactoring ideas:
+ *
+ * variables registry is read-only, so AtomicInteger as a static global index is enough for syncing them during init.
+ * memoization lock can be a flag in a registry (it works this way and efficient I guess, but code is hard to read)
+ * TIntObject or even no map/array could be used for the registry (vars are stored as mentioned below)
+ *
+ * Further optimizations:
+ *
+ * variables names are latin1, so it makes sense putting them all into byte[]
+ * same for the variable flags - can be put into AtomicIntArray
+ *
+ * Some of the implementation concepts:
+ *
+ * initialLayer: a var can be evaluated from $, but applied in global, so initialLayer is passed to global layer to apply var in global layer
+ */
 public class VariablesLayer extends HavingContext<Variables, AbstractContext> {
     private static final Logger logger = LoggerFactory.getLogger(VariablesLayer.class);
 
@@ -128,7 +145,7 @@ public class VariablesLayer extends HavingContext<Variables, AbstractContext> {
     public VariablesLayer removeConst(String name) {
         Object remove = constants.remove(name);
         if(remove != null){
-            logger.debug("{}: removed :{} ({})",this.name, name, remove);
+            logger.debug("{}: removed :{} ({})", this.name, name, remove);
         }
         return this;
     }
@@ -154,33 +171,35 @@ public class VariablesLayer extends HavingContext<Variables, AbstractContext> {
         return this;
     }
 
-    public String getString(DynamicVariable name, String _default) {
-        final Object result = get(name, _default);
-
-        if (result == null) return null;
-
-        return result.toString();
-    }
-
-    public <T> T get(Nameable<T> name, T _default) {
-        return get(name.name(), _default);
-    }
-
-    public <T> T get(String varName, T _default) {
+    protected  <T> T get(String varName, T _default) {
         return (T) getByVarName(null, varName, _default, this, false);
     }
 
     public <T> T get(DynamicVariable<T> var) {
-        return (T) getNoTemplates(var, UNDEFINED);
+        return (T) getByVarName(var, var.name(), UNDEFINED, this, false);
     }
 
-    private <T> T atomicMemoize(DynamicVariable<?> var, String varName, Object _default) {
-        SettableFuture<T> future = new SettableFuture<T>();
-        Object o = constants.putIfAbsent(var.name(), future);
-        boolean iAmTheOwner = o == null;
+    private <T> T atomicMemoize(DynamicVariable<?> var, String varName, Object _default, VariablesLayer initialLayer) {
+        boolean iAmTheOwner;
+        Object o;
+
+        Object temp = constants.get(var.name());
+
+        SettableFuture<T> future = null;
+
+        //quick test without future creation
+        if (temp instanceof SettableFuture) {
+            o = temp;
+            iAmTheOwner = false;
+        }else{
+            future = new SettableFuture<T>();
+            o = constants.putIfAbsent(var.name(), future);
+            iAmTheOwner = o == null;
+        }
+
         if(iAmTheOwner){
             try {
-                T result = (T) getByVarName(var, varName, _default, this, true);
+                T result = (T) getByVarName(var, varName, _default, initialLayer, true);
                 future.set(result);
                 return result;
             } catch (Exception e) {
@@ -192,8 +211,10 @@ public class VariablesLayer extends HavingContext<Variables, AbstractContext> {
             try {
                 //todo define memoization timeout
                 return ((Future<T>)o).get();
-            } catch (Exception e) {
+            } catch (InterruptedException e) {
                 throw Exceptions.runtime(e);
+            } catch (ExecutionException e) {
+                throw Exceptions.runtime(e.getCause());
             }
         }
 
@@ -225,15 +246,6 @@ public class VariablesLayer extends HavingContext<Variables, AbstractContext> {
         return o;
     }
 
-    public <T> T get(DynamicVariable<T> var, T _default) {
-        return (T) getNoTemplates(var, _default);
-    }
-
-    protected Object getNoTemplates(DynamicVariable<?> var, Object _default) {
-        String varName = var.name();
-
-        return getByVarName(var, varName, _default, this, false);
-    }
 
     /**
      *
@@ -251,9 +263,8 @@ public class VariablesLayer extends HavingContext<Variables, AbstractContext> {
         Preconditions.checkArgument(var != null || varName != null, "they can't both be null!");
         Preconditions.checkArgument(var == null || var.isNameSet(), "var must have name set");
 
-
         if(!memoization && var != null && var.memoizeIn() == $.getClass()){
-            return atomicMemoize(var, varName, _default);
+            return atomicMemoize(var, varName, _default, initialLayer);
         }
 
 //        if(this == initialLayer){
@@ -612,7 +623,7 @@ public class VariablesLayer extends HavingContext<Variables, AbstractContext> {
     public String toString() {
         final StringBuilder sb = new StringBuilder("VariablesLayer{");
         sb.append("name='").append(name).append('\'');
-        sb.append(", fallbackVariablesLayer=").append(fallbackVariablesLayer.getName());
+        if(fallbackVariablesLayer != null) sb.append(", fallbackVariablesLayer=").append(fallbackVariablesLayer.getName());
         sb.append(", constants=").append(constants.size());
         sb.append(", variables=").append(variables.size());
         sb.append('}');

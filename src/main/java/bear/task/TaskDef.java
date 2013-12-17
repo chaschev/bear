@@ -16,9 +16,11 @@
 
 package bear.task;
 
+import bear.context.Fun;
 import bear.core.Role;
 import bear.core.SessionContext;
-import chaschev.lang.MutableSupplier;
+import bear.session.DynamicVariable;
+import bear.session.Variables;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
@@ -54,7 +56,6 @@ public class TaskDef<TASK extends Task>{
 
     public TaskDef(SingleTaskSupplier<TASK> singleTaskSupplier) {
         this(null, singleTaskSupplier);
-        this.name = defaultName();
     }
 
     public TaskDef(String name, SingleTaskSupplier<TASK> singleTaskSupplier) {
@@ -62,9 +63,8 @@ public class TaskDef<TASK extends Task>{
         this.name = name;
     }
 
-    public TaskDef(MultitaskSupplier multitaskSupplier) {
-        this(null, null, multitaskSupplier);
-        this.name = defaultName();
+    public TaskDef(String name, MultitaskSupplier multitaskSupplier) {
+        this(name, null, multitaskSupplier);
     }
 
     public TaskDef(String name, SingleTaskSupplier<TASK> singleTaskSupplier, MultitaskSupplier<TASK> multitaskSupplier) {
@@ -99,9 +99,9 @@ public class TaskDef<TASK extends Task>{
         return task;
     }
 
-    public TaskResult runRollback(SessionTaskRunner sessionTaskRunner) {
+    public TaskResult runRollback(SessionRunner sessionRunner) {
         if(rollback != null){
-            return sessionTaskRunner.run(rollback);
+            return sessionRunner.run(rollback);
         }
         return TaskResult.OK;
     }
@@ -212,28 +212,45 @@ public class TaskDef<TASK extends Task>{
     }
 
     public String getName() {
-        return name;
+        return name == null ? "@" + hashCode() : name;
     }
 
     public String getDisplayName() {
-        return getName() +
-            (roles.isEmpty() ? "" : " with roles: " + roles);
+        String name = this.name == null ? defaultName() : this.name;
+        return name + (roles.isEmpty() ? "" : " with roles: " + roles);
     }
 
     public boolean isMultitask() {
         return multitaskSupplier != null;
     }
 
+
+//    static AtomicInteger createdLists = new AtomicInteger();
+
+    //the purpose is to lazy-initialize this factory
+    //memoize is required because task is single, sub-taskdefs are created in a single thread...
     protected final Supplier<List<TaskDef<TASK>>> multiDefsSupplier = Suppliers.memoize(new Supplier<List<TaskDef<TASK>>>() {
         @Override
         public List<TaskDef<TASK>> get() {
             final TaskDef<TASK> enclosingTaskDef = TaskDef.this;
 
-            final MutableSupplier<List<TASK>> supplier = new MutableSupplier<List<TASK>>();
-
             MultitaskSupplier<TASK> multitaskSupplier = multitaskSupplier();
-
             List<TaskDef<TASK>> taskDefs = new ArrayList<TaskDef<TASK>>(multitaskSupplier.size());
+
+            //attached to a task def, value memoized in a session
+            final DynamicVariable<List<TASK>> taskListInASession = Variables.dynamic(new Fun<SessionContext, List<TASK>>() {
+                @Override
+                public List<TASK> apply(SessionContext $) {
+                    // LoggerFactory.getLogger("log").info("created tasks: {}, $: {}, @{}", tasks, $.getName(), System.identityHashCode(list));
+
+                    return enclosingTaskDef.multitaskSupplier().createNewSessions($, $.getCurrentTask());
+                }
+            })  .setName(enclosingTaskDef.getName())
+                .memoizeIn(SessionContext.class);
+
+            // "for this task def"
+            // "in this session"
+            // multitask is created once
 
             for (int i = 0; i < multitaskSupplier.size(); i++) {
                 final int finalI = i;
@@ -241,15 +258,11 @@ public class TaskDef<TASK extends Task>{
                 taskDefs.add(new TaskDef<TASK>(new SingleTaskSupplier<TASK>() {
                     @Override
                     public TASK createNewSession(SessionContext $, Task parent, TaskDef<TASK> def) {
-                        if(!supplier.isFinalized()){
-                            synchronized (supplier){
-                                if(!supplier.isFinalized()){
-                                    supplier.setInstance(enclosingTaskDef.multitaskSupplier().createNewSessions($, parent)).makeFinal();
-                                }
-                            }
-                        }
+                        Task.wrongThreadCheck($);
+                        List<TASK> tasks = $.var(taskListInASession);
 
-                        return supplier.get().get(finalI);
+                        return tasks.get(finalI);
+//                        return $.var(sessionMemMultiTask).createNewSessions($, parent).get(finalI);
                     }
                 }));
             }

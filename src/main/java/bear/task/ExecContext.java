@@ -31,4 +31,7 @@ public abstract class ExecContext<SELF> extends HavingContext<SELF, SessionConte
     public abstract boolean visit(TaskExecutionContext.ExecutionVisitor visitor);
 
 
+    public boolean hasStarted(){
+        return true;
+    }
 }

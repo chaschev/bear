@@ -21,6 +21,7 @@ import bear.core.Bear;
 import bear.core.GlobalContext;
 import bear.core.SessionContext;
 import com.google.common.base.Function;
+import com.google.common.base.Preconditions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -32,15 +33,15 @@ import java.util.List;
 /**
  * @author Andrey Chaschev chaschev@gmail.com
  */
-public class SessionTaskRunner extends HavingContext<SessionTaskRunner, SessionContext>{
-    private static final Logger logger = LoggerFactory.getLogger(SessionTaskRunner.class);
+public class SessionRunner extends HavingContext<SessionRunner, SessionContext>{
+    private static final Logger logger = LoggerFactory.getLogger(SessionRunner.class);
     LinkedHashSet<TaskDef> tasksExecuted = new LinkedHashSet<TaskDef>();
 
     public final GlobalContext global;
     public final Bear bear;
     public Function<Task<TaskDef>, Task<TaskDef>> taskPreRun; //a hack
 
-    public SessionTaskRunner(SessionContext $, GlobalContext global) {
+    public SessionRunner(SessionContext $, GlobalContext global) {
         super($);
         this.global = global;
         this.bear = global.bear;
@@ -151,6 +152,13 @@ public class SessionTaskRunner extends HavingContext<SessionTaskRunner, SessionC
     }
 
     public TaskResult runSession(Task<?> taskSession, Object input) {
+        {
+            SessionContext taskCtx = taskSession.$();
+            boolean sameContexts = taskCtx == null || taskCtx == $;
+            Preconditions.checkArgument(sameContexts, "" +
+                "contexts are different for task sessions: %s vs %s", taskCtx == null ? null : taskCtx.getName(), ($ == null ? null : $.getName()));
+        }
+
         TaskResult result = TaskResult.OK;
 
         // todo this line was added for dep checks and might be needed to be removed
@@ -170,5 +178,13 @@ public class SessionTaskRunner extends HavingContext<SessionTaskRunner, SessionC
         }
 
         return result;
+    }
+
+    @Override
+    public String toString() {
+        final StringBuilder sb = new StringBuilder("SessionRunner{");
+        if($ != null) sb.append("name=").append($.getName());
+        sb.append('}');
+        return sb.toString();
     }
 }
