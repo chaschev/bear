@@ -43,6 +43,11 @@ public abstract class SystemEnvironmentPlugin extends Plugin<SystemSession, Syst
         this.name = name;
     }
 
+    @Override
+    public void initPlugin() {
+//        requireVars(bear.sshUsername, bear.sshPassword);
+    }
+
     public static ConsoleCallback sshPassword(final SessionContext $) {
         String pass = $.var($.bear.sshPassword);
         return println(pass);

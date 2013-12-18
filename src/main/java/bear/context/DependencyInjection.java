@@ -28,8 +28,6 @@ import bear.task.TaskDef;
 import bear.task.Tasks;
 import chaschev.lang.OpenBean;
 import com.google.common.base.Preconditions;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.text.WordUtils;
 
 import javax.annotation.Nullable;
 import java.lang.reflect.Field;
@@ -40,7 +38,7 @@ import java.lang.reflect.Field;
 public class DependencyInjection {
     public static void nameVars(Object obj, AppGlobalContext global) {
         final Class<?> aClass = obj.getClass();
-        final String className = shorten(aClass.getSimpleName());
+        final String className = Plugin.shortenName(aClass.getSimpleName());
         final Field[] fields = OpenBean.getClassDesc(aClass).fields;
 
         try {
@@ -75,30 +73,7 @@ public class DependencyInjection {
     private static String shortName(Class<?> aClass, String className, Field field) {
         Class<?> thisFieldClass = field.getDeclaringClass();
 
-        return aClass == thisFieldClass ? className : shorten(aClass.getSimpleName());
-    }
-
-    public static String shorten(String className) {
-//        StringBuilder sb = new StringBuilder(className.length() + 5);
-
-        className = StringUtils.substringBefore(className, "Plugin");
-        className = WordUtils.uncapitalize(className);
-
-//        for (int i = 0; i < className.length(); i++) {
-//            char ch = className.charAt(i);
-//            if(Character.isUpperCase(ch)){
-//                if(i>0){
-//                    sb.append('-');
-//                }
-//
-//                sb.append(Character.toLowerCase(ch));
-//            }else{
-//                sb.append(ch);
-//            }
-//        }
-//
-//        className = sb.toString();
-        return className;
+        return aClass == thisFieldClass ? className : Plugin.shortenName(aClass.getSimpleName());
     }
 
     public static void inject(Object obj, SessionContext $){

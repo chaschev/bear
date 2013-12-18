@@ -14,19 +14,24 @@
  * limitations under the License.
  */
 
-package bear.strategy;
+package bear.annotations;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
-/**
- * @author Andrey Chaschev chaschev@gmail.com
- */
-public class Symlinks {
-    List<SymlinkEntry> entries = new ArrayList<SymlinkEntry>(4);
+@Retention(RetentionPolicy.RUNTIME)
+@Target({ElementType.FIELD, ElementType.TYPE})
+public @interface Configuration {
+    String propertiesFile() default "";
 
-    public Symlinks add(SymlinkEntry symlinkEntry) {
-        entries.add(symlinkEntry);
-        return this;
-    }
+    String stage() default "";
+    Variable[] variables() default {};
+
+    boolean useUI() default true;
+
+    String vcs() default "";
+    String branch() default "";
+    String tag() default "";
 }

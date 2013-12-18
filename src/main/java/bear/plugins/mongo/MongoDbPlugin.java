@@ -3,7 +3,7 @@ package bear.plugins.mongo;
 import bear.core.Bear;
 import bear.core.GlobalContext;
 import bear.core.SessionContext;
-import bear.core.Shell;
+import bear.annotations.Shell;
 import bear.plugins.Plugin;
 import bear.plugins.sh.SystemSession;
 import bear.plugins.sh.UnixSubFlavour;

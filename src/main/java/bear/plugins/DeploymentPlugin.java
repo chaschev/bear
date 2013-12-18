@@ -1,8 +1,7 @@
-package bear.strategy;
+package bear.plugins;
 
 import bear.core.GlobalContext;
 import bear.core.SessionContext;
-import bear.plugins.Plugin;
 import bear.plugins.misc.PendingRelease;
 import bear.plugins.misc.Release;
 import bear.plugins.misc.Releases;
@@ -78,6 +77,20 @@ public class DeploymentPlugin extends Plugin {
 
             public Builder endDeploy() {
                 return Builder.this;
+            }
+
+            public List<TaskDef<Task>> createTasksToList(List<TaskDef<Task>> tasks){
+                addTask(tasks, beforeCallable, "before");
+                addTask(tasks, taskCallable, "task");
+                addTask(tasks, afterCallable, "after");
+
+                return tasks;
+            }
+
+            private void addTask(List<TaskDef<Task>> tasks, TaskCallable callable, String callableName) {
+                if(callable == null) return;
+
+                tasks.add(new TaskDef<Task>(callable).setName(getClass().getSimpleName() + " - " + callable));
             }
         }
 
@@ -254,6 +267,9 @@ public class DeploymentPlugin extends Plugin {
                 public TaskResult call(SessionContext $, Task<TaskDef> task, Object input) throws Exception {
                     Optional<Release> activatedRelease = $.var(releases.activatedRelease);
 
+                    if($.var(releases.manualRollback)){
+                        $.var(releases.session).markRollback(activatedRelease.get());
+                    }else
                     if(activatedRelease.isPresent()){
                         $.var(releases.session).markFailed(activatedRelease.get());
                     }
@@ -288,41 +304,43 @@ public class DeploymentPlugin extends Plugin {
             };
 
 
-            int size = 0;
+
+            final List<TaskDef<Task>> taskDefs = new ArrayList<TaskDef<Task>>();
+
             for (DeploymentStep deploymentStep : deploymentSteps) {
-                if(deploymentStep.beforeCallable != null) size++;
-                if(deploymentStep.taskCallable != null) size++;
-                if(deploymentStep.afterCallable != null) size++;
+                deploymentStep.createTasksToList(taskDefs);
             }
 
-            final int finalSize = size;
             return new TaskDef<Task>("deployment builder task", new MultitaskSupplier<Task>() {
                 @Override
                 public List<Task> createNewSessions(SessionContext $, Task parent) {
                     final List<Task> tasks = new ArrayList<Task>();
 
-                    for (DeploymentStep<?> deploymentStep : deploymentSteps) {
-                        addTask(tasks, parent, deploymentStep.beforeCallable);
-                        addTask(tasks, parent, deploymentStep.taskCallable);
-                        addTask(tasks, parent, deploymentStep.afterCallable);
+                    for (TaskDef<Task> taskDef : taskDefs) {
+                        tasks.add(taskDef.singleTaskSupplier().createNewSession($, parent, taskDef));
                     }
 
                     return tasks;
                 }
 
+
                 @Override
                 public int size() {
-                    return finalSize;
+                    return taskDefs.size();
                 }
             }).onRollback(new TaskDef<Task>(Tasks.newSingleTask(ifRollbackCallable)));
         }
 
-        private void addTask(List<Task> tasks, Task parent, TaskCallable callable) {
-            Task<TaskDef> task = callable == null ? null : new Task<TaskDef>(parent, callable);
+        public StopService getStopService() {
+            return stopService;
+        }
 
-            if(task!=null){
-                tasks.add(task);
-            }
+        public StartService getStartService() {
+            return startService;
+        }
+
+        public IfRollback getIfRollback() {
+            return ifRollback;
         }
     }
 

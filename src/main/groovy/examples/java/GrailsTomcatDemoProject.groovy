@@ -1,5 +1,7 @@
 package examples.java
+
 import bear.core.*
+import bear.plugins.ConfigureServiceInput
 import bear.plugins.db.DbDumpInfo
 import bear.plugins.db.DbDumpManager
 import bear.plugins.db.DumpManagerPlugin
@@ -9,8 +11,7 @@ import bear.plugins.java.TomcatPlugin
 import bear.plugins.maven.MavenPlugin
 import bear.plugins.misc.UpstartPlugin
 import bear.plugins.mysql.MySqlPlugin
-import bear.plugins.ConfigureServiceInput
-import bear.strategy.DeploymentPlugin
+import bear.plugins.DeploymentPlugin
 import bear.task.Task
 import bear.task.TaskCallable
 import bear.task.TaskDef
@@ -19,6 +20,7 @@ import com.google.common.base.Function
 
 import static bear.plugins.db.DumpManagerPlugin.DbType.mongo
 import static bear.task.TaskResult.OK
+
 /**
  * @author Andrey Chaschev chaschev@gmail.com
  */
@@ -35,8 +37,6 @@ public class GrailsTomcatDemoProject extends BearProject<GrailsTomcatDemoProject
     TomcatPlugin tomcat
     GrailsPlugin2 grails
     UpstartPlugin upstart
-
-    public TaskDef<Task> deployProject
 
     @Override
     protected GlobalContext configureMe(GlobalContextFactory factory) throws Exception
@@ -63,7 +63,7 @@ public class GrailsTomcatDemoProject extends BearProject<GrailsTomcatDemoProject
             .addSimple("three", "vm01, vm02, vm03"));
 
         // this defines the deployment task
-        deployProject = deployment.newBuilder()
+        defaultDeployment = deployment.newBuilder()
             .CheckoutFiles_2({ _, task, input -> _.run(global.tasks.vcsUpdate); } as TaskCallable)
             .BuildAndCopy_3({ _, task, input -> _.run(grails.build); } as TaskCallable)
             .StopService_5({ _, task, input -> _.run(tomcat.stop); OK; } as TaskCallable)
@@ -73,7 +73,6 @@ public class GrailsTomcatDemoProject extends BearProject<GrailsTomcatDemoProject
             .beforeLinkSwitch({ _, task, input -> _.run(tomcat.stop); } as TaskCallable)
             .afterLinkSwitch({ _, task, input -> _.run(tomcat.start, tomcat.watchStart); } as TaskCallable)
             .endRollback()
-            .build();
 
         return global;
     }
@@ -104,12 +103,6 @@ public class GrailsTomcatDemoProject extends BearProject<GrailsTomcatDemoProject
         );
     } as TaskCallable)
 
-    @Override
-    GridBuilder defaultGrid()
-    {
-        return dumpSampleGrid;
-    }
-
     static main(def args)
     {
         deploy()
@@ -124,7 +117,7 @@ public class GrailsTomcatDemoProject extends BearProject<GrailsTomcatDemoProject
             .configure()
             .set(demo.bear.clean, false)
             .newGrid()
-            .add(demo.deployProject)
+            .add(demo.defaultDeployment.build())
             .runCli();
     }
 

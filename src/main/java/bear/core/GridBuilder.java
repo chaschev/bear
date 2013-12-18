@@ -195,7 +195,7 @@ public class GridBuilder {
         return this;
     }
 
-    public GridBuilder addAll(List<TaskDef<Task>> taskList) {
+    public GridBuilder addAll(List<? extends TaskDef> taskList) {
         for (TaskDef<Task> def : taskList) {
             add(def);
         }
@@ -291,4 +291,6 @@ public class GridBuilder {
         this.project = project;
 
     }
+
+
 }

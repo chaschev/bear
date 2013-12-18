@@ -23,16 +23,14 @@ import bear.context.Fun;
 import bear.core.GlobalContext;
 import bear.core.SessionContext;
 import bear.plugins.ServerToolPlugin;
-import bear.plugins.misc.PendingRelease;
-import bear.plugins.misc.WatchDogGroup;
-import bear.plugins.misc.WatchDogInput;
-import bear.plugins.misc.WatchDogRunnable;
+import bear.plugins.misc.*;
 import bear.plugins.sh.Script;
 import bear.session.DynamicVariable;
 import bear.session.Variables;
 import bear.task.*;
 import bear.vcs.CommandLineResult;
 import com.google.common.base.Function;
+import com.google.common.base.Optional;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -42,6 +40,9 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import static bear.session.Variables.*;
+import static com.google.common.base.Predicates.containsPattern;
+import static com.google.common.base.Predicates.not;
+import static com.google.common.collect.Iterables.tryFind;
 
 /**
  * @author Andrey Chaschev chaschev@gmail.com
@@ -53,7 +54,7 @@ public class PlayPlugin extends ServerToolPlugin {
         configFile = dynamic("Path to an alternative application.conf"),
         stageTarget = concat(projectPath, "/target/universal/stage"),
         consoleLogPath = concat(instanceLogsPath, "/console"),
-        releaseExecPath = undefined()
+        releaseExecPath = undefined("a path to a play executable to run, internal var")
             ;
 
 
@@ -81,6 +82,40 @@ public class PlayPlugin extends ServerToolPlugin {
                 };
             }
         });
+
+        start.addBeforeTask(new TaskDef<Task>(new TaskCallable<TaskDef>() {
+            @Override
+            public TaskResult call(SessionContext $, Task<TaskDef> task, Object input) throws Exception {
+                Optional<Release> active = $.var(releases.activatedRelease);
+
+                if(active.isPresent()){
+                    Optional<String> execPath = getExecPath($, active.get());
+
+                    if(!execPath.isPresent()){
+                        return TaskResult.error("no executable for play release: " + active.get().toString());
+                    }
+
+                    $.putConst(releaseExecPath, execPath.get());
+                }else{
+                    return TaskResult.error("no active release found");
+                }
+
+                return TaskResult.OK;
+            }
+        }).setName("play - find exec path"));
+    }
+
+    private Optional<String> getExecPath(SessionContext $, Release release) {
+        String capture = $.sys.capture("ls -w 1 " + release.path + "/" + $.var(appName) + "/bin/*");
+
+        Optional<String> execPath = tryFind(LINE_SPLITTER.split(
+            capture.trim()), not(containsPattern("\\.bat$")));
+
+        if (!execPath.isPresent()) {
+            throw new RuntimeException("could not find a jar, dir content: " + capture);
+        }
+
+        return execPath;
     }
 
     public final TaskDef<Task> build = new TaskDef<Task>(new SingleTaskSupplier<Task>() {

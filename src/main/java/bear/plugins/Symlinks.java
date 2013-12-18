@@ -14,32 +14,19 @@
  * limitations under the License.
  */
 
-package bear.strategy;
+package bear.plugins;
 
-import bear.session.DynamicVariable;
-
-import javax.annotation.Nullable;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author Andrey Chaschev chaschev@gmail.com
  */
-public class SymlinkEntry {
-    //path in $current
-    String sourcePath;
-    //dest path in variable
-    DynamicVariable<String> destPath;
-    //apply chown if needed
-    @Nullable
-    String owner;
+public class Symlinks {
+    List<SymlinkEntry> entries = new ArrayList<SymlinkEntry>(4);
 
-    public SymlinkEntry(String sourcePath, DynamicVariable<String> destPath) {
-        this.sourcePath = sourcePath;
-        this.destPath = destPath;
-    }
-
-    public SymlinkEntry(String sourcePath, DynamicVariable<String> destPath, String owner) {
-        this.sourcePath = sourcePath;
-        this.destPath = destPath;
-        this.owner = owner;
+    public Symlinks add(SymlinkEntry symlinkEntry) {
+        entries.add(symlinkEntry);
+        return this;
     }
 }

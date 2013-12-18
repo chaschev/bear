@@ -16,6 +16,7 @@
 
 package bear.plugins.sh;
 
+import bear.annotations.Shell;
 import bear.core.*;
 import bear.session.Address;
 import bear.session.SshAddress;

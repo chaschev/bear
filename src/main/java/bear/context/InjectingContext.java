@@ -17,6 +17,7 @@
 package bear.context;
 
 import bear.context.inject.InjectingVariable;
+import bear.plugins.Plugin;
 import bear.session.DynamicVariable;
 import chaschev.lang.OpenBean;
 import chaschev.lang.reflect.ClassDesc;
@@ -85,7 +86,7 @@ public class InjectingContext<CONTEXT extends AbstractContext> extends AbstractC
 
             Field[] fields = OpenBean.getClassDesc(objClass).fields;
 
-            String scope = scopeClass == null ? "" : DependencyInjection.shorten(scopeClass.getSimpleName()) + ".";
+            String scope = scopeClass == null ? "" : Plugin.shortenName(scopeClass.getSimpleName()) + ".";
 
             Class<? extends AbstractContext> myClass = parent.getClass();
 

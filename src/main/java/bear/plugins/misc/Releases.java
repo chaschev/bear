@@ -304,7 +304,11 @@ public class Releases extends HavingContext<Releases, SessionContext>{
         getCurrentRelease(); //makes it active
     }
 
-    private Optional<Release> findByRef(ReleaseRef releaseRef) {
+    public Optional<Release> findAny(String labelOrPath) {
+        return findByRef(ReleaseRef.label(labelOrPath)).or(findByRef(ReleaseRef.path(labelOrPath)));
+    }
+
+    public Optional<Release> findByRef(ReleaseRef releaseRef) {
         String path ;
 
         if(releaseRef.isLabel()){
@@ -437,8 +441,16 @@ public class Releases extends HavingContext<Releases, SessionContext>{
             );
     }
 
+    public void markRollback(Release release) {
+        mark(release, "rollback");
+    }
+
     public void markFailed(Release release) {
-        release.status = "failed";
+        mark(release, "failed");
+    }
+
+    private void mark(Release release, String status) {
+        release.status = status;
         saveJson();
     }
 }

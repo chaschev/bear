@@ -16,9 +16,17 @@
 
 package bear.plugins;
 
+import bear.annotations.Shell;
 import bear.console.AbstractConsole;
-import bear.core.*;
+import bear.core.Bear;
+import bear.core.GlobalContext;
+import bear.core.Role;
+import bear.core.SessionContext;
+import bear.session.DynamicVariable;
+import bear.session.Variables;
 import bear.task.*;
+import org.apache.commons.lang3.text.WordUtils;
+import org.slf4j.LoggerFactory;
 
 import java.util.Set;
 
@@ -53,21 +61,31 @@ public abstract class Plugin<TASK extends Task, TASK_DEF extends TaskDef<? exten
         taskDefMixin = taskDef;
     }
 
-    public Task<? extends TaskDef> newSession(SessionContext $, Task<TaskDef> parent){
+    public static String shortenName(String className) {
+        int lastDotIndex = className.lastIndexOf('.');
+
+        int end = className.lastIndexOf("Plugin");
+
+        if(end == -1) end = className.length();
+
+        return WordUtils.uncapitalize(className.substring(lastDotIndex + 1, end));
+    }
+
+    public Task<? extends TaskDef> newSession(SessionContext $, Task<TaskDef> parent) {
         throw new UnsupportedOperationException("todo");
     }
 
     public void initPlugin() {
-        if(shell != null){
+        if (shell != null) {
             shell.init();
         }
     }
 
-    public InstallationTaskDef<? extends InstallationTask> getInstall(){
+    public InstallationTaskDef<? extends InstallationTask> getInstall() {
         return InstallationTaskDef.EMPTY;
     }
 
-    public DependencyResult checkPluginDependencies(){
+    public DependencyResult checkPluginDependencies() {
         return DependencyResult.OK;
     }
 
@@ -86,15 +104,15 @@ public abstract class Plugin<TASK extends Task, TASK_DEF extends TaskDef<? exten
         return r.updateResult();
     }
 
-    public AbstractConsole getConsole(){
+    public AbstractConsole getConsole() {
         throw new UnsupportedOperationException("plugin does not support console");
     }
 
-    public boolean isConsoleSupported(){
+    public boolean isConsoleSupported() {
         try {
             getConsole();
             return true;
-        }catch (UnsupportedOperationException e){
+        } catch (UnsupportedOperationException e) {
             return !e.getMessage().contains("plugin does not support console");
         }
     }
@@ -102,7 +120,7 @@ public abstract class Plugin<TASK extends Task, TASK_DEF extends TaskDef<? exten
     protected void require(DependencyResult r, Class<? extends Plugin<Task, ? extends TaskDef>> pluginClass) {
         final Plugin<Task, ? extends TaskDef> plugin = global.plugin(pluginClass);
 
-        if(plugin == null){
+        if (plugin == null) {
             r.add(plugin.getClass().getSimpleName() + " plugin is required");
         }
     }
@@ -136,7 +154,7 @@ public abstract class Plugin<TASK extends Task, TASK_DEF extends TaskDef<? exten
         return pluginDependencies;
     }
 
-    public Set<Role> getRoles(){
+    public Set<Role> getRoles() {
         return taskDefMixin.getRoles();
     }
 
@@ -152,11 +170,37 @@ public abstract class Plugin<TASK extends Task, TASK_DEF extends TaskDef<? exten
         return global;
     }
 
+    public final String getName(){
+        Class<? extends Plugin> pluginClass = getClass();
+        return getName(pluginClass);
+    }
+
+    public static String getName(Class<? extends Plugin> pluginClass) {
+        bear.annotations.Plugin plugin = pluginClass.getAnnotation(bear.annotations.Plugin.class);
+
+        if(plugin != null) return plugin.value();
+
+        Shell shell = pluginClass.getAnnotation(Shell.class);
+
+        if(shell != null) return shell.value();
+
+        return shortenName(pluginClass.getName());
+    }
+
     public final String cmdAnnotation() {
-        return this.getClass().getAnnotation(Shell.class).value();
+        return getClass().getAnnotation(Shell.class).value();
     }
 
     public TASK_DEF getTaskDefMixin() {
         return taskDefMixin;
+    }
+
+    protected void requireVars(DynamicVariable... vars) {
+        String msg = Variables.checkSet(global, getName(), vars);
+
+        if (msg != null) {
+            LoggerFactory.getLogger("log").error(msg);
+            throw new RuntimeException(msg);
+        }
     }
 }

@@ -19,7 +19,7 @@ package bear.plugins.sh;
 import bear.console.AbstractConsoleCommand;
 import bear.core.GlobalContext;
 import bear.core.SessionContext;
-import bear.core.Shell;
+import bear.annotations.Shell;
 import bear.session.ProcessRunner;
 import bear.session.Result;
 import bear.task.Task;

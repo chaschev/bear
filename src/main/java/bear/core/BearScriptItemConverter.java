@@ -1,5 +1,6 @@
 package bear.core;
 
+import bear.annotations.Shell;
 import bear.main.event.TextConsoleEventToUI;
 import bear.main.phaser.OnceEnteredCallable;
 import bear.plugins.Plugin;

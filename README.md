@@ -29,10 +29,10 @@ Bear is in it's early development stages now. Questions, concerns? Just drop me 
 | Node.js demo deployment - Drywall            | Finished.      |
 | Node.js demo deployment - ExpressMongoose    | Finished.      |
 | Grails/Tomcat demo deployment                | Finished.      |
-| Play! Framework three-hosts deployment       | In progress... |
+| Play! Framework three-hosts deployment       | Finished.      |
 | Node.js three-hosts deployment               | Finished.      |
 | Refactoring, simplifying API                 | In progress... |
-| Installer                                    |                |
+| Installer                                    | In progress... |
 | UI bugfixing                                 |                |
 | Implementing TODOs                           |                |
 | Unit test coverage                           |                |
@@ -71,22 +71,17 @@ Deployment project examples are available under the [examples folder][examplesFo
 [SecureSocialDemoProject]: https://github.com/chaschev/bear/blob/master/src/main/groovy/examples/java/SecureSocialDemoProject.groovy
 [examplesFolder]: https://github.com/chaschev/bear/tree/master/src/main/groovy/examples
 
-
-```properties
-# express-demo.properties
-
-bear.name=express-demo
-bear.fullName=Node Express Mongoose Demo Deployment
-bear.repositoryURI=git@github.com:madhums/node-express-mongoose-demo.git
-bear.vcsBranchName=master
-bear.sshUsername=andrey
-bear.sshPassword=***
-bear.stage=one
-```
-
 ```groovy
 // NodeExpressMongooseDemoProject.groovy
 
+@Project(shortName =  "express-demo", name = "Node Express Mongoose Demo Deployment")
+@Configuration(
+    propertiesFile = ".bear/express-demo",
+    stage = "three",
+    vcs = "git@github.com:madhums/node-express-mongoose-demo.git",
+    branch = "master",
+    useUI = false
+)
 public class NodeExpressMongooseDemoProject extends BearProject<NodeExpressMongooseDemoProject> {
     // these are the plugins which are injected
     Bear bear;
@@ -97,14 +92,14 @@ public class NodeExpressMongooseDemoProject extends BearProject<NodeExpressMongo
     ReleasesPlugin releases;
     DumpManagerPlugin dumpManager;
 
-    public TaskDef<Task> deployProject;
-
     @Override
     protected GlobalContext configureMe(GlobalContextFactory factory) throws Exception
     {
         nodeJs.version.set("0.10.22");
         nodeJs.appCommand.set("server.js")
         nodeJs.projectPath.setEqualTo(bear.vcsBranchLocalPath);
+
+        nodeJs.instancePorts.set("5000, 5001")
 
         bear.vcsBranchName.defaultTo("master");
 
@@ -126,7 +121,7 @@ public class NodeExpressMongooseDemoProject extends BearProject<NodeExpressMongo
             .addSimple("three", "vm01, vm02, vm03"));
 
         // this defines the deployment task
-        deployProject = deployment.newBuilder()
+        defaultDeployment = deployment.newBuilder()
             .CheckoutFiles_2({ _, task, input -> _.run(global.tasks.vcsUpdate); } as TaskCallable)
             .BuildAndCopy_3({ _, task, input -> _.run(nodeJs.build, copyConfiguration); } as TaskCallable)
             .StopService_5({ _, task, input -> _.run(nodeJs.stop); OK; } as TaskCallable)
@@ -135,14 +130,12 @@ public class NodeExpressMongooseDemoProject extends BearProject<NodeExpressMongo
             .ifRollback()
             .beforeLinkSwitch({ _, task, input -> _.run(nodeJs.stop); } as TaskCallable)
             .afterLinkSwitch({ _, task, input -> _.run(nodeJs.start, nodeJs.watchStart); } as TaskCallable)
-            .endRollback()
-            .build();
+            .endRollback();
 
         return global;
     }
 
-    // a helper task to copy configuration
-    TaskDef<Task> copyConfiguration = new TaskDef<Task>({ SessionContext _, task, Object input ->
+    def copyConfiguration = new TaskDef<Task>({ SessionContext _, task, input ->
         final String dir = _.var(releases.pendingRelease).path + "/config"
 
         _.sys.copy(cp("config.example.js", "config.js").cd(dir).force()).throwIfError();
@@ -151,41 +144,19 @@ public class NodeExpressMongooseDemoProject extends BearProject<NodeExpressMongo
         OK
     } as TaskCallable);
 
-    @Override
-    GridBuilder defaultGrid()
-    {
-        return newGrid().add(deployProject);
-    }
-
     // main, can be run directly from an IDE
     static main(def args)
     {
-        deploy(new NodeExpressMongooseDemoProject())
-    }
+        // complete deployment:
+        // checkout, build, stop, copy code to release, start
+        // inspect startup logs, update upstart scripts
+        new NodeExpressMongooseDemoProject().deploy()
 
-    // deploy script
-    static deploy(NodeExpressMongooseDemoProject demo)
-    {
-        demo
-            .set(demo.main().propertiesFile, new File(".bear/express-demo.properties"))
-            .configure()
-            .newGrid()
-            .add(demo.deployProject)
-            .run()
-    }
+        //stop all 6 instances (3 VMs, 2 instances each)
+        new NodeExpressMongooseDemoProject().stop()
 
-    // setup script
-    static setup(NodeExpressMongooseDemoProject demo)
-    {
-        demo
-            .set(demo.main().propertiesFile, new File(".bear/express-demo.properties"))
-            .configure()
-            .set(demo.bear.verifyPlugins, true)
-            .set(demo.bear.autoInstallPlugins, true)
-            .set(demo.bear.checkDependencies, true)
-            .newGrid()
-            .add(demo.global.tasks.setup)
-            .run()
+        //start all 6 instances
+        new NodeExpressMongooseDemoProject().start()
     }
 }
 ```

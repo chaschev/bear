@@ -6,8 +6,7 @@ import bear.core.GlobalContext;
 import bear.core.SessionContext;
 import bear.plugins.Plugin;
 import bear.session.DynamicVariable;
-import bear.task.InstallationTask;
-import bear.task.InstallationTaskDef;
+import bear.task.*;
 import com.google.common.base.Optional;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
@@ -59,7 +58,8 @@ public class ReleasesPlugin extends Plugin {
         keepXReleases = newVar(5);
 
     public final DynamicVariable<Boolean>
-        cleanPending = newVar(true);
+        cleanPending = newVar(true),
+        manualRollback = newVar(false);
 
     public final DynamicVariable<Releases> session = dynamic(new Fun<SessionContext, Releases>() {
         @Override
@@ -75,5 +75,23 @@ public class ReleasesPlugin extends Plugin {
     @Override
     public InstallationTaskDef<? extends InstallationTask> getInstall() {
         return InstallationTaskDef.EMPTY;
+    }
+
+    public TaskDef<Task> findReleaseToRollbackTo(final String labelOrPath) {
+        return new TaskDef<Task>(new TaskCallable<TaskDef>() {
+            @Override
+            public TaskResult call(SessionContext $, Task<TaskDef> task, Object input) throws Exception {
+                Releases session = $.var(ReleasesPlugin.this.session);
+                Optional<Release> release = session.findAny(labelOrPath);
+
+                if(!release.isPresent()){
+                    return TaskResult.error("release not found: " + labelOrPath + " available releases:\n " + session.show());
+                }
+
+                $.putConst(rollbackToRelease, release);
+
+                return TaskResult.OK;
+            }
+        });
     }
 }

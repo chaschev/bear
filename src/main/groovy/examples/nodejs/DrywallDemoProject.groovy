@@ -1,12 +1,14 @@
 package examples.nodejs
+import bear.annotations.Configuration
+import bear.annotations.Project
 import bear.context.Fun
 import bear.core.*
+import bear.plugins.ConfigureServiceInput
+import bear.plugins.DeploymentPlugin
 import bear.plugins.db.DumpManagerPlugin
 import bear.plugins.misc.ReleasesPlugin
 import bear.plugins.mongo.MongoDbPlugin
 import bear.plugins.nodejs.NodeJsPlugin
-import bear.plugins.ConfigureServiceInput
-import bear.strategy.DeploymentPlugin
 import bear.task.Task
 import bear.task.TaskCallable
 import bear.task.TaskDef
@@ -20,9 +22,16 @@ import static bear.task.TaskResult.OK
  * @author Andrey Chaschev chaschev@gmail.com
  */
 
+@Project(shortName =  "drywall-demo", name = "Drywall Demo Deployment")
+@Configuration(
+    propertiesFile = ".bear/drywall",
+    stage = "three",
+    vcs = "git@github.com:jedireza/drywall.git",
+    branch = "master",
+    useUI = false
+)
 public class DrywallDemoProject extends BearProject<DrywallDemoProject> {
     // these are the plugins which are injected
-    Bear bear
     GitCLIPlugin git
     NodeJsPlugin nodeJs
     MongoDbPlugin mongoPlugin
@@ -66,7 +75,7 @@ public class DrywallDemoProject extends BearProject<DrywallDemoProject> {
             .addSimple("three", "vm01, vm02, vm03"));
 
         // this defines the deployment task
-        deployProject = deployment.newBuilder()
+        defaultDeployment = deployment.newBuilder()
             .CheckoutFiles_2({ _, task, input -> _.run(global.tasks.vcsUpdate); } as TaskCallable)
             .BuildAndCopy_3({ _, task, input -> _.run(nodeJs.build, copyConfiguration); } as TaskCallable)
             .StopService_5({ _, task, input -> _.run(nodeJs.stop); OK; } as TaskCallable)
@@ -75,50 +84,20 @@ public class DrywallDemoProject extends BearProject<DrywallDemoProject> {
             .ifRollback()
             .beforeLinkSwitch({ _, task, input -> _.run(nodeJs.stop); } as TaskCallable)
             .afterLinkSwitch({ _, task, input -> _.run(nodeJs.start, nodeJs.watchStart); } as TaskCallable)
-            .endRollback()
-            .build();
+            .endRollback();
 
         return global;
     }
 
-    @Override
-    GridBuilder defaultGrid()
+    static main(args)
     {
-        return newGrid().add(deployProject);
+        new DrywallDemoProject().stop()
     }
 
-    static main(def args)
+    public void setup()
     {
-        deploy()
-    }
+        global.tasks.setup.before({ _, task, i -> _.sys.packageManager.installPackage("ImageMagick"); OK } as TaskCallable)
 
-    private static void deploy()
-    {
-        def demo = new DrywallDemoProject()
-
-        demo
-            .set(demo.main().propertiesFile, new File(".bear/drywall.properties"))
-            .configure()
-            .set(demo.bear.stage, "three")
-            .newGrid()
-            .add(demo.deployProject)
-            .run()
-    }
-
-    private static void setup()
-    {
-        def demo = new DrywallDemoProject()
-
-        demo
-            .set(demo.main().propertiesFile, new File(".bear/drywall.properties"))
-            .configure()
-            .set(demo.bear.stage, "three")
-            .set(demo.bear.verifyPlugins, true)
-            .set(demo.bear.autoInstallPlugins, true)
-            .set(demo.bear.checkDependencies, true)
-            .newGrid()
-            .add({ _, task, i -> _.sys.packageManager.installPackage("ImageMagick"); OK } as TaskCallable<TaskDef>)
-            .add(demo.global.tasks.setup)
-            .run()
+        super.setup()
     }
 }

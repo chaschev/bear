@@ -19,7 +19,6 @@ package bear.vcs;
 import bear.core.GlobalContext;
 import bear.core.SessionContext;
 import bear.plugins.Plugin;
-import bear.session.Variables;
 import bear.task.Task;
 import bear.task.TaskDef;
 
@@ -37,15 +36,7 @@ public abstract class VcsCLIPlugin<TASK extends Task, VCS_TASK_DEF extends TaskD
 
     @Override
     public void initPlugin() {
-        String msg = Variables.checkSet(global.localCtx, this.getClass().getSimpleName(),
-            bear.repositoryURI
-//            cap.vcsBranchName - no, because it's set in the script
-        );
-
-        if(msg != null){
-            global.localCtx.log("%s", msg);
-            throw new RuntimeException(msg);
-        }
+        requireVars(bear.repositoryURI);
     }
 
     public static Map<String, String> emptyParams() {

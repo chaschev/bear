@@ -48,6 +48,8 @@ top priority:
 - service interface: check live status on hosts
 
 - add default methods for projects: start, stop, rollbackTo
+- via CLI: --invoke=drywall.setup('two') OR --groovy="prj('drywall').deploy()"
+- configure via -D
 - refactorings
 -- chain operations: $.sys.rm(dir1, dir2).sudo().noForce().run()
 -- (ok) create tasks with lambdas

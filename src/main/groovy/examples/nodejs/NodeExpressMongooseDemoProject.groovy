@@ -1,4 +1,7 @@
 package examples.nodejs
+
+import bear.annotations.Configuration
+import bear.annotations.Project
 import bear.context.Fun
 import bear.core.*
 import bear.plugins.db.DumpManagerPlugin
@@ -6,7 +9,7 @@ import bear.plugins.misc.ReleasesPlugin
 import bear.plugins.mongo.MongoDbPlugin
 import bear.plugins.nodejs.NodeJsPlugin
 import bear.plugins.ConfigureServiceInput
-import bear.strategy.DeploymentPlugin
+import bear.plugins.DeploymentPlugin
 import bear.task.Task
 import bear.task.TaskCallable
 import bear.task.TaskDef
@@ -20,6 +23,14 @@ import static bear.task.TaskResult.OK
  * @author Andrey Chaschev chaschev@gmail.com
  */
 
+@Project(shortName =  "express-demo", name = "Node Express Mongoose Demo Deployment")
+@Configuration(
+    propertiesFile = ".bear/express-demo",
+    stage = "three",
+    vcs = "git@github.com:madhums/node-express-mongoose-demo.git",
+    branch = "master",
+    useUI = false
+)
 public class NodeExpressMongooseDemoProject extends BearProject<NodeExpressMongooseDemoProject> {
     // these are the plugins which are injected
     Bear bear;
@@ -29,8 +40,6 @@ public class NodeExpressMongooseDemoProject extends BearProject<NodeExpressMongo
     DeploymentPlugin deployment;
     ReleasesPlugin releases;
     DumpManagerPlugin dumpManager;
-
-    public TaskDef<Task> deployProject;
 
     @Override
     protected GlobalContext configureMe(GlobalContextFactory factory) throws Exception
@@ -61,7 +70,7 @@ public class NodeExpressMongooseDemoProject extends BearProject<NodeExpressMongo
             .addSimple("three", "vm01, vm02, vm03"));
 
         // this defines the deployment task
-        deployProject = deployment.newBuilder()
+        defaultDeployment = deployment.newBuilder()
             .CheckoutFiles_2({ _, task, input -> _.run(global.tasks.vcsUpdate); } as TaskCallable)
             .BuildAndCopy_3({ _, task, input -> _.run(nodeJs.build, copyConfiguration); } as TaskCallable)
             .StopService_5({ _, task, input -> _.run(nodeJs.stop); OK; } as TaskCallable)
@@ -70,8 +79,7 @@ public class NodeExpressMongooseDemoProject extends BearProject<NodeExpressMongo
             .ifRollback()
             .beforeLinkSwitch({ _, task, input -> _.run(nodeJs.stop); } as TaskCallable)
             .afterLinkSwitch({ _, task, input -> _.run(nodeJs.start, nodeJs.watchStart); } as TaskCallable)
-            .endRollback()
-            .build();
+            .endRollback();
 
         return global;
     }
@@ -85,45 +93,18 @@ public class NodeExpressMongooseDemoProject extends BearProject<NodeExpressMongo
         OK
     } as TaskCallable);
 
-    @Override
-    GridBuilder defaultGrid()
-    {
-        return newGrid().add(deployProject);
-    }
-
     // main, can be run directly from an IDE
     static main(def args)
     {
-        deploy()
-    }
+        // complete deployment:
+        // checkout, build, stop, copy code to release, start
+        // inspect startup logs, update upstart scripts
+        new NodeExpressMongooseDemoProject().deploy()
 
-    // deploy script
-    static deploy()
-    {
-        def demo = new NodeExpressMongooseDemoProject()
-        demo
-            .set(demo.main().propertiesFile, new File(".bear/express-demo.properties"))
-            .configure()
-            .set(demo.bear.stage, "three")
-            .newGrid()
-            .add(demo.deployProject)
-            .run()
-    }
+        //stop all 6 instances (3 VMs, 2 instances each)
+        new NodeExpressMongooseDemoProject().stop()
 
-    // setup script
-    static setup()
-    {
-        def demo = new NodeExpressMongooseDemoProject()
-
-        demo
-            .set(demo.main().propertiesFile, new File(".bear/express-demo.properties"))
-            .configure()
-            .set(demo.bear.stage, "three")
-            .set(demo.bear.verifyPlugins, true)
-            .set(demo.bear.autoInstallPlugins, true)
-            .set(demo.bear.checkDependencies, true)
-            .newGrid()
-            .add(demo.global.tasks.setup)
-            .run()
+        //start all 6 instances
+        new NodeExpressMongooseDemoProject().start()
     }
 }

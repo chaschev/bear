@@ -17,7 +17,7 @@
 package bear.plugins.groovy;
 
 import bear.core.GlobalContext;
-import bear.core.Shell;
+import bear.annotations.Shell;
 import bear.plugins.Plugin;
 import bear.session.DynamicVariable;
 import bear.session.Variables;

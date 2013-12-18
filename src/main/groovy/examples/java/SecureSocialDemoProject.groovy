@@ -1,17 +1,19 @@
 package examples.java
 
+import bear.annotations.Configuration
+import bear.annotations.Project
 import bear.context.Fun
 import bear.core.*
+import bear.plugins.DeploymentPlugin
 import bear.plugins.db.DbDumpInfo
 import bear.plugins.db.DbDumpManager
 import bear.plugins.db.DumpManagerPlugin
 import bear.plugins.java.JavaPlugin
+import bear.plugins.java.PlayPlugin
 import bear.plugins.maven.MavenPlugin
 import bear.plugins.mongo.MongoDbPlugin
 import bear.plugins.mysql.MySqlPlugin
-import bear.plugins.java.PlayPlugin
 import bear.session.DynamicVariable
-import bear.strategy.DeploymentPlugin
 import bear.task.Task
 import bear.task.TaskCallable
 import bear.task.TaskDef
@@ -30,6 +32,14 @@ import static bear.task.TaskResult.OK
  * @author Andrey Chaschev chaschev@gmail.com
  */
 
+@Project(shortName = "ss-demo", name = "Secure Social Demo")
+@Configuration(
+    propertiesFile = ".bear/ss-demo",
+    stage = "three",
+    vcs = "git@github.com:chaschev/securesocial.git",
+    branch = "master",
+    useUI = false
+)
 public class SecureSocialDemoProject extends BearProject<SecureSocialDemoProject> {
     // these are the plugins which are injected
     JavaPlugin java;
@@ -49,8 +59,6 @@ public class SecureSocialDemoProject extends BearProject<SecureSocialDemoProject
         serviceString = dynamic({_ -> _.var(useDb) == 'mysql' ? '9998:service.SqlUserService' : '9998:service.MongoUserService'} as Fun)
         ;
     ;
-
-    public TaskDef<Task> deployProject;
 
     @Override
     protected GlobalContext configureMe(GlobalContextFactory factory) throws Exception
@@ -74,17 +82,16 @@ public class SecureSocialDemoProject extends BearProject<SecureSocialDemoProject
             .addSimple("three", "vm01, vm02, vm03"));
 
         // this defines the deployment task
-        deployProject = deployment.newBuilder()
+        defaultDeployment = deployment.newBuilder()
             .CheckoutFiles_2({ _, task, input -> _.run(global.tasks.vcsUpdate); } as TaskCallable)
             .BuildAndCopy_3({ _, task, input -> updateDbConf(_); _.run(play.build); } as TaskCallable)
             .StopService_5({ _, task, input -> _.run(play.stop); OK; } as TaskCallable)
             .StartService_8({ _, task, input -> _.run(play.start, play.watchStart); } as TaskCallable)
             .endDeploy()
             .ifRollback()
-              .beforeLinkSwitch({ _, task, input -> _.run(play.stop); } as TaskCallable)
-              .afterLinkSwitch({ _, task, input -> _.run(play.start, play.watchStart); } as TaskCallable)
+            .beforeLinkSwitch({ _, task, input -> _.run(play.stop); } as TaskCallable)
+            .afterLinkSwitch({ _, task, input -> _.run(play.start, play.watchStart); } as TaskCallable)
             .endRollback()
-            .build();
 
         return global;
     }
@@ -103,16 +110,16 @@ public class SecureSocialDemoProject extends BearProject<SecureSocialDemoProject
         'd': 's'
     ];
 
-    static main(def args)
+    static main(args)
     {
-        def demo = new SecureSocialDemoProject()
+        new SecureSocialDemoProject()
+            .deploy('mongo')
+//            .setup()
+    }
 
-        demo
-            .set(demo.main().propertiesFile, new File(".bear/test.properties"))
-            .configure()
-            .dumpSampleGrid
-            .withVars(demo.mysqlVars)
-            .run();
+
+    public deploy(String db){
+        set(useDb, db).deploy()
     }
 
     GridBuilder dumpSampleGrid = new GridBuilder()
@@ -143,6 +150,12 @@ public class SecureSocialDemoProject extends BearProject<SecureSocialDemoProject
             .matcher(plugins)
             .replaceFirst(_.var(serviceString));
 
+
         return _.sys.writeString(str(pluginsPath, plugins));
+    }
+
+    static $static_methodMissing(String name, args) {
+        BearProject<? extends BearProject> prj = this.newInstance()
+        prj.invoke(name, args)
     }
 }

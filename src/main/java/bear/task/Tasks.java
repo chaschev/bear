@@ -49,7 +49,7 @@ public class Tasks {
         }
     });
 
-    public final InstallationTaskDef setup = new InstallationTaskDef<InstallationTask>(new SingleTaskSupplier<Task>() {
+    public final InstallationTaskDef<InstallationTask> setup = new InstallationTaskDef<InstallationTask>(new SingleTaskSupplier<Task>() {
         @Override
         public Task createNewSession(SessionContext $, Task parent, TaskDef<Task> def) {
             return new Task<TaskDef>(parent, setup, $) {

@@ -41,9 +41,9 @@ public class TaskDef<TASK extends Task>{
 
     Set<Role> roles = new HashSet<Role>();
 
-    List<TaskDef> beforeTasks = new ArrayList<TaskDef>();
-    List<TaskDef> afterTasks = new ArrayList<TaskDef>();
-    List<TaskDef> dependsOnTasks = new ArrayList<TaskDef>();
+    List<TaskDef<Task>> beforeTasks = new ArrayList<TaskDef<Task>>();
+    List<TaskDef<Task>> afterTasks = new ArrayList<TaskDef<Task>>();
+    List<TaskDef<Task>> dependsOnTasks = new ArrayList<TaskDef<Task>>();
     private final MultitaskSupplier<TASK> multitaskSupplier;
 
     TaskDef<Task> rollback;
@@ -52,6 +52,11 @@ public class TaskDef<TASK extends Task>{
 
     public TaskDef(TaskCallable<TaskDef> callable) {
         this(Tasks.<TASK>newSingleTask(callable));
+    }
+
+    public TaskDef(String name, TaskCallable<TaskDef> callable) {
+        this(Tasks.<TASK>newSingleTask(callable));
+        this.name = name;
     }
 
     public TaskDef(SingleTaskSupplier<TASK> singleTaskSupplier) {
@@ -162,7 +167,17 @@ public class TaskDef<TASK extends Task>{
         return this;
     }
 
-    public TaskDef addBeforeTask(TaskDef task) {
+    public TaskDef<TASK> before(String name, TaskCallable<TaskDef> callable) {
+        beforeTasks.add(new TaskDef<Task>(name, callable));
+        return this;
+    }
+
+    public TaskDef<TASK> before(TaskCallable<TaskDef> callable) {
+        beforeTasks.add(new TaskDef<Task>(callable));
+        return this;
+    }
+
+    public TaskDef<TASK> addBeforeTask(TaskDef<Task> task) {
         beforeTasks.add(task);
         return this;
     }
@@ -286,4 +301,7 @@ public class TaskDef<TASK extends Task>{
         return classNameToTaskName(getClass().getSimpleName()).toString();
     }
 
+    public TaskDef<Task> getRollback() {
+        return rollback;
+    }
 }

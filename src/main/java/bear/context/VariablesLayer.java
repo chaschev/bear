@@ -17,6 +17,7 @@
 package bear.context;
 
 import bear.main.phaser.SettableFuture;
+import bear.plugins.Plugin;
 import bear.session.DynamicVariable;
 import bear.session.Variables;
 import chaschev.lang.OpenBean;
@@ -408,7 +409,7 @@ public class VariablesLayer extends HavingContext<Variables, AbstractContext> {
 
         Field[] fields = OpenBean.getClassDesc(aClass).fields;
 
-        String scope = scopeClass == null ? "" : DependencyInjection.shorten(scopeClass.getSimpleName()) + ".";
+        String scope = scopeClass == null ? "" : Plugin.shortenName(scopeClass.getSimpleName()) + ".";
 
         for (Field field : fields) {
             Var varAnnotation = field.getAnnotation(Var.class);
@@ -517,7 +518,15 @@ public class VariablesLayer extends HavingContext<Variables, AbstractContext> {
     }
 
     public <T> boolean isConstantDefined(Nameable<T> variable) {
-        return constants.containsKey(variable.name());
+        boolean b = constants.containsKey(variable.name());
+
+        if(b) return b;
+
+        if(fallbackVariablesLayer != null){
+            return fallbackVariablesLayer.isConstantDefined(variable);
+        }
+
+        return b;
     }
 
     public <T> boolean isSet(Nameable<T> variable) {

@@ -36,6 +36,7 @@ import com.google.common.base.Optional;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 
+import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -78,7 +79,7 @@ public abstract class ServerToolPlugin extends ZippedToolPlugin {
     public final DynamicVariable<Function<ConfigureServiceInput, Void>> configureService = dynamic(new Fun<SessionContext, Function<ConfigureServiceInput, Void>>() {
         @Override
         public Function<ConfigureServiceInput, Void> apply(final SessionContext $) {
-            return null;
+            return voidEmptyFunction();
         }
     });
 
@@ -326,4 +327,18 @@ public abstract class ServerToolPlugin extends ZippedToolPlugin {
     protected ConsoleCallbackResult startedResult(SessionContext $, String port) {
         return new ConsoleCallbackResult(ConsoleCallbackResultType.DONE, sendMessage(Level.INFO, newStartedMessage($, port), $));
     }
+
+    public static <T> Function<T, Void> voidEmptyFunction() {
+        return VOID_EMPTY_FUNCTION;
+    }
+
+
+    private static final Function VOID_EMPTY_FUNCTION = new Function() {
+        @Nullable
+        @Override
+        public Void apply(Object input) {
+            return null;
+        }
+    };
+
 }

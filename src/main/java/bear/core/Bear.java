@@ -54,6 +54,7 @@ import static java.util.concurrent.TimeUnit.SECONDS;
  */
 public class Bear extends BearApp<GlobalContext> {
 
+
     public Bear() {
 
     }
@@ -161,18 +162,17 @@ public class Bear extends BearApp<GlobalContext> {
     vcsCheckoutPath = joinPath(projectSharedPath, "vcs"),
 
     vcsBranchName = dynamic("Relative path of the branch to use"),
+    vcsTag = undefined("tag name, HEAD revision is used by default"),
 
     vcsBranchLocalPath = joinPath(vcsCheckoutPath, vcsBranchName),
 
     vcsBranchURI = joinPath(repositoryURI, vcsBranchName);
 
     public final DynamicVariable<Boolean>
-        useSudo = bool("").defaultTo(true),
-        productionDeployment = bool("").defaultTo(true),
+        useUI = newVar(true),
+        productionDeployment = newVar(true),
         clean = equalTo(productionDeployment),
         speedUpBuild = and(not(productionDeployment), not(clean)),
-        vcsAuthCache = dynamic(""),
-        vcsPreferPrompt = dynamic(""),
         isRemoteEnv = dynamic(new Fun<SessionContext, Boolean>() {
             public Boolean apply(SessionContext $) {
                 return $.sys.isRemote();
