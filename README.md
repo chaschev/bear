@@ -68,9 +68,9 @@ Deployment project examples are available under the [examples folder][examplesFo
 * [Secure Social deployment][SecureSocialDemoProject] Stack: Java, Play! Framework 2, MySQL/MongoDB, Secure Social.
 * [Shell API basic usage][BasicExamplesDemoProject]
 
-[NodeExpressMongooseDemoProject]: https://github.com/chaschev/bear/blob/master/src/test/groovy/examples/node/NodeExpressMongooseDemoProject.groovy
+[NodeExpressMongooseDemoProject]: https://github.com/chaschev/bear/blob/master/src/test/groovy/examples/nodejs/NodeExpressMongooseDemoProject.groovy
 [SecureSocialDemoProject]: https://github.com/chaschev/bear/blob/master/src/test/groovy/examples/java/SecureSocialDemoProject.groovy
-[BasicExamplesDemoProject]: https://github.com/chaschev/bear/tree/master/src/test/groovy/examples/ExamplesProject.groovy
+[BasicExamplesDemoProject]: https://github.com/chaschev/bear/blob/master/src/test/groovy/examples/demo/ExamplesProject.groovy
 [examplesFolder]: https://github.com/chaschev/bear/blob/master/src/test/groovy/examples/demo/
 
 ```groovy
