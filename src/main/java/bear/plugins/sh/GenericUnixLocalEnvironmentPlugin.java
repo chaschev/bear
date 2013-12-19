@@ -60,11 +60,6 @@ public class GenericUnixLocalEnvironmentPlugin extends SystemEnvironmentPlugin {
                 this.address = $.address;
             }
 
-            @Override
-            public List<String> ls(String path) {
-                throw new UnsupportedOperationException("todo GenericUnixLocalEnvironment.ls");
-            }
-
             /**
              * Single files a treated in a different way.
              *
@@ -186,34 +181,10 @@ public class GenericUnixLocalEnvironmentPlugin extends SystemEnvironmentPlugin {
             }
 
             @Override
-            public Result mkdirs(String... dirs) {
-                throw new UnsupportedOperationException("todo GenericUnixLocalEnvironment.mkdirs");
+            public WriteStringBuilder writeString(String str) {
+                throw new UnsupportedOperationException("todo .writeString");
             }
 
-            @Override
-            protected Result copyOperation(String src, String dest, CopyCommandType type, boolean folder, String owner) {
-                throw new UnsupportedOperationException("todo GenericUnixLocalEnvironment.copyOperation");
-            }
-
-            @Override
-            public Result chown(String user, boolean recursive, String... dest) {
-                throw new UnsupportedOperationException("todo GenericUnixLocalEnvironment.chown");
-            }
-
-            @Override
-            public Result chmod(String octal, boolean recursive, String... files) {
-                throw new UnsupportedOperationException("todo GenericUnixLocalEnvironment.chmod");
-            }
-
-            @Override
-            public Result writeString(String path, String s) {
-                throw new UnsupportedOperationException("todo GenericUnixLocalEnvironment.writeString");
-            }
-
-            @Override
-            public WriteStringResult writeString(WriteStringInput input) {
-                throw new UnsupportedOperationException("todo .writeStringAs");
-            }
 
             @Override
             public String readString(String path, String _default) {
@@ -230,10 +201,7 @@ public class GenericUnixLocalEnvironmentPlugin extends SystemEnvironmentPlugin {
                 throw new UnsupportedOperationException("todo GenericUnixLocalEnvironment.readLink");
             }
 
-            @Override
-            public CommandLine rmLineImpl(RmInput rmInput, CommandLine line) {
-                throw new UnsupportedOperationException("todo GenericUnixLocalEnvironment.rmLine");
-            }
+
 
             @Override
             public String getAddress() {

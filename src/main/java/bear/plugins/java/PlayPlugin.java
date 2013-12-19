@@ -150,8 +150,9 @@ public class PlayPlugin extends ServerToolPlugin {
 
                     String dest = pendingRelease.path + "/" + $(appName); //eq to ${pendingRelease.path}/play-app
 
-                    $.sys.mkdirs(dest);
-                    $.sys.captureResult("mv " + $(stageTarget) + "/* " + dest).throwIfError();
+                    $.sys.mkdirs(dest).run();
+                    //TODO FIX
+                    $.sys.captureBuilder("mv " + $(stageTarget) + "/* " + dest).run().throwIfError();
 
                     return result;
                 }

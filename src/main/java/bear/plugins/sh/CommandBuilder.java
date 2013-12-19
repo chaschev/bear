@@ -2,17 +2,23 @@ package bear.plugins.sh;
 
 import bear.console.ConsoleCallback;
 import bear.context.HavingContext;
-import bear.core.Bear;
 import bear.core.SessionContext;
+import bear.core.except.NoSuchFileException;
+import bear.core.except.PermissionsException;
+import bear.core.except.ValidationException;
+import bear.core.except.WrongCommandException;
 import bear.vcs.CommandLineResult;
 import com.google.common.base.Optional;
+import com.google.common.base.Strings;
 
 import javax.annotation.Nonnull;
+
+import static com.google.common.base.Preconditions.checkArgument;
 
 /**
 * @author Andrey Chaschev chaschev@gmail.com
 */
-public abstract class CommandInput<SELF extends CommandInput> extends HavingContext<SELF, SessionContext> {
+public abstract class CommandBuilder<SELF extends CommandBuilder> extends HavingContext<SELF, SessionContext> implements ResultValidator  {
     private volatile boolean builderMethodCalled;
 
     protected long timeoutMs = -1;
@@ -20,15 +26,17 @@ public abstract class CommandInput<SELF extends CommandInput> extends HavingCont
     protected boolean force;
     protected boolean recursive = true;
 
+    protected ResultValidator validator = this;
+
     @Nonnull
     protected Optional<String> cd = Optional.absent();
     protected ConsoleCallback callback;
 
-    CommandInput() {
+    CommandBuilder() {
         super(null);
     }
 
-    CommandInput(SessionContext $) {
+    CommandBuilder(SessionContext $) {
         super($);
     }
 
@@ -44,10 +52,15 @@ public abstract class CommandInput<SELF extends CommandInput> extends HavingCont
 
     public CommandLineResult run(){
         builderMethodCalled = true;
-        return null;
+
+        CommandLine line = asLine();
+
+        return $.sys.sendCommand(line);
     }
 
-    public SELF cd(String cd) {
+    public SELF inDir(String cd) {
+        checkArgument(".".equals(cd) && !Strings.isNullOrEmpty(cd), "wrong cd: %s", cd);
+
         this.cd = Optional.of(cd);
         return self();
     }
@@ -58,6 +71,10 @@ public abstract class CommandInput<SELF extends CommandInput> extends HavingCont
 
     protected CommandLine<? extends CommandLineResult, ?> newLine(SessionContext $) {
         return newLine($, true);
+    }
+
+    protected <T extends CommandLineResult> CommandLine<T, Script> newLine(Class<T> tClass) {
+        return (CommandLine<T, Script>) newLine($, true);
     }
 
     protected CommandLine<? extends CommandLineResult, ?> newLine(SessionContext $, boolean useSshCallback){
@@ -90,6 +107,8 @@ public abstract class CommandInput<SELF extends CommandInput> extends HavingCont
             line.stty();
         }
 
+        line.setValidator(this);
+
         return line;
     }
 
@@ -104,7 +123,7 @@ public abstract class CommandInput<SELF extends CommandInput> extends HavingCont
 
     public void validateBeforeSend(){
         if(sudo && callback == null){
-            throw new Bear.ValidationException("sudo requires a callback!");
+            throw new ValidationException("sudo requires a callback!");
         }
     }
 
@@ -117,7 +136,7 @@ public abstract class CommandInput<SELF extends CommandInput> extends HavingCont
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
 
-        CommandInput that = (CommandInput) o;
+        CommandBuilder that = (CommandBuilder) o;
 
         if (sudo != that.sudo) return false;
         if (callback != null ? !callback.equals(that.callback) : that.callback != null) return false;
@@ -168,6 +187,7 @@ public abstract class CommandInput<SELF extends CommandInput> extends HavingCont
     protected final void finalize() throws Throwable {
         if(!builderMethodCalled){
             CommandLine line = asLine();
+
             String s;
 
             if(line != null){
@@ -175,9 +195,32 @@ public abstract class CommandInput<SELF extends CommandInput> extends HavingCont
             }else{
                 s = getClass().getSimpleName();
             }
+
             SessionContext.logger.error("command was created but was not used: " + s);
         }
 
         super.finalize();
+    }
+
+    public SELF dontValidate(){
+        validator = null;
+        return self();
+    }
+
+    public SELF validateResult(ResultValidator validator){
+        this.validator = validator;
+        return self();
+    }
+
+    @Override
+    public void validate(String script, String output) {
+        if(validator != this && validator != null) {
+            validator.validate(script, output);
+        }else{
+            //todo reflectize?
+            ValidationException.checkLine("Permission denied", script, output, PermissionsException.class);
+            ValidationException.checkLine("bash: command not found", script, output, WrongCommandException.class);
+            ValidationException.checkLine("such file or directory", script, output, NoSuchFileException.class);
+        }
     }
 }

@@ -323,4 +323,8 @@ public class SessionContext extends AbstractContext {
     public Optional<TaskResult> lastResult(){
         return executionContext.rootExecutionContext.getDefaultValue().lastResult();
     }
+
+    public String getHost(){
+        return address.getAddress();
+    }
 }

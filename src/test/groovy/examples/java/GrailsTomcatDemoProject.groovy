@@ -51,8 +51,6 @@ public class GrailsTomcatDemoProject extends BearProject<GrailsTomcatDemoProject
         tomcat.instancePorts.set("8080, 8081")
         tomcat.warName.setEqualTo(grails.warName);
 
-        bear.vcsBranchName.defaultTo("master");
-
         dumpManager.dbType.set(mongo.name());
 
         bear.appStartTimeoutSec.set(600)

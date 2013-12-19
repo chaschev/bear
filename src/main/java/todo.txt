@@ -1,61 +1,27 @@
 top priority:
 
-- (ok) ui: run a command in on a single host from shell
-- (ok) ui: check how vcs plugins work through ui
-- (ok) ui: cancel command
-- (ok) make sure any plugin can be run in a distributed fashion
-- (ok) add phases for scripts (futures, waitAny, waitNone, waitAll) - exec code in a barrier
- (ok) waitNone - default
- (ok) waitAll - awaitAdvanceInterruptibly(arrive | arriveAndAwaitAdvance)
- (ok) wait(condition($s))
- (ok) waitAny
- (ok) onAdvance - arrived barrier
-- (ok) script reference - inlines a groovy script
 - change settings to script which is executed every time
-- (ok) no need for deployment strategies
-- (ok) ui: embed noty - add message for POM generation and, run finish and errors during run
-- (ok) ui: better history - use command names, avoid duplicates, sort by timestamp, clear history, trash for items.
-- (ok) commenting option for the directives: //!:
-- (ok) ui: adapt this theme: https://github.com/onokumus/Bootstrap-Admin-Template
-- (ok) noty for notices
 - ui: autosize for code area ?
 - quick setup task recipe (i.e. [new empty bear script], :run (rename :ref) {task: 'tasks.setup'}   at the moment its _.runner.run(_.getGlobal().tasks.setup, )
--- (ok) mongo plugin
-- (ok) bug: sendAllFinishedResults sends result only for the whole run
-- (ok) upstart plugin (& fix play app)
-- (ok) ReleaseManager + unit tests, embed release manager into deployment builder
--- (ok) get the last 1 and lastX commit messages for each of the releases
--- (ok) feature: rollback to a label or to a path
--- (ok) each release contains release.json with: date, branch, revision, lastX commit messages
--- (ok) deployment builder -> release manager -> creates a new pending release, builds the app, db migration
--- (ok) when done, builder -> play plugin -> stops the service, builder -> updates the label, then builder -> play -> starts
--- (ok) if it fails to start, then play plugin rolls back the label, deletes pending label and starts the old version, reverts migration
-   (ok) the rollback must be done in deployment builder:
-   (ok) failIfAnyFails()
-   (ok) ifRollback()
-     (ok) .beforeLabelSwitch(callable)
-     (ok) .afterLabelSwitch(callable)
 
-- (ok) CLI decoupling:
--- (ok) Entry point is interpret(environment, properties, settings, script) in FXConf.java:308
--- (ok) CLI is like FX version with different appenders
--- (ok) single task execution model - app runs a task and finishes
-- (ok) refactor BearScript and message sending (extract an interface from BearFX)
--- (ok) separate bearscript from execution
--- builders may provide settings and scripts
--- (ok) run a simple captures test with builders
--- (ok) mock server replies (inject mocked sys)
 - service interface: check live status on hosts
 
-- add default methods for projects: start, stop, rollbackTo
+- refactor: remove addRaw
+- release bear with bear
+- oss plugin
+- release to git
+- (ok) add default methods for projects: start, stop, rollbackTo
+- add uninstall for project and for server
+- find top Capistrano/Puppet questions on SO, create a demo with answers
+
 - via CLI: --invoke=drywall.setup('two') OR --groovy="prj('drywall').deploy()"
 - configure via -D
 - refactorings
 -- chain operations: $.sys.rm(dir1, dir2).sudo().noForce().run()
--- (ok) create tasks with lambdas
--- (ok) return ticket (phase) on adding a taskdef
+-- move input from callable into the task
 -- Generics (later)
-- list vars, categorize vars
+-- SELF generics for: CommandLineResult, CommandLine (?)
+- list vars, alias vars, categorize vars (via Annotations?)
 - email plugin
 - sms plugin?
 - password management (can't always store a password in a local file)
@@ -65,19 +31,12 @@ top priority:
 - add pulse meters for services
 - builder must be a field to be able to switch a command
 - cover contexts with unit tests, rewrite and add feature: atomically memoize in global, calculate in $
-- (ok) better rm
+
 - update git plugin for the release
 - ssh tests for servers to test connectivity and response
-- (ok) FileWatcher
--- secure social demo for 3 hosts/single mysql
--- (ok) node.js demo: https://github.com/jedireza/drywall, https://github.com/jaredhanson/passport, https://github.com/madhums/node-express-mongoose-demo
 -- django demo: https://github.com/omab/python-social-auth
 -- RoR: https://github.com/binarylogic/authlogic/tree/master, https://github.com/technoweenie/restful-authentication/tree/master,
--- grails demo
--- (ok) reference phases from scripts
--- (ok) deploy mysql & test
--- (ok) deploy mongodb & test
--- (ok) run via scripts
+
 - refactor to be used with simplest builders
 - :run {"task":"tasks.setup"}
 - too many inputs for setting vars (how should I set a var in Groovy/ GroovyScript/bear, what is the file I am in?)
@@ -104,11 +63,7 @@ Node.js:
 - on release_roles :all do
 - TaskDef should hold a Type. So we could reference it as a phase
 
-
-- (ok, 2) send messages from plugins via uiLogger (sends to 'ui'), logger (sends to console)
-- (ok, 3) ui: logback messages (output to file, a window to view, monitor errors and display red exclamation mark when there are)
 - (4) save logs from hosts to separate folders (log4j2?)
-- (ok, 5) print '$host: capture shell' feature
 
 
 - :use shell groovy {"scope": "global", "name": "mongoTest"} -> will be translated into OnceRunCallable
@@ -143,7 +98,7 @@ Node.js:
 - (ok) ui: nicer button placement for scripts, use the space
 - reproduce and fix useless installations (timeout? stream is closed before it's fully read? cat texty)
 - test error messages by setting incorrect rights at each step
-- test revert to previous when deploy fails
+- (ok) test revert to previous when deploy fails
 - stop when errors
 - think of unit testing
 - test rollback
@@ -154,7 +109,7 @@ Node.js:
 utils:
 
 - (ok) remote WAR deploy
-- sql dumps
+- (ok) sql dumps
 
 general testing:
 - test failure reporting on timeouts
@@ -164,28 +119,20 @@ features:
 
 - there can be a single stream copier for the whole upp
 - global task: concise API
-- (ok) possible memory issue: after running two scripts memory jumps to 1.5GB
 - download plugin (wget, viaLocalCache option)
 - tomcat plugin: configurable rights as of a service
-- (ok) jdk plugin
-- (ok) grails plugin
-- (ok) tomcat plugin
-- set variables from the command line
+
 - validate variables ("required" variables)
 - variables registry (to list, to validate)
 - list available variables
 - fix weird error messages when errors occur
 - make DynVars similar to JavaFX properties
 - validation step: validation [ validate(closure) ]
-- (ok) upstart plugin
-- (ok) play plugin
 - monit plugin: http://clock.co.uk/tech-blogs/deploying-nodejs-apps
 - maven plugin
 - verify vcs installation via plugin verification
 - test: vars from console
-- (ok) console: saving/loading user input - only in the very beginning
 - configure variables from ENV
-- (ok) add running from scripts
 - dependencies
 - verify installation by checking version installed
 - interactive mode
@@ -223,6 +170,72 @@ os plugin:
 -- run code with classpath for this artifact
 
 ## History
+
+- (ok) ui: run a command in on a single host from shell
+- (ok) ui: check how vcs plugins work through ui
+- (ok) ui: cancel command
+- (ok) make sure any plugin can be run in a distributed fashion
+- (ok) add phases for scripts (futures, waitAny, waitNone, waitAll) - exec code in a barrier
+ (ok) waitNone - default
+ (ok) waitAll - awaitAdvanceInterruptibly(arrive | arriveAndAwaitAdvance)
+ (ok) wait(condition($s))
+ (ok) waitAny
+ (ok) onAdvance - arrived barrier
+- (ok) script reference - inlines a groovy script
+- (ok) no need for deployment strategies
+- (ok) ui: embed noty - add message for POM generation and, run finish and errors during run
+- (ok) ui: better history - use command names, avoid duplicates, sort by timestamp, clear history, trash for items.
+- (ok) commenting option for the directives: //!:
+- (ok) ui: adapt this theme: https://github.com/onokumus/Bootstrap-Admin-Template
+- (ok) noty for notices
+-- (ok) mongo plugin
+- (ok) bug: sendAllFinishedResults sends result only for the whole run
+- (ok) upstart plugin (& fix play app)
+- (ok) ReleaseManager + unit tests, embed release manager into deployment builder
+-- (ok) get the last 1 and lastX commit messages for each of the releases
+-- (ok) feature: rollback to a label or to a path
+-- (ok) each release contains release.json with: date, branch, revision, lastX commit messages
+-- (ok) deployment builder -> release manager -> creates a new pending release, builds the app, db migration
+-- (ok) when done, builder -> play plugin -> stops the service, builder -> updates the label, then builder -> play -> starts
+-- (ok) if it fails to start, then play plugin rolls back the label, deletes pending label and starts the old version, reverts migration
+   (ok) the rollback must be done in deployment builder:
+   (ok) failIfAnyFails()
+   (ok) ifRollback()
+     (ok) .beforeLabelSwitch(callable)
+     (ok) .afterLabelSwitch(callable)
+
+- (ok) CLI decoupling:
+-- (ok) Entry point is interpret(environment, properties, settings, script) in FXConf.java:308
+-- (ok) CLI is like FX version with different appenders
+-- (ok) single task execution model - app runs a task and finishes
+- (ok) refactor BearScript and message sending (extract an interface from BearFX)
+-- (ok) separate bearscript from execution
+-- (ok) builders may provide settings and scripts
+-- (ok) run a simple captures test with builders
+-- (ok) mock server replies (inject mocked sys)
+
+- (ok) FileWatcher
+- (ok) better rm
+-- (ok) create tasks with lambdas
+-- (ok) return ticket (phase) on adding a taskdef
+-- (ok)secure social demo for 3 hosts/single mysql
+-- (ok) node.js demo: https://github.com/jedireza/drywall, https://github.com/jaredhanson/passport, https://github.com/madhums/node-express-mongoose-demo
+-- (ok) grails demo
+-- (ok) reference phases from scripts
+-- (ok) deploy mysql & test
+-- (ok) deploy mongodb & test
+-- (ok) run via scripts
+
+- (ok) possible memory issue: after running two scripts memory jumps to 1.5GB
+- (ok) jdk plugin
+- (ok) grails plugin
+- (ok) tomcat plugin
+- (ok) upstart plugin
+- (ok) play plugin
+- (ok) set variables from the command line
+- (ok) console: saving/loading user input - only in the very beginning
+- (ok) add running from scripts
+
 
 - (ok) ui: pending timer (http://jsfiddle.net/ganarajpr/LQGE2/)
 - (ok) ui: add status counters notices
@@ -263,5 +276,9 @@ os plugin:
 -- (ok) dependencies
 - (ok) GitHub support
 - (ok) replace Functions with VarFunctions
+- (ok, 2) send messages from plugins via uiLogger (sends to 'ui'), logger (sends to console)
+- (ok, 3) ui: logback messages (output to file, a window to view, monitor errors and display red exclamation mark when there are)
+- (ok, 5) print '$host: capture shell' feature
+
 - bug: 4 releases instead of 5
 - custom setup?

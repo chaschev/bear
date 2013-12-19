@@ -1,20 +1,16 @@
 package bear.plugins.sh;
 
-import bear.session.Result;
-import bear.task.TaskResult;
+import bear.vcs.CommandLineResult;
 
 /**
 * @author Andrey Chaschev chaschev@gmail.com
 */
-public class WriteStringResult extends TaskResult {
+public class WriteStringResult extends CommandLineResult {
     boolean wrote;
 
-    public WriteStringResult(Result result, boolean wrote) {
-        super(result);
+    public WriteStringResult(CommandLineResult r, boolean wrote) {
+        super(r);
         this.wrote = wrote;
     }
 
-    public WriteStringResult(Throwable e) {
-        super(e);
-    }
 }

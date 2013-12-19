@@ -76,7 +76,7 @@ public class SessionTest extends HavingContext<SessionTest, SessionContext>{
                 commands.add(inv.getArguments()[0]);
                 return Result.OK;
             }
-        }).when(sys).writeString(any(WriteStringInput.class));
+        }).when(sys).writeString(anyString());
 
 //        stubSendCommand();
 

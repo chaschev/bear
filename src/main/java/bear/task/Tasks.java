@@ -25,9 +25,6 @@ import com.google.common.base.Preconditions;
 
 import java.util.Arrays;
 
-import static bear.plugins.sh.DirsInput.mk;
-import static bear.plugins.sh.DirsInput.perm;
-
 
 /**
  * @author Andrey Chaschev chaschev@gmail.com
@@ -68,7 +65,7 @@ public class Tasks {
                     final String sshUser = $(bear.sshUsername);
                     final String appUser = $(bear.appUsername);
 
-                    $.sys.mkdirs(mk(dirs).sudo().withPermissions("g+w").withUser(sshUser + "." + sshUser));
+                    $.sys.mkdirs(dirs).sudo().withPermissions("g+w").withUser(sshUser + "." + sshUser).run();
 
 
 //                    $.sys.chown(sshUser + "." + sshUser, true, dirs);
@@ -76,7 +73,7 @@ public class Tasks {
 
                     if (!appUser.equals(sshUser)) {
                         //this part might be changed
-                        $.sys.permissions(perm($(bear.appLogsPath)).sudo().withUser(appUser + "." + appUser));
+                        $.sys.permissions($(bear.appLogsPath)).sudo().withUser(appUser + "." + appUser).run();
                     }
 
                     if ($(bear.autoInstallPlugins) || $(bear.verifyPlugins)) {

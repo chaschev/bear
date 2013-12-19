@@ -36,12 +36,6 @@ import java.text.MessageFormat;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import static bear.plugins.sh.CopyOperationInput.cp;
-import static bear.plugins.sh.CopyOperationInput.ln;
-import static bear.plugins.sh.DirsInput.dirs;
-import static bear.plugins.sh.DirsInput.mk;
-import static bear.plugins.sh.RmInput.newRm;
-import static bear.plugins.sh.WriteStringInput.str;
 import static bear.session.BearVariables.joinPath;
 import static bear.session.Variables.*;
 import static java.lang.Integer.parseInt;
@@ -171,8 +165,8 @@ public class TomcatPlugin extends ServerToolPlugin {
             for (String port : $.var(portsSplit)) {
                 String tomcatPath = path(webappsPath, port, $) + "/" + FilenameUtils.getBaseName($.var(warName));
 
-                $.sys.rm(newRm(tomcatPath).sudo());
-                $.sys.mkdirs(mk(tomcatPath).withUser($.var(user))).throwIfError();
+                $.sys.rm(tomcatPath).sudo().run();
+                $.sys.mkdirs(tomcatPath).withUser($.var(user)).run();
 
                 $.sys.unzip(warSourcePath).to(tomcatPath).withUser($.var(user)).run().throwIfError();
             }
@@ -218,8 +212,8 @@ public class TomcatPlugin extends ServerToolPlugin {
                             dirs[i] = format(dirs[i], port);
                         }
 
-                        $.sys.mkdirs(dirs(dirs).sudo().withUser(userWithGroup));
-                        $.sys.copy(cp($(homePath) + "/conf", instancePath).sudo().withUser(userWithGroup));
+                        $.sys.mkdirs(dirs).sudo().withUser(userWithGroup).run();
+                        $.sys.copy($(homePath) + "/conf").to(instancePath).sudo().withUser(userWithGroup).run();
 
                         int portI = parseInt(port);
 
@@ -234,7 +228,11 @@ public class TomcatPlugin extends ServerToolPlugin {
                             .replace("port=\"8009\"", "port=\"" + (parseInt($(ajpPort)) + diff) + "\"")
                             ;
 
-                        $.sys.writeString(str(format($(confPath) + "/server.xml", port), instanceServerXml).sudo().withUser(userWithGroup));
+                        $.sys.writeString(instanceServerXml)
+                            .toPath(format($(confPath) + "/server.xml", port))
+                            .sudo()
+                            .withUser(userWithGroup)
+                            .run();
 
                         $.put(configureService, newBasicUpstartConfigurator($));
 
@@ -270,8 +268,8 @@ public class TomcatPlugin extends ServerToolPlugin {
         return new Function<String, String>() {
             @Override
             public String apply(String port) {
-                $.sys.rm(newRm(path(instanceLogsPath, port, $)));
-                $.sys.link(ln(path(logsPath, port, $), path(instanceLogsPath, port, $)));
+                $.sys.rm(path(instanceLogsPath, port, $)).run();
+                $.sys.link(path(instanceLogsPath, port, $)).toSource(path(logsPath, port, $));
 
                 final String logPath = consoleLogPath(port, $);
 

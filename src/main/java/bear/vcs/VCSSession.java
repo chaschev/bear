@@ -1,15 +1,15 @@
 package bear.vcs;
 
-import bear.plugins.sh.CommandLine;
 import bear.console.ConsoleCallback;
 import bear.core.SessionContext;
+import bear.plugins.sh.CommandLine;
+import bear.plugins.sh.ResultParser;
 import bear.plugins.sh.SystemEnvironmentPlugin;
 import bear.session.DynamicVariable;
 import bear.task.SessionRunner;
 import bear.task.Task;
 import bear.task.TaskDef;
 import bear.task.TaskResult;
-import com.google.common.base.Function;
 
 import java.util.Map;
 
@@ -112,9 +112,8 @@ public abstract class VCSSession extends Task<TaskDef> {
 
 
 
-    public  <R extends CommandLineResult> VCSScript<R> newPlainScript(String command, Function<String, R> parser) {
-        return this.<R>newPlainScript(command)
-            .setParser(parser);
+    public  <R extends CommandLineResult> VCSScript<R> newPlainScript(String command, ResultParser<R> parser) {
+        return this.<R>newPlainScript(command).setParser(parser);
     }
 
     public abstract VCSScript<VcsLogInfo> logLastN(int n);

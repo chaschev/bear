@@ -23,9 +23,9 @@ import bear.context.AbstractContext;
 import bear.context.Fun;
 import bear.core.GlobalContext;
 import bear.core.SessionContext;
+import bear.plugins.ConfigureServiceInput;
 import bear.plugins.ServerToolPlugin;
 import bear.plugins.misc.*;
-import bear.plugins.ConfigureServiceInput;
 import bear.session.DynamicVariable;
 import bear.session.Variables;
 import bear.task.*;
@@ -40,8 +40,6 @@ import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import static bear.plugins.sh.CaptureInput.cap;
-import static bear.plugins.sh.CopyOperationInput.cp;
 import static bear.session.Variables.*;
 
 /**
@@ -209,14 +207,14 @@ public class NodeJsPlugin extends ServerToolPlugin {
                     PendingRelease pendingRelease = $.var(releases.pendingRelease);
                     Optional<Release> activeRelease = $.var(releases.activatedRelease);
 
-                    $.sys.copy(cp($.var(projectPath) + "/*", pendingRelease.path));
+                    $.sys.copy($.var(projectPath) + "/*").to(pendingRelease.path).run();
 
                     //this will be the previous active release
                     if(activeRelease.isPresent()){
-                        $.sys.copy(cp(activeRelease.get().path + "/node_modules", pendingRelease.path)).throwIfError();
+                        $.sys.copy(activeRelease.get().path + "/node_modules").to(pendingRelease.path).run().throwIfError();
                     }
 
-                    return $.sys.captureResult(cap("npm install --loglevel warn").cd(pendingRelease.path));
+                    return $.sys.captureBuilder("npm install --loglevel warn").inDir(pendingRelease.path).run();
                 }
             };
         }
@@ -237,7 +235,7 @@ public class NodeJsPlugin extends ServerToolPlugin {
                     shortCut($(execName), "bin/" + $(execName));
                     shortCut("npm", "bin/npm");
 
-                    $.sys.captureResult(cap("npm install -g grunt-cli").sudo()).throwIfError();
+                    $.sys.captureBuilder("npm install -g grunt-cli").sudo().run().throwIfError();
 
                     return verify();
                 }

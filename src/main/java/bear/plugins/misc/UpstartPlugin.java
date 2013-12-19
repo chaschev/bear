@@ -3,7 +3,6 @@ package bear.plugins.misc;
 import bear.core.GlobalContext;
 import bear.core.SessionContext;
 import bear.plugins.Plugin;
-import bear.plugins.sh.WriteStringInput;
 import bear.plugins.sh.WriteStringResult;
 import bear.session.DynamicVariable;
 import bear.session.Variables;
@@ -12,9 +11,6 @@ import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
 
 import java.util.Map;
-
-import static bear.plugins.sh.WriteStringInput.str;
-import static com.google.common.base.Optional.of;
 
 /**
  * TODO: could be updated by using this example: https://github.com/yyuu/capistrano-upstart/
@@ -85,7 +81,7 @@ public class UpstartPlugin extends Plugin {
                                 section(service.custom)
                             ;
 
-                        $.sys.writeString(str("/etc/init/" + service.name + ".conf", text).sudo().withPermissions("u+x,g+x,o+x").ifDiffers());
+                        $.sys.writeString(text).toPath("/etc/init/" + service.name + ".conf").sudo().withPermissions("u+x,g+x,o+x").ifDiffers().run();
                     }
 
                     Optional<String> groupName = upstartServices.groupName;
@@ -100,7 +96,11 @@ public class UpstartPlugin extends Plugin {
                                 text += "sudo " + $.sys.getOsInfo().getHelper().serviceCommand(service.name, command) + "\n";
                             }
 
-                            WriteStringResult r = $.sys.writeString(new WriteStringInput("/usr/bin/" + scriptName, text, true, Optional.<String>absent(), of("u+x,g+x,o+x")));
+                            WriteStringResult r = $.sys.writeString(text)
+                                .toPath("/usr/bin/" + scriptName)
+                                .sudo()
+                                .withPermissions("u+x,g+x,o+x")
+                                .run();
 
                             if(!r.ok()){
                                 return r;

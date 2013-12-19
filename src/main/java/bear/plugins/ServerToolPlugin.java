@@ -95,7 +95,7 @@ public abstract class ServerToolPlugin extends ZippedToolPlugin {
             List<UpstartService> serviceList = new ArrayList<UpstartService>(ports.size());
 
             for (String port : ports) {
-                $.sys.mkdirs(instancePath(port, $), format($.var(instanceLogsPath), port));
+                $.sys.mkdirs(instancePath(port, $), format($.var(instanceLogsPath), port)).run();
 
                 String scriptText = $.var(createScriptText).apply(port);
 
@@ -143,7 +143,7 @@ public abstract class ServerToolPlugin extends ZippedToolPlugin {
     }
 
     public void resetConsolePath(SessionContext $, String logPath) {
-        $.sys.chmod("u+rwx,g+rwx,o+rwx", false, logPath);
+        $.sys.permissions(logPath).withPermissions("u+rwx,g+rwx,o+rwx").withUser($.var(userWithGroup)).sudo().run().throwIfError();
         $.sys.resetFile(logPath, true);
     }
 
@@ -153,9 +153,8 @@ public abstract class ServerToolPlugin extends ZippedToolPlugin {
         SystemSession.OSHelper helper = $.sys.getOsInfo().getHelper();
 
         for (String port : ports) {
-            $.sys.captureResult(
-                helper.serviceCommand(format($.var(isSingle ? singleServiceName : multiServiceName), port), command), true)
-                .throwIfError();
+            String serviceCommand = helper.serviceCommand(format($.var(isSingle ? singleServiceName : multiServiceName), port), command);
+            $.sys.captureBuilder(serviceCommand).sudo().run().throwIfError();
         }
 
         return CommandLineResult.OK;

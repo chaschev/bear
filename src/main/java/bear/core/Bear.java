@@ -23,7 +23,6 @@ import bear.plugins.Plugin;
 import bear.session.Address;
 import bear.session.BearVariables;
 import bear.session.DynamicVariable;
-import bear.task.BearException;
 import bear.task.TaskDef;
 import bear.vcs.BranchInfo;
 import bear.vcs.VCSSession;
@@ -42,7 +41,6 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.regex.Pattern;
 
 import static bear.session.BearVariables.joinPath;
 import static bear.session.Variables.*;
@@ -299,30 +297,4 @@ public class Bear extends BearApp<GlobalContext> {
         public FileNameGenerator apply(SessionContext $) {return new FileNameGenerator($);}
     });
 
-    public final DynamicVariable<Predicate<String>> pathValidator = dynamic(new Fun<AbstractContext, Predicate<String>>() {
-        @Override
-        public Predicate<String> apply(AbstractContext $) {return DEFAULT_VALIDATOR;}
-    });
-
-    private static final Pattern BASH_COMMAND_NOT_FOUND = Pattern.compile("bash:\\s+.*command not found", Pattern.MULTILINE | Pattern.DOTALL);
-
-    public static final class ValidationException extends BearException{
-        public ValidationException() {
-        }
-
-        public ValidationException(String message) {
-            super(message);
-        }
-    }
-
-    private static final Predicate<String> DEFAULT_VALIDATOR = new Predicate<String>() {
-        @Override
-        public boolean apply(String input) {
-            if(BASH_COMMAND_NOT_FOUND.matcher(input).find()){
-                throw new ValidationException("bash: command not found");
-            }
-
-            return true;
-        }
-    };
 }

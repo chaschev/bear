@@ -98,7 +98,7 @@ public class DbDumpManager {
 
         public void saveDumpList(List<DbDumpInfo> list) {
             try {
-                $.sys.writeString($(plugin.dumpsJson), dumpInfoWriter.writeValueAsString(list));
+                $.sys.writeString(dumpInfoWriter.writeValueAsString(list)).toPath($(plugin.dumpsJson)).run();
             } catch (JsonProcessingException e) {
                 throw Exceptions.runtime(e);
             }

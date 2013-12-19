@@ -19,10 +19,10 @@ package bear.plugins.sh;
 import bear.console.AbstractConsoleCommand;
 import bear.console.ConsoleCallback;
 import bear.core.SessionContext;
+import bear.session.Result;
 import bear.task.BearException;
 import bear.vcs.CommandLineOperator;
 import bear.vcs.CommandLineResult;
-import com.google.common.base.Function;
 import com.google.common.base.Joiner;
 import org.apache.commons.lang3.StringUtils;
 
@@ -40,12 +40,14 @@ public abstract class CommandLine<T extends CommandLineResult, SCRIPT extends Sc
 
     public List strings = new ArrayList(4);
 
-    protected Function<String, T> parser;
+    protected ResultParser<T> parser;
+    protected ResultValidator validator;
 
     /**
      * Null when used outside of a script.
      */
     @Nullable
+    //todo change to Script
     protected SCRIPT script;
 
     protected SystemSession sys;
@@ -57,6 +59,27 @@ public abstract class CommandLine<T extends CommandLineResult, SCRIPT extends Sc
     protected CommandLine(SCRIPT script) {
         this.script = script;
         this.sys = script.sys;
+    }
+
+    static CommandLineResult parseWithParser(ResultParser<? extends CommandLineResult> parser, ResultValidator validator, String commandOutput, SessionContext $, String script) {
+        final CommandLineResult obj;
+
+        if (parser != null) {
+            obj = parser.parse(script,commandOutput);
+            obj.output = commandOutput;
+        }else{
+            obj = new CommandLineResult(script, commandOutput, Result.OK);
+        }
+
+        if(validator != null){
+            try {
+                validator.validate(script, commandOutput);
+            } catch (Exception e) {
+                obj.setException(e);
+            }
+        }
+
+        return obj;
     }
 
     public CommandLine<T, SCRIPT> a(String... strings) {
@@ -86,15 +109,21 @@ public abstract class CommandLine<T extends CommandLineResult, SCRIPT extends Sc
         for (Map.Entry<String, String> e : params.entrySet()) {
             strings.add(" --" + e.getKey() + "=" + e.getValue() + " ");
         }
+
         return this;
     }
 
     public T parseResult(SessionContext $, String text) {
-        return (T) Script.parseWithParser(parser, text, $, asText(false));
+        return (T) parseWithParser(parser, validator, text, $, asText(false));
     }
 
-    public CommandLine<T, SCRIPT> setParser(Function<String, T> parser) {
+    public CommandLine<T, SCRIPT> setParser(ResultParser<T> parser) {
         this.parser = parser;
+        return this;
+    }
+
+    public CommandLine<T, SCRIPT> setValidator(ResultValidator validator) {
+        this.validator = validator;
         return this;
     }
 

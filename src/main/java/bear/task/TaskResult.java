@@ -16,6 +16,7 @@
 
 package bear.task;
 
+import bear.core.except.ValidationException;
 import bear.session.Result;
 import chaschev.util.Exceptions;
 import com.google.common.base.Optional;
@@ -31,6 +32,11 @@ public class TaskResult {
     public TaskResult(Result result) {
         this.result = result;
         exception = Optional.absent();
+    }
+
+    public TaskResult(TaskResult other) {
+        this.result = other.result;
+        this.exception = other.exception;
     }
 
     public TaskResult(Throwable e) {
@@ -72,6 +78,14 @@ public class TaskResult {
         return this;
     }
 
+    public TaskResult throwIfValidationError() {
+        if(exception.isPresent() && exception.get() instanceof ValidationException){
+            throw (ValidationException) exception.get();
+        }
+
+        return this;
+    }
+
     public static TaskResult of(boolean b, String errorMessage) {
         return b ? OK : new TaskResult(new Exception(errorMessage));
     }
@@ -93,5 +107,9 @@ public class TaskResult {
         this.result = Result.ERROR;
         this.exception = Optional.of(e);
         return this;
+    }
+
+    public boolean isValidationError() {
+        return exception.isPresent() && (exception.get() instanceof ValidationException);
     }
 }

@@ -1,20 +1,19 @@
 package bear.plugins.mongo;
 
-import bear.core.Bear;
+import bear.annotations.Shell;
 import bear.core.GlobalContext;
 import bear.core.SessionContext;
-import bear.annotations.Shell;
+import bear.core.except.ValidationException;
 import bear.plugins.Plugin;
 import bear.plugins.sh.SystemSession;
 import bear.plugins.sh.UnixSubFlavour;
-import bear.plugins.sh.WriteStringInput;
+import bear.plugins.sh.WriteStringResult;
 import bear.session.DynamicVariable;
 import bear.session.Result;
 import bear.session.Versions;
 import bear.task.*;
 import bear.vcs.CommandLineResult;
 import com.google.common.base.Function;
-import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableMap;
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.aether.version.Version;
@@ -24,7 +23,6 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static bear.plugins.sh.RmInput.newRm;
 import static bear.plugins.sh.SystemEnvironmentPlugin.sshPassword;
 import static bear.session.Variables.*;
 import static bear.session.Versions.*;
@@ -77,12 +75,14 @@ public class MongoDbPlugin extends Plugin {
                     TaskResult r = TaskResult.OK;
 
                     if (!clientVersionOk || !serverVersionOk) {
-                        $.sys.writeString(new WriteStringInput("/etc/yum.repos.d/mongodb.repo", "" +
+                        String script = "" +
                             "[mongodb]\n" +
                             "name=MongoDB Repository\n" +
                             "baseurl=" + $(repo).get($.sys.getOsInfo().unixSubFlavour) + "\n" +
                             "gpgcheck=0\n" +
-                            "enabled=1\n", true, Optional.<String>absent(), Optional.<String>absent()));
+                            "enabled=1\n";
+
+                        $.sys.writeString(script).toPath("/etc/yum.repos.d/mongodb.repo").sudo().run();
                     }
 
                     if (serverVersion == NOT_INSTALLED) {
@@ -120,21 +120,21 @@ public class MongoDbPlugin extends Plugin {
     public TaskResult runScript(SessionContext $, String script) {
         final String tempPath = $.var($.bear.randomFilePath).getTempPath("mongo_", ".js");
 
-        Result result = $.sys.writeString(tempPath, script);
+        WriteStringResult result = $.sys.writeString(script).toPath(tempPath).run();
 
         if(!result.ok()){
             return new TaskResult(result);
         }
 
-        CommandLineResult lineResult = $.sys.captureResult("mongo " + $.var(connectionString) + " " + tempPath, sshPassword($));
+        CommandLineResult lineResult = $.sys.captureBuilder("mongo " + $.var(connectionString) + " " + tempPath).run();
 
-        $.sys.rm(newRm(tempPath));
+        $.sys.rm(tempPath).run();
 
-        if(lineResult.text!=null
-            && lineResult.text.contains("doesn't exist")
-            && lineResult.text.contains("failed to load")
+        if(lineResult.output !=null
+            && lineResult.output.contains("doesn't exist")
+            && lineResult.output.contains("failed to load")
             ) {
-            lineResult.setException(new Bear.ValidationException("failed to load " + tempPath));
+            lineResult.setException(new ValidationException("failed to load " + tempPath));
         }
 
         return lineResult;
@@ -156,7 +156,7 @@ public class MongoDbPlugin extends Plugin {
             } else {
                 version = null;
             }
-        } catch (Bear.ValidationException e) {
+        } catch (ValidationException e) {
             version = null;
         }
 
@@ -167,12 +167,12 @@ public class MongoDbPlugin extends Plugin {
         try {
             final CommandLineResult r = new CommandLineResult("mongo version", "", Result.ERROR);
 
-            if (r.getResult().nok() || StringUtils.isBlank(r.text)) {
+            if (r.getResult().nok() || StringUtils.isBlank(r.output)) {
                 return NOT_INSTALLED;
             }
 
-            return Versions.newVersion(r.text.trim().split("\\s+")[1]);
-        } catch (Bear.ValidationException e) {
+            return Versions.newVersion(r.output.trim().split("\\s+")[1]);
+        } catch (ValidationException e) {
             return NOT_INSTALLED;
         }
     }

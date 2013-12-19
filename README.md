@@ -66,10 +66,12 @@ Deployment project examples are available under the [examples folder][examplesFo
 
 * [node-express-mongoose-demo deployment][NodeExpressMongooseDemoProject] Stack: Node.js, Express, MongoDB.
 * [Secure Social deployment][SecureSocialDemoProject] Stack: Java, Play! Framework 2, MySQL/MongoDB, Secure Social.
+* [Shell API basic usage][BasicExamplesDemoProject]
 
-[NodeExpressMongooseDemoProject]: https://github.com/chaschev/bear/blob/master/src/main/groovy/examples/node/NodeExpressMongooseDemoProject.groovy
-[SecureSocialDemoProject]: https://github.com/chaschev/bear/blob/master/src/main/groovy/examples/java/SecureSocialDemoProject.groovy
-[examplesFolder]: https://github.com/chaschev/bear/tree/master/src/main/groovy/examples
+[NodeExpressMongooseDemoProject]: https://github.com/chaschev/bear/blob/master/src/test/groovy/examples/node/NodeExpressMongooseDemoProject.groovy
+[SecureSocialDemoProject]: https://github.com/chaschev/bear/blob/master/src/test/groovy/examples/java/SecureSocialDemoProject.groovy
+[BasicExamplesDemoProject]: https://github.com/chaschev/bear/tree/master/src/test/groovy/examples/ExamplesProject.groovy
+[examplesFolder]: https://github.com/chaschev/bear/blob/master/src/test/groovy/examples/demo/
 
 ```groovy
 // NodeExpressMongooseDemoProject.groovy

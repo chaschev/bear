@@ -18,10 +18,8 @@ package bear.plugins.sh;
 
 import bear.console.ConsoleCallback;
 import bear.core.SessionContext;
-import bear.session.Result;
 import bear.vcs.CommandLineResult;
 import chaschev.lang.OpenStringBuilder;
-import com.google.common.base.Function;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -38,7 +36,7 @@ public class Script <T extends CommandLineResult, CHILD extends Script>{
 
     public List<CommandLine<T, CHILD>> lines = new ArrayList<CommandLine<T, CHILD>>();
 
-    protected Function<String, T> parser;
+    protected ResultParser<T> parser;
 
     protected int timeoutMs = -1;
 
@@ -80,26 +78,13 @@ public class Script <T extends CommandLineResult, CHILD extends Script>{
         return (T) sys.run(this);
     }
 
-    public CHILD setParser(Function<String, T> parser) {
+    public CHILD setParser(ResultParser<T> parser) {
         this.parser = parser;
         return (CHILD) this;
     }
 
     public T parseResult(String text, SessionContext $, String script) {
-        return (T) parseWithParser(parser, text, $, script);
-    }
-
-    static CommandLineResult parseWithParser(Function<String, ? extends CommandLineResult> parser, String text, SessionContext $, String script) {
-        final CommandLineResult obj;
-
-        if (parser != null) {
-            obj = parser.apply(text);
-            obj.text = text;
-        }else{
-            obj = new CommandLineResult(script, text, Result.OK);
-        }
-
-        return obj.validate($);
+        return (T) CommandLine.parseWithParser(parser, null, text, $, script);
     }
 
     public CHILD timeoutMin(int min) {

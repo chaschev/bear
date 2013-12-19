@@ -16,8 +16,6 @@
 
 package bear.vcs;
 
-import bear.core.Bear;
-import bear.core.SessionContext;
 import bear.session.Result;
 import bear.session.Variables;
 import bear.task.TaskResult;
@@ -29,7 +27,7 @@ import org.apache.commons.lang3.StringUtils;
  */
 public class CommandLineResult extends TaskResult{
     public transient String script;
-    public transient String text;
+    public transient String output;
     public int exitCode;
     public Object value;
 
@@ -37,10 +35,18 @@ public class CommandLineResult extends TaskResult{
         super(Result.OK);
     }
 
-    public CommandLineResult(String script, String text) {
+    public CommandLineResult(CommandLineResult other) {
+        super(other.result);
+        this.script = other.script;
+        this.output = other.output;
+        this.exitCode = other.exitCode;
+        this.value = other.value;
+    }
+
+    public CommandLineResult(String script, String commandOutput) {
         super(Result.OK);
         this.script = cut(script);
-        this.text = text;
+        this.output = commandOutput;
     }
 
     private static String cut(String script) {
@@ -55,10 +61,10 @@ public class CommandLineResult extends TaskResult{
         }
     }
 
-    public CommandLineResult(String script, String text, Result result) {
+    public CommandLineResult(String script, String output, Result result) {
         super(result);
         this.script = cut(script);
-        this.text = text;
+        this.output = output;
     }
 
     @Override
@@ -67,7 +73,7 @@ public class CommandLineResult extends TaskResult{
         sb.append("result='").append(result).append('\'');
         if(exception.isPresent()) sb.append(", exception='").append(exception.get().toString()).append('\'');
         sb.append(", script='").append(script).append('\'');
-        sb.append(", text='").append(text).append('\'');
+        sb.append(", text='").append(output).append('\'');
         sb.append(", exitCode=").append(exitCode);
         sb.append('}');
         return sb.toString();
@@ -79,21 +85,15 @@ public class CommandLineResult extends TaskResult{
         return this;
     }
 
-    public CommandLineResult setException(Throwable e) {
-        result = Result.ERROR;
-        exception = Optional.of(e);
-
+    @Override
+    public CommandLineResult throwIfValidationError() {
+        super.throwIfValidationError();
         return this;
     }
 
-    public CommandLineResult validate(SessionContext $){
-        try {
-            if(result.ok() && text != null){
-                $.var($.bear.pathValidator).apply(text);
-            }
-        } catch (Bear.ValidationException e) {
-            setException(e);
-        }
+    public CommandLineResult setException(Throwable e) {
+        result = Result.ERROR;
+        exception = Optional.of(e);
 
         return this;
     }

@@ -23,16 +23,15 @@ import bear.plugins.DeploymentPlugin;
 import bear.plugins.Plugin;
 import bear.plugins.misc.ReleasesPlugin;
 import bear.session.DynamicVariable;
-import bear.task.InstallationTask;
-import bear.task.InstallationTaskDef;
-import bear.task.Task;
-import bear.task.TaskDef;
+import bear.task.*;
 import chaschev.lang.OpenBean;
 import chaschev.lang.reflect.Annotations;
 import chaschev.lang.reflect.MethodDesc;
 import chaschev.util.Exceptions;
+import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Supplier;
+import com.google.common.collect.Lists;
 import org.apache.logging.log4j.core.helpers.Strings;
 
 import javax.annotation.Nullable;
@@ -303,13 +302,27 @@ public abstract class BearProject<SELF extends BearProject> {
         System.out.println("returned result: " + result);
     }
 
-    private void runTasksWithAnnotations(Supplier<? extends List<? extends TaskDef>> taskList) {
+    public SELF run(final List<TaskCallable<TaskDef>> callables) {
+        runTasksWithAnnotations(new Supplier<List<? extends TaskDef>>() {
+            @Override
+            public List<? extends TaskDef> get() {
+                return Lists.newArrayList(Lists.transform(callables, new Function<TaskCallable<TaskDef>, TaskDef>() {
+                    @Override
+                    public TaskDef apply( TaskCallable<TaskDef> input) {
+                        return new TaskDef(input);
+                    }
+                }));
+            }
+        });
+        return self();
+    }
+
+    public void runTasksWithAnnotations(Supplier<? extends List<? extends TaskDef>> taskList) {
         setProjectVars();
 
         Configuration projectConf = load(projectConf());
 
         GridBuilder gridBuilder = configure()
-            .checkDeployment()
             .newGrid()
             .addAll(taskList.get());
 
@@ -386,5 +399,10 @@ public abstract class BearProject<SELF extends BearProject> {
         setAnnotation(bear.fullName, projectAnn.name());
         setAnnotation(bear.name, projectAnn.shortName());
     }
+
+    public static class Test<T>{
+        public static void main(String[] args) {
+            System.out.println("12242735735435435373".matches("^[0-9]+$"));
+        }    }
 }
 

@@ -39,7 +39,6 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.util.*;
 
-import static bear.plugins.sh.RmInput.newRm;
 import static com.bethecoder.table.ASCIITableHeader.h;
 import static com.google.common.base.Optional.fromNullable;
 
@@ -83,7 +82,7 @@ public class Releases extends HavingContext<Releases, SessionContext>{
 
         String releasePath = $(releases.releasePath);
 
-        $.sys.move(pendingRelease.path, releasePath);
+        $.sys.move(pendingRelease.path).to(releasePath).run();
 
         removeItem(pendingRelease.path);
 
@@ -186,7 +185,7 @@ public class Releases extends HavingContext<Releases, SessionContext>{
 
         String pendingPath = $(releases.pendingReleasePath);
 
-        $.sys.mkdirs(pendingPath);
+        $.sys.mkdirs(pendingPath).run();
 
         PendingRelease release;
 
@@ -241,7 +240,7 @@ public class Releases extends HavingContext<Releases, SessionContext>{
 
         removeItem(path);
 
-        $.sys.rm(newRm(path));
+        $.sys.rm(path).run();
 
         saveJson();
     }
@@ -253,7 +252,7 @@ public class Releases extends HavingContext<Releases, SessionContext>{
 
         if($(releases.cleanPending)){
             String path = $(releases.path) + "/" + $(releases.pendingName) + "*";
-            $.sys.rm(newRm(path).sudo());
+            $.sys.rm(path).sudo().run();
         }
 
         if(keepX > 0){
@@ -275,7 +274,7 @@ public class Releases extends HavingContext<Releases, SessionContext>{
         //apps may be run under a root and create files with root's owner
         String[] paths = toDelete.toArray(new String[toDelete.size()]);
 
-        $.sys.rm(newRm(paths).sudo());
+        $.sys.rm(paths).sudo().run();
 
         sort();
     }
@@ -299,7 +298,7 @@ public class Releases extends HavingContext<Releases, SessionContext>{
     private void switchLinkTo(String path) {
         current = path;
 
-        $.sys.link(path, $(releases.currentReleaseLinkPath));
+        $.sys.link($(releases.currentReleaseLinkPath)).toSource(path).run();
 
         getCurrentRelease(); //makes it active
     }
@@ -327,7 +326,7 @@ public class Releases extends HavingContext<Releases, SessionContext>{
 
     void saveJson() {
         try {
-            $.sys.writeString($(releases.releasesJsonPath), JACKSON_MAPPER.toJSON(folderMap));
+            $.sys.writeString(JACKSON_MAPPER.toJSON(folderMap)).toPath($(releases.releasesJsonPath)).run();
         } catch (Exception e) {
             logger.warn("unable to save JSON", e);
         }
@@ -381,7 +380,7 @@ public class Releases extends HavingContext<Releases, SessionContext>{
 
 
     List<String> ls() {
-        return $.sys.lsAbs($(releases.path));
+        return $.sys.ls($(releases.path)).absolutePaths().run().getLines();
     }
 
     Release computeRelease(String folder) {

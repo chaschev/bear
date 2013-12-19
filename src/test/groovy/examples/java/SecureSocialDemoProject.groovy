@@ -1,5 +1,4 @@
 package examples.java
-
 import bear.annotations.Configuration
 import bear.annotations.Project
 import bear.context.Fun
@@ -23,7 +22,6 @@ import bear.vcs.GitCLIPlugin
 import java.util.regex.Pattern
 
 import static bear.plugins.db.DumpManagerPlugin.DbType.mysql
-import static bear.plugins.sh.WriteStringInput.str
 import static bear.session.BearVariables.joinPath
 import static bear.session.Variables.dynamic
 import static bear.session.Variables.newVar
@@ -70,8 +68,6 @@ public class SecureSocialDemoProject extends BearProject<SecureSocialDemoProject
 
         play.version.set("2.2.0");
 
-        bear.vcsBranchName.defaultTo("master");
-
         play.projectPath.setEqualTo(joinPath(bear.vcsBranchLocalPath, "samples/java/db-demo"));
 
         dumpManager.dbType.setEqualTo(useDb);
@@ -83,10 +79,10 @@ public class SecureSocialDemoProject extends BearProject<SecureSocialDemoProject
 
         // this defines the deployment task
         defaultDeployment = deployment.newBuilder()
-            .CheckoutFiles_2({ _, task, input -> _.run(global.tasks.vcsUpdate); } as TaskCallable)
-            .BuildAndCopy_3({ _, task, input -> updateDbConf(_); _.run(play.build); } as TaskCallable)
-            .StopService_5({ _, task, input -> _.run(play.stop); OK; } as TaskCallable)
-            .StartService_8({ _, task, input -> _.run(play.start, play.watchStart); } as TaskCallable)
+            .CheckoutFiles_2({ _, task, i -> _.run(global.tasks.vcsUpdate); } as TaskCallable)
+            .BuildAndCopy_3({ _, task, i -> updateDbConf(_); _.run(play.build); } as TaskCallable)
+            .StopService_5({ _, task, i -> _.run(play.stop); OK; } as TaskCallable)
+            .StartService_8({ _, task, i -> _.run(play.start, play.watchStart); } as TaskCallable)
             .endDeploy()
             .ifRollback()
             .beforeLinkSwitch({ _, task, input -> _.run(play.stop); } as TaskCallable)
@@ -113,7 +109,14 @@ public class SecureSocialDemoProject extends BearProject<SecureSocialDemoProject
     static main(args)
     {
         new SecureSocialDemoProject()
-            .deploy('mongo')
+            .run(
+            [
+                {_, task, i -> println "${_.sys.name}: ${_.sys.fileSizeAsLong('/home/andrey/texty')}"; OK} as TaskCallable,
+                {_, task, i -> println "${_.sys.name}: ${_.sys.capture('cat /home/andrey/texty')}"; OK} as TaskCallable
+            ])
+
+//        new SecureSocialDemoProject()
+//            .deploy('mongo')
 //            .setup()
     }
 
@@ -151,7 +154,7 @@ public class SecureSocialDemoProject extends BearProject<SecureSocialDemoProject
             .replaceFirst(_.var(serviceString));
 
 
-        return _.sys.writeString(str(pluginsPath, plugins));
+        return _.sys.writeString(plugins).toPath(pluginsPath).run();
     }
 
     static $static_methodMissing(String name, args) {

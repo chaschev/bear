@@ -84,8 +84,8 @@ public class GrailsPlugin2 extends ServerToolPlugin {
                         .add(grails($).addRaw("war").a(warPath))
                         .run();
 
-                    if(buildResult.text.contains("Use --stacktrace to see the full trace") ||
-                        buildResult.text.contains("Set log level to 'warn")){
+                    if(buildResult.output.contains("Use --stacktrace to see the full trace") ||
+                        buildResult.output.contains("Set log level to 'warn")){
                         buildResult.setResult(Result.ERROR);
                     }
 

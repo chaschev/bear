@@ -16,7 +16,6 @@ import bear.vcs.GitCLIPlugin
 import com.google.common.base.Function
 
 import static bear.plugins.db.DumpManagerPlugin.DbType.mongo
-import static bear.plugins.sh.CopyOperationInput.mv
 import static bear.task.TaskResult.OK
 /**
  * @author Andrey Chaschev chaschev@gmail.com
@@ -45,7 +44,7 @@ public class DrywallDemoProject extends BearProject<DrywallDemoProject> {
         final String dir = _.var(releases.pendingRelease).path
 
         if(!_.sys.exists(dir + "/config.js")){
-            _.sys.move(mv("config.example.js", "config.js").cd(dir)).throwIfError();
+            _.sys.move("config.example.js").to("config.js").inDir(dir).run().throwIfError();
         }
 
         OK

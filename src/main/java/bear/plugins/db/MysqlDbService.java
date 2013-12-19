@@ -3,7 +3,6 @@ package bear.plugins.db;
 import bear.core.SessionContext;
 import bear.main.event.NoticeEventToUI;
 import bear.plugins.mysql.MySqlPlugin;
-import bear.plugins.sh.FileSizeInput;
 import bear.vcs.CommandLineResult;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
@@ -68,7 +67,8 @@ public class MysqlDbService extends DbDumpManager.AbstractDbService<DbDumpManage
             "",
             startedAt,
             finishedAt,
-            $.sys.fileSizeAsLong(FileSizeInput.newSize($(plugin.dumpArchivePath))));
+            $.sys.fileSizeAsLong($(plugin.dumpArchivePath))
+        );
 
         dumpInfos.add(dbDumpInfo);
 

@@ -1,8 +1,8 @@
 package bear.vcs;
 
+import bear.plugins.sh.ResultParser;
 import bear.plugins.sh.Script;
 import bear.plugins.sh.SystemSession;
-import com.google.common.base.Function;
 
 /**
 * @author Andrey Chaschev chaschev@gmail.com
@@ -23,7 +23,7 @@ public class VCSScript<T extends CommandLineResult> extends Script<T, VCSScript<
         return sys.run(this);
     }
 
-    public T run(Function<String, T> parser) {
+    public T run(ResultParser<T> parser) {
         setParser(parser);
         callback(vcsSession.passwordCallback());
         return sys.run(this);

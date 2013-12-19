@@ -1,7 +1,6 @@
 package bear.plugins.sh;
 
 import bear.core.SessionContext;
-import bear.vcs.CommandLineResult;
 import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
 
@@ -12,7 +11,7 @@ import static com.google.common.base.Optional.of;
 /**
 * @author Andrey Chaschev chaschev@gmail.com
 */
-public class UnzipCommand extends PermissionsCommandInput<UnzipCommand>{
+public class UnzipCommand extends PermissionsCommandBuilder<UnzipCommand> {
 
     @Nonnull
     protected final String zipPath;
@@ -29,12 +28,6 @@ public class UnzipCommand extends PermissionsCommandInput<UnzipCommand>{
     public UnzipCommand to(String to) {
         this.to = of(to);
         return this;
-    }
-
-    public CommandLineResult run(){
-        CommandLine line = asLine();
-
-        return $.sys.sendCommand(line);
     }
 
     @Override
@@ -59,7 +52,7 @@ public class UnzipCommand extends PermissionsCommandInput<UnzipCommand>{
         line.a(zipPath);
 
         if(hasPermissions){
-            addSudoPermissions(line, to.get());
+            addPermissions(line, to.get());
         }
 
         return line;
@@ -68,6 +61,5 @@ public class UnzipCommand extends PermissionsCommandInput<UnzipCommand>{
     @Override
     public void validate() {
         super.validate();
-//            Preconditions.checkNotNull(to, "destination must not be null");
     }
 }

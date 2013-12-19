@@ -12,7 +12,6 @@ import java.util.List;
 import java.util.concurrent.Callable;
 
 import static bear.core.SessionContext.ui;
-import static bear.plugins.sh.RmInput.newRm;
 
 /**
 * @author Andrey Chaschev chaschev@gmail.com
@@ -47,7 +46,7 @@ public class MongoDbService extends DbDumpManager.AbstractDbService<DbDumpManage
             new Callable<Object>() {
                 @Override
                 public Object call() throws Exception {
-                    $.sys.mkdirs($(plugin.dumpFolderPath));
+                    $.sys.mkdirs($(plugin.dumpFolderPath)).run();
 
                     ui.info(new NoticeEventToUI("Mongo Restore", "Started mongo restore at " + $($.bear.sessionHostname)
                         + " for dump " + dbDumpInfo.name));
@@ -91,7 +90,7 @@ public class MongoDbService extends DbDumpManager.AbstractDbService<DbDumpManage
             .addRaw("tar cvfz %s %s", $(plugin.dumpArchivePath), $(plugin.dumpFolderPath)).build()
             .run();
 
-        $.sys.rm(newRm($(plugin.dumpFolderPath)));
+        $.sys.rm($(plugin.dumpFolderPath)).run();
 
         DateTime finishedAt = new DateTime();
 

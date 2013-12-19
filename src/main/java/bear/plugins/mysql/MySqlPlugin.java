@@ -140,19 +140,19 @@ public class MySqlPlugin extends Plugin<Task, TaskDef<?>> {
     private Version computeInstalledServerVersion(SessionRunner runner) {
         final CommandLineResult r = runScript(runner, "select version();");
 
-        if (r.getResult().nok() || StringUtils.isBlank(r.text)) {
+        if (r.getResult().nok() || StringUtils.isBlank(r.output)) {
             return null;
         }
 
-        return Versions.newVersion(r.text.trim().split("\\s+")[1]);
+        return Versions.newVersion(r.output.trim().split("\\s+")[1]);
     }
 
     public Version computeInstalledClientVersion(SystemSession system) {
         final CommandLineResult result = system.sendCommand(system.newCommandLine().a("mysql", "--version"));
 
         final String version;
-        if (result.text != null) {
-            final Matcher matcher = Pattern.compile(".*Distrib\\s+([0-9.]+).*").matcher(result.text);
+        if (result.output != null) {
+            final Matcher matcher = Pattern.compile(".*Distrib\\s+([0-9.]+).*").matcher(result.output);
             if (matcher.matches()) {
                 version = matcher.group(1);
             } else {
@@ -202,7 +202,7 @@ public class MySqlPlugin extends Plugin<Task, TaskDef<?>> {
                 protected TaskResult exec(SessionRunner runner, Object input) {
                     Question.freeQuestionWithOption("Enter a filename", $(dumpName), dumpName);
 
-                    $.sys.mkdirs($(dumpsDirPath));
+                    $.sys.mkdirs($(dumpsDirPath)).run();
 
                     $.sys.sendCommand($.sys.line()
                         .stty()
@@ -263,9 +263,10 @@ public class MySqlPlugin extends Plugin<Task, TaskDef<?>> {
         final String filePath = runner.$(mysqlTempScriptPath);
 
         final SystemSession sys = runner.$().sys;
-        sys.writeString(filePath, sql);
 
-        return sys.sendCommand(sys.newCommandLine().stty().a("mysql", "-u", user, "-p").redirectFrom(filePath));
+        sys.writeString(sql).toPath(filePath).run();
+
+        return sys.sendCommand(sys.line().stty().a("mysql", "-u", user, "-p").redirectFrom(filePath));
     }
 
     public static ConsoleCallback passwordCallback(final String pw) {

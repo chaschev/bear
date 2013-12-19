@@ -9,7 +9,6 @@ import bear.core.MarkedBuffer;
 import bear.core.SessionContext;
 import bear.session.Result;
 import bear.session.SshAddress;
-import bear.session.Variables;
 import bear.task.BearException;
 import bear.task.Task;
 import bear.task.TaskResult;
@@ -17,7 +16,6 @@ import bear.vcs.CommandLineResult;
 import bear.vcs.RemoteCommandLine;
 import chaschev.util.Exceptions;
 import com.google.common.base.*;
-import net.schmizz.sshj.common.IOUtils;
 import net.schmizz.sshj.connection.ConnectionException;
 import net.schmizz.sshj.connection.channel.direct.Session;
 import net.schmizz.sshj.sftp.SFTPClient;
@@ -29,7 +27,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -37,8 +34,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
-
-import static bear.plugins.sh.CopyOperationInput.mv;
 
 /**
 * @author Andrey Chaschev chaschev@gmail.com
@@ -223,21 +218,6 @@ public class RemoteSystemSession extends SystemSession {
     }
 
     @Override
-    public List<String> ls(String path) {
-        final CommandLineResult r = sendCommand(newCommandLine().a("ls", "-w", "1", path));
-
-        List<String> lines = Variables.LINE_SPLITTER.splitToList(r.text);
-
-        if (lines.size() == 1 &&
-            (lines.get(0).contains("ls: cannot access") ||
-                lines.get(0).contains("such file or directory"))) {
-            return Collections.emptyList();
-        }
-
-        return lines;
-    }
-
-    @Override
     public void zip(String dest, Collection<String> paths) {
         throw new UnsupportedOperationException("todo GenericUnixRemoteEnvironment.zip");
     }
@@ -337,114 +317,8 @@ public class RemoteSystemSession extends SystemSession {
     }
 
     @Override
-    public Result mkdirs(final String... dirs) {
-        sendCommand(newCommandLine()
-            .a("mkdir", "-p")
-            .a(dirs)
-        );
-        return Result.OK;
-    }
-
-    @Override
-    @Deprecated
-    protected Result copyOperation(String src, String dest, CopyCommandType type, boolean folder, @Nullable String owner) {
-        final CommandLine line = newCommandLine();
-
-        switch (type) {
-            case COPY:
-                line.addRaw("cp ").a("-R", src, dest);
-                break;
-            case LINK:
-                line.addRaw("rm ").a(dest);
-                line.semicolon();
-                line.sudo();
-                line.addRaw("ln -s").a(src, dest);
-                break;
-            case MOVE:
-                line.addRaw("mv ").a(src, dest);
-                break;
-        }
-
-        if (owner == null) {
-            return sendCommand(line).getResult();
-        } else {
-            //todo sudo
-            sendCommand(line);
-        }
-
-        return chown(owner, true, dest);
-    }
-
-    @Override
-    public Result chown(String user, boolean recursive, String... files) {
-        final CommandLine<CommandLineResult, ?> line = newCommandLine();
-
-        line.a("chown");
-        if (recursive) line.a("-R");
-        line.a(user);
-        line.a(files);
-
-        final CommandLineResult run = sendCommand(line);
-
-        return run.getResult();
-    }
-
-    @Override
-    public Result chmod(String octal, boolean recursive, String... files) {
-        final CommandLine<CommandLineResult, ?> line = newCommandLine();
-
-        line.sudo(true).addRaw("chmod");
-        if (recursive) line.a("-R");
-        line.a(octal);
-        line.a(files);
-
-        final CommandLineResult run = sendCommand(line);
-
-        return run.getResult();
-    }
-
-    @Override
-    public Result writeString(String path, String s) {
-        try {
-            final File tempFile = File.createTempFile("bear", "upload");
-            FileUtils.writeStringToFile(tempFile, s, IOUtils.UTF8.name());
-            upload(path, tempFile);
-            tempFile.delete();
-            return Result.OK;
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    @Override
-    public WriteStringResult writeString(WriteStringInput input) {
-        try {
-            if(input.ifDiffers){
-                String s = $.sys.readString(input.getFullPath(), "");
-
-                if(input.text.equals(s)) {
-                    return new WriteStringResult(Result.OK, false);
-                }
-            }
-
-            final File tempFile = File.createTempFile("bear", "upload");
-            FileUtils.writeStringToFile(tempFile, input.text, IOUtils.UTF8.name());
-            String remoteTempPath = tempFile.getName();
-
-            upload(remoteTempPath, tempFile);
-
-            tempFile.delete();
-
-            CommandLineResult move = $.sys.move(mv(remoteTempPath, input.path)
-                .withPermissions(input.permissions)
-                .withUser(input.user)
-                .sudo(input.sudo)
-                .callback(input.callback));
-
-            return new WriteStringResult(move.getResult(), true);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+    public WriteStringBuilder writeString(String str) {
+        return new WriteStringBuilder($, str);
     }
 
     @Override
@@ -474,21 +348,14 @@ public class RemoteSystemSession extends SystemSession {
             .a("ls", "-w", "1", path)
         );
 
-        return !(run.text.contains("cannot access") || run.text.contains("o such file"));
+        return !(run.output.contains("cannot access") || run.output.contains("o such file"));
     }
 
     @Override
     public String readLink(String path) {
-        String result = script().line().a("readlink", path).build().run().throwIfError().text.trim();
+        String result = script().line().a("readlink", path).build().run().throwIfError().output.trim();
 
         return Strings.emptyToNull(result);
-    }
-
-    @Override
-    public CommandLine rmLineImpl(RmInput rm, CommandLine line) {
-        rm.validate();
-
-        return rm.forLine(line, $).addRaw("rm").a(rm.recursive ? (rm.force ? "-rf" : "-r") : "-f" ).a(rm.paths);
     }
 
     @Override

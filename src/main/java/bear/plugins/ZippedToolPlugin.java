@@ -28,7 +28,6 @@ import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
 
-import static bear.plugins.sh.RmInput.newRm;
 import static bear.session.Variables.*;
 import static chaschev.lang.Predicates2.contains;
 import static com.google.common.base.Predicates.or;
@@ -121,8 +120,8 @@ public class ZippedToolPlugin extends Plugin<Task, TaskDef<?>> {
         }
 
         protected void clean(){
-            $.sys.rm(newRm($(buildPath)));
-            $.sys.mkdirs($(buildPath));
+            $.sys.rm($(buildPath)).run();
+            $.sys.mkdirs($(buildPath)).run();
         }
 
         protected void download(){
@@ -135,9 +134,9 @@ public class ZippedToolPlugin extends Plugin<Task, TaskDef<?>> {
 
                 Predicate<String> errorPredicate = or(contains("404 Not Found"), contains("ERROR"));
 
-                if(errorPredicate.apply(run.text)){
+                if(errorPredicate.apply(run.output)){
                     throw new RuntimeException("Error during download of " + url +
-                        ": " + find(on('\n').split(run.text), errorPredicate));
+                        ": " + find(on('\n').split(run.output), errorPredicate));
                 }
             }
         }
@@ -180,11 +179,9 @@ public class ZippedToolPlugin extends Plugin<Task, TaskDef<?>> {
 
             Preconditions.checkArgument(!"/var/lib/".equals($(homePath)));
 
-
-
             script = $.sys.script();
 
-            $.sys.addRmLine(script, newRm($(homePath), $(currentVersionPath)).sudo());
+            $.sys.rm($(homePath), $(currentVersionPath)).sudo().run();
 
             //todo change to static api
             script
@@ -203,7 +200,7 @@ public class ZippedToolPlugin extends Plugin<Task, TaskDef<?>> {
         protected void shortCut(String newCommandName, String sourceExecutableName){
             Script script = $.sys.script();
 
-            $.sys.addRmLine(script, newRm("/usr/bin/" + newCommandName).sudo());
+            $.sys.rm("/usr/bin/" + newCommandName).sudo().run();
 
             script
                 .line().sudo().addRaw("ln -s %s/%s /usr/bin/%s", $(currentVersionPath), sourceExecutableName, newCommandName).build()

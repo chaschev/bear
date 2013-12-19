@@ -28,21 +28,18 @@ import bear.task.TaskResult;
 import bear.vcs.CommandLineResult;
 import chaschev.lang.Predicates2;
 import chaschev.util.Exceptions;
-import com.google.common.base.*;
+import com.google.common.base.Joiner;
+import com.google.common.base.Splitter;
 import com.google.common.collect.Iterables;
-import com.google.common.collect.Lists;
-import org.apache.commons.lang3.StringUtils;
 import org.eclipse.aether.version.InvalidVersionSpecificationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.Nullable;
 import java.io.File;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static bear.plugins.sh.CaptureInput.cap;
 import static bear.plugins.sh.SystemEnvironmentPlugin.sshPassword;
 
 /**
@@ -85,7 +82,7 @@ public abstract class SystemSession extends Task<SystemEnvironmentPlugin.SystemS
 
             final CommandLineResult result = sendCommand(line);
 
-            sb.append(result.text);
+            sb.append(result.output);
         }
 
         return script.parseResult(sb.toString(), $, script.firstLineAsText());
@@ -138,53 +135,31 @@ public abstract class SystemSession extends Task<SystemEnvironmentPlugin.SystemS
 
     public abstract <T extends CommandLineResult> CommandLine<T, ?> newCommandLine(Class<T> aClass);
 
-
     public String capture(String s) {
         return capture(s, false);
     }
 
-    public String capture(String s, boolean sudo) {
-        return captureResult(s, sudo).throwIfError().text;
+    protected String capture(String s, boolean sudo) {
+        CommandLineResult result = captureResult(s, sudo).throwIfValidationError();
+
+        if(result.nok()) return null;
+
+        return result.output;
     }
 
     public String capture(String s, ConsoleCallback callback) {
-        return captureResult(s, callback).throwIfError().text;
+        return captureBuilder(s).sudo(false).callback(callback).run().throwIfError().output;
     }
 
-    public String capture(CaptureInput cap) {
-        return captureResult(cap).throwIfError().text;
-    }
-
-    public CommandLineResult captureResult(String s, ConsoleCallback callback) {
-        return captureResult(s, false, callback);
-    }
-
-    public CommandLineResult captureResult(String s) {
-        return captureResult(s, false);
+    public CaptureBuilder captureBuilder(String s) {
+        return new CaptureBuilder($, s);
     }
 
     public CommandLineResult captureResult(String s, boolean sudo) {
-        return captureResult(s, sudo, sudo ? sshPassword($) : null);
-    }
+        ConsoleCallback callback = sudo ? sshPassword($) : null;
 
-    public CommandLineResult captureResult(String s, boolean sudo, ConsoleCallback callback) {
-        return captureResult(cap(s).sudo(sudo).callback(callback));
+        return captureBuilder(s).sudo(sudo).callback(callback).run();
     }
-
-    public CommandLineResult captureResult(CaptureInput input) {
-        return sendCommand(input.newLine($).addRaw(input.text));
-    }
-
-    public Script addRmLine(Script script, RmInput rm) {
-        addRmLine(script.line(), rm);
-        return script;
-    }
-
-    CommandLine addRmLine(CommandLine line, RmInput rm) {
-        return rmLineImpl(rm, line);
-    }
-
-    protected abstract CommandLine rmLineImpl(RmInput rmInput, CommandLine line);
 
     public abstract String getAddress();
 
@@ -203,48 +178,15 @@ public abstract class SystemSession extends Task<SystemEnvironmentPlugin.SystemS
     public abstract Result upload(String dest, File... files);
 
 
-    public abstract Result mkdirs(String... dirs);
-
-    public CommandLineResult mkdirs(DirsInput mkdirs) {
-        CommandLine line = mkdirs.newLine($)
-            .addRaw("mkdir")
-            .a("-p");
-
-        if (mkdirs.permissions.isPresent()) {
-            line.addRaw(" -m " + mkdirs.permissions.get() + " ");
-        }
-
-        line.a(mkdirs.dirs);
-
-        if (mkdirs.user.isPresent()) {
-            line.addRaw(" && sudo chown "+mkdirs.user.get() + " ").a(mkdirs.dirs);
-        }
-
-        return sendCommand(line);
-
+    public DirsBuilder mkdirs(String... dirs){
+        return DirsBuilder.mk($, dirs);
     }
 
-    @Deprecated
-    protected abstract Result copyOperation(String src, String dest, CopyCommandType type, boolean folder, String owner);
-
-    public CommandLineResult permissions(DirsInput input) {
-        CommandLine line = input.newLine($);
-
-        input.addPermissions(line, false, input.dirs);
-
-        return sendCommand(line);
+    public PermissionsCommandBuilder<PermissionsCommandBuilder> permissions(String... paths) {
+        return new PermissionsCommandBuilder<PermissionsCommandBuilder>($, paths);
     }
 
-    @Deprecated
-    public abstract Result chown(String user, boolean recursive, String... dest);
-
-    @Deprecated
-    public abstract Result chmod(String octal, boolean recursive, String... files);
-
-    @Deprecated
-    public abstract Result writeString(String path, String s);
-
-    public abstract WriteStringResult writeString(WriteStringInput input);
+    public abstract WriteStringBuilder writeString(String str);
 
     public abstract String readString(String path, String _default);
 
@@ -252,73 +194,21 @@ public abstract class SystemSession extends Task<SystemEnvironmentPlugin.SystemS
 
     public abstract String readLink(String path);
 
-    public CommandLineResult rm(RmInput rm) {
-        return rmLineImpl(rm, script().line()).build().run();
-    }
-
-    public CommandLineResult move(CopyOperationInput input) {
-        return copy(input);
+    public RmBuilder rm(String... paths) {
+        return RmBuilder.newRm($, paths);
     }
 
     //make it link(dest).toSource(path)
-    public CommandLineResult link(CopyOperationInput input) {
-        return copy(input);
+    public LinkOperationBuilder link(String destLinkPath) {
+        return CopyOperationBuilder.ln(destLinkPath, $);
     }
 
-    public CommandLineResult copy(CopyOperationInput input) {
-        CommandLine<? extends CommandLineResult, ?> line = input.newLine($);
-
-        switch (input.type) {
-            case COPY:
-                line.addRaw("cp ")
-                    .addRaw(input.recursive ? "-R " : "")
-                    .addRaw(input.force ? "-f " : "")
-                    .a(input.src, input.dest);
-                break;
-            case LINK:
-                line.addRaw("rm ").a(input.dest).addRaw("; ");
-                input.forLine(line, $, false).addRaw("ln -s").a(input.src, input.dest);
-                break;
-            case MOVE:
-                line.addRaw("mv ").a(input.src, input.dest);
-                break;
-        }
-
-        if(input.hasPermissions()){
-            input.addSudoPermissions(line,input.dest);
-        }
-
-        return sendCommand(line);
+    public CopyOperationBuilder copy(String from) {
+        return CopyOperationBuilder.cp(from, $);
     }
 
-    @Deprecated
-    public Result copy(String src, String dest) {
-        return copy(src, dest, null);
-    }
-
-    @Deprecated
-    public Result copy(String src, String dest, String owner) {
-        return copyOperation(src, dest, CopyCommandType.COPY, false, owner);
-    }
-
-    @Deprecated
-    public Result move(String src, String dest) {
-        return move(src, dest, null);
-    }
-
-    @Deprecated
-    public Result move(String src, String dest, String owner) {
-        return copyOperation(src, dest, CopyCommandType.MOVE, false, owner);
-    }
-
-    @Deprecated
-    public Result link(String src, String dest) {
-        return link(src, dest, null);
-    }
-
-    @Deprecated
-    public Result link(String src, String dest, @Nullable String owner) {
-        return copyOperation(src, dest, CopyCommandType.LINK, false, owner);
+    public CopyOperationBuilder move(String src) {
+        return CopyOperationBuilder.mv(src, $);
     }
 
     public Set<Role> getRoles() {
@@ -338,7 +228,11 @@ public abstract class SystemSession extends Task<SystemEnvironmentPlugin.SystemS
     }
 
     public String joinPath(Object... varsAndObjects) {
-        return Joiner.on(dirSeparator()).join(Variables.resolveVars($, varsAndObjects));
+        return Joiner.on(dirSeparator())
+            .join(Variables.resolveVars($, varsAndObjects))
+            .replace("//", "/")
+            .replace("/./", "/")
+            .replace("//", "/");
     }
 
     public String joinPath(Iterable<?> varsAndObjects) {
@@ -349,8 +243,13 @@ public abstract class SystemSession extends Task<SystemEnvironmentPlugin.SystemS
         return isUnix() ? '/' : '\\';
     }
 
+    public List<String> lsQuick(String path){
+        return ls(path).run().throwIfValidationError().lines;
+    }
 
-    public abstract List<String> ls(String path);
+    public LsBuilder ls(String path){
+        return new LsBuilder($, path);
+    }
 
     public void zip(String dest, String... paths) {
         zip(dest, Arrays.asList(paths));
@@ -388,30 +287,22 @@ public abstract class SystemSession extends Task<SystemEnvironmentPlugin.SystemS
         return scp(dest, args, fullPaths);
     }
 
-    public List<String> lsAbs(final String path) {
-        return Lists.newArrayList(Lists.transform(ls(path), new Function<String, String>() {
-            public String apply(String s) {
-                return path + "/" + s;
-            }
-        }));
-    }
+
 
     public CommandLineResult resetFile(String logPath, boolean sudo) {
         return script().line().sudo(sudo).sshCallback($).addRaw("cat /dev/null >| ").a(logPath).build().run();
     }
 
-    public String fileSize(FileSizeInput input) {
-        String capture = capture(String.format("du -s%s '%s'", input.humanReadable ? "h" : "b", input.path), input.sudo);
-
-        if (capture == null) return null;
-
-        return StringUtils.substringBefore(capture, "\t").trim();
+    private FileSizeBuilder fileSize(String path) {
+        return new FileSizeBuilder($, path);
     }
 
-    public long fileSizeAsLong(FileSizeInput input) {
-        Preconditions.checkArgument(!input.humanReadable, "humanReadable must be off for decimal value");
+    public long fileSizeAsLong(String path) {
+        return fileSize(path).asLong().run().longValue;
+    }
 
-        return Long.parseLong(fileSize(input));
+    public String fileSizeAsString(String path) {
+        return fileSize(path).asString().run().stringValue;
     }
 
     //TODO this should be temporary and redesigned
@@ -518,7 +409,7 @@ public abstract class SystemSession extends Task<SystemEnvironmentPlugin.SystemS
                         final CommandLineResult result = sendCommand(
                             line().timeoutForInstallation().sudo().a(command(), "install", packageName, "-y"));
 
-                        final String text = result.text;
+                        final String text = result.output;
 
                         if (text.contains("Complete!") ||
                             text.contains("nothing to do")) {

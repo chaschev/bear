@@ -1,15 +1,14 @@
 package examples.nodejs
-
 import bear.annotations.Configuration
 import bear.annotations.Project
 import bear.context.Fun
 import bear.core.*
+import bear.plugins.ConfigureServiceInput
+import bear.plugins.DeploymentPlugin
 import bear.plugins.db.DumpManagerPlugin
 import bear.plugins.misc.ReleasesPlugin
 import bear.plugins.mongo.MongoDbPlugin
 import bear.plugins.nodejs.NodeJsPlugin
-import bear.plugins.ConfigureServiceInput
-import bear.plugins.DeploymentPlugin
 import bear.task.Task
 import bear.task.TaskCallable
 import bear.task.TaskDef
@@ -17,7 +16,6 @@ import bear.vcs.GitCLIPlugin
 import com.google.common.base.Function
 
 import static bear.plugins.db.DumpManagerPlugin.DbType.mongo
-import static bear.plugins.sh.CopyOperationInput.cp
 import static bear.task.TaskResult.OK
 /**
  * @author Andrey Chaschev chaschev@gmail.com
@@ -49,8 +47,6 @@ public class NodeExpressMongooseDemoProject extends BearProject<NodeExpressMongo
         nodeJs.projectPath.setEqualTo(bear.vcsBranchLocalPath);
 
         nodeJs.instancePorts.set("5000, 5001")
-
-        bear.vcsBranchName.defaultTo("master");
 
         dumpManager.dbType.set(mongo.toString());
 
@@ -87,8 +83,8 @@ public class NodeExpressMongooseDemoProject extends BearProject<NodeExpressMongo
     def copyConfiguration = new TaskDef<Task>({ SessionContext _, task, input ->
         final String dir = _.var(releases.pendingRelease).path + "/config"
 
-        _.sys.copy(cp("config.example.js", "config.js").cd(dir).force()).throwIfError();
-        _.sys.copy(cp("imager.example.js", "imager.js").cd(dir).force()).throwIfError();
+        _.sys.copy("config.example.js").to("config.js").inDir(dir).force().run().throwIfError();
+        _.sys.copy("imager.example.js").to("imager.js").inDir(dir).force().run().throwIfError();
 
         OK
     } as TaskCallable);

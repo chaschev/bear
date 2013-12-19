@@ -1,8 +1,8 @@
 package bear.plugins;
 
-import bear.core.Bear;
 import bear.core.GlobalContext;
 import bear.core.SessionContext;
+import bear.core.except.ValidationException;
 import bear.session.DynamicVariable;
 import bear.session.Result;
 import bear.session.Variables;
@@ -86,13 +86,14 @@ public class DownloadPlugin extends Plugin{
                 .cd(absCachePath($))
                 .line().timeoutMin(60).addRaw("wget %s", url).build()
                 .run();
+
             CommandLineResult run = result;
 
             Predicate<String> errorPredicate = or(contains("404 Not Found"), contains("ERROR"));
 
-            if(errorPredicate.apply(run.text)){
-                throw new Bear.ValidationException("Error during download of " + url +
-                    ": " + find(on('\n').split(run.text), errorPredicate));
+            if(errorPredicate.apply(run.output)){
+                throw new ValidationException("Error during download of " + url +
+                    ": " + find(on('\n').split(run.output), errorPredicate));
             }
             return result.getResult();
         }
@@ -117,10 +118,10 @@ public class DownloadPlugin extends Plugin{
         }
     }
 
-    public final TaskDef<Task> downloadTask = new TaskDef<Task>(new SingleTaskSupplier() {
+    public final TaskDef<Task> downloadTask = new TaskDef<Task>(new SingleTaskSupplier<Task>() {
         @Override
-        public Task createNewSession(SessionContext $, Task parent, TaskDef def) {
-            return new Task(parent, new TaskCallable<TaskDef>() {
+        public Task<TaskDef> createNewSession(SessionContext $, Task parent, TaskDef def) {
+            return new Task<TaskDef>(parent, new TaskCallable<TaskDef>() {
                 @Override
                 public TaskResult call(final SessionContext $, final Task<TaskDef> task, final Object input) throws Exception {
                     final ImmutableList<SessionContext> parties = task.getGrid().parties();

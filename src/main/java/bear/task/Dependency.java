@@ -161,7 +161,7 @@ public class Dependency extends Task<TaskDef> {
         public boolean check() {
             CommandLineResult run = script.timeoutSec(30).run();
 
-            return run.ok() && matcher.apply(run.text);
+            return run.ok() && matcher.apply(run.output);
 
         }
 

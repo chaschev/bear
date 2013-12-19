@@ -22,13 +22,13 @@ import bear.console.ConsoleCallbackResult;
 import bear.core.GlobalContext;
 import bear.core.SessionContext;
 import bear.plugins.sh.CommandLine;
+import bear.plugins.sh.ResultParser;
 import bear.plugins.sh.Script;
 import bear.plugins.sh.StubScript;
 import bear.session.DynamicVariable;
 import bear.session.Variables;
 import bear.task.*;
 import chaschev.lang.OpenStringBuilder;
-import com.google.common.base.Function;
 import com.google.common.base.Splitter;
 import com.google.common.collect.PeekingIterator;
 import org.joda.time.DateTime;
@@ -42,7 +42,6 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static bear.plugins.sh.RmInput.newRm;
 import static bear.session.Variables.equalTo;
 import static bear.session.Variables.newVar;
 import static chaschev.lang.LangUtils.elvis;
@@ -57,13 +56,14 @@ import static org.apache.commons.lang3.StringUtils.substringBefore;
  * @author Andrey Chaschev chaschev@gmail.com
  */
 public class GitCLIPlugin extends VcsCLIPlugin<Task, TaskDef<?>> {
-    public static final Function<String, LsResult> LS_PARSER = new Function<String, LsResult>() {
-        public LsResult apply(String s) {
-            return new LsResult(s, convertLsOutput(s));
+    public static final ResultParser<LsResult>  LS_PARSER = new ResultParser<LsResult>() {
+        @Override
+        public LsResult parse(String script, String commandOutput) {
+            return new LsResult(commandOutput, convertLsOutput(commandOutput));
         }
     };
 
-    public static final Function<String, VcsLogInfo> LOG_PARSER = new LogParserFunction();
+    public static final LogParser LOG_PARSER = new LogParser();
     public static final Pattern HASH_REGEX = Pattern.compile("^[0-9a-f]{40}$");
 
 
@@ -288,7 +288,7 @@ public class GitCLIPlugin extends VcsCLIPlugin<Task, TaskDef<?>> {
             newRevision = $.sys.sendCommand(commandPrefix("rev-parse", emptyParams())
                 .cd($(getBear().vcsBranchLocalPath))
                 .a("--revs-only", origin() + "/" + revision)
-                .timeoutSec(10)).text.trim();
+                .timeoutSec(10)).output.trim();
 
             if (!validRevision(newRevision)) {
                 return newQueryRevisionResult(newRevision);
@@ -331,7 +331,9 @@ public class GitCLIPlugin extends VcsCLIPlugin<Task, TaskDef<?>> {
 
         @Override
         public VCSScript<?> export(String revision, String destination, Map<String, String> params) {
-            return (VCSScript<?>) $.sys.addRmLine(checkout(revision, destination, emptyParams()), newRm(destination + "/.git").cd("."));
+            VCSScript<?> checkout = checkout(revision, destination, emptyParams());
+            checkout.add($.sys.rm(destination + "/.git").asLine());
+            return checkout;
         }
 
         @Override
@@ -403,10 +405,11 @@ public class GitCLIPlugin extends VcsCLIPlugin<Task, TaskDef<?>> {
         return newArrayList(s.split("\n"));
     }
 
-    private static class LogParserFunction implements Function<String, VcsLogInfo> {
+    static class LogParser implements ResultParser<VcsLogInfo> {
         public static final DateTimeFormatter GIT_DATE_FORMAT = DateTimeFormat.forPattern("EEE MMM dd HH:mm:ss yyyy Z");
 
-        public VcsLogInfo apply(String s) {
+        @Override
+        public VcsLogInfo parse(String script, String s) {
             List<VcsLogInfo.LogEntry> entries = new ArrayList<VcsLogInfo.LogEntry>();
 
             OpenStringBuilder comment = new OpenStringBuilder(256);
@@ -454,6 +457,7 @@ public class GitCLIPlugin extends VcsCLIPlugin<Task, TaskDef<?>> {
             }
 
             return new VcsLogInfo(s, entries);
+
         }
     }
 }

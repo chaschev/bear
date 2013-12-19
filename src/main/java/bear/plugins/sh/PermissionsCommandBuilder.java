@@ -1,6 +1,7 @@
 package bear.plugins.sh;
 
 import bear.core.SessionContext;
+import bear.core.except.ValidationException;
 import bear.vcs.CommandLineResult;
 import com.google.common.base.Optional;
 
@@ -9,15 +10,14 @@ import static com.google.common.base.Optional.of;
 /**
  * @author Andrey Chaschev chaschev@gmail.com
  */
-public class PermissionsCommandInput<SELF extends CommandInput> extends CommandInput<SELF> {
+public class PermissionsCommandBuilder<SELF extends PermissionsCommandBuilder> extends CommandBuilder<SELF> {
+    protected String[] paths;
     protected Optional<String> user = Optional.absent();
     protected Optional<String> permissions = Optional.absent();
 
-    public PermissionsCommandInput() {
-    }
-
-    public PermissionsCommandInput(SessionContext $) {
+    public PermissionsCommandBuilder(SessionContext $, String... paths) {
         super($);
+        this.paths = paths;
     }
 
     public SELF withPermissions(String permissions){
@@ -45,17 +45,19 @@ public class PermissionsCommandInput<SELF extends CommandInput> extends CommandI
     }
 
     public SELF addPermissions(CommandLine<? extends CommandLineResult, ?> line, boolean needsChainAdd, String... paths) {
-        if (this.permissions.isPresent()) {
+        if (permissions.isPresent()) {
             if(needsChainAdd) line.addRaw(" && ");
 
-            line.addRaw("chmod " + (this.recursive ? "-R " : "") + this.permissions.get() + " ").a(paths);
+            if(sudo) line.addRaw("sudo ");
+            line.addRaw("chmod " + (recursive ? "-R " : "") + permissions.get() + " ").a(paths);
 
-            needsChainAdd = false;
+            needsChainAdd = true;
         }
 
         if(this.user.isPresent()){
             if(needsChainAdd) line.addRaw(" && ");
-            line.addRaw("chown " + (this.recursive ? "-R ":"") + this.user.get() + " ").a(paths);
+            if(sudo) line.addRaw("sudo ");
+            line.addRaw("chown " + (recursive ? "-R ":"") + user.get() + " ").a(paths);
         }
 
         return self();
@@ -65,7 +67,20 @@ public class PermissionsCommandInput<SELF extends CommandInput> extends CommandI
         return permissions.isPresent() || user.isPresent();
     }
 
-    public SELF addSudoPermissions(CommandLine<? extends CommandLineResult, ?> line, String... dest) {
-        return addPermissions(line.addRaw(" && sudo "), false, dest);
+    @Override
+    public CommandLine asLine() {
+        super.asLine();
+
+        CommandLine line = newLine($);
+
+        addPermissions(line, false, paths);
+
+        return line;
+    }
+
+    public void validateOutput(String script, String output){
+        if(output.contains("Operation not permitted")){
+            throw new ValidationException(script + ": " + output);
+        }
     }
 }

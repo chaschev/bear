@@ -14,7 +14,7 @@ public class GitCLIPluginTest {
     }
 
     public static VcsLogInfo vcsLogSample() {
-        return GitCLIPlugin.LOG_PARSER.apply("" +
+        return GitCLIPlugin.LOG_PARSER.parse("", "" +
             "\n\ncommit 9e7f01a379b3553f2855ee871f05580e97e07c1a\n" +
             "Author: Jeff Scott Brown <jbrown@gopivotal.com>\n" +
             "Date:   Tue Jun 4 15:18:37 2013 -0700\n" +
