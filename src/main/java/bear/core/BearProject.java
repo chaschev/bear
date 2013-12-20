@@ -185,17 +185,18 @@ public abstract class BearProject<SELF extends BearProject> {
         return (SELF) this;
     }
 
-    void injectMain(BearMain bearMain){
+    SELF injectMain(BearMain bearMain){
         this.bearMain = bearMain;
+        return self();
     }
 
     public synchronized BearMain main() {
         if(bearMain == null){
-            bearMain = new BearMain(global);
+            bearMain = new BearMain(global, null);
         }
+
         return bearMain;
     }
-
 
     public GridBuilder newGrid() {
         GridBuilder gb = new GridBuilder();

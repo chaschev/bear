@@ -275,10 +275,8 @@ public class GridBuilder {
     public void run(boolean shutdown) {
         if(bearMain == null){
             try {
-                bearMain = new BearMain(GlobalContext.getInstance())
-
+                bearMain = new BearMain(GlobalContext.getInstance(), null)
                     .configure();
-
               } catch (IOException e) {
                 throw Exceptions.runtime(e);
             }

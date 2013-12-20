@@ -17,7 +17,7 @@ import static bear.task.TaskResult.OK
  * @author Andrey Chaschev chaschev@gmail.com
  */
 
-@Project(shortName = "examples-demo", name = "Command Examples Demo 2")
+@Project(shortName = "examples-demo2", name = "Command Examples Demo 2")
 @Configuration(
     propertiesFile = ".bear/ss-demo",
     stage = "three",
@@ -25,7 +25,7 @@ import static bear.task.TaskResult.OK
     branch = "master",
     useUI = false
 )
-public class ExamplesDemoProject2 extends BearProject<ExamplesDemoProject2> {
+public class ExamplesProject2 extends BearProject<ExamplesProject2> {
     // these are the plugins which are injected
     JavaPlugin java;
     MavenPlugin maven;
@@ -46,8 +46,6 @@ public class ExamplesDemoProject2 extends BearProject<ExamplesDemoProject2> {
 
         play.version.set("2.2.0");
 
-        bear.vcsBranchName.defaultTo("master");
-
         play.projectPath.setEqualTo(joinPath(bear.vcsBranchLocalPath, "samples/java/db-demo"));
 
         bear.stages.defaultTo(new Stages(global)
@@ -61,7 +59,7 @@ public class ExamplesDemoProject2 extends BearProject<ExamplesDemoProject2> {
 
     static main(args)
     {
-        new ExamplesDemoProject2()
+        new ExamplesProject2()
             .run(
             [
                 {_, task, i -> println "${_.sys.name}: ${_.sys.fileSizeAsLong('/home/andrey/texty')}"; OK} as TaskCallable,

@@ -1,16 +1,17 @@
 # Welcome the Bear!
 
-Bear is a lightweight deployment tool for Java. It's primary task are builds and deploys of applications to remote hosts. Bear first started as a Capistrano clone, but then grew into a different project.
+Bear is a lightweight framework deployment tool for Java. It's main goal is to make your deployment a programming task by using OOP, static types and fluent programming techniques which one find in many modern languages and libraries. Bear first started as a Capistrano clone, but then grew into a different project.
 
 Bear is in it's early development stages now. Questions, concerns? Just drop me a line at chaschev@gmail.com.
 
 ### Bear Highlights
 
-* Syntax completion in IDEs, static types and OOP approach for tasks, enum-like variables prevent typos
+* Syntax completion in IDEs, static type safety and OOP approach (see demos below)
 * Dynamic scripting with Groovy (@CompileStatic for strict Java-like mode)
 * Debugging in IDEs and script unit-testing
 * Fast execution, parallel execution framework
 * Desktop UI app to monitor running tasks (Twitter Bootstrap 3)
+* A single project definition file driven by annotations and convention over configuration
 * Scripts can be edited in UI and in IDEs (by importing through Maven)
 * Lambda-based configuration, session/global evaluation context for variables
 * (planned) JavaScript, Ruby and Python support
@@ -20,39 +21,19 @@ Bear is in it's early development stages now. Questions, concerns? Just drop me 
 
 | Step                                         | State          |
 | -------------------------------------------- |:--------------:|
-| Git, MongoDB and MySQL plugins               | Finished.      |
-| Install as services (Upstart)                | Finished.      |
-| Play! Framework single-host deployment       | Finished.      |
-| Parametrize demo deployment (mongo or mysql) | Finished.      |
-| CLI version                                  | Finished.      |
+| Git, Upstart, MongoDB and MySQL plugins      | Finished.      |
 | Test deployment rollbacks and db dumps       | Finished.      |
-| Node.js demo deployment - Drywall            | Finished.      |
-| Node.js demo deployment - ExpressMongoose    | Finished.      |
-| Grails/Tomcat demo deployment                | Finished.      |
-| Play! Framework three-hosts deployment       | Finished.      |
-| Node.js three-hosts deployment               | Finished.      |
-| Refactoring, simplifying API                 | In progress... |
-| Installer                                    | In progress... |
+| Node.js deployment demo - Drywall, ExpressMongoose  | Finished.      |
+| Grails/Tomcat deployment demo                | Finished.      |
+| Node.js/Java three-hosts deployment          | Finished.      |
+| Refactoring, simplifying API                 | Finished.      |
+| Installer, launcher                          | In progress... |
+| Finishing TODOs                              |                |
 | UI bugfixing                                 |                |
-| Implementing TODOs                           |                |
+| Support Ubuntu                               |                |
 | Unit test coverage                           |                |
 | Refactoring, simplifying API                 |                |
 
-
-### Road Map for Release 1.0a2 (+ Ubuntu Server, localhost, Cloud)
-
-| Step                                              | State          |
-| ------------------------------------------------- |:--------------:|
-| Quick Start tutorial                              |                |
-| Support Debian/Ubuntu Server                      |                |
-| Support localhost                                 |                |
-| JavaScript, sample project                        |                |
-| Ruby, RoR demo, sample project                    |                |
-| Python & sample project & demo                    |                |
-| Deployments to Heroku, AWS, GCE, Azure, Rackspace |                |
-| Run via a Maven Plugin                            |                |
-| Support JDK 6 for CLI, JDK 7 for GUI              |                |
-| Documentation                                     |                |
 
 ### Project Samples
 
@@ -163,9 +144,26 @@ public class NodeExpressMongooseDemoProject extends BearProject<NodeExpressMongo
 }
 ```
 
+Bear uses a ... framework under the hood which invisible to the user. If you want to ... i.e. speed up download ... you can access Grid API via ...
+
 There are also grids. Grid is an execution table for the tasks. It is a parallel framework which allows syncing tasks execution, communicating, sharing their results (i.e. a file downloaded). Any task is run inside a grid and can be synchronized by getting a Future for some other cell in a grid. If your tasks a simple and you don't need syncing, grid cold be seen as an array for your tasks.
 
 
 ### Bear UI
 
 Bear has a UI written in AngularJS inside a JavaFX's WebView. It's probably the first AngularJS desktop app. :-) It has  a code editor with code completion for script editing and many panes and triggers to monitor deployment execution over your hosts.
+
+### Road Map for Release 1.0a2 (+ Ubuntu Server, localhost, Cloud)
+
+| Step                                              | State          |
+| ------------------------------------------------- |:--------------:|
+| Quick Start tutorial                              |                |
+| Support Debian/Ubuntu Server                      |                |
+| Support localhost                                 |                |
+| JavaScript, sample project                        |                |
+| Ruby, RoR demo, sample project                    |                |
+| Python & sample project & demo                    |                |
+| Deployments to Heroku, AWS, GCE, Azure, Rackspace |                |
+| Run via a Maven Plugin                            |                |
+| Support JDK 6 for CLI, JDK 7 for GUI              |                |
+| Documentation

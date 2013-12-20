@@ -6,18 +6,31 @@ top priority:
 
 - service interface: check live status on hosts
 
+- test deployments after refactorings
+- deploy Hadoop
+- run all demos with Bear
 - refactor: remove addRaw
-- release bear with bear
+- release bear with bear (this should be an exciting feature!)
 - oss plugin
 - release to git
 - (ok) add default methods for projects: start, stop, rollbackTo
 - add uninstall for project and for server
-- find top Capistrano/Puppet questions on SO, create a demo with answers
+- find the top Capistrano/Puppet questions on SO, create a demo with answers
+- releases simple demo
 
-- via CLI: --invoke=drywall.setup('two') OR --groovy="prj('drywall').deploy()"
+- Bear Installer ideas:
+-- Maven archetype: Idea project, bear.xml, bear plugin to quickly run from console.
+-- Installation:
+--- bear-ui - opens the last project
+--- bear-ui drywall - opens the drywall project
+--- bear --create drywall - creates a new project named drywall
+--- (?) bear --unpack-demos
+--- (ok) bear drywall.deploy
+--- bear drywall.deploy -Dlog.level=WARN
+- Distributed File Task - (later or a demo)
 - configure via -D
 - refactorings
--- chain operations: $.sys.rm(dir1, dir2).sudo().noForce().run()
+-- (ok) chain operations: $.sys.rm(dir1, dir2).sudo().noForce().run()
 -- move input from callable into the task
 -- Generics (later)
 -- SELF generics for: CommandLineResult, CommandLine (?)

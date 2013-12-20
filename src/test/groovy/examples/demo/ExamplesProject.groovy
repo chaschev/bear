@@ -86,6 +86,12 @@ public class ExamplesProject extends BearProject<ExamplesProject> {
         OK
     } as TaskCallable
 
+    @Override
+    public void deploy()
+    {
+        run([fileOperations])
+    }
+
     static main(args)
     {
         new ExamplesProject().run([fileOperations])

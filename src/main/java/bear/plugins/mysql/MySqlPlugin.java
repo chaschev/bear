@@ -42,6 +42,8 @@ import java.text.MessageFormat;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static bear.session.Variables.dynamic;
+import static bear.session.Variables.newVar;
 import static bear.session.Variables.strVar;
 
 /**
@@ -57,16 +59,16 @@ public class MySqlPlugin extends Plugin<Task, TaskDef<?>> {
         dbName = strVar().desc("database name"),
         user = strVar().desc("default user for operations").setEqualTo(adminUser),
         password = strVar().desc("pw").setEqualTo(adminPassword),
-        serverPackage = Variables.newVar("mysql55-server"),
-        clientPackage = Variables.newVar("mysql55"),
+        serverPackage = newVar("mysql55-server"),
+        clientPackage = newVar("mysql55"),
         mysqlTempScriptName = strVar().defaultTo("temp.sql"),
-        mysqlTempScriptPath = Variables.dynamic(new Fun<SessionContext, String>() {
+        mysqlTempScriptPath = dynamic(new Fun<SessionContext, String>() {
             @Override
             public String apply(SessionContext $) {
                 return $.sys.joinPath($.var(bear.projectSharedPath), $.var(mysqlTempScriptName));
             }
         }),
-        dumpName = Variables.dynamic(new Fun<AbstractContext, String>() {
+        dumpName = dynamic(new Fun<AbstractContext, String>() {
             @Override
             public String apply(AbstractContext $) {
                 return String.format("dump_%s_%s.GMT_%s.sql",
@@ -74,13 +76,13 @@ public class MySqlPlugin extends Plugin<Task, TaskDef<?>> {
             }
         }),
         dumpsDirPath = BearVariables.joinPath(bear.projectSharedPath, "dumps"),
-        dumpPath = Variables.dynamic(new Fun<SessionContext, String>() {
+        dumpPath = dynamic(new Fun<SessionContext, String>() {
             public String apply(SessionContext $) {
                 return $.sys.joinPath($.var(dumpsDirPath), $.var(dumpName) + ".bz2");
             }
         });
 
-    public final DynamicVariable<VersionConstraint> getVersion = Variables.dynamic(new Fun<AbstractContext, VersionConstraint>() {
+    public final DynamicVariable<VersionConstraint> getVersion = dynamic(new Fun<AbstractContext, VersionConstraint>() {
         @Override
         public VersionConstraint apply(AbstractContext $) {
             return Versions.newVersionConstraint($.var(version));

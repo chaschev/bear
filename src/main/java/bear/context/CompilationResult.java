@@ -10,9 +10,9 @@ import java.util.Collection;
 * @author Andrey Chaschev chaschev@gmail.com
 */
 public interface CompilationResult {
-    Optional<CompiledEntry> byName(String name);
+    Optional<? extends CompiledEntry> byName(String name);
     long timestamp();
-    Collection<CompiledEntry> getEntries();
+    Collection<? extends CompiledEntry> getEntries();
 
-    Optional<CompiledEntry> byFile(File file);
+    Optional<? extends CompiledEntry> byFile(File file);
 }

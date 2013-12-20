@@ -27,11 +27,15 @@ import static com.google.common.collect.Lists.newArrayList;
 public class AppCli<GLOBAL extends AppGlobalContext<GLOBAL, BEAR_APP>, BEAR_APP extends BearApp<GLOBAL>> extends HavingContext<BearMain, GLOBAL> {
     protected final BEAR_APP bear;
 
+
+    public final DynamicVariable<String>
+        appConfigDirName = newVar(".bear");
+
     public final DynamicVariable<File>
-        appConfigDir,
-        scriptsDir,
-        propertiesFile,
-        buildDir;
+        appConfigDir = convert(appConfigDirName, TO_FILE),
+        scriptsDir = equalTo(appConfigDir),
+        propertiesFile = convert(concat(appConfigDir, "/settings.properties"), TO_FILE),
+        buildDir = convert(concat(scriptsDir, "/classes"), TO_FILE);
 
     public final DynamicVariable<Boolean>
         bearify = newVar(false);
@@ -39,6 +43,7 @@ public class AppCli<GLOBAL extends AppGlobalContext<GLOBAL, BEAR_APP>, BEAR_APP 
     protected final GLOBAL global;
     protected String[] args;
     private boolean shouldExit;
+    protected Options options;
 
     public AppCli(GLOBAL $, String... args) {
         super($);
@@ -46,11 +51,7 @@ public class AppCli<GLOBAL extends AppGlobalContext<GLOBAL, BEAR_APP>, BEAR_APP 
         this.bear = $.bear;
         this.args = args;
         this.global = $;
-
-        appConfigDir = convert(newVar(".bear").temp(), TO_FILE);
-        scriptsDir = equalTo(appConfigDir);
-        propertiesFile = convert(concat(appConfigDir, "/settings.properties"), TO_FILE);
-        buildDir = convert(concat(scriptsDir, "/classes"), TO_FILE);
+        options = new Options(args);
     }
 
     private static void copyResource(String resource, File bearDir) throws IOException {
@@ -79,8 +80,6 @@ public class AppCli<GLOBAL extends AppGlobalContext<GLOBAL, BEAR_APP>, BEAR_APP 
 
     //todo move to vars framework
     public AppCli configure() throws IOException {
-
-        Options options = new Options(args);
 
         if (options.has(HELP)) {
             System.out.println(options.printHelpOn());
@@ -111,8 +110,6 @@ public class AppCli<GLOBAL extends AppGlobalContext<GLOBAL, BEAR_APP>, BEAR_APP 
                 dir.mkdirs();
             }
 
-            copyResource("CreateNewScript.java", dir);
-            copyResource("BearSettings.java", dir);
             copyResource("settings.properties.rename", "settings.properties", dir);
 
             shouldExit = true;
@@ -126,7 +123,7 @@ public class AppCli<GLOBAL extends AppGlobalContext<GLOBAL, BEAR_APP>, BEAR_APP 
     }
 
     @SuppressWarnings("unchecked")
-    static class Options extends JOptOptions {
+    protected static class Options extends JOptOptions {
         public final static OptionSpec<KeyValuePair> VARIABLES =
             parser.acceptsAll(Arrays.asList("V", "vars"), "set global vars").withRequiredArg()
                 .withValuesSeparatedBy(",")

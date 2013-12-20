@@ -17,6 +17,7 @@
 package bear.core;
 
 import bear.context.AppGlobalContext;
+import bear.main.CompileManager;
 import bear.plugins.DownloadPlugin;
 import bear.plugins.Plugin;
 import bear.plugins.Plugins;
@@ -39,6 +40,8 @@ import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nonnull;
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.*;
 
 import static com.google.common.util.concurrent.MoreExecutors.listeningDecorator;
@@ -56,6 +59,10 @@ public class GlobalContext extends AppGlobalContext<GlobalContext, Bear> {
     public final Tasks tasks;
 
     public final Plugins plugins = new Plugins(this);
+
+    public static class ProjectRegistry{
+        CompileManager manager;
+    }
 
     public final ListeningExecutorService taskExecutor = listeningDecorator(new ThreadPoolExecutor(2, 32,
         5L, TimeUnit.SECONDS,

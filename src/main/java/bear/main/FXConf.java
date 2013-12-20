@@ -71,7 +71,7 @@ public class FXConf extends BearMain {
     protected BearCommandInterpreter commandInterpreter;
 
     public FXConf(String... args) {
-        super(GlobalContextFactory.INSTANCE.getGlobal(), args);
+        super(GlobalContextFactory.INSTANCE.getGlobal(), null, args);
     }
 
     protected String getScriptText() throws IOException {

@@ -46,16 +46,17 @@ public class JavaCompiler2 extends Compiler {
     private static final Logger logger = LoggerFactory.getLogger(JavaCompiler2.class);
     private URLClassLoader classLoader;
 
-    JavaCompiler2(File sourcesDir, File buildDir) {
-        super(sourcesDir, buildDir);
+    JavaCompiler2(List<File> sourceDirs, File buildDir) {
+        super(sourceDirs, buildDir);
     }
+
 
     @Override
     public String[] extensions() {
         return new String[]{"java"};
     }
 
-    public JavaCompilationResult compile() {
+    public JavaCompilationResult compile(ClassLoader parentCL) {
         throw new UnsupportedOperationException("remove Java");
 //        final List<File> filesList = compileScripts(sourcesDir);
 //

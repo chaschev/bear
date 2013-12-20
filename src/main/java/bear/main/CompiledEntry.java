@@ -29,12 +29,12 @@ import java.io.IOException;
 /**
 * @author Andrey Chaschev chaschev@gmail.com
 */
-public class CompiledEntry {
-    public final Class<?> aClass;
+public class CompiledEntry<T> {
+    public final Class<? extends T> aClass;
     public final File file;
     public final String type;
 
-    public CompiledEntry(Class<?> aClass, File file, String type) {
+    public CompiledEntry(Class<? extends T> aClass, File file, String type) {
         this.aClass = aClass;
         this.file = file;
         this.type = type;
@@ -78,6 +78,7 @@ public class CompiledEntry {
 
         return desc.newInstance(params);
     }
+
 
     @Override
     public String toString() {

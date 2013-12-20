@@ -50,6 +50,13 @@ public class Variables {
         }
     };
 
+    public static final Function<String, List<String>> COMMA_SPLIT_CONVERTER = new Function<String, List<String>>() {
+        @Override
+        public List<String> apply( String input) {
+            return COMMA_SPLITTER.splitToList(input);
+        }
+    };
+
     public static <T extends Enum<T>> Function<String, T> toEnum(final Class<T> tClass){
         return new Function<String, T>() {
             @Override

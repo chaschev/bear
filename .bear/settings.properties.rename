@@ -1,6 +1,2 @@
 bear-fx.settings=BearSettings.java
 bear-fx.script=SampleSetupScript.java
-
-svn.password=
-pac-dev.password=
-pac-test.password=

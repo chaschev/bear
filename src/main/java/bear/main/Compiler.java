@@ -20,6 +20,7 @@ import bear.context.CompilationResult;
 import org.apache.commons.lang3.ArrayUtils;
 
 import java.io.File;
+import java.util.List;
 
 /**
 * @author Andrey Chaschev chaschev@gmail.com
@@ -27,13 +28,13 @@ import java.io.File;
 public abstract class Compiler {
     protected final String[] extensions = extensions();
 
-    protected File sourcesDir;
+    protected List<File> sourceDirs;
     protected File buildDir;
 
     public abstract String[] extensions();
 
-    Compiler(File sourcesDir, File buildDir) {
-        this.sourcesDir = sourcesDir;
+    Compiler(List<File> sourceDirs, File buildDir) {
+        this.sourceDirs = sourceDirs;
         this.buildDir = buildDir;
     }
 
@@ -41,5 +42,6 @@ public abstract class Compiler {
         return ArrayUtils.contains(extensions, extension);
     }
 
-    public abstract CompilationResult compile();
+    public abstract CompilationResult compile(ClassLoader parentCL);
+
 }
