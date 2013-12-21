@@ -183,7 +183,7 @@ public class Bear extends BearApp<GlobalContext> {
         autoInstallPlugins = newVar(false),
         installationInProgress = newVar(false),
         verbose = newVar(false),
-        printHostsToConsole = newVar(false),
+        printHostsToConsole = newVar(true),
         printHostsToBearLog = newVar(true)
     ;
 

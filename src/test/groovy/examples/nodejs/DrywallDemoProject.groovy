@@ -23,7 +23,7 @@ import static bear.task.TaskResult.OK
 
 @Project(shortName =  "drywall-demo", name = "Drywall Demo Deployment")
 @Configuration(
-    propertiesFile = ".bear/drywall",
+    properties = ".bear/drywall",
     stage = "three",
     vcs = "git@github.com:jedireza/drywall.git",
     branch = "master",
@@ -68,9 +68,9 @@ public class DrywallDemoProject extends BearProject<DrywallDemoProject> {
         nodeJs.createScriptText.setEqualTo(nodeJs.simpleGruntUpstart);
 
         bear.stages.set(new Stages(global)
-            .addSimple("one", "vm01")
-            .addSimple("two", "vm01, vm02")
-            .addSimple("three", "vm01, vm02, vm03"));
+            .addQuick("one", "vm01")
+            .addQuick("two", "vm01, vm02")
+            .addQuick("three", "vm01, vm02, vm03"));
 
         // this defines the deployment task
         defaultDeployment = deployment.newBuilder()

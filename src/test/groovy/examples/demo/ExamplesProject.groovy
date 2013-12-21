@@ -16,7 +16,7 @@ import static org.fest.assertions.api.Assertions.assertThat
  */
 @Project(shortName = "examples-demo", name = "Shell Examples Demo 1")
 @Configuration(
-    propertiesFile = ".bear/ss-demo",
+    properties = ".bear/ss-demo",
     stage = "two",
     useUI = false
 )
@@ -27,9 +27,9 @@ public class ExamplesProject extends BearProject<ExamplesProject> {
     protected GlobalContext configureMe(GlobalContextFactory factory) throws Exception
     {
         bear.stages.set(new Stages(global)
-            .addSimple("one", "vm01")
-            .addSimple("two", "vm01, vm02")
-            .addSimple("three", "vm01, vm02, vm03"));
+            .addQuick("one", "vm01")
+            .addQuick("two", "vm01, vm02")
+            .addQuick("three", "vm01, vm02, vm03"));
 
         return global;
     }

@@ -24,7 +24,7 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.FIELD, ElementType.TYPE})
 public @interface Configuration {
-    String propertiesFile() default "";
+    String properties() default "";
 
     String stage() default "";
     Variable[] variables() default {};

@@ -21,10 +21,7 @@ import bear.context.AppOptions;
 import bear.context.DependencyInjection;
 import bear.context.Fun;
 import bear.core.except.NoSuchFileException;
-import bear.main.BearFX;
-import bear.main.CompileManager;
-import bear.main.CompiledEntry;
-import bear.main.ThresholdRangeFilter;
+import bear.main.*;
 import bear.maven.LoggingBooter;
 import bear.maven.MavenBooter;
 import bear.plugins.groovy.GroovyShellPlugin;
@@ -36,6 +33,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import groovy.lang.GroovyShell;
 import joptsimple.OptionSpec;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -73,7 +71,7 @@ public class BearMain extends AppCli<GlobalContext, Bear, BearMain.AppOptions2> 
 
     public static class AppOptions2 extends AppOptions {
         public final static OptionSpec<String>
-            CREATE_NEW = parser.accepts("create", "creates a new Project").withRequiredArg().describedAs("project").ofType(String.class)
+            CREATE_NEW = parser.accepts("create", "with dashes, i.e. 'drywall-demo' creates a new Project").withRequiredArg().describedAs("name-with-dashes").ofType(String.class)
             ;
 
         public final static OptionSpec<Void>
@@ -102,7 +100,6 @@ public class BearMain extends AppCli<GlobalContext, Bear, BearMain.AppOptions2> 
 
     public BearFX bearFX;
     protected CompileManager compileManager;
-
 
     public BearMain(GlobalContext global, CompileManager compileManager, String... args) {
         super(global, args);
@@ -368,6 +365,28 @@ public class BearMain extends AppCli<GlobalContext, Bear, BearMain.AppOptions2> 
         BearMain bearMain = new BearMain(global, createCompilerManager(), args);
 
         if(bearMain.checkHelpAndVersion()){
+            return;
+        }
+
+        if(bearMain.options.has(AppOptions2.CREATE_NEW)){
+            String dashedTitle = bearMain.options.get(AppOptions2.CREATE_NEW);
+
+            ProjectGenerator generator = new ProjectGenerator();
+
+            String groovy = generator.generateGroovyProject(dashedTitle);
+
+            File projectFile = new File(BEAR_DIR, generator.getProjectTitle() + ".groovy");
+            File pomFile = new File(BEAR_DIR.getParentFile(), "bear.xml");
+
+            FileUtils.writeStringToFile(projectFile, groovy);
+            FileUtils.writeStringToFile(pomFile, generator.generatePom(dashedTitle));
+
+            System.out.printf("Created project file: %s%n", projectFile.getPath());
+            System.out.printf("Created maven pom: %s%n", pomFile.getPath());
+
+            System.out.println("\n");
+            System.out.println("Project files have been created. You may open a Bear project in your favourite IDE by importing a Maven module (bear.xml).");
+
             return;
         }
 

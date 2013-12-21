@@ -56,9 +56,9 @@ public class GrailsTomcatDemoProject extends BearProject<GrailsTomcatDemoProject
         bear.appStartTimeoutSec.set(600)
 
         bear.stages.set(new Stages(global)
-            .addSimple("one", "vm01")
-            .addSimple("two", "vm01, vm02")
-            .addSimple("three", "vm01, vm02, vm03"));
+            .addQuick("one", "vm01")
+            .addQuick("two", "vm01, vm02")
+            .addQuick("three", "vm01, vm02, vm03"));
 
         // this defines the deployment task
         defaultDeployment = deployment.newBuilder()

@@ -147,6 +147,29 @@ Bear uses a ... framework under the hood which invisible to the user. If you wan
 There are also grids. Grid is an execution table for the tasks. It is a parallel framework which allows syncing tasks execution, communicating, sharing their results (i.e. a file downloaded). Any task is run inside a grid and can be synchronized by getting a Future for some other cell in a grid. If your tasks a simple and you don't need syncing, grid cold be seen as an array for your tasks.
 
 
+### Installing and using Bear (latest developer release)
+
+Bear is designed to be used as a normal Java library. A possible way to run it's projects is to have it on classpath and do `new YourBearProject().deploy()`.
+
+To install the latest stage version of Bear you need to run in your console:
+
+    mvn com.chaschev:installation-maven-plugin:1.4:install -Dartifact=com.chaschev:bear -Dshapshots=true -U
+
+This command requires Maven 3.1.1+ installed and also might require administrator rights to create shortcuts in JAVA_HOME.
+
+Note: installation-maven-plugin might not yet be in Maven Central at the time of writing.
+
+### Building Bear
+
+Bear requires Maven 3.x to build:
+
+    git clone https://github.com/chaschev/bear.git
+    cd bear
+    mvn com.zenjava:javafx-maven-plugin:2.0:fix-classpath
+    mvn install
+
+Third command will fix JavaFX installation to be available on classpath. You might need to run this with admin user. [More...](http://zenjava.com/javafx/maven/fix-classpath.html)
+
 ### Bear UI
 
 Bear has a UI written in AngularJS inside a JavaFX's WebView. It's probably the first AngularJS desktop app. :-) It has  a code editor with code completion for script editing and many panes and triggers to monitor deployment execution over your hosts.

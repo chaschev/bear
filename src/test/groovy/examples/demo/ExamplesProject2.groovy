@@ -19,7 +19,7 @@ import static bear.task.TaskResult.OK
 
 @Project(shortName = "examples-demo2", name = "Command Examples Demo 2")
 @Configuration(
-    propertiesFile = ".bear/ss-demo",
+    properties = ".bear/ss-demo",
     stage = "three",
     vcs = "git@github.com:chaschev/securesocial.git",
     branch = "master",
@@ -49,9 +49,9 @@ public class ExamplesProject2 extends BearProject<ExamplesProject2> {
         play.projectPath.setEqualTo(joinPath(bear.vcsBranchLocalPath, "samples/java/db-demo"));
 
         bear.stages.set(new Stages(global)
-            .addSimple("one", "vm01")
-            .addSimple("two", "vm01, vm02")
-            .addSimple("three", "vm01, vm02, vm03"));
+            .addQuick("one", "vm01")
+            .addQuick("two", "vm01, vm02")
+            .addQuick("three", "vm01, vm02, vm03"));
 
         return global;
     }

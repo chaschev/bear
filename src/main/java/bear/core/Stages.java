@@ -54,7 +54,7 @@ public class Stages {
         return this;
     }
 
-    public Stages addSimple(String name, String csvHosts) {
+    public Stages addQuick(String name, String csvHosts) {
         return add(new Stage(name).addHosts(hosts(csvHosts)));
     }
 

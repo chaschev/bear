@@ -3,6 +3,7 @@ package bear.maven;
 
 import chaschev.util.Exceptions;
 import com.google.common.base.Optional;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.SystemUtils;
 import org.apache.maven.repository.internal.MavenRepositorySystemUtils;
 import org.codehaus.plexus.util.StringUtils;
@@ -22,7 +23,11 @@ import org.eclipse.aether.util.filter.DependencyFilterUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.xml.stream.XMLInputFactory;
+import javax.xml.stream.XMLStreamReader;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
@@ -86,42 +91,96 @@ public class MavenBooter {
         return session;
     }
 
+    enum DependencyTag {
+        dependency, artifactId, version, groupId, none
+    }
+
     public Optional<ClassLoader> loadArtifacts(Properties properties){
-        Set<Map.Entry<String, String>> entries = (Set) properties.entrySet();
+        File bearXml = new File("bear.xml");
 
-        boolean hasErrors = false;
+        if(!bearXml.exists()) return Optional.absent();
 
-        List<URL> urls = new ArrayList<URL>();
+        XMLInputFactory inputFactory = XMLInputFactory.newInstance();
+        // Setup a new eventReader
+        InputStream in = null;
 
-        for (Map.Entry<String, String> entry : entries) {
-            String key = entry.getKey();
+        String artifactId = null, version = null, groupId = null;
 
-            if(!key.startsWith("dep.")) continue;
+        List<String> deps = new ArrayList<String>();
 
-            try {
-                DependencyResult dependencyResult = resolveArtifact(new DefaultArtifact(entry.getValue()));
+        try {
+            in = new FileInputStream(bearXml);
+            XMLStreamReader r = inputFactory.createXMLStreamReader(in);
 
-                List<ArtifactResult> results = dependencyResult.getArtifactResults();
+            loop: while(r.hasNext()){
+                r.next();
 
-                for (ArtifactResult result : results) {
-                    urls.add(result.getArtifact().getFile().toURI().toURL());
+                if(!r.isStartElement() && !r.isEndElement()) continue;
+
+                if(!r.hasName()) continue;
+
+                DependencyTag tag = DependencyTag.none;
+                try {
+                    tag = DependencyTag.valueOf(r.getLocalName());
+                } catch (IllegalArgumentException ignore) {
+
                 }
-            } catch (ArtifactResolutionException e) {
-                logger.error(e.toString());
-                hasErrors = true;
-            } catch (MalformedURLException e) {
-                throw Exceptions.runtime(e);
+
+                switch (tag) {
+                    case dependency:
+                        if(r.isEndElement()){
+                            if(!artifactId.equals("bear")){
+                                deps.add(groupId + ":" + artifactId + ":" + version);
+                                groupId = artifactId = version = null;
+                            }
+                        }
+                        continue loop;
+                    case artifactId:
+                        artifactId = r.getElementText();
+                        break;
+                    case version:
+                        version = r.getElementText();
+                        break;
+                    case groupId:
+                        groupId = r.getElementText();
+                        break;
+                }
             }
+
+            boolean hasErrors = false;
+
+            List<URL> urls = new ArrayList<URL>();
+
+            for (String dep : deps) {
+                try {
+                    DependencyResult dependencyResult = resolveArtifact(new DefaultArtifact(dep));
+
+                    List<ArtifactResult> results = dependencyResult.getArtifactResults();
+
+                    for (ArtifactResult result : results) {
+                        urls.add(result.getArtifact().getFile().toURI().toURL());
+                    }
+                } catch (ArtifactResolutionException e) {
+                    logger.error(e.toString());
+                    hasErrors = true;
+                } catch (MalformedURLException e) {
+                    throw Exceptions.runtime(e);
+                }
+            }
+
+            if(hasErrors){
+                System.out.println("Unable to resolve artifacts, exiting.");
+                System.exit(-1);
+            }
+
+            if(urls.isEmpty()) return Optional.absent();
+
+            return Optional.of((ClassLoader) new URLClassLoader(urls.toArray(new URL[urls.size()]), getClass().getClassLoader()));
+        } catch (Exception e) {
+            throw Exceptions.runtime(e);
+        } finally {
+            IOUtils.closeQuietly(in);
         }
-
-        if(hasErrors){
-            System.out.println("Unable to resolve artifacts, exiting.");
-            System.exit(-1);
-        }
-
-        if(urls.isEmpty()) return Optional.absent();
-
-        return Optional.of((ClassLoader) new URLClassLoader(urls.toArray(new URL[urls.size()]), getClass().getClassLoader()));
     }
 
     public DependencyResult resolveArtifact(Artifact artifact) throws ArtifactResolutionException {

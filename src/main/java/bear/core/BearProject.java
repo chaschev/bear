@@ -346,11 +346,11 @@ public abstract class BearProject<SELF extends BearProject> {
 
     private Configuration load(Configuration annotation) {
         if(annotation == null) return null;
-        if(!"".equals(annotation.propertiesFile())) {
-            File file = new File(annotation.propertiesFile());
+        if(!"".equals(annotation.properties())) {
+            File file = new File(annotation.properties());
 
             if(!file.exists() && !file.getName().endsWith(".properties")){
-                 file = new File(annotation.propertiesFile() + ".properties");
+                 file = new File(annotation.properties() + ".properties");
             }
 
             Preconditions.checkArgument(file.exists(), "properties file does not exist: %s", file.getAbsolutePath());

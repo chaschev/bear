@@ -23,7 +23,7 @@ import static bear.task.TaskResult.OK
 
 @Project(shortName =  "express-demo", name = "Node Express Mongoose Demo Deployment")
 @Configuration(
-    propertiesFile = ".bear/express-demo",
+    properties = ".bear/express-demo",
     stage = "three",
     vcs = "git@github.com:madhums/node-express-mongoose-demo.git",
     branch = "master",
@@ -61,9 +61,9 @@ public class NodeExpressMongooseDemoProject extends BearProject<NodeExpressMongo
         } as Fun);
 
         bear.stages.set(new Stages(global)
-            .addSimple("one", "vm01")
-            .addSimple("two", "vm01, vm02")
-            .addSimple("three", "vm01, vm02, vm03"));
+            .addQuick("one", "vm01")
+            .addQuick("two", "vm01, vm02")
+            .addQuick("three", "vm01, vm02, vm03"));
 
         // this defines the deployment task
         defaultDeployment = deployment.newBuilder()

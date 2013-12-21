@@ -90,9 +90,9 @@ public class StageTest {
     private Stages sample1() {
         Stages stages = new Stages(global);
 
-        stages.addSimple("1", "vm1, vm2, vm3")
-            .addSimple("2", "vm1, vm2, vm3, vm4")
-            .addSimple("3", "vm2")
+        stages.addQuick("1", "vm1, vm2, vm3")
+            .addQuick("2", "vm1, vm2, vm3, vm4")
+            .addQuick("3", "vm2")
         ;
 
         stages

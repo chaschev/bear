@@ -1,24 +1,24 @@
 top priority:
 
-- put logs into separate files for sessions
-- create project from template
-- change settings to script which is executed every time
+- (ok) put logs into separate files for sessions
+- (ok) create project a from template
 - ui: autosize for code area ?
-- quick setup task recipe (i.e. [new empty bear script], :run (rename :ref) {task: 'tasks.setup'}   at the moment its _.runner.run(_.getGlobal().tasks.setup, )
+- (ok) quick setup task recipe (i.e. [new empty bear script], :run (rename :ref) {task: 'tasks.setup'}   at the moment its _.runner.run(_.getGlobal().tasks.setup, )
 
 - service interface: check live status on hosts
 
-
+- bear --install maven -Vmaven.version=3.1.1,bear.host=vm04
 - deploy Hadoop
 - run all demos with Bear
 - refactor: remove addRaw
 - release bear with bear (this should be an exciting feature!)
-- oss plugin
+- oss sonatype plugin
 - release to git
 - (ok) add default methods for projects: start, stop, rollbackTo
 - add uninstall for project and for server
 - find the top Capistrano/Puppet questions on SO, create a demo with answers
 - releases simple demo
+- --create del-me --from-template mini
 
 - Bear Installer ideas:
 -- Maven archetype: Idea project, bear.xml, bear plugin to quickly run from console.
@@ -26,6 +26,7 @@ top priority:
 --- bear-ui - opens the last project
 --- bear-ui drywall - opens the drywall project
 --- bear --create drywall - creates a new project named drywall, pom.xml, generates drywall.iml
+--- bear --command=ls drywall - runs command, prints text
 --- (?) bear --unpack-demos
 --- (ok) bear drywall.deploy
 --- bear drywall.deploy -Dlog.level=WARN

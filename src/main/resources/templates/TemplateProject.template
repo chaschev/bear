@@ -1,0 +1,32 @@
+import bear.annotations.Configuration
+import bear.annotations.Project
+import bear.core.*
+import bear.task.TaskCallable
+
+import static bear.task.TaskResult.OK
+
+@Project(shortName = "${dashedTitle}", name = "${spacedTitle}")
+@Configuration(
+    properties = ".bear/ss-demo",
+    stage = "two",
+    useUI = false
+)
+public class ${projectTitle} extends BearProject<${projectTitle}> {
+    Bear bear;
+
+    @Override
+    protected GlobalContext configureMe(GlobalContextFactory factory) throws Exception
+    {
+        bear.stages.set(new Stages(global)
+            .addQuick("one", "vm01")
+            .addQuick("two", "vm01, vm02")
+            .addQuick("three", "vm01, vm02, vm03"));
+
+        return global;
+    }
+
+    static main(args)
+    {
+        new ${projectTitle}().deploy()
+    }
+}
