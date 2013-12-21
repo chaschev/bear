@@ -4,9 +4,38 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
+    <parent>
+        <groupId>org.sonatype.oss</groupId>
+        <artifactId>oss-parent</artifactId>
+        <version>7</version>
+    </parent>
+
     <groupId>com.chaschev</groupId>
     <artifactId>bear</artifactId>
     <version>1.0-SNAPSHOT</version>
+    <packaging>jar</packaging>
+
+    <scm>
+        <connection>scm:git:git@github.com:chaschev/bear.git</connection>
+        <developerConnection>scm:git:git@github.com:chaschev/bear.git</developerConnection>
+        <url>git@github.com:chaschev/bear.git</url>
+    </scm>
+
+    <developers>
+        <developer>
+            <id>chaschev</id>
+            <email>chaschev@gmail.com</email>
+            <name>Andrey Chaschev</name>
+        </developer>
+    </developers>
+
+    <licenses>
+        <license>
+            <name>The Apache Software License, Version 2.0</name>
+            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
 
     <properties>
         <javaHome>${env.JAVA_HOME}</javaHome>
@@ -17,12 +46,24 @@
         <manufacturer>org.eclipse</manufacturer>
         <aetherVersion>0.9.0.M3</aetherVersion>
         <mavenVersion>3.1.1</mavenVersion>
+        <timestamp>${maven.build.timestamp}</timestamp>
     </properties>
 
     <profiles>
+<!--
+        <profile>
+            <id>freaking-java-fx</id>
+            <build>
+                <plugins>
+                </plugins>
+            </build>
+        </profile>
+-->
         <profile>
             <id>allow-snapshots</id>
-            <activation><activeByDefault>true</activeByDefault></activation>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
             <repositories>
                 <repository>
                     <id>snapshots-repo</id>
@@ -45,11 +86,6 @@
             <artifactId>guava</artifactId>
             <version>15.0</version>
         </dependency>
-        <!--<dependency>
-            <groupId>ch.qos.logback</groupId>
-            <artifactId>logback-classic</artifactId>
-            <version>1.0.12</version>
-        </dependency>-->
         <dependency>
             <groupId>org.apache.logging.log4j</groupId>
             <artifactId>log4j-slf4j-impl</artifactId>
@@ -60,11 +96,6 @@
             <artifactId>log4j-core</artifactId>
             <version>2.0-beta9</version>
         </dependency>
-        <!--<dependency>
-            <groupId>org.codehaus.groovy</groupId>
-            <artifactId>groovy-all</artifactId>
-            <version>1.8.6</version>
-        </dependency>-->
         <dependency>
             <groupId>net.schmizz</groupId>
             <artifactId>sshj</artifactId>
@@ -101,13 +132,16 @@
             <artifactId>chutils</artifactId>
             <version>1.2-SNAPSHOT</version>
         </dependency>
+<!--
         <dependency>
             <groupId>com.oracle</groupId>
             <artifactId>javafx</artifactId>
             <version>2.2.3</version>
-            <scope>system</scope>
-            <systemPath>${fx.jar.path}</systemPath>
+            <scope>provided</scope>
+            &lt;!&ndash;<systemPath>${fx.jar.path}</systemPath>&ndash;&gt;
         </dependency>
+-->
+
         <dependency>
             <groupId>net.sf.jopt-simple</groupId>
             <artifactId>jopt-simple</artifactId>
@@ -180,7 +214,6 @@
             <artifactId>aether-transport-http</artifactId>
             <version>${aetherVersion}</version>
         </dependency>
-
         <dependency>
             <groupId>org.easytesting</groupId>
             <artifactId>fest-assert-core</artifactId>
@@ -203,6 +236,33 @@
 
     <build>
         <plugins>
+<!--
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-install-plugin</artifactId>
+                <version>2.2</version>
+                <executions>
+                    <execution>
+                        <id>javafx</id>
+                        <inherited>false</inherited>
+                        <phase>validate</phase>
+                        <configuration>
+                            <file>${fx.jar.path}</file>
+                            <repositoryLayout>default</repositoryLayout>
+                            <groupId>com.oracle</groupId>
+                            <artifactId>javafx</artifactId>
+                            <version>2.2.3</version>
+                            <packaging>jar</packaging>
+                            <generatePom>true</generatePom>
+                        </configuration>
+                        <goals>
+                            <goal>install-file</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+-->
+
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
@@ -227,177 +287,126 @@
                     </archive>
                 </configuration>
             </plugin>
-
             <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-shade-plugin</artifactId>
+                <groupId>com.zenjava</groupId>
+                <artifactId>javafx-maven-plugin</artifactId>
                 <version>2.0</version>
-                <executions>
-                    <execution>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>shade</goal>
-                        </goals>
-                        <configuration>
-                            <artifactSet>
-                                <excludes>
-                                    <exclude>org.apache.poi:poi-ooxml</exclude>
-                                </excludes>
-                            </artifactSet>
-                            <filters>
-<!--
-                                <filter>
-                                    <artifact>org.apache.xmlbeans:xmlbeans</artifact>
-                                    <excludes>
-                                        <exclude>**</exclude>
-                                    </excludes>
-                                </filter>
-                                <filter>
-                                    <artifact>org.apache.tika:tika-core</artifact>
-                                    <excludes>
-                                        <exclude>org/apache/tika/language/*</exclude>
-                                    </excludes>
-                                </filter>
--->
-                               <!-- <filter>
-                                    <artifact>xpp3:xpp3_min</artifact>
-                                    <excludes>
-                                        <exclude>/META-INF/services/org.xmlpull.v1.XmlPullParserFactory
-                                        </exclude>
-                                    </excludes>
-                                </filter>-->
-
-
-<!--
-                                <filter>
-                                    <artifact>*:*</artifact>
-                                    <excludes>
-                                        <exclude>META-INF/*.SF</exclude>
-                                        <exclude>META-INF/*.DSA</exclude>
-                                        <exclude>META-INF/*.RSA</exclude>
-                                    </excludes>
-                                </filter>
--->
-                            </filters>
-                        </configuration>
-                    </execution>
-                </executions>
+                <configuration>
+                    <mainClass>bear.main.BearFX.BearFXApp</mainClass>
+                </configuration>
             </plugin>
 
-
-
-<!--
             <plugin>
-                <groupId>com.github.wvengen</groupId>
-                <artifactId>proguard-maven-plugin</artifactId>
-                <version>2.0.6</version>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>buildnumber-maven-plugin</artifactId>
+                <version>1.2</version>
                 <executions>
                     <execution>
-                        <phase>install</phase>
+                        <phase>validate</phase>
                         <goals>
-                            <goal>proguard</goal>
+                            <goal>create</goal>
                         </goals>
                     </execution>
                 </executions>
                 <configuration>
-                    <injar>${project.build.finalName}.jar</injar>
-                    <outjar>${project.build.finalName}-slim.jar</outjar>
-                    <libs>
-                        <lib>${rt.jar.path}</lib>
-                        <lib>${jsse.jar.path}</lib>
-                    </libs>
-                    <attach>true</attach>
-                    <attachArtifactClassifier>min</attachArtifactClassifier>
-                    <obfuscate>false</obfuscate>
-                    <options>
-                        <option>-dontoptimize</option>
-                        <option>-ignorewarnings</option>
-                        &lt;!&ndash;<option>-optimizationpasses 2</option>&ndash;&gt;
-                        &lt;!&ndash;<option>-dontshrink</option>&ndash;&gt;
-                        <option>
-                            -keepclassmembers enum * {
-                                public static **[] values();
-                                public static ** valueOf(java.lang.String);
-                            }
-                            -keepparameternames
-                            -keepattributes Exceptions,InnerClasses,Signature,Deprecated,SourceFile,LineNumberTable,*Annotation*,EnclosingMethod
-                        </option>
-                        &lt;!&ndash; -renamesourcefileattribute SourceFile&ndash;&gt;
-                        <option>-keep class org.slf4j.**{*;}</option>
-                        &lt;!&ndash;<option>-keep class * implements chaschev.conf.ProguardKeep{*;}</option>
-                        <option>-keepclassmembers class * implements chaschev.conf.ProguardKeepNames{*;}</option>&ndash;&gt;
-
-                        <option>-keep class bear.**{*;}</option>
-                        <option>-keepclassmembers class bear.**{*;}</option>
-
-                        <option>-keep class ch.qos.logback.core.FileAppender{*;}</option>
-                        <option>-keepclassmembers class ch.qos.logback.core.FileAppender{*;}</option>
-
-                        <option>-keep class org.apache.commons.io.FileUtils{*;}</option>
-                        <option>-keepclassmembers class org.apache.commons.io.FileUtils{*;}</option>
-
-                        <option>-keep class java.util.concurrent.Callable{*;}</option>
-                        <option>-keepclassmembers class java.util.concurrent.Callable{*;}</option>
-
-                        <option>-keep class com.google.common.collect.AbstractIterator$State {*;}</option>
-                        &lt;!&ndash; can be partially removed &ndash;&gt;
-
-                        <option>-dontwarn com.google.common.collect.MinMaxPriorityQueue</option>
-                    </options>
+                    <doCheck>false</doCheck>
+                    <doUpdate>false</doUpdate>
                 </configuration>
-                <dependencies>
-                    <dependency>
-                        <groupId>net.sf.proguard</groupId>
-                        <artifactId>proguard-base</artifactId>
-                        <version>4.10</version>
-                    </dependency>
-                </dependencies>
             </plugin>
--->
 
-
-
-
-
-
-
-<!--
             <plugin>
-                <artifactId>maven-resources-plugin</artifactId>
-                <version>2.6</version>
+                <groupId>pl.project13.maven</groupId>
+                <artifactId>git-commit-id-plugin</artifactId>
+                <version>2.1.7</version>
                 <executions>
                     <execution>
-                        <id>copy-resources</id>
-                        <phase>generate-sources</phase>
                         <goals>
-                            <goal>copy-resources</goal>
+                            <goal>revision</goal>
                         </goals>
-                        <configuration>
-                            <encoding>UTF-8</encoding>
-                            <outputDirectory>${}</outputDirectory>
-                            <resources>
-                                <resource>
-                                    <filtering>true</filtering>
-                                    <directory>src/main/resources</directory>
-                                    <includes>
-                                        <include>*.java</include>
-                                    </includes>
-                                    &lt;!&ndash;<directory>${dicts.dir}</directory>&ndash;&gt;
-                                </resource>
-                            </resources>
-                        </configuration>
                     </execution>
                 </executions>
+
+                <configuration>
+                    <!-- that's the default value -->
+                    <dateFormat>dd/MM/yyyy HH:mm z</dateFormat>
+
+                    <!-- true is default here, it prints some more information during the build -->
+                    <verbose>true</verbose>
+
+                    <!-- ALTERNATE SETUP - GENERATE FILE -->
+                    <!--
+                        If you want to keep git information, even in your WAR file etc,
+                        use this mode, which will generate a properties file (with filled out values)
+                        which you can then normally read using new Properties().load(/**/)
+                    -->
+
+                    <!--
+                        this is true by default; You may want to set this to false, if the plugin should run inside a
+                        <packaging>pom</packaging> project. Most projects won't need to override this property.
+
+                        For an use-case for this kind of behaviour see: https://github.com/ktoso/maven-git-commit-id-plugin/issues/21
+                    -->
+                    <skipPoms>true</skipPoms>
+
+                    <!-- this is false by default, forces the plugin to generate the git.properties file -->
+                    <generateGitPropertiesFile>true</generateGitPropertiesFile>
+
+                    <!-- The path for the to be generated properties file, it's relative to ${project.basedir} -->
+                    <generateGitPropertiesFilename>src/main/resources/git.properties</generateGitPropertiesFilename>
+
+                    <!-- true by default, controls whether the plugin will fail when no .git directory is found, when set to false the plugin will just skip execution -->
+                    <!-- @since 2.0.4 -->
+                    <failOnNoGitDirectory>false</failOnNoGitDirectory>
+
+                    <!-- @since 2.1.0 -->
+                    <!--
+                        read up about git-describe on the in man, or it's homepage - it's a really powerful versioning helper
+                        and the recommended way to use git-commit-id-plugin. The configuration bellow is optional,
+                        by default describe will run "just like git-describe on the command line", even though it's a JGit reimplementation.
+                    -->
+                    <gitDescribe>
+
+                        <!-- don't generate the describe property -->
+                        <skip>false</skip>
+
+                        <!--
+                            if no tag was found "near" this commit, just print the commit's id instead,
+                            helpful when you always expect this field to be not-empty
+                        -->
+                        <always>false</always>
+                        <!--
+                             how many chars should be displayed as the commit object id?
+                             7 is git's default,
+                             0 has a special meaning (see end of this README.md),
+                             and 40 is the maximum value here
+                        -->
+                        <abbrev>7</abbrev>
+
+                        <!-- when the build is triggered while the repo is in "dirty state", append this suffix -->
+                        <dirty>-dirty</dirty>
+                    </gitDescribe>
+                </configuration>
+
             </plugin>
--->
         </plugins>
         <resources>
             <resource>
                 <directory>src/main/resources</directory>
-                <filtering>true</filtering>
+                <excludes>
+                    <exclude>**/metis/img/**/*.*</exclude>
+                    <exclude>**/*firebug*.*</exclude>
+                    <exclude>**/js/content/**/*.*</exclude>
+                    <exclude>**/js/sandbox/**/*.*</exclude>
+                </excludes>
+                <filtering>false</filtering>
             </resource>
             <resource>
                 <directory>.bear</directory>
+                <filtering>false</filtering>
+            </resource>
+            <resource>
+                <directory>src/main/resources-filtered</directory>
+                <filtering>true</filtering>
             </resource>
         </resources>
     </build>

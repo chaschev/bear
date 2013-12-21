@@ -55,7 +55,6 @@ public class DrywallDemoProject extends BearProject<DrywallDemoProject> {
     {
         nodeJs.version.set("0.10.22");
         nodeJs.projectPath.setEqualTo(bear.vcsBranchLocalPath);
-        bear.vcsBranchName.defaultTo("master");
 
         nodeJs.instancePorts.set("3000")
 
@@ -68,7 +67,7 @@ public class DrywallDemoProject extends BearProject<DrywallDemoProject> {
 
         nodeJs.createScriptText.setEqualTo(nodeJs.simpleGruntUpstart);
 
-        bear.stages.defaultTo(new Stages(global)
+        bear.stages.set(new Stages(global)
             .addSimple("one", "vm01")
             .addSimple("two", "vm01, vm02")
             .addSimple("three", "vm01, vm02, vm03"));

@@ -23,11 +23,12 @@ top priority:
 -- Installation:
 --- bear-ui - opens the last project
 --- bear-ui drywall - opens the drywall project
---- bear --create drywall - creates a new project named drywall
+--- bear --create drywall - creates a new project named drywall, pom.xml, generates drywall.iml
 --- (?) bear --unpack-demos
 --- (ok) bear drywall.deploy
 --- bear drywall.deploy -Dlog.level=WARN
 - Distributed File Task - (later or a demo)
+
 - configure via -D
 - refactorings
 -- (ok) chain operations: $.sys.rm(dir1, dir2).sudo().noForce().run()
@@ -39,7 +40,8 @@ top priority:
 - sms plugin?
 - password management (can't always store a password in a local file)
 
-- download maven dependencies & add to a classpath when running baseCL -> MavenCL -> ProjectCL
+- (ok) download maven dependencies & add to a classpath when running baseCL -> MavenCL -> ProjectCL
+- (later) parse generated pom.xml for deps
 
 - add pulse meters for services
 - builder must be a field to be able to switch a command

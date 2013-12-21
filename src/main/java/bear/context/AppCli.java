@@ -2,29 +2,31 @@ package bear.context;
 
 import bear.core.BearApp;
 import bear.core.BearMain;
+import bear.maven.MavenBooter;
 import bear.session.DynamicVariable;
-import chaschev.util.JOptOptions;
+import chaschev.util.RevisionInfo;
 import com.google.common.base.Preconditions;
-import joptsimple.OptionSpec;
 import joptsimple.ValueConverter;
 import joptsimple.util.KeyValuePair;
 import org.apache.commons.io.IOUtils;
+import org.apache.logging.log4j.Level;
 
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.Map;
 
-import static bear.context.AppCli.Options.HELP;
-import static bear.context.AppCli.Options.VARIABLES;
+import static bear.context.AppOptions.*;
 import static bear.session.Variables.*;
-import static com.google.common.collect.Lists.newArrayList;
 
 /**
  * @author Andrey Chaschev chaschev@gmail.com
  */
-public class AppCli<GLOBAL extends AppGlobalContext<GLOBAL, BEAR_APP>, BEAR_APP extends BearApp<GLOBAL>> extends HavingContext<BearMain, GLOBAL> {
+public abstract class AppCli<
+    GLOBAL extends AppGlobalContext<GLOBAL, BEAR_APP>,
+    BEAR_APP extends BearApp<GLOBAL>,
+    OPTIONS extends AppOptions>
+    extends HavingContext<BearMain, GLOBAL> {
     protected final BEAR_APP bear;
 
 
@@ -43,7 +45,7 @@ public class AppCli<GLOBAL extends AppGlobalContext<GLOBAL, BEAR_APP>, BEAR_APP 
     protected final GLOBAL global;
     protected String[] args;
     private boolean shouldExit;
-    protected Options options;
+    protected OPTIONS options;
 
     public AppCli(GLOBAL $, String... args) {
         super($);
@@ -51,8 +53,10 @@ public class AppCli<GLOBAL extends AppGlobalContext<GLOBAL, BEAR_APP>, BEAR_APP 
         this.bear = $.bear;
         this.args = args;
         this.global = $;
-        options = new Options(args);
+        options = createOptions(args);
     }
+
+    protected abstract OPTIONS createOptions(String... args);
 
     private static void copyResource(String resource, File bearDir) throws IOException {
         copyResource(resource, resource, bearDir);
@@ -80,14 +84,7 @@ public class AppCli<GLOBAL extends AppGlobalContext<GLOBAL, BEAR_APP>, BEAR_APP 
 
     //todo move to vars framework
     public AppCli configure() throws IOException {
-
-        if (options.has(HELP)) {
-            System.out.println(options.printHelpOn());
-            shouldExit = true;
-            return this;
-        }
-
-        Map<String, String> env = System.getenv();
+Map<String, String> env = System.getenv();
 
         for (Map.Entry<String, String> entry : env.entrySet()) {
             $.convertAndPutConst(entry.getKey(), entry.getValue(),
@@ -122,19 +119,23 @@ public class AppCli<GLOBAL extends AppGlobalContext<GLOBAL, BEAR_APP>, BEAR_APP 
         return this;
     }
 
-    @SuppressWarnings("unchecked")
-    protected static class Options extends JOptOptions {
-        public final static OptionSpec<KeyValuePair> VARIABLES =
-            parser.acceptsAll(Arrays.asList("V", "vars"), "set global vars").withRequiredArg()
-                .withValuesSeparatedBy(",")
-                .withValuesConvertedBy(new KeyValueConverter())
-                .ofType(KeyValuePair.class).describedAs("var list");
-
-        public final static OptionSpec<Void> HELP = parser.acceptsAll(newArrayList("h", "help"), "show help");
-
-        public Options(String[] args) {
-            super(args);
+    protected boolean checkHelpAndVersion() {
+        if(options.has(LOG_LEVEL)){
+            System.out.println("changing root logger level to " + LOG_LEVEL);
+            MavenBooter.changeLogLevel("root", Level.toLevel(options.get(LOG_LEVEL)));
         }
+
+        if (options.has(HELP)) {
+            System.out.println(options.printHelpOn());
+            shouldExit = true;
+        }
+
+        if(options.has(VERSION)){
+            System.out.println(RevisionInfo.get(AppCli.class).toString());
+            shouldExit = true;
+        }
+
+        return shouldExit;
     }
 
     public static class KeyValueConverter implements ValueConverter<KeyValuePair> {

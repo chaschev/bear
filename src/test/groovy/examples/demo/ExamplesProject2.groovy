@@ -48,7 +48,7 @@ public class ExamplesProject2 extends BearProject<ExamplesProject2> {
 
         play.projectPath.setEqualTo(joinPath(bear.vcsBranchLocalPath, "samples/java/db-demo"));
 
-        bear.stages.defaultTo(new Stages(global)
+        bear.stages.set(new Stages(global)
             .addSimple("one", "vm01")
             .addSimple("two", "vm01, vm02")
             .addSimple("three", "vm01, vm02, vm03"));

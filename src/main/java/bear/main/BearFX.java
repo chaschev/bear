@@ -19,12 +19,12 @@ package bear.main;
 import bear.main.event.EventToUI;
 import bear.main.event.EventWithId;
 import bear.main.event.NewPhaseConsoleEventToUI;
+import bear.maven.MavenBooter;
 import chaschev.js.Bindings;
 import chaschev.js.ExceptionWrapper;
 import chaschev.json.JacksonMapper;
 import chaschev.json.Mapper;
 import chaschev.lang.OpenBean;
-import chaschev.util.Exceptions;
 import com.google.common.base.Preconditions;
 import javafx.application.Application;
 import javafx.application.Platform;
@@ -42,12 +42,7 @@ import javafx.stage.Screen;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 import netscape.javascript.JSObject;
-import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.core.Appender;
-import org.apache.logging.log4j.core.Filter;
-import org.apache.logging.log4j.core.LoggerContext;
-import org.apache.logging.log4j.core.config.LoggerConfig;
 import org.apache.logging.log4j.core.layout.PatternLayout;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -185,8 +180,8 @@ public class BearFX {
 //                    new FXAppender("fxAppInfo", createFilter("info", null, null), PatternLayout.createLayout("%highlight{%d{HH:mm:ss.S} %-5level %c{1.} - %msg%n}", null, null, null, null), true, bearFX);
 
 
-                addLog4jAppender("root", fxAppInfo, null, null);
-                addLog4jAppender("fx", fxAppDebug, null, null);
+                MavenBooter.addLog4jAppender("root", fxAppInfo, null, null);
+                MavenBooter.addLog4jAppender("fx", fxAppDebug, null, null);
 
                 fxConf.configure();
 
@@ -279,31 +274,6 @@ public class BearFX {
         }
     }
 
-    public static void addLog4jAppender(String loggerName, Appender appender, Level level, Filter filter) {
-        try {
-            org.apache.logging.log4j.core.Logger coreLogger
-                = (org.apache.logging.log4j.core.Logger) org.apache.logging.log4j.LogManager.getLogger(loggerName);
-
-            LoggerContext context = coreLogger.getContext();
-
-            org.apache.logging.log4j.core.config.BaseConfiguration configuration
-                = (org.apache.logging.log4j.core.config.BaseConfiguration) context.getConfiguration();
-
-            configuration.addAppender(appender);
-
-            context.updateLoggers(configuration);
-
-//            coreLogger.addAppender(appender);
-
-            if ("root".equals(loggerName)) {
-                for (LoggerConfig loggerConfig : configuration.getLoggers().values()) {
-                    loggerConfig.addAppender(appender, level, filter);
-                }
-            }
-        } catch (Exception e) {
-            throw Exceptions.runtime(e);
-        }
-    }
 
     public static void setFullscreen(Stage stage) {
         Screen screen = Screen.getPrimary();

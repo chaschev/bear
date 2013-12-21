@@ -7,6 +7,7 @@ import bear.main.event.PhasePartyFinishedEventToUI;
 import bear.main.phaser.Phase;
 import bear.main.phaser.PhaseCallable;
 import bear.main.phaser.PhaseParty;
+import bear.maven.MavenBooter;
 import bear.plugins.Plugin;
 import bear.session.Result;
 import bear.task.*;
@@ -254,8 +255,8 @@ public class GridBuilder {
                 null
             );
 
-        BearFX.addLog4jAppender("root", fxAppInfo, null, null);
-        BearFX.addLog4jAppender("fx", fxAppDebug, null, null);
+        MavenBooter.addLog4jAppender("root", fxAppInfo, null, null);
+        MavenBooter.addLog4jAppender("fx", fxAppDebug, null, null);
 
         LoggerFactory.getLogger(BearFX.class).debug("MUST NOT BE SEEN started the Bear - -1!");
         LoggerFactory.getLogger("fx").info("started the Bear - 0!");

@@ -72,7 +72,7 @@ public class SecureSocialDemoProject extends BearProject<SecureSocialDemoProject
 
         dumpManager.dbType.setEqualTo(useDb);
 
-        bear.stages.defaultTo(new Stages(global)
+        bear.stages.set(new Stages(global)
             .addSimple("one", "vm01")
             .addSimple("two", "vm01, vm02")
             .addSimple("three", "vm01, vm02, vm03"));

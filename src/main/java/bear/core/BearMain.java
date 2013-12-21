@@ -17,6 +17,7 @@
 package bear.core;
 
 import bear.context.AppCli;
+import bear.context.AppOptions;
 import bear.context.DependencyInjection;
 import bear.context.Fun;
 import bear.core.except.NoSuchFileException;
@@ -32,8 +33,10 @@ import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import groovy.lang.GroovyShell;
+import joptsimple.OptionSpec;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -43,10 +46,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.MalformedURLException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
+import java.util.*;
 
 import static bear.session.Variables.*;
 import static chaschev.lang.OpenBean.getFieldValue;
@@ -55,7 +55,7 @@ import static java.util.Collections.singletonList;
 /**
  * @author Andrey Chaschev chaschev@gmail.com
  */
-public class BearMain extends AppCli<GlobalContext, Bear> {
+public class BearMain extends AppCli<GlobalContext, Bear, BearMain.AppOptions2> {
     public static final Logger logger = LoggerFactory.getLogger(BearMain.class);
     public static final org.apache.logging.log4j.Logger ui = LogManager.getLogger("fx");
     public static final File BEAR_DIR = new File(".bear");
@@ -63,6 +63,21 @@ public class BearMain extends AppCli<GlobalContext, Bear> {
 
     static {
         if(!BUILD_DIR.exists()) BUILD_DIR.mkdirs();
+    }
+
+    public static class AppOptions2 extends AppOptions {
+        public final static OptionSpec<String>
+            CREATE_NEW = parser.accepts("create", "Creates new Project").withRequiredArg().describedAs("project").ofType(String.class)
+            ;
+
+        public final static OptionSpec<Void>
+            USE_UI = parser.accepts("ui", "Use Ui"),
+            UNPACK_DEMOS = parser.accepts("unpack-demos", "Unpack demos")
+        ;
+
+        public AppOptions2(String[] args) {
+            super(args);
+        }
     }
 
     public final DynamicVariable<String>
@@ -102,6 +117,11 @@ public class BearMain extends AppCli<GlobalContext, Bear> {
     }
 
     @Override
+    protected AppOptions2 createOptions(String... args) {
+        return new AppOptions2(args);
+    }
+
+    @Override
     public BearMain configure() throws IOException {
         super.configure();
 
@@ -127,6 +147,18 @@ public class BearMain extends AppCli<GlobalContext, Bear> {
             fis = new FileInputStream(new File(bearDir, "bootstrap.properties"));
 
             properties.load(fis);
+
+            Set<Map.Entry<String, String>> entries = (Set) properties.entrySet();
+
+            for (Map.Entry<String, String> entry : entries) {
+                String key = entry.getKey();
+
+                if(!key.startsWith("logger.")) continue;
+
+                key = StringUtils.substringAfter(key, "logger.");
+
+                MavenBooter.changeLogLevel(key, Level.toLevel(entry.getValue()));
+            }
 
             String property = "bearMain.customFolders";
 
@@ -278,6 +310,10 @@ public class BearMain extends AppCli<GlobalContext, Bear> {
         GlobalContext global = GlobalContext.getInstance();
 
         BearMain bearMain = new BearMain(global, createCompilerManager(), args);
+
+        if(bearMain.checkHelpAndVersion()){
+            return;
+        }
 
         List<?> list = bearMain.options.getOptionSet().nonOptionArguments();
 

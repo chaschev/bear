@@ -1,0 +1,2 @@
+- Maven dependencies
+- Configure logging
