@@ -25,7 +25,6 @@ import bear.plugins.misc.ReleasesPlugin;
 import bear.plugins.sh.CommandLine;
 import bear.plugins.sh.Script;
 import bear.session.DynamicVariable;
-import bear.session.Result;
 import bear.session.Variables;
 import bear.task.*;
 import bear.vcs.CommandLineResult;
@@ -86,7 +85,7 @@ public class GrailsPlugin2 extends ServerToolPlugin {
 
                     if(buildResult.output.contains("Use --stacktrace to see the full trace") ||
                         buildResult.output.contains("Set log level to 'warn")){
-                        buildResult.setResult(Result.ERROR);
+                        buildResult.setError();
                     }
 
 //                    CommandLineResult buildResult = CommandLineResult.OK;

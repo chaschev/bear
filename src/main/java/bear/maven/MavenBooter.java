@@ -4,12 +4,6 @@ package bear.maven;
 import chaschev.util.Exceptions;
 import com.google.common.base.Optional;
 import org.apache.commons.lang3.SystemUtils;
-import org.apache.logging.log4j.Level;
-import org.apache.logging.log4j.core.Appender;
-import org.apache.logging.log4j.core.Filter;
-import org.apache.logging.log4j.core.LoggerContext;
-import org.apache.logging.log4j.core.config.BaseConfiguration;
-import org.apache.logging.log4j.core.config.LoggerConfig;
 import org.apache.maven.repository.internal.MavenRepositorySystemUtils;
 import org.codehaus.plexus.util.StringUtils;
 import org.eclipse.aether.DefaultRepositorySystemSession;
@@ -90,52 +84,6 @@ public class MavenBooter {
         // session.setDependencyGraphTransformer( null );
 
         return session;
-    }
-
-    public static void changeLogLevel(String loggerName, Level level){
-        org.apache.logging.log4j.core.Logger coreLogger
-            = (org.apache.logging.log4j.core.Logger) org.apache.logging.log4j.LogManager.getLogger(loggerName);
-
-        coreLogger.setLevel(level);
-
-        LoggerContext context = coreLogger.getContext();
-
-        BaseConfiguration configuration = (BaseConfiguration) context.getConfiguration();
-
-        configuration.getLoggerConfig(loggerName).setLevel(level);
-
-        for (LoggerConfig loggerConfig : configuration.getLoggers().values()) {
-            if(loggerConfig.getName().equals(loggerName)){
-                loggerConfig.setLevel(level);
-            }
-        }
-
-        context.updateLoggers(configuration);
-    }
-
-    public static void addLog4jAppender(String loggerName, Appender appender, Level level, Filter filter) {
-        try {
-            org.apache.logging.log4j.core.Logger coreLogger
-                = (org.apache.logging.log4j.core.Logger) org.apache.logging.log4j.LogManager.getLogger(loggerName);
-
-            LoggerContext context = coreLogger.getContext();
-
-            BaseConfiguration configuration
-                = (BaseConfiguration) context.getConfiguration();
-
-            configuration.addAppender(appender);
-            context.updateLoggers(configuration);
-
-//            coreLogger.addAppender(appender);
-
-            if ("root".equals(loggerName)) {
-                for (LoggerConfig loggerConfig : configuration.getLoggers().values()) {
-                    loggerConfig.addAppender(appender, level, filter);
-                }
-            }
-        } catch (Exception e) {
-            throw Exceptions.runtime(e);
-        }
     }
 
     public Optional<ClassLoader> loadArtifacts(Properties properties){

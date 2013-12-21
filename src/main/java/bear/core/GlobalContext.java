@@ -40,8 +40,6 @@ import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nonnull;
 import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.concurrent.*;
 
 import static com.google.common.util.concurrent.MoreExecutors.listeningDecorator;
@@ -64,9 +62,6 @@ public class GlobalContext extends AppGlobalContext<GlobalContext, Bear> {
         CompileManager manager;
     }
 
-    public final ListeningExecutorService taskExecutor = listeningDecorator(new ThreadPoolExecutor(2, 32,
-        5L, TimeUnit.SECONDS,
-        new LinkedBlockingQueue<Runnable>()));
 
     public static class AwareThread extends Thread{
         private Exception interruptedAt;
@@ -108,6 +103,18 @@ public class GlobalContext extends AppGlobalContext<GlobalContext, Bear> {
     }
 
     public final ListeningExecutorService localExecutor = listeningDecorator(new ThreadPoolExecutor(4, 32,
+        5L, TimeUnit.SECONDS,
+        new SynchronousQueue<Runnable>(),
+        new ThreadFactory() {
+            @Override
+            public Thread newThread(Runnable r) {
+                final AwareThread thread = new AwareThread(r);
+                thread.setDaemon(true);
+                return thread;
+            }
+        }));
+
+    public final ListeningExecutorService sessionsExecutor = listeningDecorator(new ThreadPoolExecutor(4, 32,
         5L, TimeUnit.SECONDS,
         new SynchronousQueue<Runnable>(),
         new ThreadFactory() {
@@ -163,14 +170,15 @@ public class GlobalContext extends AppGlobalContext<GlobalContext, Bear> {
     }
 
     public void shutdown() throws InterruptedException {
-        taskExecutor.shutdown();
-        if(!taskExecutor.awaitTermination(5, TimeUnit.SECONDS)){
-            taskExecutor.shutdownNow();
+        scheduler.shutdown();
+        sessionsExecutor.shutdown();
+
+        if(!sessionsExecutor.awaitTermination(5, TimeUnit.SECONDS)){
+            sessionsExecutor.shutdownNow();
         }
 
-        scheduler.shutdown();
         if(!scheduler.awaitTermination(5, TimeUnit.SECONDS)){
-            taskExecutor.shutdownNow();
+            scheduler.shutdownNow();
         }
     }
 

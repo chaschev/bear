@@ -23,10 +23,10 @@
     </appender>
 
     <appender name="FILE" class="ch.qos.logback.core.FileAppender">
-        <file>.bear/logs/bear.log</file>
+        <file>.bear/log/bear.log</file>
         <append>true</append>
         <encoder>
-            <Pattern>%d{HH:mm:ss.SSS} [%thread{10] %-5level %c{1.} - %msg%n</Pattern>
+            <Pattern>%d{HH:mm:ss.SSS} [%thread{10}] %-5level %c{1.} - %msg%n</Pattern>
         </encoder>
     </appender>
 

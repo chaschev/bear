@@ -2,7 +2,7 @@ package bear.context;
 
 import bear.core.BearApp;
 import bear.core.BearMain;
-import bear.maven.MavenBooter;
+import bear.maven.LoggingBooter;
 import bear.session.DynamicVariable;
 import chaschev.util.RevisionInfo;
 import com.google.common.base.Preconditions;
@@ -122,10 +122,12 @@ Map<String, String> env = System.getenv();
     protected boolean checkHelpAndVersion() {
         if(options.has(LOG_LEVEL)){
             System.out.println("changing root logger level to " + LOG_LEVEL);
-            MavenBooter.changeLogLevel("root", Level.toLevel(options.get(LOG_LEVEL)));
+            LoggingBooter.changeLogLevel("root", Level.toLevel(options.get(LOG_LEVEL)));
         }
 
         if (options.has(HELP)) {
+            System.out.println(RevisionInfo.get(getClass()).toString());
+            System.out.println();
             System.out.println(options.printHelpOn());
             shouldExit = true;
         }

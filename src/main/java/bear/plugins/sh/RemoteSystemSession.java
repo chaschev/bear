@@ -23,6 +23,7 @@ import net.schmizz.sshj.xfer.FileSystemFile;
 import net.schmizz.sshj.xfer.scp.SCPFileTransfer;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -42,6 +43,7 @@ public class RemoteSystemSession extends SystemSession {
     private static final Logger logger = LoggerFactory.getLogger(RemoteSystemSession.class);
 
     private final GlobalContext global;
+    private final boolean printToConsole;
     GenericUnixRemoteEnvironmentPlugin.SshSession sshSession;
     private GenericUnixRemoteEnvironmentPlugin remotePlugin;
 
@@ -54,6 +56,8 @@ public class RemoteSystemSession extends SystemSession {
         Preconditions.checkNotNull($.address.getAddress(), "address not initialized");
 
         address = $.address;
+
+        printToConsole = global.var(global.bear.printHostsToConsole);
     }
 
     public void checkConnection() {
@@ -87,9 +91,15 @@ public class RemoteSystemSession extends SystemSession {
                     @Nonnull
                     @Override
                     public ConsoleCallbackResult textAdded(String textAdded, MarkedBuffer buffer) throws Exception {
-
                         $.logOutput(textAdded);
-                        System.out.print(textAdded);
+
+                        if(printToConsole){
+                            System.out.print(textAdded);
+                        }else{
+                            if(!StringUtils.isBlank(textAdded)){
+                                logger.debug("text: {}", textAdded);
+                            }
+                        }
 
                         if (Strings.isNullOrEmpty(textAdded)) {
                             return ConsoleCallbackResult.CONTINUE;

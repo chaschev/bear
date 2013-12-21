@@ -3,9 +3,15 @@
     <Appenders>
         <Console name="Console" target="SYSTEM_OUT">
             <PatternLayout pattern="%d{HH:mm:ss.SSS} [%thread{10}] %-5level %c{1.} - %msg%n"/>
+            <ThreadContextMapFilter onMatch="DENY" onMismatch="NEUTRAL" operator="or">
+                <KeyValuePair key="hideFromConsole" value="yes"/>
+            </ThreadContextMapFilter>
         </Console>
         <File name="File" fileName=".bear/logs/bear.log" append="false" >
             <PatternLayout pattern="%d{HH:mm:ss.SSS} [%thread{10}] %-5level %c{1.} - %msg%n"/>
+            <ThreadContextMapFilter onMatch="DENY" onMismatch="NEUTRAL" operator="or">
+                <KeyValuePair key="hideFromBearLog" value="yes"/>
+            </ThreadContextMapFilter>
         </File>
     </Appenders>
     <Loggers>

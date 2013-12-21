@@ -1,6 +1,6 @@
 # Welcome the Bear!
 
-Bear is a lightweight framework deployment tool for Java. It's main goal is to make your deployment a programming task by using OOP, static types and fluent programming techniques which one find in many modern languages and libraries. Bear first started as a Capistrano clone, but then grew into a different project.
+Bear is a lightweight framework and a deployment tool for Java. It's main goal is to make your deployment a programming task by using OOP, static types and fluent programming techniques which one find in many modern languages and libraries. Bear first started as a Capistrano clone, but then grew into a different project.
 
 Bear is in it's early development stages now. Questions, concerns? Just drop me a line at chaschev@gmail.com.
 
@@ -27,10 +27,10 @@ Bear is in it's early development stages now. Questions, concerns? Just drop me 
 | Grails/Tomcat deployment demo                | Finished.      |
 | Node.js/Java three-hosts deployment          | Finished.      |
 | Refactoring, simplifying API                 | Finished.      |
-| Installer, launcher                          | In progress... |
-| Finishing TODOs                              |                |
+| Installer, launcher                          | Finished.      |
+| Finishing TODOs                              | In progress... |
+| Support Ubuntu                               | In progress... |
 | UI bugfixing                                 |                |
-| Support Ubuntu                               |                |
 | Unit test coverage                           |                |
 | Refactoring, simplifying API                 |                |
 

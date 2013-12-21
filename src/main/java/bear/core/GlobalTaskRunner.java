@@ -97,17 +97,19 @@ public class GlobalTaskRunner {
 
         grid.setWhenAllFinished(new ComputingGrid.WhenAllFinished() {
             @Override
-            public void run(int failedParties, int okParties) {
+            public void run(final int failedParties, final int okParties) {
                 try {
-                    if(failedParties > 0){
+
+                    if (failedParties > 0) {
                         SessionContext.ui.error(new NoticeEventToUI("All parties arrived", failedParties + " errors"));
-                    }else{
+                    } else {
                         SessionContext.ui.fatal(new NoticeEventToUI(null, "All parties arrived"));
                     }
 
-                    if(whenAllFinished != null){
+                    if (whenAllFinished != null) {
                         whenAllFinished.run(failedParties, okParties);
                     }
+
                 } finally {
                     finishedLatch.countDown();
                 }

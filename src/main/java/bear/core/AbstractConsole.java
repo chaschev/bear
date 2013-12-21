@@ -38,6 +38,8 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 
 /**
+ *  Generally, this is a big mess. What could be improved? Copiers could be run in a single thread.
+ *
  * @author Andrey Chaschev chaschev@gmail.com
  */
 public abstract class AbstractConsole extends bear.console.AbstractConsole.Terminal {

@@ -101,7 +101,7 @@ public class BearScriptRunner {
 
         ui.info(new RMIEventToUI("terminals", "onScriptStart", getHosts($s)));
 
-        globalTaskRunner.startParties(global.localExecutor);
+        globalTaskRunner.startParties(global.sessionsExecutor);
 
         RunResponse runResponse = new RunResponse(globalTaskRunner, getHosts(preparationResult.getSessions()));
 

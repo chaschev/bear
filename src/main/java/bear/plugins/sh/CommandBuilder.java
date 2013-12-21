@@ -186,17 +186,21 @@ public abstract class CommandBuilder<SELF extends CommandBuilder> extends Having
     @Override
     protected final void finalize() throws Throwable {
         if(!builderMethodCalled){
-            CommandLine line = asLine();
+            String s = null;
 
-            String s;
+            try {
+                CommandLine line = asLine();
 
-            if(line != null){
-                s = line.asText(false);
-            }else{
-                s = getClass().getSimpleName();
+                if(line != null){
+                    s = line.asText(false);
+                }else{
+                    s = toString();
+                }
+            } catch (UnsupportedOperationException e) {
+                s = toString();
             }
 
-            SessionContext.logger.error("command was created but was not used: " + s);
+            SessionContext.logger.error("command had been created but was not used: " + s);
         }
 
         super.finalize();
@@ -222,5 +226,9 @@ public abstract class CommandBuilder<SELF extends CommandBuilder> extends Having
             ValidationException.checkLine("bash: command not found", script, output, WrongCommandException.class);
             ValidationException.checkLine("such file or directory", script, output, NoSuchFileException.class);
         }
+    }
+
+    protected void setCalled(){
+        this.builderMethodCalled = true;
     }
 }

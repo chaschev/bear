@@ -83,15 +83,17 @@ public class GenericUnixRemoteEnvironmentPlugin extends SystemEnvironmentPlugin 
         public SshSession(final SshAddress sshAddress, GlobalContext global) {
             this.sshAddress = sshAddress;
 
-            sshFuture = global.localExecutor.submit(new CatchyCallable<SSHClient>(new Callable<SSHClient>() {
+            sshFuture = global.sessionsExecutor.submit(new CatchyCallable<SSHClient>(new Callable<SSHClient>() {
                 @Override
                 public SSHClient call() throws Exception {
                     try {
-                        logger.info("connecting to " + sshAddress.address);
+                        logger.info("connecting to {}", sshAddress.address);
+
                         SSHClient ssh = new SSHClient();
                         ssh.loadKnownHosts(new File(SystemUtils.getUserHome(), ".ssh/known_hosts"));
                         ssh.connect(sshAddress.address);
                         ssh.authPassword(sshAddress.username, sshAddress.password);
+
                         return ssh;
                     } catch (Exception e) {
                         final String fingerprint = StringUtils.substringBetween(
@@ -103,6 +105,7 @@ public class GenericUnixRemoteEnvironmentPlugin extends SystemEnvironmentPlugin 
                         ssh.addHostKeyVerifier(fingerprint);
                         ssh.connect(sshAddress.address);
                         ssh.authPassword(sshAddress.username, sshAddress.password);
+
                         return ssh;
                     }
                 }

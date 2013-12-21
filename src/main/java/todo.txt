@@ -1,12 +1,14 @@
 top priority:
 
+- put logs into separate files for sessions
+- create project from template
 - change settings to script which is executed every time
 - ui: autosize for code area ?
 - quick setup task recipe (i.e. [new empty bear script], :run (rename :ref) {task: 'tasks.setup'}   at the moment its _.runner.run(_.getGlobal().tasks.setup, )
 
 - service interface: check live status on hosts
 
-- test deployments after refactorings
+
 - deploy Hadoop
 - run all demos with Bear
 - refactor: remove addRaw
@@ -35,6 +37,7 @@ top priority:
 -- move input from callable into the task
 -- Generics (later)
 -- SELF generics for: CommandLineResult, CommandLine (?)
+- test deployments after refactorings
 - list vars, alias vars, categorize vars (via Annotations?)
 - email plugin
 - sms plugin?

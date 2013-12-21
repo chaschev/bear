@@ -19,7 +19,7 @@ package bear.main;
 import bear.main.event.EventToUI;
 import bear.main.event.EventWithId;
 import bear.main.event.NewPhaseConsoleEventToUI;
-import bear.maven.MavenBooter;
+import bear.maven.LoggingBooter;
 import chaschev.js.Bindings;
 import chaschev.js.ExceptionWrapper;
 import chaschev.json.JacksonMapper;
@@ -42,7 +42,6 @@ import javafx.stage.Screen;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 import netscape.javascript.JSObject;
-import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.core.layout.PatternLayout;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -180,8 +179,8 @@ public class BearFX {
 //                    new FXAppender("fxAppInfo", createFilter("info", null, null), PatternLayout.createLayout("%highlight{%d{HH:mm:ss.S} %-5level %c{1.} - %msg%n}", null, null, null, null), true, bearFX);
 
 
-                MavenBooter.addLog4jAppender("root", fxAppInfo, null, null);
-                MavenBooter.addLog4jAppender("fx", fxAppDebug, null, null);
+                LoggingBooter.addLog4jAppender("root", fxAppInfo, null, null);
+                LoggingBooter.addLog4jAppender("fx", fxAppDebug, null, null);
 
                 fxConf.configure();
 
@@ -227,13 +226,7 @@ public class BearFX {
                             bearFX.sendMessageToUI(new NewPhaseConsoleEventToUI("status", randomId()));
 
                             logger.error("[Loggers Diagnostics]");
-                            LoggerFactory.getLogger(BearFX.class).debug("MUST NOT BE SEEN started the Bear - -1!");
-                            LoggerFactory.getLogger("fx").info("started the Bear - 0!");
-                            LoggerFactory.getLogger("fx").warn("started the Bear - 1!");
-                            LoggerFactory.getLogger("root").warn("started the Bear - 2!");
-                            LoggerFactory.getLogger(BearFX.class).warn("started the Bear - 3!");
-                            LogManager.getLogger(BearFX.class).warn("started the Bear - 4!");
-                            LoggerFactory.getLogger("fx").debug("started the Bear - 5!");
+                            LoggingBooter.loggerDiagnostics();
                         }
                     }
                 });

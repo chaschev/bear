@@ -36,7 +36,7 @@ public abstract class AppOptions extends JOptOptions {
             .ofType(KeyValuePair.class).describedAs("var list");
 
     public final static OptionSpec<String>
-        LOG_LEVEL = parser.accepts("log-level", "Logging level").withRequiredArg().describedAs("level");
+        LOG_LEVEL = parser.accepts("log-level", "set the logging level (INFO, ERROR, ...)").withRequiredArg().describedAs("level");
 
     public final static OptionSpec<Void>
         HELP = parser.acceptsAll(newArrayList("h", "help"), "show help"),

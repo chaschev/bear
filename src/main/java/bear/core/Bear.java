@@ -182,7 +182,9 @@ public class Bear extends BearApp<GlobalContext> {
         verifyPlugins = equalTo(checkDependencies),
         autoInstallPlugins = newVar(false),
         installationInProgress = newVar(false),
-        verbose = newVar(false)
+        verbose = newVar(false),
+        printHostsToConsole = newVar(false),
+        printHostsToBearLog = newVar(true)
     ;
 
     public final DynamicVariable<Integer>

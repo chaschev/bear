@@ -24,6 +24,8 @@ import bear.core.except.NoSuchFileException;
 import bear.main.BearFX;
 import bear.main.CompileManager;
 import bear.main.CompiledEntry;
+import bear.main.ThresholdRangeFilter;
+import bear.maven.LoggingBooter;
 import bear.maven.MavenBooter;
 import bear.plugins.groovy.GroovyShellPlugin;
 import bear.session.DynamicVariable;
@@ -35,9 +37,13 @@ import com.google.common.base.Throwables;
 import groovy.lang.GroovyShell;
 import joptsimple.OptionSpec;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.core.Appender;
+import org.apache.logging.log4j.core.appender.FileAppender;
+import org.apache.logging.log4j.core.layout.PatternLayout;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -67,12 +73,12 @@ public class BearMain extends AppCli<GlobalContext, Bear, BearMain.AppOptions2> 
 
     public static class AppOptions2 extends AppOptions {
         public final static OptionSpec<String>
-            CREATE_NEW = parser.accepts("create", "Creates new Project").withRequiredArg().describedAs("project").ofType(String.class)
+            CREATE_NEW = parser.accepts("create", "creates a new Project").withRequiredArg().describedAs("project").ofType(String.class)
             ;
 
         public final static OptionSpec<Void>
-            USE_UI = parser.accepts("ui", "Use Ui"),
-            UNPACK_DEMOS = parser.accepts("unpack-demos", "Unpack demos")
+            USE_UI = parser.accepts("ui", "start Bear UI"),
+            UNPACK_DEMOS = parser.accepts("unpack-demos", "unpack the demos")
         ;
 
         public AppOptions2(String[] args) {
@@ -125,6 +131,8 @@ public class BearMain extends AppCli<GlobalContext, Bear, BearMain.AppOptions2> 
     public BearMain configure() throws IOException {
         super.configure();
 
+        configureLoggersForConsole();
+
         global.loadProperties(new File(global.var(appConfigDir), "bootstrap.properties"));
 
         $.localCtx().log("configuring Bear with default settings...");
@@ -134,6 +142,48 @@ public class BearMain extends AppCli<GlobalContext, Bear, BearMain.AppOptions2> 
         build();
 
         return this;
+    }
+
+    protected static void configureLoggersForConsole() {
+        Appender fxAppDebug =
+            FileAppender.createAppender(
+                ".bear/logs/ui-cli-debug.log",
+                null,
+                null,
+                "fxAppDebug",
+                null,
+                null,
+                null,
+                PatternLayout.createLayout("%d{HH:mm:ss.S} %c{1.} - %msg%n", null, null, null, null),
+                ThresholdRangeFilter.createFilter("DEBUG", "INFO", null, null),
+                null,
+                null,
+                null
+            );
+
+        Appender fxAppInfo =
+            FileAppender.createAppender(
+                ".bear/logs/ui-cli.log",
+                null,
+                null,
+                "fxAppInfo",
+                null,
+                null,
+                null,
+                PatternLayout.createLayout("%d{HH:mm:ss.S} %c{1.} - %msg%n", null, null, null, null),
+                ThresholdRangeFilter.createFilter("INFO", "OFF", null, null),
+                null,
+                null,
+                null
+            );
+
+        fxAppDebug.start();
+        fxAppInfo.start();
+
+        LoggingBooter.addLog4jAppender(LogManager.getRootLogger(), fxAppInfo, null, null);
+        LoggingBooter.addLog4jAppender("fx", fxAppDebug, null, null);
+
+        LoggingBooter.loggerDiagnostics();
     }
 
     private static CompileManager createCompilerManager() {
@@ -157,7 +207,7 @@ public class BearMain extends AppCli<GlobalContext, Bear, BearMain.AppOptions2> 
 
                 key = StringUtils.substringAfter(key, "logger.");
 
-                MavenBooter.changeLogLevel(key, Level.toLevel(entry.getValue()));
+                LoggingBooter.changeLogLevel(key, Level.toLevel(entry.getValue()));
             }
 
             String property = "bearMain.customFolders";
@@ -307,6 +357,12 @@ public class BearMain extends AppCli<GlobalContext, Bear, BearMain.AppOptions2> 
      * -VbearMain.appConfigDir=src/main/groovy/examples -VbearMain.buildDir=.bear/classes -VbearMain.script=dumpSampleGrid -VbearMain.projectClass=SecureSocialDemoProject -VbearMain.propertiesFile=.bear/test.properties
      */
     public static void main(String[] args) throws Exception {
+        int i = ArrayUtils.indexOf(args, "--log-level");
+        if(i!=-1){
+            LoggingBooter.changeLogLevel(LogManager.ROOT_LOGGER_NAME, Level.toLevel(args[i + 1]));
+        }
+
+
         GlobalContext global = GlobalContext.getInstance();
 
         BearMain bearMain = new BearMain(global, createCompilerManager(), args);
@@ -389,6 +445,8 @@ public class BearMain extends AppCli<GlobalContext, Bear, BearMain.AppOptions2> 
                 GlobalTaskRunner runner = response.getGlobalRunner();
 
                 runner.getFinishedLatch().await();
+
+                System.out.println("finished: " + runner.stats.getDefaultValue().toString());
             } finally {
                 if(response.getSavedVariables() != null){
                     global.putMap(response.getSavedVariables());

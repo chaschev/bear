@@ -17,7 +17,7 @@ import static org.fest.assertions.api.Assertions.assertThat
 @Project(shortName = "examples-demo", name = "Shell Examples Demo 1")
 @Configuration(
     propertiesFile = ".bear/ss-demo",
-    stage = "one",
+    stage = "two",
     useUI = false
 )
 public class ExamplesProject extends BearProject<ExamplesProject> {

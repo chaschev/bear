@@ -415,7 +415,7 @@ public abstract class SystemSession extends Task<SystemEnvironmentPlugin.SystemS
                             text.contains("nothing to do")) {
                             result.setResult(Result.OK);
                         } else {
-                            result.setResult(Result.ERROR);
+                            result.setError();
                         }
 
                         if (result.getResult().nok()) {

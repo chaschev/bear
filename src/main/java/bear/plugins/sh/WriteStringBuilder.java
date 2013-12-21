@@ -53,11 +53,14 @@ public class WriteStringBuilder extends PermissionsCommandBuilder<WriteStringBui
 
     @Override
     public CommandLine asLine() {
+        super.asLine();
         throw new UnsupportedOperationException();
     }
 
     @Override
     public WriteStringResult run() {
+        setCalled();
+
         try {
             if(this.ifDiffers){
                 String s = $.sys.readString(this.getFullPath(), "");

@@ -103,6 +103,10 @@ public class TaskResult {
         return this;
     }
 
+    public TaskResult setError() {
+        return setResult(Result.ERROR);
+    }
+
     public TaskResult setException(Exception e) {
         this.result = Result.ERROR;
         this.exception = Optional.of(e);

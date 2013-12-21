@@ -17,13 +17,10 @@
 package bear.core;
 
 import bear.console.ConsoleCallback;
-import bear.plugins.sh.CommandLine;
 import bear.context.AbstractContext;
+import bear.maven.LoggingBooter;
 import bear.plugins.Plugin;
-import bear.plugins.sh.GenericUnixLocalEnvironmentPlugin;
-import bear.plugins.sh.GenericUnixRemoteEnvironmentPlugin;
-import bear.plugins.sh.SystemEnvironmentPlugin;
-import bear.plugins.sh.SystemSession;
+import bear.plugins.sh.*;
 import bear.session.Address;
 import bear.session.DynamicVariable;
 import bear.session.SshAddress;
@@ -31,15 +28,23 @@ import bear.session.Variables;
 import bear.task.*;
 import com.google.common.base.Optional;
 import org.apache.commons.lang3.RandomStringUtils;
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.core.appender.FileAppender;
+import org.apache.logging.log4j.core.filter.ThreadContextMapFilter;
+import org.apache.logging.log4j.core.helpers.KeyValuePair;
+import org.apache.logging.log4j.core.layout.PatternLayout;
 import org.joda.time.DateTime;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
+import org.slf4j.MDC;
 
 import java.util.HashMap;
 import java.util.Map;
 
 import static bear.session.Variables.*;
+import static org.apache.logging.log4j.core.Filter.Result.ACCEPT;
+import static org.apache.logging.log4j.core.Filter.Result.DENY;
 
 /**
  * @author Andrey Chaschev chaschev@gmail.com
@@ -56,7 +61,7 @@ public class SessionContext extends AbstractContext {
     public final SessionRunner runner;
     public Bear bear;
     public Address address;
-//    protected CompositeTaskRunContext taskRunContext;
+    //    protected CompositeTaskRunContext taskRunContext;
     public static final org.apache.logging.log4j.Logger ui = LogManager.getLogger("fx");
 
     protected Task<?> currentTask;
@@ -102,6 +107,64 @@ public class SessionContext extends AbstractContext {
         currentTask = new Task<TaskDef>(null, TaskDef.ROOT, this);
     }
 
+    public synchronized void foo() {
+        //  this can be any thread-specific string
+        String threadName = Thread.currentThread().getName();
+
+        org.apache.logging.log4j.core.Logger coreLogger
+            = (org.apache.logging.log4j.core.Logger) org.apache.logging.log4j.LogManager.getLogger(threadName);
+
+        String appenderName = threadName + "-file-appender";
+
+        MDC.put("threadId", threadName);
+
+        if(!global.var(bear.printHostsToConsole)){
+            MDC.put("hideFromConsole", "yes");
+        }
+
+        if(!global.var(bear.printHostsToBearLog)){
+            MDC.put("hideFromBearLog", "yes");
+        }
+
+        if (coreLogger.getAppenders().containsKey(appenderName)) {
+            return;
+        }
+
+        //will reject messages coming from other threads
+
+        ThreadContextMapFilter filter = ThreadContextMapFilter.createFilter(
+            new KeyValuePair[]{new KeyValuePair("threadId", name)}, "or",
+            ACCEPT.name(),
+            DENY.name());
+
+        try {
+
+            FileAppender fileAppender = FileAppender.createAppender(
+                ".bear/logs/" + threadName + ".log",
+                "false",
+                null,
+                appenderName,
+                null,
+                null,
+                null,
+                PatternLayout.createLayout("%d{HH:mm:ss.S} [%thread{10}] %c{1.} - %msg%n", null, null, null, null),
+                filter,
+                null,
+                null,
+                null
+            );
+
+            fileAppender.start();
+
+            LoggingBooter.addLog4jAppender(LogManager.getRootLogger(), fileAppender, Level.DEBUG, filter);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+
+//        logger.info("This message will only end up in {}.log!", threadName);
+//        LogManager.getLogger("fx").info("This message will only end up in {}.log!", threadName);
+    }
+
     public static String randomId() {
         return RandomStringUtils.randomAlphanumeric(6);
     }
@@ -113,9 +176,10 @@ public class SessionContext extends AbstractContext {
     public void setThread(Thread thread) {
         this.thread = thread;
         thread.setName(threadName());
+        foo();
     }
 
-    public void whenPhaseStarts(BearScriptPhase phase, BearScriptRunner.ShellSessionContext shellSessionContext){
+    public void whenPhaseStarts(BearScriptPhase phase, BearScriptRunner.ShellSessionContext shellSessionContext) {
         StringBuilder phaseSB = executionContext.phaseText.getDefaultValue();
         phaseSB.setLength(0);
         executionContext.phaseText.fireExternalModification();
@@ -138,8 +202,8 @@ public class SessionContext extends AbstractContext {
         globalTaskRunner.arrivedCount.fireExternalModification();
     }
 
-    public void cancel(){
-        if(thread == null){
+    public void cancel() {
+        if (thread == null) {
             throw new IllegalStateException("not running or already cancelled");
         }
 
@@ -147,7 +211,7 @@ public class SessionContext extends AbstractContext {
     }
 
     public void terminate() {
-        if(thread == null){
+        if (thread == null) {
             throw new IllegalStateException("not running or already cancelled");
         }
 
@@ -165,17 +229,17 @@ public class SessionContext extends AbstractContext {
     }
 
 
-    public static class ExecutionHistoryEntry{
+    public static class ExecutionHistoryEntry {
 
     }
 
-    public static class ExecutionHistory{
+    public static class ExecutionHistory {
         protected Map<TaskDef<Task>, TaskResult> resultMap = new HashMap<TaskDef<Task>, TaskResult>();
 
 
     }
 
-    public class ExecutionContext{
+    public class ExecutionContext {
         public final DateTime startedAt = new DateTime();
         public final DynamicVariable<String> phaseId = undefined();
         public final DynamicVariable<StringBuilder> text = newVar(new StringBuilder(8192)).desc("text appended in session");
@@ -198,11 +262,10 @@ public class SessionContext extends AbstractContext {
             sbVar.fireExternalModification(null, sb);
         }
 
-        public boolean isRunning(){
+        public boolean isRunning() {
             return rootExecutionContext.getDefaultValue().isRunning();
         }
     }
-
 
 
     public String joinPath(DynamicVariable<String> var, String path) {
@@ -259,7 +322,7 @@ public class SessionContext extends AbstractContext {
     public void setCurrentTask(Task<?> currentTask) {
         Task.wrongThreadCheck(currentTask.$());
 
-        if(currentTask.isRootTask()){
+        if (currentTask.isRootTask()) {
             executionContext.rootExecutionContext.defaultTo(currentTask.getExecutionContext());
         }
 
@@ -268,7 +331,7 @@ public class SessionContext extends AbstractContext {
     }
 
     public void logOutput(String textAdded) {
-        System.out.print(textAdded);
+//        System.out.print(textAdded);
 
         executionContext.textAdded(textAdded);
     }
@@ -315,16 +378,16 @@ public class SessionContext extends AbstractContext {
         return runner.runSession(taskSession, input);
     }
 
-    public Optional<TaskResult> findResult(TaskDef<Task> def){
+    public Optional<TaskResult> findResult(TaskDef<Task> def) {
         return executionContext.rootExecutionContext.getDefaultValue().findResult(def);
     }
 
     // returns last available result, null if none of the tasks finished
-    public Optional<TaskResult> lastResult(){
+    public Optional<TaskResult> lastResult() {
         return executionContext.rootExecutionContext.getDefaultValue().lastResult();
     }
 
-    public String getHost(){
+    public String getHost() {
         return address.getAddress();
     }
 }
