@@ -17,6 +17,6 @@
         </dependency>
     </dependencies>
     <build>
-        <sourceDirectory>$${basedir}/.bear</sourceDirectory>
+        <sourceDirectory>$${basedir}</sourceDirectory>
     </build>
 </project>

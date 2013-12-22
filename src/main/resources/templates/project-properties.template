@@ -1,0 +1,4 @@
+# Ssh login and password
+
+bear.sshUsername=deploy
+bear.sshPassword=ChangeMe!

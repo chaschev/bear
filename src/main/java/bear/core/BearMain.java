@@ -31,6 +31,7 @@ import chaschev.util.Exceptions;
 import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
+import com.google.common.collect.Lists;
 import groovy.lang.GroovyShell;
 import joptsimple.OptionSpec;
 import org.apache.commons.io.FileUtils;
@@ -52,6 +53,7 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.util.*;
 
+import static bear.main.ProjectGenerator.readResource;
 import static bear.session.Variables.*;
 import static chaschev.lang.OpenBean.getFieldValue;
 import static java.util.Collections.singletonList;
@@ -66,18 +68,16 @@ public class BearMain extends AppCli<GlobalContext, Bear, BearMain.AppOptions2> 
     public static final File BUILD_DIR = new File(BEAR_DIR, "classes");
 
     static {
-        if(!BUILD_DIR.exists()) BUILD_DIR.mkdirs();
+        if (!BUILD_DIR.exists()) BUILD_DIR.mkdirs();
     }
 
     public static class AppOptions2 extends AppOptions {
         public final static OptionSpec<String>
-            CREATE_NEW = parser.accepts("create", "with dashes, i.e. 'drywall-demo' creates a new Project").withRequiredArg().describedAs("name-with-dashes").ofType(String.class)
-            ;
+            CREATE_NEW = parser.accepts("create", "with dashes, i.e. 'drywall-demo' creates a new Project").withRequiredArg().describedAs("name-with-dashes").ofType(String.class);
 
         public final static OptionSpec<Void>
             USE_UI = parser.accepts("ui", "start Bear UI"),
-            UNPACK_DEMOS = parser.accepts("unpack-demos", "unpack the demos")
-        ;
+            UNPACK_DEMOS = parser.accepts("unpack-demos", "unpack the demos");
 
         public AppOptions2(String[] args) {
             super(args);
@@ -88,8 +88,7 @@ public class BearMain extends AppCli<GlobalContext, Bear, BearMain.AppOptions2> 
         project = newVar(".bear/BearSettings.java"),
         projectClass = newVar("BearSettings"),
         script = undefined(),
-        customFolders = undefined("CustomFolders to search for the projects")
-    ;
+        customFolders = undefined("CustomFolders to search for the projects");
 
     public final DynamicVariable<File> projectFile = convert(project, TO_FILE);
 
@@ -104,7 +103,7 @@ public class BearMain extends AppCli<GlobalContext, Bear, BearMain.AppOptions2> 
     public BearMain(GlobalContext global, CompileManager compileManager, String... args) {
         super(global, args);
 
-        if(compileManager != null){
+        if (compileManager != null) {
             this.compileManager = compileManager;
         }
 
@@ -126,11 +125,13 @@ public class BearMain extends AppCli<GlobalContext, Bear, BearMain.AppOptions2> 
 
     @Override
     public BearMain configure() throws IOException {
+        Preconditions.checkState(compileManager != null, "compiler must be injected at this point");
+
         super.configure();
 
         configureLoggersForConsole();
 
-        global.loadProperties(new File(global.var(appConfigDir), "bootstrap.properties"));
+//        global.loadProperties(new File(global.var(appConfigDir), "bootstrap.properties"));
 
         $.localCtx().log("configuring Bear with default settings...");
 
@@ -183,15 +184,29 @@ public class BearMain extends AppCli<GlobalContext, Bear, BearMain.AppOptions2> 
         LoggingBooter.loggerDiagnostics();
     }
 
-    private static CompileManager createCompilerManager() {
-        FileInputStream fis = null;
-        try {
-            File bearDir = BEAR_DIR;
-            List<File> folders = singletonList(bearDir);
+    static CompileManager createCompilerManager() {
+        List<File> folders = Lists.newArrayList(BEAR_DIR);
 
+        Optional<ClassLoader> dependenciesCL = createDepsClassLoader(folders);
+
+        CompileManager manager = new CompileManager(folders, BUILD_DIR);
+
+        manager.setDependenciesCL(dependenciesCL);
+
+        return manager;
+    }
+
+    static Optional<ClassLoader> createDepsClassLoader(List<File> folders) {
+        File bootstrapFile = new File(BEAR_DIR, "bootstrap.properties");
+
+        if (!bootstrapFile.exists()) return Optional.absent();
+
+        FileInputStream fis = null;
+
+        try {
             Properties properties = new Properties();
 
-            fis = new FileInputStream(new File(bearDir, "bootstrap.properties"));
+            fis = new FileInputStream(bootstrapFile);
 
             properties.load(fis);
 
@@ -200,7 +215,7 @@ public class BearMain extends AppCli<GlobalContext, Bear, BearMain.AppOptions2> 
             for (Map.Entry<String, String> entry : entries) {
                 String key = entry.getKey();
 
-                if(!key.startsWith("logger.")) continue;
+                if (!key.startsWith("logger.")) continue;
 
                 key = StringUtils.substringAfter(key, "logger.");
 
@@ -211,14 +226,13 @@ public class BearMain extends AppCli<GlobalContext, Bear, BearMain.AppOptions2> 
 
             String customFolders = properties.getProperty(property, null);
 
-            if(customFolders != null){
+            if (customFolders != null) {
                 List<String> temp = COMMA_SPLITTER.splitToList(customFolders);
-                folders = new ArrayList<File>(temp.size());
-                folders.add(bearDir);
+
                 for (String s : temp) {
                     File file = new File(s);
 
-                    if(!file.exists()){
+                    if (!file.exists()) {
                         throw new NoSuchFileException("dir does not exist (:" + property + "): " + s);
                     }
 
@@ -226,14 +240,8 @@ public class BearMain extends AppCli<GlobalContext, Bear, BearMain.AppOptions2> 
                 }
             }
 
-            Optional<ClassLoader> dependenciesCL = new MavenBooter(properties).loadArtifacts(properties);
-
-            CompileManager manager = new CompileManager(folders, BUILD_DIR);
-
-            manager.setDependenciesCL(dependenciesCL);
-
-            return manager;
-        } catch (IOException e) {
+            return new MavenBooter(properties).loadArtifacts(properties);
+        } catch (Exception e) {
             throw Exceptions.runtime(e);
         } finally {
             IOUtils.closeQuietly(fis);
@@ -243,7 +251,7 @@ public class BearMain extends AppCli<GlobalContext, Bear, BearMain.AppOptions2> 
     private List<File> getScriptFolders2() {
         List<File> folders = singletonList($(scriptsDir));
 
-        if($.isSet(customFolders)){
+        if ($.isSet(customFolders)) {
             List<String> temp = COMMA_SPLITTER.splitToList($(customFolders));
 
             folders = new ArrayList<File>(temp.size());
@@ -253,7 +261,7 @@ public class BearMain extends AppCli<GlobalContext, Bear, BearMain.AppOptions2> 
 
                 File file = new File(s);
 
-                if(!file.exists()){
+                if (!file.exists()) {
                     throw new NoSuchFileException("dir does not exist (:" + customFolders.name() +
                         "): " + s);
                 }
@@ -296,9 +304,9 @@ public class BearMain extends AppCli<GlobalContext, Bear, BearMain.AppOptions2> 
     public BearProject newProject() {
         File file = $(projectFile);
 
-        if(!compileManager.findClass(file).isPresent()){
+        if (!compileManager.findClass(file).isPresent()) {
             return newProject($(projectClass));
-        }else{
+        } else {
             return newProject(file);
         }
     }
@@ -307,7 +315,7 @@ public class BearMain extends AppCli<GlobalContext, Bear, BearMain.AppOptions2> 
         try {
             Optional<CompiledEntry<?>> entry = compileManager.findClass(className);
 
-            if(!entry.isPresent()){
+            if (!entry.isPresent()) {
                 Preconditions.checkArgument(entry.isPresent(), "class %s not found", className);
             }
 
@@ -355,7 +363,7 @@ public class BearMain extends AppCli<GlobalContext, Bear, BearMain.AppOptions2> 
      */
     public static void main(String[] args) throws Exception {
         int i = ArrayUtils.indexOf(args, "--log-level");
-        if(i!=-1){
+        if (i != -1) {
             LoggingBooter.changeLogLevel(LogManager.ROOT_LOGGER_NAME, Level.toLevel(args[i + 1]));
         }
 
@@ -364,11 +372,11 @@ public class BearMain extends AppCli<GlobalContext, Bear, BearMain.AppOptions2> 
 
         BearMain bearMain = new BearMain(global, createCompilerManager(), args);
 
-        if(bearMain.checkHelpAndVersion()){
+        if (bearMain.checkHelpAndVersion()) {
             return;
         }
 
-        if(bearMain.options.has(AppOptions2.CREATE_NEW)){
+        if (bearMain.options.has(AppOptions2.CREATE_NEW)) {
             String dashedTitle = bearMain.options.get(AppOptions2.CREATE_NEW);
 
             ProjectGenerator generator = new ProjectGenerator();
@@ -376,9 +384,11 @@ public class BearMain extends AppCli<GlobalContext, Bear, BearMain.AppOptions2> 
             String groovy = generator.generateGroovyProject(dashedTitle);
 
             File projectFile = new File(BEAR_DIR, generator.getProjectTitle() + ".groovy");
-            File pomFile = new File(BEAR_DIR.getParentFile(), "bear.xml");
+            File pomFile = new File(BEAR_DIR, "pom.xml");
+            File propertiesFile = new File(BEAR_DIR, dashedTitle + ".properties");
 
             FileUtils.writeStringToFile(projectFile, groovy);
+            FileUtils.writeStringToFile(propertiesFile, readResource("/templates/project-properties.template"));
             FileUtils.writeStringToFile(pomFile, generator.generatePom(dashedTitle));
 
             System.out.printf("Created project file: %s%n", projectFile.getPath());
@@ -392,12 +402,12 @@ public class BearMain extends AppCli<GlobalContext, Bear, BearMain.AppOptions2> 
 
         List<?> list = bearMain.options.getOptionSet().nonOptionArguments();
 
-        if(list.size() > 1){
+        if (list.size() > 1) {
             throw new IllegalArgumentException("too many arguments: " + list + ", " +
                 "please specify an invoke line, project.method(arg1, arg2)");
         }
 
-        if(list.isEmpty()){
+        if (list.isEmpty()) {
             throw new UnsupportedOperationException("todo implement running a single project");
         }
 
@@ -406,27 +416,27 @@ public class BearMain extends AppCli<GlobalContext, Bear, BearMain.AppOptions2> 
         String projectName;
         String method;
 
-        if(invokeLine.contains(".")){
+        if (invokeLine.contains(".")) {
             projectName = StringUtils.substringBefore(invokeLine, ".");
             method = StringUtils.substringAfter(invokeLine, ".");
-        }else{
+        } else {
             projectName = invokeLine;
             method = null;
         }
 
-        if(method == null || method.isEmpty()) method = "deploy()";
-        if(!method.contains("(")) method += "()";
+        if (method == null || method.isEmpty()) method = "deploy()";
+        if (!method.contains("(")) method += "()";
 
         Optional<CompiledEntry<? extends BearProject>> optional = bearMain.compileManager.findProject(projectName);
 
-        if(!optional.isPresent()){
+        if (!optional.isPresent()) {
             throw new IllegalArgumentException("project was not found: " + projectName +
                 ", loaded classes: " + bearMain.compileManager.findProjects() +
                 ", searched in: " + bearMain.compileManager.getSourceDirs() + ", ");
         }
 
         BearProject project = OpenBean.newInstance(optional.get().aClass)
-             .injectMain(bearMain);
+            .injectMain(bearMain);
 
         GroovyShell shell = new GroovyShell();
 
@@ -434,25 +444,25 @@ public class BearMain extends AppCli<GlobalContext, Bear, BearMain.AppOptions2> 
         shell.evaluate("project." + method);
     }
 
-    public static void run(BearProject project, boolean shutdown){
+    public static void run(BearProject project, boolean shutdown) {
         run(project, null, shutdown);
     }
 
-    public static void run(BearProject project, @Nullable Map<Object, Object> variables, boolean shutdown){
+    public static void run(BearProject project, @Nullable Map<Object, Object> variables, boolean shutdown) {
         GlobalContext global = project.global;
 
         String script = global.var(project.main().script);
 
         Optional<GridBuilder> gridOptional = getFieldValue(project, script, GridBuilder.class);
 
-        if(!gridOptional.isPresent()){
+        if (!gridOptional.isPresent()) {
             throw new IllegalArgumentException("did not find field: " + script);
         }
 
         run(project, gridOptional.get(), variables, shutdown);
     }
 
-    public static void run(BearProject project, GridBuilder grid, Map<Object, Object> variables, boolean shutdown){
+    public static void run(BearProject project, GridBuilder grid, Map<Object, Object> variables, boolean shutdown) {
         try {
             GlobalContext global = project.global;
 
@@ -467,12 +477,12 @@ public class BearMain extends AppCli<GlobalContext, Bear, BearMain.AppOptions2> 
 
                 System.out.println("finished: " + runner.stats.getDefaultValue().toString());
             } finally {
-                if(response.getSavedVariables() != null){
+                if (response.getSavedVariables() != null) {
                     global.putMap(response.getSavedVariables());
                 }
             }
 
-            if(shutdown){
+            if (shutdown) {
                 shutdown(global);
             }
         } catch (InterruptedException e) {
@@ -508,7 +518,7 @@ public class BearMain extends AppCli<GlobalContext, Bear, BearMain.AppOptions2> 
     }
 
     public static StringBuilder threadDump() {
-        Map<Thread,StackTraceElement[]> map = Thread.getAllStackTraces();
+        Map<Thread, StackTraceElement[]> map = Thread.getAllStackTraces();
 
         StringBuilder sb = new StringBuilder();
 
@@ -519,9 +529,9 @@ public class BearMain extends AppCli<GlobalContext, Bear, BearMain.AppOptions2> 
             StackTraceElement el = elements == null || elements.length == 0 ? null : elements[0];
 
             sb.append(thread.getName());
-            if(el != null){
+            if (el != null) {
                 sb.append("\tat ").append(el)
-                .append("\n");
+                    .append("\n");
             }
         }
 

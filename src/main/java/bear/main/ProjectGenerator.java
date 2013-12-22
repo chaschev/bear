@@ -37,10 +37,8 @@ public class ProjectGenerator {
     public String generatePom(String dashedTitle){
 
         try {
-            return StrSubstitutor.replace(Resources.toString(
-                ProjectGenerator.class.getResource("/templates/pom.xml"),
-                Charsets.UTF_8
-            ), ImmutableMap.<String, String>builder()
+            String s = "/templates/pom.xml";
+            return StrSubstitutor.replace(readResource(s), ImmutableMap.<String, String>builder()
                 .put("dashedTitle", dashedTitle)
                 .put("bearVersion", RevisionInfo.get(getClass()).getVersion())
                 .build());
@@ -49,15 +47,19 @@ public class ProjectGenerator {
         }
     }
 
+    public static String readResource(String path) throws IOException {
+        return Resources.toString(
+            ProjectGenerator.class.getResource(path),
+            Charsets.UTF_8
+        );
+    }
+
     public String generateGroovyProject(String dashedTitle){
 
         try {
             projectTitle = toCamelHumpCase(dashedTitle) + "Project";
 
-            return StrSubstitutor.replace(Resources.toString(
-                ProjectGenerator.class.getResource("/templates/TemplateProject.template"),
-                Charsets.UTF_8
-            ), ImmutableMap.<String, String>builder()
+            return StrSubstitutor.replace(readResource("/templates/TemplateProject.template"), ImmutableMap.<String, String>builder()
                 .put("dashedTitle", dashedTitle)
                 .put("projectTitle", projectTitle)
                 .put("spacedTitle", toSpacedTitle(toCamelHumpCase(dashedTitle)))

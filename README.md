@@ -151,7 +151,7 @@ There are also grids. Grid is an execution table for the tasks. It is a parallel
 
 Bear is designed to be used as a normal Java library. A possible way to run it's projects is to have it on classpath and do `new YourBearProject().deploy()`.
 
-To install the latest stage version of Bear you need to run in your console:
+To install the latest stage version of Bear, type in your console:
 
     mvn com.chaschev:installation-maven-plugin:1.4:install -Dartifact=com.chaschev:bear -Dshapshots=true -U
 

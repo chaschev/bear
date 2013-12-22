@@ -192,7 +192,7 @@ public abstract class BearProject<SELF extends BearProject> {
 
     public synchronized BearMain main() {
         if(bearMain == null){
-            bearMain = new BearMain(global, null);
+            bearMain = new BearMain(global, BearMain.createCompilerManager());
         }
 
         return bearMain;

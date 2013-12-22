@@ -6,8 +6,9 @@ top priority:
 - (ok) quick setup task recipe (i.e. [new empty bear script], :run (rename :ref) {task: 'tasks.setup'}   at the moment its _.runner.run(_.getGlobal().tasks.setup, )
 
 - service interface: check live status on hosts
+- read repos from pom.xml
 
-- bear --install maven -Vmaven.version=3.1.1,bear.host=vm04
+- Ubuntu!
 - deploy Hadoop
 - run all demos with Bear
 - refactor: remove addRaw
@@ -18,7 +19,8 @@ top priority:
 - add uninstall for project and for server
 - find the top Capistrano/Puppet questions on SO, create a demo with answers
 - releases simple demo
-- --create del-me --from-template mini
+- (later) bear --install maven -Vmaven.version=3.1.1,bear.host=vm04
+- (later) --create del-me --from-template mini
 
 - Bear Installer ideas:
 -- Maven archetype: Idea project, bear.xml, bear plugin to quickly run from console.
