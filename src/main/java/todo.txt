@@ -1,5 +1,10 @@
 top priority:
 
+- (ok) recheck demos with CentOS
+- Ubuntu
+- Refactor
+- recheck demos
+- Integration tests
 - (ok) put logs into separate files for sessions
 - (ok) create project a from template
 - ui: autosize for code area ?

@@ -33,7 +33,7 @@ import static bear.task.TaskResult.OK
 @Project(shortName = "ss-demo", name = "Secure Social Demo")
 @Configuration(
     properties = ".bear/ss-demo",
-    stage = "three",
+    stage = "one",
     vcs = "git@github.com:chaschev/securesocial.git",
     branch = "master",
     useUI = false
@@ -108,15 +108,15 @@ public class SecureSocialDemoProject extends BearProject<SecureSocialDemoProject
 
     static main(args)
     {
-        new SecureSocialDemoProject()
-            .run(
-            [
-                {_, task, i -> println "${_.sys.name}: ${_.sys.fileSizeAsLong('/home/andrey/texty')}"; OK} as TaskCallable,
-                {_, task, i -> println "${_.sys.name}: ${_.sys.capture('cat /home/andrey/texty')}"; OK} as TaskCallable
-            ])
-
 //        new SecureSocialDemoProject()
-//            .deploy('mongo')
+//            .run(
+//            [
+//                {_, task, i -> println "${_.sys.name}: ${_.sys.fileSizeAsLong('/home/andrey/texty')}"; OK} as TaskCallable,
+//                {_, task, i -> println "${_.sys.name}: ${_.sys.capture('cat /home/andrey/texty')}"; OK} as TaskCallable
+//            ])
+
+        new SecureSocialDemoProject()
+            .deploy('mongo')
 //            .setup()
     }
 

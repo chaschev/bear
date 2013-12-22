@@ -31,7 +31,7 @@ Bear is in it's early development stages now. Questions, concerns? Just drop me 
 | Finishing TODOs                              | In progress... |
 | Support Ubuntu                               | In progress... |
 | UI bugfixing                                 |                |
-| Unit test coverage                           |                |
+| Integration & unit tests                     |                |
 | Refactoring, simplifying API                 |                |
 
 
@@ -142,10 +142,9 @@ public class NodeExpressMongooseDemoProject extends BearProject<NodeExpressMongo
 }
 ```
 
-Bear uses a ... framework under the hood which invisible to the user. If you want to ... i.e. speed up download ... you can access Grid API via ...
+Bear uses a computing grid framework under the hood which is invisible to the user by default. If you at some moment would require to utilize any of it's features to coordinate hosts session, i.e. to speed up a big file download by downloading it on a single host and sharing it among others, you could manually access the Grid API.
 
-There are also grids. Grid is an execution table for the tasks. It is a parallel framework which allows syncing tasks execution, communicating, sharing their results (i.e. a file downloaded). Any task is run inside a grid and can be synchronized by getting a Future for some other cell in a grid. If your tasks a simple and you don't need syncing, grid cold be seen as an array for your tasks.
-
+Computing Grid is an execution table for the tasks. It is a parallel framework which allows syncing tasks execution, communicating, sharing their results. Any task is run inside a grid and can be synchronized by getting a Future for some other cell in a grid.
 
 ### Installing and using Bear (latest developer release)
 
@@ -158,6 +157,12 @@ To install the latest stage version of Bear, type in your console:
 This command requires Maven 3.1.1+ installed and also might require administrator rights to create shortcuts in JAVA_HOME.
 
 Note: installation-maven-plugin might not yet be in Maven Central at the time of writing.
+
+To create a new Bear project after installation type
+
+    bear --create project-name
+
+This will create a .bear folder in which there will be a `pom.xml` and a simple project definition. In `.bear/project-name.properties` configuration can be defined, i.e. SSH authentication data. `.bear/pom.xml` project can be imported as a Maven module to an IDE of your choice and after it `.bear/ProjectNameProject.groovy` is ready to be run.
 
 ### Building Bear
 
