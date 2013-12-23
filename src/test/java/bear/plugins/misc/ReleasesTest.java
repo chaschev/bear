@@ -20,6 +20,7 @@ import org.mockito.stubbing.Answer;
 import java.util.*;
 
 import static bear.plugins.misc.ReleaseRef.label;
+import static com.google.common.base.Optional.of;
 import static com.google.common.base.Predicates.*;
 import static com.google.common.collect.Lists.newArrayList;
 import static org.fest.assertions.api.Assertions.assertThat;
@@ -92,8 +93,8 @@ public class ReleasesTest extends SessionTest{
     }
 
     private Release newRelease(String path) {
-        return new Release(GitCLIPluginTest.vcsLogSample(),
-            new BranchInfo("auth1", "r1", "d1"), path, "ok");
+        return new Release(of(GitCLIPluginTest.vcsLogSample()),
+            of(new BranchInfo("auth1", "r1", "d1")), path, "ok");
     }
 
     @Test
@@ -277,7 +278,7 @@ public class ReleasesTest extends SessionTest{
         Map<String, Release> o = mapper.readValue(s, new TypeReference<Map<String, Release>>() {
         });
 
-        assertThat(o.values().iterator().next().log.entries.size()).isGreaterThan(1);
+        assertThat(o.values().iterator().next().log.get().entries.size()).isGreaterThan(1);
     }
 
     @After

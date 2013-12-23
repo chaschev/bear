@@ -160,12 +160,12 @@ public class GitCLIPlugin extends VcsCLIPlugin<Task, TaskDef<?>> {
             List<String> args = new ArrayList<String>();
 
             if ($.isSet(bear.vcsBranchName)) {
-                addAll(args, "-b", $(getBear().vcsBranchURI));
+                addAll(args, "-b", $(getBear().vcsBranchName));
             }
 
-            if (remoteIsNotOrigin(remote)) {
-                addAll(args, "-o", remote);
-            }
+//            if (remoteIsNotOrigin(remote)) {
+//                addAll(args, "-o", remote);
+//            }
 
             if ($(cloneDepth) != -1) {
                 addAll(args, "--depth", "" + $(cloneDepth));
@@ -177,10 +177,12 @@ public class GitCLIPlugin extends VcsCLIPlugin<Task, TaskDef<?>> {
                 .line()
                 .stty().a(git).a("clone", verbose()).a(args)
                 .a($(bear.repositoryURI), destination).build()
-                .line()
-                .stty()
-                .cd(destination)
-                .a(git, "checkout", "-b", "deploy", revision).build();
+//                .line()
+//                .stty()
+//                .cd(destination)
+//                .a(git, "checkout", "-b", "deploy", revision)
+//                .build()
+            ;
 
             syncSubmodules(git, script);
 
@@ -215,14 +217,14 @@ public class GitCLIPlugin extends VcsCLIPlugin<Task, TaskDef<?>> {
             // changes between calls, but as long as the repositories are all
             // based from each other it should still work fine.
 
-            if (remoteIsNotOrigin(remote)) {
-                script
-                    .line().stty().a(git, "config", "remote." + remote + ".url", $(getBear().repositoryURI)).build()
-                    .line().stty().a(git, "config", "remote." + remote + ".fetch", "+refs/heads/*:refs/remotes/" + remote + "/*").build();
-            }
+//            if (remoteIsNotOrigin(remote)) {
+//                script
+//                    .line().stty().a(git, "config", "remote." + remote + ".url", $(getBear().repositoryURI)).build()
+//                    .line().stty().a(git, "config", "remote." + remote + ".fetch", "+refs/heads/*:refs/remotes/" + remote + "/*").build();
+//            }
 
             return script
-                .line().stty().a(git, "pull", verbose(), remote).build();
+                .line().stty().a(git, "pull", verbose()).build();
 
             /*//since we're in a local branch already, just reset to specified revision rather than merge
             script
@@ -376,8 +378,24 @@ public class GitCLIPlugin extends VcsCLIPlugin<Task, TaskDef<?>> {
     }
 
     @Override
-    public InstallationTaskDef getInstall() {
-        return InstallationTaskDef.EMPTY;
+    public InstallationTaskDef<InstallationTask> getInstall() {
+        return new InstallationTaskDef<InstallationTask>(new SingleTaskSupplier() {
+            @Override
+            public InstallationTask createNewSession(SessionContext $, Task parent, TaskDef def) {
+                return new InstallationTask<InstallationTaskDef>(parent, (InstallationTaskDef) def, $) {
+                    @Override
+                    protected TaskResult exec(SessionRunner runner, Object input) {
+                        return $.sys.getPackageManager().installPackage("git");
+                    }
+
+                    @Override
+                    public Dependency asInstalledDependency() {
+                        return new Dependency("git dep", $)
+                            .addCommands("git --version");
+                    }
+                };
+            }
+        });
     }
 
     private static boolean validRevision(String revision) {
@@ -460,4 +478,6 @@ public class GitCLIPlugin extends VcsCLIPlugin<Task, TaskDef<?>> {
 
         }
     }
+
+
 }

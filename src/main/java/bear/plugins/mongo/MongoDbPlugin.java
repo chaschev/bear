@@ -1,12 +1,14 @@
 package bear.plugins.mongo;
 
 import bear.annotations.Shell;
+import bear.context.Fun;
 import bear.core.GlobalContext;
 import bear.core.SessionContext;
 import bear.core.except.ValidationException;
 import bear.plugins.Plugin;
+import bear.plugins.sh.SystemEnvironmentPlugin;
 import bear.plugins.sh.SystemSession;
-import bear.plugins.sh.UnixSubFlavour;
+import bear.plugins.sh.UnixFlavour;
 import bear.plugins.sh.WriteStringResult;
 import bear.session.DynamicVariable;
 import bear.session.Result;
@@ -14,16 +16,13 @@ import bear.session.Versions;
 import bear.task.*;
 import bear.vcs.CommandLineResult;
 import com.google.common.base.Function;
-import com.google.common.collect.ImmutableMap;
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.aether.version.Version;
 import org.eclipse.aether.version.VersionConstraint;
 
-import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static bear.plugins.sh.SystemEnvironmentPlugin.sshPassword;
 import static bear.session.Variables.*;
 import static bear.session.Versions.*;
 
@@ -33,26 +32,74 @@ import static bear.session.Versions.*;
 
 @Shell("mongo")
 public class MongoDbPlugin extends Plugin {
+    private static class PackageInfo{
+        String serverPackage;
+        String clientPackage;
+
+        private PackageInfo(String serverPackage, String clientPackage) {
+            this.serverPackage = serverPackage;
+            this.clientPackage = clientPackage;
+        }
+    }
+
     public final DynamicVariable<String>
         version = undefined(),
         dbHost = newVar("localhost").desc("database host"),
         dbPort = newVar("27017").desc("database port"),
         dbName = strVar().desc("database name"),
         connectionString = concat(dbHost, ":", dbPort, "/", dbName),
-        serverPackage = newVar("mongo-10gen-server"),
-        clientPackage = newVar("mongo-10gen");
+        serviceName = dynamic(new Fun<SessionContext, String>() {
+            @Override
+            public String apply(SessionContext $) {
+                return $.sys.getOsInfo().unixFlavour == UnixFlavour.UBUNTU ? "mongodb" : "mongod";
+            }
+        });
+
+    public final DynamicVariable<PackageInfo> packageInfo = dynamic(new Fun<SessionContext, PackageInfo>() {
+        @Override
+        public PackageInfo apply(SessionContext $) {
+            switch ($.sys.getOsInfo().unixFlavour) {
+                case CENTOS:
+                    return new PackageInfo("mongo-10gen-server", "mongo-10gen");
+
+                case UBUNTU:
+                    return  new PackageInfo("mongodb-10gen-server", "mongodb-10gen");
+            }
+            throw new IllegalStateException();
+        }
+    });
+
+    public final DynamicVariable<CommandLineResult> installer = dynamic(new Fun<SessionContext, CommandLineResult>() {
+        @Override
+        public CommandLineResult apply(SessionContext $) {
+            switch ($.sys.getOsInfo().unixFlavour) {
+                case CENTOS:
+                    String script = "" +
+                        "[mongodb]\n" +
+                        "name=MongoDB Repository\n" +
+                        "baseurl=http://downloads-distro.mongodb.org/repo/redhat/os/x86_64/\n" +
+                        "gpgcheck=0\n" +
+                        "enabled=1\n";
+
+                    $.sys.writeString(script).toPath("/etc/yum.repos.d/mongodb.repo").sudo().run();
+                    break;
+                case UBUNTU:
+                    $.sys.captureResult("apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv 7F0CEB10", true).throwIfException();
+                    $.sys.writeString("deb http://downloads-distro.mongodb.org/repo/ubuntu-upstart dist 10gen\n").toPath("/etc/apt/sources.list.d/mongodb.list").sudo().run();
+                    $.sys.captureResult("apt-get update", true).throwIfError();
+
+                    break;
+            }
+
+            return CommandLineResult.OK;
+        }
+    });
 
     public final DynamicVariable<VersionConstraint> versionConstraint = condition(isSet(version), convert(version, new Function<String, VersionConstraint>() {
         public VersionConstraint apply(String input) {
             return newVersionConstraint(input);
         }
     }), newVar(ANY));
-
-    public final DynamicVariable<? extends Map<UnixSubFlavour, String>> repo = newVar(
-        new ImmutableMap.Builder<UnixSubFlavour, String>()
-            .put(UnixSubFlavour.CENTOS, "http://downloads-distro.mongodb.org/repo/redhat/os/x86_64/")
-            .build()
-    );
 
     public MongoDbPlugin(GlobalContext global) {
         super(global);
@@ -75,25 +122,22 @@ public class MongoDbPlugin extends Plugin {
                     TaskResult r = TaskResult.OK;
 
                     if (!clientVersionOk || !serverVersionOk) {
-                        String script = "" +
-                            "[mongodb]\n" +
-                            "name=MongoDB Repository\n" +
-                            "baseurl=" + $(repo).get($.sys.getOsInfo().unixSubFlavour) + "\n" +
-                            "gpgcheck=0\n" +
-                            "enabled=1\n";
-
-                        $.sys.writeString(script).toPath("/etc/yum.repos.d/mongodb.repo").sudo().run();
+                       r = $(installer);
                     }
 
+                    PackageInfo info = $.var(packageInfo);
+
+                    SystemEnvironmentPlugin.PackageManager packageManager = $.sys.getPackageManager();
+
                     if (serverVersion == NOT_INSTALLED) {
-                        r = Tasks.and(r, $.sys.getPackageManager().installPackage($(serverPackage)));
+                        r = Tasks.and(r, packageManager.installPackage(info.serverPackage));
                     }
 
                     if(clientVersion == NOT_INSTALLED){
-                        r = Tasks.and(r, $.sys.getPackageManager().installPackage($(clientPackage)));
+                        r = Tasks.and(r, packageManager.installPackage(info.clientPackage));
                     }
 
-                    $.sys.run($.sys.plainScript("service mongod start", true).timeoutForBuild().callback(sshPassword($)));
+                    packageManager.serviceCommand($(serviceName), "start");
 
                     //TODO extract interface SystemService, ensure started: http://docs.mongodb.org/manual/tutorial/install-mongodb-on-red-hat-centos-or-fedora-linux/
 

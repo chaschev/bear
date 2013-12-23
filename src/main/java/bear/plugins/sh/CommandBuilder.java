@@ -59,7 +59,7 @@ public abstract class CommandBuilder<SELF extends CommandBuilder> extends Having
     }
 
     public SELF inDir(String cd) {
-        checkArgument(".".equals(cd) && !Strings.isNullOrEmpty(cd), "wrong cd: %s", cd);
+        checkArgument(!".".equals(cd) && !Strings.isNullOrEmpty(cd), "wrong cd: %s", cd);
 
         this.cd = Optional.of(cd);
         return self();
@@ -221,11 +221,14 @@ public abstract class CommandBuilder<SELF extends CommandBuilder> extends Having
         if(validator != this && validator != null) {
             validator.validate(script, output);
         }else{
-            //todo reflectize?
-            ValidationException.checkLine("Permission denied", script, output, PermissionsException.class);
-            ValidationException.checkLine("bash: command not found", script, output, WrongCommandException.class);
-            ValidationException.checkLine("such file or directory", script, output, NoSuchFileException.class);
+            defaultValidation(script, output);
         }
+    }
+
+    public static void defaultValidation(String script, String output) {
+        PermissionsException.check(script, output);
+        WrongCommandException.check(script, output);
+        NoSuchFileException.check(script, output);
     }
 
     protected void setCalled(){

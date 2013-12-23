@@ -116,6 +116,7 @@ public class Task<TASK_DEF extends TaskDef> extends HavingContext<Task<TaskDef>,
 
     }
 
+    @Deprecated
     protected TaskResult exec(SessionRunner runner, Object input) {
         throw new UnsupportedOperationException("todo: implement or use nop() task or set callable!");
     }

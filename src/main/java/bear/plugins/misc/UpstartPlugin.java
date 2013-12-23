@@ -93,7 +93,7 @@ public class UpstartPlugin extends Plugin {
                             String text = "";
 
                             for (UpstartService service : upstartServices.services) {
-                                text += "sudo " + $.sys.getOsInfo().getHelper().serviceCommand(service.name, command) + "\n";
+                                text += "sudo " + $.sys.getOsInfo().getHelper().upstartCommand(service.name, command) + "\n";
                             }
 
                             WriteStringResult r = $.sys.writeString(text)

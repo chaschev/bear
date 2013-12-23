@@ -34,4 +34,6 @@ public @interface Configuration {
     String vcs() default "";
     String branch() default "";
     String tag() default "";
+    String user() default "";
+    String password() default "";
 }

@@ -36,11 +36,13 @@ import com.google.common.collect.Iterables;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.util.*;
 
+import static bear.task.TaskResult.okOrAbsent;
 import static com.bethecoder.table.ASCIITableHeader.h;
-import static com.google.common.base.Optional.fromNullable;
+import static com.google.common.base.Optional.*;
 
 /**
  * Releases are saved as JSON cache in root releases folders.
@@ -136,15 +138,15 @@ public class Releases extends HavingContext<Releases, SessionContext>{
     public Optional<Release> getRelease(String folder){
         checkLoaded();
 
+        Optional<Release> optional = computeRelease(folder);
+
         if(!folderMap.containsKey(folder)){
-            folderMap.put(folder, computeRelease(folder));
+            folderMap.put(folder, optional.orNull());
         }
 
         if(!folders.contains(folder)){
             folders.add(folder);
         }
-
-        sort();
 
         return fromNullable(folderMap.get(folder));
     }
@@ -177,10 +179,11 @@ public class Releases extends HavingContext<Releases, SessionContext>{
     public PendingRelease newPendingRelease(){
         checkLoaded();
 
-        return newPendingRelease(null, null);
+        return newPendingRelease(Optional.<BranchInfo>absent(), Optional.<VcsLogInfo>absent());
     }
 
-    public PendingRelease newPendingRelease(BranchInfo branchInfo, VcsLogInfo vcsLogInfo){
+    public PendingRelease newPendingRelease(
+        @Nonnull Optional<BranchInfo> branchInfo, @Nonnull Optional<VcsLogInfo> vcsLogInfo){
         checkLoaded();
 
         String pendingPath = $(releases.pendingReleasePath);
@@ -189,9 +192,14 @@ public class Releases extends HavingContext<Releases, SessionContext>{
 
         PendingRelease release;
 
-        if(branchInfo == null || vcsLogInfo == null){
-            Release temp = computeRelease(pendingPath);
-            release = new PendingRelease(temp.log, temp.branchInfo, temp.path, this);
+        if(!branchInfo.isPresent() || !vcsLogInfo.isPresent()){
+            Optional<Release> temp = computeRelease(pendingPath);
+
+            if(!temp.isPresent()){
+                throw new RuntimeException("error occurred while computing release: " + pendingPath + ". it might not exist");
+            }
+
+            release = new PendingRelease(temp.get().log, temp.get().branchInfo, temp.get().path, this);
         }else{
             release = new PendingRelease(vcsLogInfo, branchInfo, pendingPath, this);
         }
@@ -383,13 +391,26 @@ public class Releases extends HavingContext<Releases, SessionContext>{
         return $.sys.ls($(releases.path)).absolutePaths().run().getLines();
     }
 
-    Release computeRelease(String folder) {
+    Optional<Release> computeRelease(String folder) {
+        if(!$.sys.exists(folder)){
+            return absent();
+        }
+
         VCSSession vcs = $(bear.vcs);
 
         VcsLogInfo vcsLogInfo = vcs.logLastN($(retrieveLastXCommits)).run();
+
+//        if(!vcsLogInfo.ok()){
+//            return absent();
+//        }
+
         BranchInfo branchInfo = vcs.queryRevision($(bear.revision)).run();
 
-        return new Release(vcsLogInfo, branchInfo, folder, null);
+//        if(!branchInfo.ok()){
+//            return absent();
+//        }
+
+        return of(new Release(okOrAbsent(vcsLogInfo), okOrAbsent(branchInfo), folder, null));
     }
 
     List<String> listToDelete(int keepX) {
@@ -427,9 +448,9 @@ public class Releases extends HavingContext<Releases, SessionContext>{
 
             table.add(new String[]{
                 release.name(),
-                    String.valueOf(fromNullable(release.log.lastAuthor()).or(fromNullable(release.branchInfo.author)).or("<not entry>")),
-                    release.branchInfo.revision,
-                    release.log.firstComment().replace("\n", " "),
+                    release.getLastAuthor(),
+                    release.branchInfo.isPresent() ? release.branchInfo.get().revision : "",
+                    release.log.isPresent() ? release.log.get().firstComment().replace("\n", " ") : "",
                     release.status
             });
         }

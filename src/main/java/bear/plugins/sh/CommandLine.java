@@ -41,7 +41,12 @@ public abstract class CommandLine<T extends CommandLineResult, SCRIPT extends Sc
     public List strings = new ArrayList(4);
 
     protected ResultParser<T> parser;
-    protected ResultValidator validator;
+    protected ResultValidator validator = new ResultValidator() {
+        @Override
+        public void validate(String script, String output) {
+            CommandBuilder.defaultValidation(script, output);
+        }
+    };
 
     /**
      * Null when used outside of a script.

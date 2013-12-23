@@ -21,6 +21,7 @@ import bear.console.AbstractConsoleCommand;
 import bear.console.ConsoleCallback;
 import bear.core.Role;
 import bear.core.SessionContext;
+import bear.core.except.ValidationException;
 import bear.session.*;
 import bear.task.SessionRunner;
 import bear.task.Task;
@@ -46,6 +47,7 @@ import static bear.plugins.sh.SystemEnvironmentPlugin.sshPassword;
  * @author Andrey Chaschev chaschev@gmail.com
  */
 public abstract class SystemSession extends Task<SystemEnvironmentPlugin.SystemSessionDef> implements AbstractConsole {
+    public static final String THROW_ON_ERROR = "THROW_ON_ERROR";
     private static final Logger logger = LoggerFactory.getLogger(SystemSession.class);
     public static final Splitter LINE_SPLITTER = Splitter.on("\n").trimResults();
 
@@ -83,6 +85,12 @@ public abstract class SystemSession extends Task<SystemEnvironmentPlugin.SystemS
             final CommandLineResult result = sendCommand(line);
 
             sb.append(result.output);
+
+            if(!result.ok()) {
+                T r = script.parseResult(sb.toString(), $, script.firstLineAsText());
+
+                return (T) r.copyFrom(result);
+            }
         }
 
         return script.parseResult(sb.toString(), $, script.firstLineAsText());
@@ -140,9 +148,9 @@ public abstract class SystemSession extends Task<SystemEnvironmentPlugin.SystemS
     }
 
     protected String capture(String s, boolean sudo) {
-        CommandLineResult result = captureResult(s, sudo).throwIfValidationError();
+        CommandLineResult result = captureResult(s, sudo).throwIfException();
 
-        if(result.nok()) return null;
+        if (result.nok()) return null;
 
         return result.output;
     }
@@ -178,7 +186,7 @@ public abstract class SystemSession extends Task<SystemEnvironmentPlugin.SystemS
     public abstract Result upload(String dest, File... files);
 
 
-    public DirsBuilder mkdirs(String... dirs){
+    public DirsBuilder mkdirs(String... dirs) {
         return DirsBuilder.mk($, dirs);
     }
 
@@ -243,11 +251,11 @@ public abstract class SystemSession extends Task<SystemEnvironmentPlugin.SystemS
         return isUnix() ? '/' : '\\';
     }
 
-    public List<String> lsQuick(String path){
-        return ls(path).run().throwIfValidationError().lines;
+    public List<String> lsQuick(String path) {
+        return ls(path).run().throwIfException().lines;
     }
 
-    public LsBuilder ls(String path){
+    public LsBuilder ls(String path) {
         return new LsBuilder($, path);
     }
 
@@ -258,7 +266,7 @@ public abstract class SystemSession extends Task<SystemEnvironmentPlugin.SystemS
     public abstract void zip(String dest, Collection<String> paths);
 
 
-    public UnzipCommand unzip(String zipPath){
+    public UnzipCommand unzip(String zipPath) {
         return new UnzipCommand($, zipPath);
     }
 
@@ -288,7 +296,6 @@ public abstract class SystemSession extends Task<SystemEnvironmentPlugin.SystemS
     }
 
 
-
     public CommandLineResult resetFile(String logPath, boolean sudo) {
         return script().line().sudo(sudo).sshCallback($).addRaw("cat /dev/null >| ").a(logPath).build().run();
     }
@@ -307,7 +314,7 @@ public abstract class SystemSession extends Task<SystemEnvironmentPlugin.SystemS
 
     //TODO this should be temporary and redesigned
     public static interface OSHelper {
-        String serviceCommand(String service, String command);
+        String upstartCommand(String service, String command);
     }
 
     public static class OSInfo {
@@ -325,8 +332,16 @@ public abstract class SystemSession extends Task<SystemEnvironmentPlugin.SystemS
                 case CENTOS:
                     osHelper = new OSHelper() {
                         @Override
-                        public String serviceCommand(String service, String command) {
+                        public String upstartCommand(String service, String command) {
                             return "initctl " + command + " " + service;
+                        }
+                    };
+                    break;
+                case UBUNTU:
+                    osHelper = new OSHelper() {
+                        @Override
+                        public String upstartCommand(String service, String command) {
+                            return "service " + service + " " + command;
                         }
                     };
                     break;
@@ -345,37 +360,46 @@ public abstract class SystemSession extends Task<SystemEnvironmentPlugin.SystemS
 
 //        versionScheme.parseVersion();
 
-        final String text = capture("cat /etc/issue");
+        try {
+            final String text = capture("cat /etc/issue");
 
-        if (text == null) return null;
+            if (text == null) return null;
 
-        UnixFlavour flavour = null;
-        UnixSubFlavour subFlavour = null;
-        org.eclipse.aether.version.Version version = null;
+            UnixFlavour flavour = null;
+            UnixSubFlavour subFlavour = null;
+            org.eclipse.aether.version.Version version = null;
 
-        if (text.contains("CentOS")) {
-            flavour = UnixFlavour.CENTOS;
-            subFlavour = UnixSubFlavour.CENTOS;
+            if (text.contains("CentOS")) {
+                flavour = UnixFlavour.CENTOS;
+                subFlavour = UnixSubFlavour.CENTOS;
 
-            String versionLine = Iterables.find(LINE_SPLITTER.split(text), Predicates2.contains("CentOS"));
-            Matcher matcher = Pattern.compile("release\\s+([^\\s]+)").matcher(versionLine);
+                String versionLine = Iterables.find(LINE_SPLITTER.split(text), Predicates2.contains("CentOS"));
+                Matcher matcher = Pattern.compile("release\\s+([^\\s]+)").matcher(versionLine);
 
-            if (!matcher.find()) {
-                throw new RuntimeException("could not parse OS version: " + versionLine);
-            }
+                if (!matcher.find()) {
+                    throw new ValidationException("could not parse OS version: " + versionLine);
+                }
 
-            try {
                 version = Versions.VERSION_SCHEME.parseVersion(matcher.group(1));
-            } catch (InvalidVersionSpecificationException e) {
-                throw Exceptions.runtime(e);
-            }
-        } else if (text.contains("Ubuntu")) {
-            throw new UnsupportedOperationException("todo support Ubuntu!");
-        } else {
-            throw new UnsupportedOperationException("todo support: " + text);
-        }
+            } else if (text.contains("Ubuntu")) {
+                flavour = UnixFlavour.UBUNTU;
+                subFlavour = UnixSubFlavour.UBUNTU;
 
-        return new OSInfo(flavour, subFlavour, version);
+                Matcher matcher = Pattern.compile("Ubuntu\\s+(\\d+\\.\\d+)").matcher(text);
+
+                if (!matcher.find()) {
+                    throw new ValidationException("could not parse OS version: " + text);
+                }
+
+                version = Versions.VERSION_SCHEME.parseVersion(matcher.group(1));
+            } else {
+                throw new UnsupportedOperationException("todo support: " + text);
+            }
+
+            return new OSInfo(flavour, subFlavour, version);
+        } catch (InvalidVersionSpecificationException e) {
+            throw Exceptions.runtime(e);
+        }
     }
 
     public OSInfo getOsInfo() {
@@ -391,45 +415,9 @@ public abstract class SystemSession extends Task<SystemEnvironmentPlugin.SystemS
         //todo move into os info
         switch (getOsInfo().unixFlavour) {
             case CENTOS:
-                return new SystemEnvironmentPlugin.PackageManager() {
-                    @Override
-                    public CommandLineResult installPackage(PackageInfo pi) {
-                        String desc = pi.toString();
-
-                        String packageName = pi.getCompleteName();
-
-                        return installPackage(packageName, desc);
-                    }
-
-                    public CommandLineResult installPackage(String packageName) {
-                        return installPackage(packageName, packageName);
-                    }
-
-                    public CommandLineResult installPackage(String packageName, String desc) {
-                        final CommandLineResult result = sendCommand(
-                            line().timeoutForInstallation().sudo().a(command(), "install", packageName, "-y"));
-
-                        final String text = result.output;
-
-                        if (text.contains("Complete!") ||
-                            text.contains("nothing to do")) {
-                            result.setResult(Result.OK);
-                        } else {
-                            result.setError();
-                        }
-
-                        if (result.getResult().nok()) {
-                            logger.error("could not install {}", desc);
-                        }
-
-                        return result;
-                    }
-
-                    public String command() {
-                        return "yum";
-                    }
-                };
+                return new YumPackageManager(this);
             case UBUNTU:
+                return new AptPackageManager(this);
             default:
                 throw new UnsupportedOperationException("todo support" + getOsInfo() + " !");
         }
@@ -440,4 +428,86 @@ public abstract class SystemSession extends Task<SystemEnvironmentPlugin.SystemS
     }
 
     public abstract boolean isRemote();
+
+    private static class YumPackageManager extends SystemEnvironmentPlugin.PackageManager {
+
+        private YumPackageManager(SystemSession sys) {
+            super(sys);
+        }
+
+        @Override
+        public CommandLineResult installPackage(PackageInfo pi) {
+            String desc = pi.toString();
+
+            String packageName = pi.getCompleteName();
+
+            return installPackage(packageName, desc);
+        }
+
+        public CommandLineResult installPackage(String packageName) {
+            return installPackage(packageName, packageName);
+        }
+
+        public CommandLineResult installPackage(String packageName, String desc) {
+            final CommandLineResult result = sys.sendCommand(
+                sys.line().timeoutForInstallation().sudo().a(command(), "install", packageName, "-y"));
+
+            final String text = result.output;
+
+            if (text.contains("Complete!") ||
+                text.contains("nothing to do")) {
+                result.setResult(Result.OK);
+            }
+
+            if (result.getResult().nok()) {
+                logger.error("could not install {}", desc);
+            }
+
+            return result;
+        }
+
+        public String command() {
+            return "yum";
+        }
+    }
+
+    private static class AptPackageManager extends SystemEnvironmentPlugin.PackageManager {
+        private AptPackageManager(SystemSession sys) {
+            super(sys);
+        }
+
+        @Override
+        public CommandLineResult installPackage(PackageInfo pi) {
+            String desc = pi.toString();
+
+            String packageName = pi.getCompleteName();
+
+            return installPackage(packageName, desc);
+        }
+
+        public CommandLineResult installPackage(String packageName) {
+            return installPackage(packageName, packageName);
+        }
+
+        public CommandLineResult installPackage(String packageName, String desc) {
+            final CommandLineResult result = sys.sendCommand(
+                sys.line().timeoutForInstallation().sudo().a(command(), "install", packageName, "-y"));
+
+            final String text = result.output;
+
+            if (text.contains("is already the newest version")) {
+                result.setResult(Result.OK);
+            }
+
+            if (result.getResult().nok()) {
+                logger.error("could not install {}", desc);
+            }
+
+            return result;
+        }
+
+        public String command() {
+            return "apt-get";
+        }
+    }
 }

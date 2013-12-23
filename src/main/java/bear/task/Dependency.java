@@ -37,6 +37,8 @@ public class Dependency extends Task<TaskDef> {
 
     List<Check> checks = new ArrayList<Check>();
 
+    TaskCallable<TaskDef> installer;
+
     public static DependencyResult checkDeps(Iterable<Dependency> transform) {
         DependencyResult r = new DependencyResult(Result.OK);
 
@@ -45,6 +47,23 @@ public class Dependency extends Task<TaskDef> {
         }
 
         return r;
+    }
+
+    public Dependency addCommands(CommandLine... lines) {
+        for (CommandLine line : lines) {
+            add(new Command(
+                line,
+                new Predicate<CharSequence>() {
+                    @Override
+                    public boolean apply(CharSequence input) {
+                        return !input.toString().contains("command not found");
+                    }
+                },
+                "command '" + line.asText(false) + "' not found")
+            );
+        }
+
+        return this;
     }
 
     public Dependency addCommands(String... commands) {
@@ -62,6 +81,14 @@ public class Dependency extends Task<TaskDef> {
         }
 
         return this;
+    }
+
+    public TaskResult install() {
+        try {
+            return installer.call($, this, null);
+        } catch (Exception e) {
+            return new TaskResult(e);
+        }
     }
 
 
@@ -96,6 +123,14 @@ public class Dependency extends Task<TaskDef> {
         }
     }
 
+    public Dependency setInstaller(TaskCallable<TaskDef> installer) {
+        this.installer = installer;
+        return this;
+    }
+
+    public boolean isInstallSupported(){
+        return installer != null;
+    }
 
     public Dependency(String name) {
         super(null, null, null);
@@ -168,6 +203,14 @@ public class Dependency extends Task<TaskDef> {
         @Override
         public String message() {
             return message;
+        }
+
+        @Override
+        public String toString() {
+            final StringBuilder sb = new StringBuilder("Command{");
+            sb.append("script=").append(script.asTextScript());
+            sb.append('}');
+            return sb.toString();
         }
     }
 

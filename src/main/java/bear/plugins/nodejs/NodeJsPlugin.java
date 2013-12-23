@@ -237,6 +237,11 @@ public class NodeJsPlugin extends ServerToolPlugin {
 
                     $.sys.captureBuilder("npm install -g grunt-cli").sudo().run().throwIfError();
 
+                    // a fix for Ubuntu: ~/tmp is being created after installing grunt as sudo
+                    if($.sys.exists("tmp")){
+                        $.sys.rm("tmp").force().sudo().run().throwIfError();
+                    }
+
                     return verify();
                 }
 

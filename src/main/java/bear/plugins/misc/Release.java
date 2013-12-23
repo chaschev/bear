@@ -1,25 +1,38 @@
 package bear.plugins.misc;
 
+import bear.task.TaskResult;
 import bear.vcs.BranchInfo;
 import bear.vcs.VcsLogInfo;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.google.common.base.Optional;
 import org.apache.commons.io.FilenameUtils;
+
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+
+import static com.google.common.base.Optional.absent;
+import static com.google.common.base.Optional.fromNullable;
 
 /**
 * @author Andrey Chaschev chaschev@gmail.com
 */
 public class Release {
     public String path;
-    public VcsLogInfo log;
-    public BranchInfo branchInfo;
+
+    @Nonnull
+    protected Optional<VcsLogInfo> log;
+
+    @Nonnull
+    protected Optional<BranchInfo> branchInfo;
+
     public String status;
 
     public Release() {
     }
 
-    public Release(VcsLogInfo log, BranchInfo branchInfo, String path, String status) {
-        this.log = log;
-        this.branchInfo = branchInfo;
+    public Release(Optional<VcsLogInfo> log, Optional<BranchInfo> branchInfo, String path, String status) {
+        this.log = TaskResult.okOrAbsent(log);
+        this.branchInfo = TaskResult.okOrAbsent(branchInfo);
         this.path = path;
         this.status = status;
     }
@@ -41,5 +54,37 @@ public class Release {
     @JsonIgnore
     public boolean isActive() {
         return "active".equals(status);
+    }
+
+    public void setLog(VcsLogInfo log) {
+        this.log = Optional.fromNullable(log);
+    }
+
+    public void setBranchInfo(BranchInfo branchInfo) {
+        this.branchInfo = Optional.fromNullable(branchInfo);
+    }
+
+    @Nullable
+    public VcsLogInfo getLog() {
+        return log.orNull();
+    }
+
+    @Nullable
+    public BranchInfo getBranchInfo() {
+        return branchInfo.orNull();
+    }
+
+    public String getLastAuthor() {
+        Optional<String> optional = absent();
+
+        if(log.isPresent()){
+            optional = fromNullable(log.get().lastAuthor());
+        }
+
+        if(branchInfo.isPresent()){
+            optional = optional.or(fromNullable(branchInfo.get().author));
+        }
+
+        return  optional.or("<no entry>");
     }
 }

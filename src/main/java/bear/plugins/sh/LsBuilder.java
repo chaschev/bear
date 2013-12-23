@@ -66,8 +66,8 @@ public class LsBuilder extends CommandBuilder<LsBuilder> {
         }
 
         @Override
-        public LsResult throwIfValidationError() {
-            super.throwIfValidationError();
+        public LsResult throwIfException() {
+            super.throwIfException();
             return this;
         }
     }

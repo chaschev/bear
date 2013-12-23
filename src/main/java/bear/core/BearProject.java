@@ -362,6 +362,8 @@ public abstract class BearProject<SELF extends BearProject> {
         setAnnotation(bear.vcsBranchName, annotation.branch());
         setAnnotation(bear.vcsTag, annotation.tag());
         setAnnotation(bear.stage, annotation.stage());
+        setAnnotation(bear.sshUsername, annotation.user());
+        setAnnotation(bear.sshPassword, annotation.password());
 
         if(annotation.variables() != null){
             for (Variable variable : annotation.variables()) {

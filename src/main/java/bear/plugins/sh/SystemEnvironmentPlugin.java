@@ -94,8 +94,19 @@ public abstract class SystemEnvironmentPlugin extends Plugin<SystemSession, Syst
     public abstract SystemSession newSession(SessionContext $, Task<TaskDef> parent);
 
     public static abstract class PackageManager {
+        protected SystemSession sys;
+
+        protected PackageManager(SystemSession sys) {
+            this.sys = sys;
+        }
+
         public abstract CommandLineResult installPackage(PackageInfo pi);
+
         public abstract CommandLineResult installPackage(String s);
+
+        public CommandLineResult serviceCommand(String service, String command){
+            return sys.captureResult("service " + service + " " + command, true);
+        }
 
         public abstract String command();
     }

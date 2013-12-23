@@ -28,6 +28,9 @@ public abstract class InstallationTask<TASK_DEF extends InstallationTaskDef> ext
         super(parent, def, $);
     }
 
+    /**
+     * Returns a dependency to check that this tool is installed.
+     */
     public abstract Dependency asInstalledDependency();
 
     @Override

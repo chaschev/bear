@@ -44,4 +44,18 @@ public class Dependencies {
     public List<Dependency> getDependencies() {
         return dependencies;
     }
+
+    public TaskResult tryInstall() {
+        TaskResult result = TaskResult.OK;
+
+        for (Dependency dependency : dependencies) {
+            if(dependency.isInstallSupported()){
+                result = dependency.install();
+
+                if(!result.ok()) return result;
+            }
+        }
+
+        return result;
+    }
 }

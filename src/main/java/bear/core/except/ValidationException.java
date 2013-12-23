@@ -23,4 +23,6 @@ public class ValidationException extends BearException {
             throw OpenBean.newInstance(exceptionClass, name + " (" + script + ", " + output + ")");
         }
     }
+
+
 }

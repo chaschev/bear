@@ -21,6 +21,7 @@ import bear.core.SessionContext;
 import bear.plugins.java.JavaPlugin;
 import bear.plugins.sh.CommandLine;
 import bear.plugins.sh.Script;
+import bear.plugins.sh.SystemEnvironmentPlugin;
 import bear.session.DynamicVariable;
 import bear.task.*;
 import bear.vcs.CommandLineResult;
@@ -43,6 +44,8 @@ import static com.google.common.collect.Iterables.find;
  * A class that simplifies operations (i.e. installation) of tools like Maven, Grails, Play, Tomcat, etc
  */
 public class ZippedToolPlugin extends Plugin<Task, TaskDef<?>> {
+
+
     public final DynamicVariable<String>
         version = dynamic("version of the tool, a string which is return by a tool identifying it's version"),
         toolname = dynamic("this will be the name of home folder, i.e. maven, jdk"),
@@ -51,13 +54,13 @@ public class ZippedToolPlugin extends Plugin<Task, TaskDef<?>> {
         distrFilename = concat(versionName, ".tar.gz"),
         homeParentPath = concat(bear.toolsInstallDirPath, "/", toolname),
         homePath = concat(homeParentPath, "/", version).desc("Tool root dir"),
-//        homeVersionPath = equalTo(homePath),
-        currentVersionPath = concat(homeParentPath, "/current"),
+    //        homeVersionPath = equalTo(homePath),
+    currentVersionPath = concat(homeParentPath, "/current"),
 
-        myDirPath,
+    myDirPath,
         buildPath,
 
-        distrWwwAddress = dynamic("distribution download address");
+    distrWwwAddress = dynamic("distribution download address");
 
     public ZippedToolPlugin(GlobalContext global) {
         super(global);
@@ -66,10 +69,33 @@ public class ZippedToolPlugin extends Plugin<Task, TaskDef<?>> {
         buildPath = concat(myDirPath, "/build");
     }
 
-    protected class ZippedToolTaskDef<T extends ZippedTool> extends InstallationTaskDef<T>{
+    protected class ZippedToolTaskDef<T extends ZippedTool> extends InstallationTaskDef<T> {
 
         public ZippedToolTaskDef(SingleTaskSupplier singleTaskSupplier) {
             super(singleTaskSupplier);
+        }
+    }
+
+
+    public static class SystemDependencyPlugin extends Plugin<Task, TaskDef<Task>> {
+        public SystemDependencyPlugin(GlobalContext global) {
+            super(global);
+        }
+
+        @Override
+        public InstallationTaskDef<? extends InstallationTask> getInstall() {
+            return new InstallationTaskDef<InstallationTask>(new SingleTaskSupplier() {
+                @Override
+                public Task createNewSession(SessionContext $, Task parent, TaskDef def) {
+                    return new Task(parent, new TaskCallable<TaskDef>() {
+                        @Override
+                        public TaskResult call(SessionContext $, Task<TaskDef> task, Object input) throws Exception {
+//                            $.sys.getPackageManager()
+                            return TaskResult.OK;
+                        }
+                    });
+                }
+            });
         }
     }
 
@@ -77,9 +103,23 @@ public class ZippedToolPlugin extends Plugin<Task, TaskDef<?>> {
         protected ZippedTool(Task<TaskDef> parent, InstallationTaskDef def, SessionContext $) {
             super(parent, def, $);
 
-            addDependency(new Dependency(toString(), $).addCommands(
-                "unzip -v | head -n 1",
-                " wget --version | head -n 1"));
+            addDependency(new Dependency(toString(), $)
+                .addCommands(
+                    "unzip -v | head -n 1",
+                    "wget --version | head -n 1"
+                )
+                .setInstaller(new TaskCallable<TaskDef>() {
+                    @Override
+                    public TaskResult call(SessionContext $, Task<TaskDef> task, Object input) throws Exception {
+                        SystemEnvironmentPlugin.PackageManager manager = $.sys.getPackageManager();
+
+                        manager.installPackage("unzip").throwIfError();
+                        manager.installPackage("wget").throwIfError();
+
+                        return TaskResult.OK;
+                    }
+                })
+            );
         }
 
         @Override
@@ -90,6 +130,7 @@ public class ZippedToolPlugin extends Plugin<Task, TaskDef<?>> {
         protected Script extractToHomeScript;
 
         protected abstract String extractVersion(String output);
+
         protected abstract String createVersionCommandLine();
 
         @Override
@@ -99,7 +140,7 @@ public class ZippedToolPlugin extends Plugin<Task, TaskDef<?>> {
             CommandLine line = $.sys.line();
             Optional<JavaPlugin> java = global.getPlugin(JavaPlugin.class);
 
-            if(java.isPresent()){
+            if (java.isPresent()) {
                 line.setVar("JAVA_HOME", $(java.get().homePath));
             }
 
@@ -119,13 +160,13 @@ public class ZippedToolPlugin extends Plugin<Task, TaskDef<?>> {
             return dep;
         }
 
-        protected void clean(){
+        protected void clean() {
             $.sys.rm($(buildPath)).run();
             $.sys.mkdirs($(buildPath)).run();
         }
 
-        protected void download(){
-            if(!$.sys.exists($.sys.joinPath($(myDirPath), $(distrFilename)))){
+        protected void download() {
+            if (!$.sys.exists($.sys.joinPath($(myDirPath), $(distrFilename)))) {
                 String url = $(distrWwwAddress);
                 CommandLineResult run = $.sys.script()
                     .cd($(myDirPath))
@@ -134,7 +175,7 @@ public class ZippedToolPlugin extends Plugin<Task, TaskDef<?>> {
 
                 Predicate<String> errorPredicate = or(contains("404 Not Found"), contains("ERROR"));
 
-                if(errorPredicate.apply(run.output)){
+                if (errorPredicate.apply(run.output)) {
                     throw new RuntimeException("Error during download of " + url +
                         ": " + find(on('\n').split(run.output), errorPredicate));
                 }
@@ -142,27 +183,24 @@ public class ZippedToolPlugin extends Plugin<Task, TaskDef<?>> {
         }
 
 
-        protected Script extractToHomeDir(){
+        protected Script extractToHomeDir() {
             final String distrName = $(distrFilename);
 
             Script script = $.sys.script()
                 .cd($(buildPath))
                 .timeoutSec(60);
 
-            if(distrName.endsWith("tar.gz")){
+            if (distrName.endsWith("tar.gz")) {
                 script.line().addRaw("tar xvfz ../%s", distrName).build();
-            }else
-            if(distrName.endsWith("gz")){
+            } else if (distrName.endsWith("gz")) {
                 script.line().addRaw("tar xvf ../%s", distrName).build();
-            }else
-            if(distrName.endsWith("zip")){
+            } else if (distrName.endsWith("zip")) {
                 script.line().addRaw("unzip ../%s", distrName).build();
-            }else
-            if(distrName.endsWith("bin")){
+            } else if (distrName.endsWith("bin")) {
                 script
                     .line().addRaw("chmod u+x %s", distrName).build()
                     .line().addRaw("./%s", distrName).build();
-            }else{
+            } else {
                 throw new IllegalArgumentException("unsupported archive type: " + distrName);
             }
 
@@ -172,7 +210,7 @@ public class ZippedToolPlugin extends Plugin<Task, TaskDef<?>> {
 
             String toolDirName = $.sys.capture(String.format("cd %s && ls -w 1", $(buildPath))).trim();
 
-            if(!toolDirName.equals($(versionName))){
+            if (!toolDirName.equals($(versionName))) {
                 $.warn("tool version name is not equal to tool dir name: (expected) %s vs (actual) %s. setting new tool name to %s", $(versionName), toolDirName, toolDirName);
                 versionName.defaultTo(toolDirName);
             }
@@ -197,7 +235,7 @@ public class ZippedToolPlugin extends Plugin<Task, TaskDef<?>> {
             return script;
         }
 
-        protected void shortCut(String newCommandName, String sourceExecutableName){
+        protected void shortCut(String newCommandName, String sourceExecutableName) {
             Script script = $.sys.script();
 
             $.sys.rm("/usr/bin/" + newCommandName).sudo().run();
@@ -208,16 +246,15 @@ public class ZippedToolPlugin extends Plugin<Task, TaskDef<?>> {
         }
 
 
-        public DependencyResult checkDeps(boolean throwException){
-              return DependencyResult.OK;
+        public DependencyResult checkDeps(boolean throwException) {
+            return DependencyResult.OK;
         }
-
 
 
         protected DependencyResult verify() {
             final DependencyResult r = asInstalledDependency().checkDeps();
 
-            if(r.ok()){
+            if (r.ok()) {
                 $.log("%s has been installed", $(versionName));
             }
             return r;

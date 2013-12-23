@@ -40,12 +40,16 @@ import java.util.concurrent.TimeUnit;
 * @author Andrey Chaschev chaschev@gmail.com
 */
 public class RemoteSystemSession extends SystemSession {
+
     private static final Logger logger = LoggerFactory.getLogger(RemoteSystemSession.class);
 
     private final GlobalContext global;
+
     private final boolean printToConsole;
-    GenericUnixRemoteEnvironmentPlugin.SshSession sshSession;
+
     private GenericUnixRemoteEnvironmentPlugin remotePlugin;
+
+    GenericUnixRemoteEnvironmentPlugin.SshSession sshSession;
 
     public RemoteSystemSession(GenericUnixRemoteEnvironmentPlugin remotePlugin, Task parent, SessionContext $) {
         super(parent, remotePlugin.getTaskDefMixin(), $);
@@ -336,7 +340,7 @@ public class RemoteSystemSession extends SystemSession {
         DownloadResult downloadResult = download(Collections.singletonList(path), new File(global.localCtx.var(getBear().tempDirPath)));
 
         if(!downloadResult.ok()){
-            if(_default == null){
+            if(THROW_ON_ERROR.equals(_default)){
                 throw downloadResult.exception.isPresent() ?
                     new BearException("unable to download: " + path, downloadResult.exception.get()) :
                     new BearException("unable to download: " + path);
@@ -363,7 +367,11 @@ public class RemoteSystemSession extends SystemSession {
 
     @Override
     public String readLink(String path) {
-        String result = script().line().a("readlink", path).build().run().throwIfError().output.trim();
+        CommandLineResult r = script().line().a("readlink", path).build().run();
+
+        if(!r.ok()) return null;
+
+        String result = r.output.trim();
 
         return Strings.emptyToNull(result);
     }

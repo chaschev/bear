@@ -23,6 +23,7 @@ import bear.context.Fun;
 import bear.core.Env;
 import bear.core.GlobalContext;
 import bear.core.SessionContext;
+import bear.core.except.NoSuchFileException;
 import bear.main.event.NoticeEventToUI;
 import bear.plugins.misc.*;
 import bear.plugins.nodejs.NodeJsPlugin;
@@ -143,7 +144,7 @@ public abstract class ServerToolPlugin extends ZippedToolPlugin {
     }
 
     public void resetConsolePath(SessionContext $, String logPath) {
-        $.sys.permissions(logPath).withPermissions("u+rwx,g+rwx,o+rwx").withUser($.var(userWithGroup)).sudo().run().throwIfError();
+        $.sys.permissions(logPath).withPermissions("u+rwx,g+rwx,o+rwx").withUser($.var(userWithGroup)).sudo().run().throwIfNot(NoSuchFileException.class);
         $.sys.resetFile(logPath, true);
     }
 
@@ -153,7 +154,7 @@ public abstract class ServerToolPlugin extends ZippedToolPlugin {
         SystemSession.OSHelper helper = $.sys.getOsInfo().getHelper();
 
         for (String port : ports) {
-            String serviceCommand = helper.serviceCommand(format($.var(isSingle ? singleServiceName : multiServiceName), port), command);
+            String serviceCommand = helper.upstartCommand(format($.var(isSingle ? singleServiceName : multiServiceName), port), command);
             $.sys.captureBuilder(serviceCommand).sudo().run().throwIfError();
         }
 

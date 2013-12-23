@@ -86,8 +86,20 @@ public class CommandLineResult extends TaskResult{
     }
 
     @Override
-    public CommandLineResult throwIfValidationError() {
-        super.throwIfValidationError();
+    public CommandLineResult throwIfException() {
+        super.throwIfException();
+        return this;
+    }
+
+    @Override
+    public CommandLineResult throwIfNot(Class... exceptions) {
+        super.throwIfNot(exceptions);
+        return this;
+    }
+
+    @Override
+    public CommandLineResult throwIfExceptionIs(Class<? extends Exception>... exceptions) {
+        super.throwIfExceptionIs(exceptions);
         return this;
     }
 
@@ -99,4 +111,18 @@ public class CommandLineResult extends TaskResult{
     }
 
     public static final CommandLineResult OK = new CommandLineResult("default", "OK");
+
+    public CommandLineResult copyFrom(CommandLineResult result) {
+        if(result.exception.isPresent()){
+            exception = result.exception;
+        }
+
+        this.result = result.result;
+        this.script = result.script;
+        this.output = result.output;
+        this.exitCode = result.exitCode;
+        this.value = result.value;
+
+        return this;
+    }
 }

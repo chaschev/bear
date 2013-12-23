@@ -23,7 +23,7 @@ top priority:
 - (ok) add default methods for projects: start, stop, rollbackTo
 - add uninstall for project and for server
 - find the top Capistrano/Puppet questions on SO, create a demo with answers
-- releases simple demo
+- releases simple demo, create dumps demo (http://habrahabr.ru/post/206898/#comment_7127738)
 - (later) bear --install maven -Vmaven.version=3.1.1,bear.host=vm04
 - (later) --create del-me --from-template mini
 
@@ -50,9 +50,13 @@ top priority:
 - email plugin
 - sms plugin?
 - password management (can't always store a password in a local file)
+- don't print fx to console!
+- refactor: for plugins installations there is no spec/unclear for when to use asInstalledDependency,
+    getInstall or setInstaller
 
 - (ok) download maven dependencies & add to a classpath when running baseCL -> MavenCL -> ProjectCL
 - (later) parse generated pom.xml for deps
+- (later) print which parties failed
 
 - add pulse meters for services
 - builder must be a field to be able to switch a command

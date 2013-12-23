@@ -167,6 +167,14 @@ public class SessionRunner extends HavingContext<SessionRunner, SessionContext>{
 
         if($(bear.checkDependencies)){
             result = taskSession.getDependencies().check();
+
+            if(!result.ok() && $(bear.autoInstallPlugins)){
+                result = taskSession.getDependencies().tryInstall();
+
+                if(result.ok()){
+                    result = taskSession.getDependencies().check();
+                }
+            }
         }
 
         $.setCurrentTask(taskSession);

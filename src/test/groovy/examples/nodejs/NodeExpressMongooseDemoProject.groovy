@@ -21,13 +21,15 @@ import static bear.task.TaskResult.OK
  * @author Andrey Chaschev chaschev@gmail.com
  */
 
-@Project(shortName =  "express-demo", name = "Node Express Mongoose Demo Deployment")
+@Project(shortName = "express-demo", name = "Node Express Mongoose Demo Deployment")
 @Configuration(
     properties = ".bear/express-demo",
-    stage = "three",
-    vcs = "git@github.com:madhums/node-express-mongoose-demo.git",
+    stage = "u-3",
+    vcs = "https://github.com/chaschev/node-express-mongoose-demo.git",
     branch = "master",
-    useUI = false
+    useUI = false,
+    user = "andrey",
+    password = "1"
 )
 public class NodeExpressMongooseDemoProject extends BearProject<NodeExpressMongooseDemoProject> {
     // these are the plugins which are injected
@@ -63,7 +65,12 @@ public class NodeExpressMongooseDemoProject extends BearProject<NodeExpressMongo
         bear.stages.set(new Stages(global)
             .addQuick("one", "vm01")
             .addQuick("two", "vm01, vm02")
-            .addQuick("three", "vm01, vm02, vm03"));
+            .addQuick("three", "vm01, vm02, vm03")
+            .addQuick("u-1", "vm04")
+            .addQuick("u-2", "vm04, vm05")
+            .addQuick("u-3", "vm04, vm05, vm06")
+
+        );
 
         // this defines the deployment task
         defaultDeployment = deployment.newBuilder()
@@ -92,15 +99,18 @@ public class NodeExpressMongooseDemoProject extends BearProject<NodeExpressMongo
     // main, can be run directly from an IDE
     static main(def args)
     {
+//        new NodeExpressMongooseDemoProject().setup()
+        new NodeExpressMongooseDemoProject().deploy()
+
         // complete deployment:
         // checkout, build, stop, copy code to release, start
         // inspect startup logs, update upstart scripts
-        new NodeExpressMongooseDemoProject().deploy()
+//        new NodeExpressMongooseDemoProject().deploy()
 
         //stop all 6 instances (3 VMs, 2 instances each)
-        new NodeExpressMongooseDemoProject().stop()
+//        new NodeExpressMongooseDemoProject().stop()
 
         //start all 6 instances
-        new NodeExpressMongooseDemoProject().start()
+//        new NodeExpressMongooseDemoProject().start()
     }
 }
