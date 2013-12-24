@@ -28,7 +28,9 @@ public class WatchDogRunnable implements Runnable {
     public void run() {
         try {
             result = watchDog.watch($, input);
-        } finally {
+        }
+
+        finally {
             finished = true;
 
             if(group != null){

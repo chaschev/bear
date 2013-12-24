@@ -49,6 +49,7 @@ public class NodeExpressMongooseDemoProject extends BearProject<NodeExpressMongo
         nodeJs.projectPath.setEqualTo(bear.vcsBranchLocalPath);
 
         nodeJs.instancePorts.set("5000, 5001")
+//        nodeJs.useWatchDog.set(false)
 
         dumpManager.dbType.set(mongo.toString());
 
@@ -66,7 +67,7 @@ public class NodeExpressMongooseDemoProject extends BearProject<NodeExpressMongo
             .addQuick("one", "vm01")
             .addQuick("two", "vm01, vm02")
             .addQuick("three", "vm01, vm02, vm03")
-            .addQuick("u-1", "vm04")
+            .addQuick("u-1", "vm06")
             .addQuick("u-2", "vm04, vm05")
             .addQuick("u-3", "vm04, vm05, vm06")
 
@@ -100,12 +101,11 @@ public class NodeExpressMongooseDemoProject extends BearProject<NodeExpressMongo
     static main(def args)
     {
 //        new NodeExpressMongooseDemoProject().setup()
-        new NodeExpressMongooseDemoProject().deploy()
 
         // complete deployment:
         // checkout, build, stop, copy code to release, start
         // inspect startup logs, update upstart scripts
-//        new NodeExpressMongooseDemoProject().deploy()
+        new NodeExpressMongooseDemoProject().deploy()
 
         //stop all 6 instances (3 VMs, 2 instances each)
 //        new NodeExpressMongooseDemoProject().stop()
@@ -113,4 +113,5 @@ public class NodeExpressMongooseDemoProject extends BearProject<NodeExpressMongo
         //start all 6 instances
 //        new NodeExpressMongooseDemoProject().start()
     }
+
 }

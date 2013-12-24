@@ -21,6 +21,8 @@ import bear.core.SessionContext;
 import bear.vcs.CommandLineResult;
 import com.google.common.base.Optional;
 import org.joda.time.DateTime;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nonnull;
 import java.util.ArrayList;
@@ -42,6 +44,8 @@ import static com.google.common.base.Optional.of;
  * @author Andrey Chaschev chaschev@gmail.com
  */
 public class TaskExecutionContext extends ExecContext<TaskExecutionContext> {
+    private static final Logger logger = LoggerFactory.getLogger(TaskExecutionContext.class);
+
 //    TaskExecutionEntry selfEntry;
     List<ExecContext> execEntries = new ArrayList<ExecContext>();
     public TaskResult taskResult;
@@ -115,7 +119,12 @@ public class TaskExecutionContext extends ExecContext<TaskExecutionContext> {
     }
 
     public <T extends CommandLineResult> void onEndCommand(AbstractConsoleCommand<T> command, T result) {
-        findEntryByCommand(command).onEnd(result);
+        ExecContext execContext = findEntryByCommand(command);
+        if(execContext == null){
+            logger.warn("");
+        }else{
+            execContext.onEnd(result);
+        }
     }
 
     @Nonnull
@@ -165,8 +174,6 @@ public class TaskExecutionContext extends ExecContext<TaskExecutionContext> {
         DateTime finishedAt = lastEntry.isPresent() ? null : lastEntry.get().getFinishedAt();
 
         finishedAt = finishedAt == null ? new DateTime() : finishedAt;
-
-
 
         return finishedAt.getMillis() - firstEntry.get().getStartedAt().getMillis();
     }

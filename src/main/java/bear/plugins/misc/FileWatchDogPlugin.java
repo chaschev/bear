@@ -50,6 +50,7 @@ public class FileWatchDogPlugin extends Plugin {
                     if (buffer.contains("password")) {
                         console.println($.var($.bear.sshPassword));
                     }
+
                     if (reportExceptions) {
                         int index = buffer.indexOf("Exception: ");
                         if (index != -1) {
