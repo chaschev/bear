@@ -40,6 +40,7 @@ import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nonnull;
 import java.util.Collection;
+import java.util.List;
 import java.util.concurrent.*;
 
 import static com.google.common.util.concurrent.MoreExecutors.listeningDecorator;
@@ -196,11 +197,11 @@ public class GlobalContext extends AppGlobalContext<GlobalContext, Bear> {
     }
 
     public Collection<Class<? extends Plugin>> getPluginClasses() {
-        return plugins.pluginMap.keySet();
+        return plugins.getPluginMap().keySet();
     }
 
-    public Collection<Plugin> getGlobalPlugins() {
-        return plugins.pluginMap.values();
+    public List<Plugin<Task, TaskDef>> getOrderedPlugins() {
+        return plugins.getOrderedPlugins();
     }
 
     public static GlobalContext getInstance() {

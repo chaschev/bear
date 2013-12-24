@@ -24,6 +24,7 @@ import chaschev.lang.OpenStringBuilder;
 import com.google.common.base.Preconditions;
 
 import java.util.Arrays;
+import java.util.List;
 
 
 /**
@@ -77,7 +78,7 @@ public class Tasks {
                     }
 
                     if ($(bear.autoInstallPlugins) || $(bear.verifyPlugins)) {
-                        Iterable<Plugin> plugins = global.getGlobalPlugins();
+                        List<Plugin<Task, TaskDef>> plugins = global.getOrderedPlugins();
 
                         for (Plugin<Task, ? extends TaskDef> plugin : plugins) {
                             InstallationTaskDef<? extends InstallationTask> installTask = plugin.getInstall();

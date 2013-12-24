@@ -156,7 +156,7 @@ public class SessionContext extends AbstractContext {
 
             fileAppender.start();
 
-            LoggingBooter.addLog4jAppender(LogManager.getRootLogger(), fileAppender, Level.DEBUG, filter);
+            LoggingBooter.addLog4jAppender(LogManager.getRootLogger(), fileAppender, Level.DEBUG, filter, true);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

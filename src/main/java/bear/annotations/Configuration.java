@@ -27,13 +27,14 @@ public @interface Configuration {
     String properties() default "";
 
     String stage() default "";
-    Variable[] variables() default {};
-
-    boolean useUI() default true;
 
     String vcs() default "";
     String branch() default "";
     String tag() default "";
     String user() default "";
     String password() default "";
+
+    boolean useUI() default true;
+
+    Variable[] variables() default {};
 }

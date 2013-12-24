@@ -178,8 +178,8 @@ public class BearMain extends AppCli<GlobalContext, Bear, BearMain.AppOptions2> 
         fxAppDebug.start();
         fxAppInfo.start();
 
-        LoggingBooter.addLog4jAppender(LogManager.getRootLogger(), fxAppInfo, null, null);
-        LoggingBooter.addLog4jAppender("fx", fxAppDebug, null, null);
+        LoggingBooter.addLog4jAppender(LogManager.getRootLogger(), fxAppInfo, null, null, false);
+        LoggingBooter.addLog4jAppender("fx", fxAppDebug, null, null, false);
 
         LoggingBooter.loggerDiagnostics();
     }

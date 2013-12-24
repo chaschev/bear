@@ -35,10 +35,7 @@ import org.slf4j.LoggerFactory;
 import javax.annotation.Nonnull;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
 * @author Andrey Chaschev chaschev@gmail.com
@@ -46,7 +43,7 @@ import java.util.Map;
 public class Plugins {
     private static final Logger logger = LoggerFactory.getLogger(Plugins.class);
 
-    public final Map<Class<? extends Plugin>, Plugin> pluginMap = new LinkedHashMap<Class<? extends Plugin>, Plugin>();
+    protected final Map<Class<? extends Plugin>, Plugin<Task, TaskDef>> pluginMap = new LinkedHashMap<Class<? extends Plugin>, Plugin<Task, TaskDef>>();
     public final Map<String, Plugin> shortcutsPluginMap = new LinkedHashMap<String, Plugin>();
 
     private GlobalContext globalContext;
@@ -83,6 +80,30 @@ public class Plugins {
         }
     }
 
+    /**
+     * Returns plugins in the order of initialization. First are the most basic.
+     */
+    public List<Plugin<Task, TaskDef>> getOrderedPlugins() {
+        LinkedHashSet<Plugin<Task, TaskDef>> tempSet = new LinkedHashSet<Plugin<Task, TaskDef>>();
+
+        Collection<Plugin<Task, TaskDef>> plugins = pluginMap.values();
+
+        for (Plugin<Task, TaskDef> plugin : plugins) {
+            _addOrderedPlugin(plugin, tempSet);
+        }
+
+        return new ArrayList<Plugin<Task, TaskDef>>(tempSet);
+    }
+
+    private void _addOrderedPlugin(Plugin<Task, TaskDef> plugin, LinkedHashSet<Plugin<Task, TaskDef>> tempSet) {
+        if(tempSet.contains(plugin)) return;
+
+        for (Plugin<Task, TaskDef> pluginDep : plugin.getPluginDependencies()) {
+            _addOrderedPlugin(pluginDep, tempSet);
+        }
+
+        tempSet.add(plugin);
+    }
 
 
     protected static class PluginBuilder{
@@ -244,5 +265,7 @@ public class Plugins {
         }
     }
 
-
+    public Map<Class<? extends Plugin>, Plugin<Task, TaskDef>> getPluginMap() {
+        return pluginMap;
+    }
 }

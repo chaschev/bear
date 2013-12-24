@@ -16,13 +16,23 @@ import org.slf4j.LoggerFactory;
  */
 public class LoggingBooter {
     public static void addLog4jAppender(String loggerName, Appender appender, Level level, Filter filter) {
-        addLog4jAppender(LogManager.getLogger(loggerName), appender, level, filter);
+        addLog4jAppender(loggerName, appender, level, filter, true);
+    }
+
+    public static void addLog4jAppender(String loggerName, Appender appender, Level level, Filter filter, boolean additive) {
+        addLog4jAppender(LogManager.getLogger(loggerName), appender, level, filter, additive);
     }
 
     public static void addLog4jAppender(org.apache.logging.log4j.Logger log4jLogger, Appender appender, Level level, Filter filter) {
+        addLog4jAppender(log4jLogger, appender, level, filter, true);
+    }
+
+    public static void addLog4jAppender(org.apache.logging.log4j.Logger log4jLogger, Appender appender, Level level, Filter filter, boolean additive) {
         try {
             org.apache.logging.log4j.core.Logger coreLogger
                 = (org.apache.logging.log4j.core.Logger) log4jLogger;
+
+            coreLogger.setAdditive(additive);
 
             LoggerContext context = coreLogger.getContext();
 

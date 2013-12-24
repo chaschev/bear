@@ -109,7 +109,7 @@ public class GridBuilder {
                                 if (isFirstCallableFinal && $.var($.bear.verifyPlugins)) {
                                     DependencyResult r = new DependencyResult(Result.OK);
 
-                                    for (Plugin<Task, TaskDef<?>> plugin : $.getGlobal().getGlobalPlugins()) {
+                                    for (Plugin<Task, TaskDef> plugin : $.getGlobal().getOrderedPlugins()) {
                                         r.join(plugin.checkPluginDependencies());
 
                                         //todo replace with insideInstallation? - no!

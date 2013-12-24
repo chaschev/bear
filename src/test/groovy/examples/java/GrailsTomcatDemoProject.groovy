@@ -1,7 +1,10 @@
 package examples.java
 
+import bear.annotations.Configuration
+import bear.annotations.Project
 import bear.core.*
 import bear.plugins.ConfigureServiceInput
+import bear.plugins.DeploymentPlugin
 import bear.plugins.db.DbDumpInfo
 import bear.plugins.db.DbDumpManager
 import bear.plugins.db.DumpManagerPlugin
@@ -11,7 +14,6 @@ import bear.plugins.java.TomcatPlugin
 import bear.plugins.maven.MavenPlugin
 import bear.plugins.misc.UpstartPlugin
 import bear.plugins.mysql.MySqlPlugin
-import bear.plugins.DeploymentPlugin
 import bear.task.Task
 import bear.task.TaskCallable
 import bear.task.TaskDef
@@ -25,6 +27,15 @@ import static bear.task.TaskResult.OK
  * @author Andrey Chaschev chaschev@gmail.com
  */
 
+@Project(shortName = "petclinic", name = "Grails Petclinic Demo Deployment")
+@Configuration(
+    properties = ".bear/petclinic",
+    stage = "u-3",
+    useUI = false,
+    vcs = "https://github.com/grails-samples/grails-petclinic.git",
+    branch = "master",
+    user = "andrey"
+)
 public class GrailsTomcatDemoProject extends BearProject<GrailsTomcatDemoProject> {
     // these are the plugins which are injected
     JavaPlugin java
@@ -58,7 +69,11 @@ public class GrailsTomcatDemoProject extends BearProject<GrailsTomcatDemoProject
         bear.stages.set(new Stages(global)
             .addQuick("one", "vm01")
             .addQuick("two", "vm01, vm02")
-            .addQuick("three", "vm01, vm02, vm03"));
+            .addQuick("three", "vm01, vm02, vm03")
+            .addQuick("u-1", "vm04")
+            .addQuick("u-2", "vm04, vm05")
+            .addQuick("u-3", "vm04, vm05, vm06")
+        );
 
         // this defines the deployment task
         defaultDeployment = deployment.newBuilder()
@@ -103,38 +118,7 @@ public class GrailsTomcatDemoProject extends BearProject<GrailsTomcatDemoProject
 
     static main(def args)
     {
-        deploy()
-    }
-
-    static deploy()
-    {
-        def demo = new GrailsTomcatDemoProject()
-
-        demo
-            .set(demo.main().propertiesFile, new File(".bear/grails-petclinic-demo.properties"))
-            .configure()
-            .set(demo.bear.clean, false)
-            .newGrid()
-            .add(demo.defaultDeployment.build())
-            .runCli();
-    }
-
-    // setup script
-    static setup()
-    {
-        def demo = new GrailsTomcatDemoProject()
-
-        demo
-            .set(demo.main().propertiesFile, new File(".bear/grails-petclinic-demo.properties"))
-            .configure()
-            .set(demo.bear.verifyPlugins, true)
-            .set(demo.bear.autoInstallPlugins, true)
-            .set(demo.bear.checkDependencies, true)
-            .newGrid()
-            // a quick dirty hack to force the installation
-//            .add({ SessionContext _, task, i -> _.sys.rm(RmInput.newRm('/var/lib/bear/tools/tomcat/6.0.37').sudo())} as TaskCallable)
-            .add(demo.global.tasks.setup)
-            .runCli()
+        new GrailsTomcatDemoProject().deploy()
     }
 
     GridBuilder dumpSampleGrid = new GridBuilder()

@@ -179,8 +179,8 @@ public class BearFX {
 //                    new FXAppender("fxAppInfo", createFilter("info", null, null), PatternLayout.createLayout("%highlight{%d{HH:mm:ss.S} %-5level %c{1.} - %msg%n}", null, null, null, null), true, bearFX);
 
 
-                LoggingBooter.addLog4jAppender("root", fxAppInfo, null, null);
-                LoggingBooter.addLog4jAppender("fx", fxAppDebug, null, null);
+                LoggingBooter.addLog4jAppender("fx", fxAppInfo, null, null, false);
+                LoggingBooter.addLog4jAppender("fx", fxAppDebug, null, null, false);
 
                 fxConf.configure();
 

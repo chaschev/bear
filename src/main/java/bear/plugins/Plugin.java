@@ -33,7 +33,7 @@ import java.util.Set;
 /**
  * @author Andrey Chaschev chaschev@gmail.com
  */
-public abstract class Plugin<TASK extends Task, TASK_DEF extends TaskDef<? extends Task>> {
+public abstract class Plugin<TASK extends Task, TASK_DEF extends TaskDef> {
     public String name;
     protected String desc;
 
@@ -43,7 +43,7 @@ public abstract class Plugin<TASK extends Task, TASK_DEF extends TaskDef<? exten
 
     protected boolean transitiveDependency;
 
-    Set<Plugin<Task, TaskDef<? extends Task>>> pluginDependencies;
+    Set<Plugin<Task, TaskDef>> pluginDependencies;
 
     protected final TASK_DEF taskDefMixin;
 
@@ -150,7 +150,7 @@ public abstract class Plugin<TASK extends Task, TASK_DEF extends TaskDef<? exten
         return name.hashCode();
     }
 
-    public Set<Plugin<Task, TaskDef<? extends Task>>> getPluginDependencies() {
+    public Set<Plugin<Task, TaskDef>> getPluginDependencies() {
         return pluginDependencies;
     }
 

@@ -110,7 +110,7 @@ public abstract class BearProject<SELF extends BearProject> {
         Preconditions.checkArgument(!configured, "already configured");
 
         for (Field field : OpenBean.fieldsOfType(this.getClass(), Plugin.class)) {
-            Class<? extends Plugin<Task, TaskDef<?>>> aClass = (Class<? extends Plugin<Task, TaskDef<?>>>) field.getType();
+            Class<? extends Plugin<Task, TaskDef>> aClass = (Class<? extends Plugin<Task, TaskDef>>) field.getType();
 
             factory.requirePlugins(aClass);
         }
