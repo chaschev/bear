@@ -272,31 +272,6 @@ public class BearMain extends AppCli<GlobalContext, Bear, BearMain.AppOptions2> 
         return folders;
     }
 
-    protected Optional<CompiledEntry> findScriptToRun() {
-        if (isScriptNameSet()) {
-            String scriptName = $(script);
-
-            logger.info("script is set in the command line to {}", scriptName);
-            bear.deployScript.defaultTo(scriptName);
-        } else {
-//            new Question("Enter a script name to run:",
-//                transform(compiledEntries, new Function<CompiledEntry, String>() {
-//                    public String apply(CompiledEntry input) {
-//                        return input.aClass.getSimpleName();
-//                    }
-//                }),
-//                bear.deployScript).ask();
-        }
-
-        throw new UnsupportedOperationException("todo");
-//        return Iterables.tryFind(compiledEntries, new Predicate<CompiledEntry>() {
-//            @Override
-//            public boolean apply(CompiledEntry input) {
-//                return input.aClass.getName().equals(global.var(bear.deployScript));
-//            }
-//        });
-    }
-
     protected boolean isScriptNameSet() {
         return $.isSet(script) && $.var(script) != Fun.UNDEFINED;
     }
@@ -462,7 +437,7 @@ public class BearMain extends AppCli<GlobalContext, Bear, BearMain.AppOptions2> 
         run(project, gridOptional.get(), variables, shutdown);
     }
 
-    public static void run(BearProject project, GridBuilder grid, Map<Object, Object> variables, boolean shutdown) {
+    public static GlobalTaskRunner run(BearProject project, GridBuilder grid, Map<Object, Object> variables, boolean shutdown) {
         try {
             GlobalContext global = project.global;
 
@@ -476,15 +451,23 @@ public class BearMain extends AppCli<GlobalContext, Bear, BearMain.AppOptions2> 
                 runner.getFinishedLatch().await();
 
                 System.out.println("finished: " + runner.stats.getDefaultValue().toString());
+
+                return runner;
             } finally {
+                try {
+                    if (shutdown) {
+                        shutdown(global);
+                    }
+                } catch (Exception e) {
+                    logger.warn("exception during shutdown", e);
+                }
+
                 if (response.getSavedVariables() != null) {
                     global.putMap(response.getSavedVariables());
                 }
             }
 
-            if (shutdown) {
-                shutdown(global);
-            }
+
         } catch (InterruptedException e) {
             throw Exceptions.runtime(e);
         }

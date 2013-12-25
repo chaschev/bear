@@ -6,6 +6,7 @@ import chaschev.lang.OpenBean;
 import chaschev.util.CatchyRunnable;
 import chaschev.util.Exceptions;
 import com.google.common.base.Function;
+import com.google.common.base.Optional;
 import com.google.common.collect.ArrayTable;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
@@ -13,11 +14,15 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nonnull;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import static com.google.common.base.Optional.absent;
+import static com.google.common.base.Optional.of;
 
 /**
  * Elegant sweep strategy: add listener for
@@ -140,6 +145,47 @@ public class ComputingGrid<C, PHASE> {
 
     private final boolean[] phaseEntered;
 
+    @Nonnull
+    public Optional<Phase<GridCell, PHASE>> phase(String name) {
+        for (Phase<?, PHASE> phase : phases) {
+            if(name.equals(phase.getName())) return (Optional) of(phase);
+        }
+
+        return Optional.absent();
+    }
+
+    public <V> Optional<SettableFuture<V>> future(String phaseName, String partyName, Class<V> vClass) {
+        Optional<GridCell<C, V, PHASE>> cell = cell(phaseName, partyName, vClass);
+
+        if(cell.isPresent()){
+            return of(cell.get().getFuture());
+        }
+
+        return absent();
+    }
+
+    public <V> Optional<GridCell<C, V, PHASE>> cell(String phaseName, String partyName, Class<V> vClass) {
+        Optional<Phase<GridCell, PHASE>> phase = phase(phaseName);
+
+        if(!phase.isPresent()) return Optional.absent();
+
+        Optional<PhaseParty<C, PHASE>> party = party(partyName);
+
+        if(!party.isPresent()) return absent();
+
+        return (Optional) of(cellAt(phase.get().rowIndex, party.get().index));
+    }
+
+    @Nonnull
+    private Optional<PhaseParty<C, PHASE>> party(String partyName) {
+        for (PhaseParty<C, PHASE> party : parties) {
+            if(partyName.equals(OpenBean.invoke(party.column, "getName"))){
+                return of(party);
+            }
+        }
+        return Optional.absent();
+    }
+
     public static interface PartyListener<PHASE, C>{
         void handle(Phase<?, PHASE> phase, PhaseParty<C, PHASE> party);
     }
@@ -188,10 +234,11 @@ public class ComputingGrid<C, PHASE> {
 
                             checkPhaseEntered(phase, party);
 
-                            Object result = null;
+                            Object result;
 
                             try {
                                 result = cell.callable.call(party, party.currentPhaseIndex, phase);
+
                                 party.lastResult = result;
 
                                 cell.getFuture().set(result);
@@ -200,10 +247,12 @@ public class ComputingGrid<C, PHASE> {
                                     cell.whenDone.act(result, party);
                                 }
                             } catch (Exception e) {
-                                GridException gridException = new GridException(e, phase, party);
-                                party.setException(gridException);
+                                party.setException(
+                                    e instanceof GridException ? (GridException) e :
+                                        new GridException(e, phase, party)
+                                );
                                 partiesFailed.incrementAndGet();
-                                LoggerFactory.getLogger("log").warn(e.toString(), gridException);
+                                LoggerFactory.getLogger("log").warn(e.toString(), new GridException(e, phase, party));
 
                                 break;
                             } finally {

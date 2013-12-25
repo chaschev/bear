@@ -16,11 +16,14 @@
 
 package bear.context;
 
+import bear.plugins.Plugin;
 import bear.session.DynamicVariable;
 import bear.session.Variables;
+import bear.vcs.VcsCLIPlugin;
 import chaschev.util.Exceptions;
 import com.google.common.base.Function;
 import com.google.common.base.Functions;
+import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

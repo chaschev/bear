@@ -8,12 +8,14 @@ import bear.main.event.TaskConsoleEventToUI;
 import bear.main.phaser.ComputingGrid;
 import bear.main.phaser.Phase;
 import bear.main.phaser.PhaseParty;
+import bear.main.phaser.SettableFuture;
 import bear.session.DynamicVariable;
 import bear.session.Variables;
 import bear.task.Task;
 import bear.task.TaskDef;
 import bear.task.TaskResult;
 import com.google.common.base.Function;
+import com.google.common.base.Optional;
 import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import org.slf4j.Logger;
@@ -156,6 +158,12 @@ public class GlobalTaskRunner {
         return $s;
     }
 
+    public void throwIfAnyFailed() {
+        if(stats.getDefaultValue().partiesFailed > 0){
+            throw new RuntimeException("there are failed parties");
+        }
+    }
+
     public static class Stats{
         public final AtomicInteger partiesArrived = new AtomicInteger();
         public final AtomicInteger partiesOk = new AtomicInteger();
@@ -221,5 +229,12 @@ public class GlobalTaskRunner {
     public GlobalTaskRunner whenAllFinished(ComputingGrid.WhenAllFinished whenAllFinished) {
         this.whenAllFinished = whenAllFinished;
         return this;
+    }
+
+    /**
+     * @return Absent if the future was not found in the grid by the names provided.
+     */
+    public Optional<SettableFuture<TaskResult>> future(String taskDefName, String sessionName){
+        return grid.future(taskDefName, sessionName, TaskResult.class);
     }
 }

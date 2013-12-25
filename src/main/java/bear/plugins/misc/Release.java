@@ -74,6 +74,7 @@ public class Release {
         return branchInfo.orNull();
     }
 
+    @JsonIgnore
     public String getLastAuthor() {
         Optional<String> optional = absent();
 

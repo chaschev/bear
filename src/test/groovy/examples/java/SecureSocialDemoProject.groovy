@@ -33,9 +33,10 @@ import static bear.task.TaskResult.OK
 @Project(shortName = "ss-demo", name = "Secure Social Demo")
 @Configuration(
     properties = ".bear/ss-demo",
-    stage = "one",
-    vcs = "git@github.com:chaschev/securesocial.git",
+    stage = "u-3",
+    vcs = "https://github.com/chaschev/securesocial",
     branch = "master",
+    user = "andrey",
     useUI = false
 )
 public class SecureSocialDemoProject extends BearProject<SecureSocialDemoProject> {
@@ -61,7 +62,7 @@ public class SecureSocialDemoProject extends BearProject<SecureSocialDemoProject
     @Override
     protected GlobalContext configureMe(GlobalContextFactory factory) throws Exception
     {
-        maven.version.set("3.0.5");
+        maven.version.set("3.1.1");
 
         java.versionName.set("jdk-7u40-linux-x64");
         java.version.set("1.7.0_40");
@@ -75,7 +76,12 @@ public class SecureSocialDemoProject extends BearProject<SecureSocialDemoProject
         bear.stages.set(new Stages(global)
             .addQuick("one", "vm01")
             .addQuick("two", "vm01, vm02")
-            .addQuick("three", "vm01, vm02, vm03"));
+            .addQuick("three", "vm01, vm02, vm03")
+            .addQuick("u-1", "vm04")
+            .addQuick("u-2", "vm04, vm05")
+            .addQuick("u-3", "vm04, vm05, vm06")
+        );
+
 
         // this defines the deployment task
         defaultDeployment = deployment.newBuilder()
@@ -94,12 +100,6 @@ public class SecureSocialDemoProject extends BearProject<SecureSocialDemoProject
 
 
     private static final Pattern DB_LINE_PATTERN = Pattern.compile("9998:[^\\n]+", Pattern.DOTALL | Pattern.MULTILINE);
-
-    @Override
-    GridBuilder defaultGrid()
-    {
-        return dumpSampleGrid;
-    }
 
     def mysqlVars = [
         (useDb): mysql.toString(),

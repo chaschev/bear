@@ -32,6 +32,7 @@ public class GridBuilder {
     private Map<Object, Object> variables;
 
     protected BearProject project;
+    private boolean shutdownAfterRun = true;
 
     public GridBuilder add(final TaskDef<Task> taskDef){
         _addTask(taskDef);
@@ -82,7 +83,7 @@ public class GridBuilder {
 
             final boolean isFirstCallableFinal = isFirstCallable;
 
-            subPhases.add(new Phase<TaskResult, BearScriptPhase>(new BearScriptPhase(taskDef, null, GlobalTaskRunner.createGroupDivider()),
+            subPhases.add(new Phase<TaskResult, BearScriptPhase>(new BearScriptPhase(def, null, GlobalTaskRunner.createGroupDivider()),
                 new Function<Integer, PhaseCallable<SessionContext, TaskResult, BearScriptPhase>>() {
                 @Override
                 public PhaseCallable<SessionContext, TaskResult, BearScriptPhase> apply(final Integer partyIndex) {
@@ -128,7 +129,7 @@ public class GridBuilder {
                                     }
 
                                     if (r.nok()) {
-                                        throw PartyResultException.create(r, party, phase.getName());
+                                        throw PartyResultException.create(r, party, phase);
                                     }
                                 }
 
@@ -144,7 +145,7 @@ public class GridBuilder {
                                 result = $.run(def);
 
                                 if (!result.ok()) {
-                                    throw PartyResultException.create(result, party, phase.getName());
+                                    throw PartyResultException.create(result, party, phase);
                                 }
 
                                 return result;
@@ -214,15 +215,12 @@ public class GridBuilder {
         throw new UnsupportedOperationException("todo");
     }
 
-    public void runCli() {
-        run();
+    public GlobalTaskRunner runCli() {
+        return run();
     }
 
-    public void run() {
-        run(true);
-    }
+    public GlobalTaskRunner run() {
 
-    public void run(boolean shutdown) {
         if(bearMain == null){
             try {
                 bearMain = new BearMain(GlobalContext.getInstance(), null)
@@ -232,7 +230,7 @@ public class GridBuilder {
             }
         }
 
-        BearMain.run(project, this, variables, shutdown);
+        return BearMain.run(project, this, variables, shutdownAfterRun);
     }
 
     public void init(BearProject<?> project) {
@@ -240,5 +238,8 @@ public class GridBuilder {
 
     }
 
-
+    public GridBuilder setShutdownAfterRun(boolean shutdownAfterRun) {
+        this.shutdownAfterRun = shutdownAfterRun;
+        return this;
+    }
 }

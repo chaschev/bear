@@ -87,7 +87,7 @@ public class ExamplesProject extends BearProject<ExamplesProject> {
     } as TaskCallable
 
     @Override
-    public void deploy()
+    public GlobalTaskRunner deploy()
     {
         run([fileOperations])
     }

@@ -164,4 +164,8 @@ public class TaskResult {
     public boolean isValidationError() {
         return exception.isPresent() && (exception.get() instanceof ValidationException);
     }
+
+    public boolean isErrorOf(Class<?> aClass) {
+        return exception.isPresent() && (aClass.isAssignableFrom(exception.get().getClass()));
+    }
 }

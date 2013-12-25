@@ -55,6 +55,8 @@ public abstract class BearProject<SELF extends BearProject> {
     private BearMain bearMain;
     protected Bear bear;
 
+    protected boolean shutdownAfterRun = true;
+
     protected DeploymentPlugin.Builder defaultDeployment;
 
     protected ReleasesPlugin releases;
@@ -242,8 +244,8 @@ public abstract class BearProject<SELF extends BearProject> {
         });
     }
 
-    public void deploy(){
-        runTasksWithAnnotations(new Supplier<List<TaskDef<Task>>>() {
+    public GlobalTaskRunner deploy(){
+        return runTasksWithAnnotations(new Supplier<List<TaskDef<Task>>>() {
             @Override
             public List<TaskDef<Task>> get() {
                 return singletonList(defaultDeployment.build());
@@ -255,14 +257,14 @@ public abstract class BearProject<SELF extends BearProject> {
         setup(true);
     }
 
-    public void setup(boolean autoInstall){
+    public GlobalTaskRunner setup(boolean autoInstall){
         if(autoInstall){
             set(bear.verifyPlugins, true);
             set(bear.autoInstallPlugins, true);
             set(bear.checkDependencies, true);
         }
 
-        runTasksWithAnnotations(new Supplier<List<InstallationTaskDef<InstallationTask>>>() {
+        return runTasksWithAnnotations(new Supplier<List<InstallationTaskDef<InstallationTask>>>() {
             @Override
             public List<InstallationTaskDef<InstallationTask>> get() {
                 return singletonList(global.tasks.setup);
@@ -303,36 +305,48 @@ public abstract class BearProject<SELF extends BearProject> {
         System.out.println("returned result: " + result);
     }
 
-    public SELF run(final List<TaskCallable<TaskDef>> callables) {
-        runTasksWithAnnotations(new Supplier<List<? extends TaskDef>>() {
+    public GlobalTaskRunner run(final List<TaskCallable<TaskDef>> callables) {
+        return runTasksWithAnnotations(new Supplier<List<? extends TaskDef>>() {
             @Override
             public List<? extends TaskDef> get() {
                 return Lists.newArrayList(Lists.transform(callables, new Function<TaskCallable<TaskDef>, TaskDef>() {
                     @Override
-                    public TaskDef apply( TaskCallable<TaskDef> input) {
+                    public TaskDef apply(TaskCallable<TaskDef> input) {
                         return new TaskDef(input);
                     }
                 }));
             }
         });
-        return self();
     }
 
-    public void runTasksWithAnnotations(Supplier<? extends List<? extends TaskDef>> taskList) {
+    protected Function<GridBuilder, Void> preRunHook;
+
+    public GlobalTaskRunner runTasksWithAnnotations(Supplier<? extends List<? extends TaskDef>> taskList) {
         setProjectVars();
 
         Configuration projectConf = load(projectConf());
 
-        GridBuilder gridBuilder = configure()
-            .newGrid()
-            .addAll(taskList.get());
+        if(!configured){
+            configure();
+        }
+
+        GridBuilder grid = newGrid()
+            .setShutdownAfterRun(shutdownAfterRun);
+
+        if(preRunHook != null){
+            preRunHook.apply(grid);
+        }
+
+        grid.addAll(taskList.get());
 
         if(useUI(projectConf)){
-            gridBuilder.run();
+            return grid.run();
         }else{
-            gridBuilder.runCli();
+            return grid.runCli();
         }
     }
+
+
 
     private Configuration projectConf() {
         return getClass().getAnnotation(Configuration.class);
@@ -403,9 +417,13 @@ public abstract class BearProject<SELF extends BearProject> {
         setAnnotation(bear.name, projectAnn.shortName());
     }
 
-    public static class Test<T>{
-        public static void main(String[] args) {
-            System.out.println("12242735735435435373".matches("^[0-9]+$"));
-        }    }
+    public SELF setShutdownAfterRun(boolean p) {
+        this.shutdownAfterRun = p;
+        return self();
+    }
+
+    public DeploymentPlugin.Builder getDefaultDeployment() {
+        return defaultDeployment;
+    }
 }
 

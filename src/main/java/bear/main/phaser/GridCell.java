@@ -6,7 +6,7 @@ import javax.annotation.Nullable;
 * @author Andrey Chaschev chaschev@gmail.com
 */
 public final class GridCell<COL, V, PHASE> {
-    public long startedAtMs ;
+    public long startedAtMs;
     public long finishedAtMs;
 
     private SettableFuture<V> future;

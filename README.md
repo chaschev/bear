@@ -28,10 +28,10 @@ Bear is in it's early development stages now. Questions, concerns? Just drop me 
 | Node.js/Java three-hosts deployment          | Finished.      |
 | Refactoring, simplifying API                 | Finished.      |
 | Installer, launcher                          | Finished.      |
+| Support Ubuntu                               | Finished.      |
 | Finishing TODOs                              | In progress... |
-| Support Ubuntu                               | In progress... |
-| UI bugfixing                                 |                |
 | Integration & unit tests                     |                |
+| UI bugfixing                                 |                |
 | Refactoring, simplifying API                 |                |
 
 

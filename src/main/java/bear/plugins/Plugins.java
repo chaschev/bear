@@ -248,21 +248,25 @@ public class Plugins {
         try {
             final T plugin = globalContext.plugin(aClass);
 
-            Task task = plugin.newSession($, parent);
-
-            task.wire($);
-
-            if($.var(globalContext.bear.checkDependencies)){
-                DependencyResult deps = task.getDependencies().check();
-                if(!deps.ok()){
-                    throw new DependencyException(deps);
-                }
-            }
-
-            return task;
+            return newSession(plugin, $, parent);
         } catch (Exception e) {
             throw Exceptions.runtime(e);
         }
+    }
+
+    public <T extends Plugin> Task<TaskDef> newSession(T plugin, SessionContext $, Task<?> parent) {
+        Task task = plugin.newSession($, parent);
+
+        task.wire($);
+
+        if($.var(globalContext.bear.checkDependencies)){
+            DependencyResult deps = task.getDependencies().check();
+            if(!deps.ok()){
+                throw new DependencyException(deps);
+            }
+        }
+
+        return task;
     }
 
     public Map<Class<? extends Plugin>, Plugin<Task, TaskDef>> getPluginMap() {

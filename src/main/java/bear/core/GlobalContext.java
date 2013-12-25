@@ -59,6 +59,20 @@ public class GlobalContext extends AppGlobalContext<GlobalContext, Bear> {
 
     public final Plugins plugins = new Plugins(this);
 
+        public <T extends Plugin> Optional<T> pluginOfInstance(Class<? extends T> pluginClass) {
+            Class<T> result = null;
+
+            for (Class<? extends Plugin> aClass : getPluginClasses()) {
+                if(pluginClass.isAssignableFrom(aClass)){
+                    result = (Class<T>) aClass;
+                }
+            }
+
+            if(result == null) return Optional.absent();
+
+            return Optional.fromNullable(plugin(pluginClass));
+        }
+
     public static class ProjectRegistry{
         CompileManager manager;
     }
@@ -178,7 +192,7 @@ public class GlobalContext extends AppGlobalContext<GlobalContext, Bear> {
             sessionsExecutor.shutdownNow();
         }
 
-        if(!scheduler.awaitTermination(5, TimeUnit.SECONDS)){
+        if(!scheduler.awaitTermination(3, TimeUnit.SECONDS)){
             scheduler.shutdownNow();
         }
     }

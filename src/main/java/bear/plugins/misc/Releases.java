@@ -19,11 +19,11 @@ package bear.plugins.misc;
 import bear.context.HavingContext;
 import bear.core.Bear;
 import bear.core.SessionContext;
+import bear.core.except.PermissionsException;
 import bear.session.DynamicVariable;
 import bear.session.Variables;
-import bear.vcs.BranchInfo;
-import bear.vcs.VCSSession;
-import bear.vcs.VcsLogInfo;
+import bear.task.BearException;
+import bear.vcs.*;
 import chaschev.json.JacksonMapper;
 import chaschev.util.Exceptions;
 import com.bethecoder.table.ASCIITableHeader;
@@ -188,7 +188,11 @@ public class Releases extends HavingContext<Releases, SessionContext>{
 
         String pendingPath = $(releases.pendingReleasePath);
 
-        $.sys.mkdirs(pendingPath).run();
+        CommandLineResult result = $.sys.mkdirs(pendingPath).run();
+
+        if(result.isErrorOf(PermissionsException.class)){
+            throw new BearException("releases plugin: unable to create a pending directory, did you run project.setup()?");
+        }
 
         PendingRelease release;
 
@@ -378,8 +382,8 @@ public class Releases extends HavingContext<Releases, SessionContext>{
     protected Map<String, Release> loadMap() {
         try {
             String json = $.sys.readString($(releases.releasesJsonPath), null);
-            return mapper.readValue(json, new TypeReference<Map<String, Release>>() {
-            });
+            if(json == null) return new LinkedHashMap<String, Release>();
+            return mapper.readValue(json, new TypeReference<Map<String, Release>>() {});
         } catch (IOException e) {
             throw Exceptions.runtime(e);
         }
@@ -396,19 +400,15 @@ public class Releases extends HavingContext<Releases, SessionContext>{
             return absent();
         }
 
+        if(!$.getGlobal().pluginOfInstance(VcsCLIPlugin.class).isPresent()){
+            return of(new Release(Optional.<VcsLogInfo>absent(), Optional.<BranchInfo>absent(), folder, null));
+        }
+
         VCSSession vcs = $(bear.vcs);
 
         VcsLogInfo vcsLogInfo = vcs.logLastN($(retrieveLastXCommits)).run();
 
-//        if(!vcsLogInfo.ok()){
-//            return absent();
-//        }
-
         BranchInfo branchInfo = vcs.queryRevision($(bear.revision)).run();
-
-//        if(!branchInfo.ok()){
-//            return absent();
-//        }
 
         return of(new Release(okOrAbsent(vcsLogInfo), okOrAbsent(branchInfo), folder, null));
     }

@@ -31,6 +31,22 @@ public class DeploymentPlugin extends Plugin {
         return new Builder();
     }
 
+    public static <T extends Builder.DeploymentStep> String stepNameBefore(Class<T> tClass){
+        return stepName(tClass, ".before");
+    }
+
+    public static <T extends Builder.DeploymentStep> String stepNameMain(Class<T> tClass){
+        return stepName(tClass, ".main");
+    }
+
+    public static <T extends Builder.DeploymentStep> String stepNameAfter(Class<T> tClass){
+        return stepName(tClass, ".after");
+    }
+
+    private static <T extends Builder.DeploymentStep> String stepName(Class<T> tClass, String s) {
+        return tClass.getSimpleName() + s;
+    }
+
     public class Builder{
         // in before: pendingRelease
         protected final SetFilesLocation setFilesLocation = new SetFilesLocation();
@@ -50,9 +66,12 @@ public class DeploymentPlugin extends Plugin {
         };
 
         public abstract class DeploymentStep<SELF extends DeploymentStep>  {
+            String beforeCallableName = stepNameBefore(getClass());
+            String taskCallableName = stepNameMain(getClass());
+            String afterCallableName = stepNameAfter(getClass());
+
             @Nullable
             protected TaskCallable<TaskDef> beforeCallable;
-
             @Nullable protected TaskCallable<TaskDef> taskCallable;
 
             @Nullable
@@ -70,6 +89,12 @@ public class DeploymentPlugin extends Plugin {
                 return self();
             }
 
+            public SELF setTaskCallable(String name, TaskCallable<TaskDef> taskCallable) {
+                this.taskCallable = taskCallable;
+                this.taskCallableName = name;
+                return self();
+            }
+
             @SuppressWarnings("unchecked")
             protected final SELF self(){
                 return (SELF) this;
@@ -80,17 +105,42 @@ public class DeploymentPlugin extends Plugin {
             }
 
             public List<TaskDef<Task>> createTasksToList(List<TaskDef<Task>> tasks){
-                addTask(tasks, beforeCallable, "before");
-                addTask(tasks, taskCallable, "task");
-                addTask(tasks, afterCallable, "after");
+                addTask(tasks, beforeCallable, beforeCallableName);
+                addTask(tasks, taskCallable, taskCallableName);
+                addTask(tasks, afterCallable, afterCallableName);
 
                 return tasks;
             }
 
-            private void addTask(List<TaskDef<Task>> tasks, TaskCallable callable, String callableName) {
+            private void addTask(List<TaskDef<Task>> tasks, TaskCallable<TaskDef> callable, String callableName) {
                 if(callable == null) return;
 
-                tasks.add(new TaskDef<Task>(callable).setName(getClass().getSimpleName() + " - " + callable));
+                tasks.add(new TaskDef<Task>(callable).setName(callableName));
+            }
+
+            public SELF setBeforeCallableName(String beforeCallableName) {
+                this.beforeCallableName = beforeCallableName;
+                return self();
+            }
+
+            public SELF setTaskCallableName(String taskCallableName) {
+                this.taskCallableName = taskCallableName;
+                return self();
+            }
+
+            public SELF setAfterCallableName(String afterCallableName) {
+                this.afterCallableName = afterCallableName;
+                return self();
+            }
+
+            @Override
+            public String toString() {
+                final StringBuilder sb = new StringBuilder(getClass().getSimpleName()).append("{");
+                if(taskCallableName != null) sb.append("task='").append(taskCallableName).append('\'');
+                if(beforeCallableName != null) sb.append(" before='").append(beforeCallableName).append('\'');
+                if(afterCallableName != null) sb.append(" after='").append(afterCallableName).append('\'');
+                sb.append('}');
+                return sb.toString();
             }
         }
 
@@ -260,6 +310,30 @@ public class DeploymentPlugin extends Plugin {
             return ifRollback;
         }
 
+        public SetFilesLocation getSetFilesLocation() {
+            return setFilesLocation;
+        }
+
+        public CheckoutFiles getCheckoutFiles() {
+            return checkoutFiles;
+        }
+
+        public BuildAndCopy getBuildAndCopy() {
+            return buildAndCopy;
+        }
+
+        public UpdateLinks getUpdateLinks() {
+            return updateLinks;
+        }
+
+        public WhenStarted getWhenStarted() {
+            return whenStarted;
+        }
+
+        public DeploymentStep[] getDeploymentSteps() {
+            return deploymentSteps;
+        }
+
         //todo each step could provide it's own implementation for the task
         public TaskDef<Task> build(){
             final TaskCallable<TaskDef> ifRollbackCallable = new TaskCallable<TaskDef>() {
@@ -311,7 +385,13 @@ public class DeploymentPlugin extends Plugin {
                 deploymentStep.createTasksToList(taskDefs);
             }
 
-            return new TaskDef<Task>("deployment builder task", new MultitaskSupplier<Task>() {
+            TaskDef<Task> rollback = new TaskDef<Task>("deployment rollback", Tasks.newSingleTask(ifRollbackCallable));
+
+            for (TaskDef<Task> taskDef : taskDefs) {
+                taskDef.onRollback(rollback);
+            }
+
+            return new TaskDef<Task>("deployment multitask", new MultitaskSupplier<Task>() {
                 @Override
                 public List<Task> createNewSessions(SessionContext $, Task parent) {
                     final List<Task> tasks = new ArrayList<Task>();
@@ -323,12 +403,17 @@ public class DeploymentPlugin extends Plugin {
                     return tasks;
                 }
 
+                @Override
+                public List<TaskDef<Task>> getTaskDefs() {
+                    return taskDefs;
+                }
+
 
                 @Override
                 public int size() {
                     return taskDefs.size();
                 }
-            }).onRollback(new TaskDef<Task>(Tasks.newSingleTask(ifRollbackCallable)));
+            }).onRollback(rollback);
         }
 
         public StopService getStopService() {
@@ -374,5 +459,6 @@ public class DeploymentPlugin extends Plugin {
     public InstallationTaskDef<? extends InstallationTask> getInstall() {
         return InstallationTaskDef.EMPTY;
     }
+
 
 }

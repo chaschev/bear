@@ -1,11 +1,16 @@
 package bear.main.phaser;
 
+import chaschev.lang.OpenBean;
+import chaschev.lang.reflect.MethodDesc;
+import com.google.common.base.Optional;
+
 /**
  * @author Andrey Chaschev chaschev@gmail.com
  */
 public class PhaseParty<COL, PHASE> {
     final int index;
     final COL column;
+    private final String name;
     int currentPhaseIndex;
 
     PartyState state = PartyState.WAITING;
@@ -20,6 +25,12 @@ public class PhaseParty<COL, PHASE> {
         this.index = index;
         this.column = column;
         this.grid = grid;
+        Optional<MethodDesc> nameMethod = OpenBean.getMethod(column, "getName");
+        if(nameMethod.isPresent()){
+            this.name = (String) nameMethod.get().invoke(column);
+        }else{
+            this.name = "" + index;
+        }
     }
 
     public GridException getException() {
@@ -40,8 +51,12 @@ public class PhaseParty<COL, PHASE> {
         }
     }
 
+    public String getName() {
+        return name;
+    }
+
     public String getName(Object phase) {
-        return "(" + phase + ", " + index + ")";
+        return "(" + phase + ", " + name + ")";
     }
 
     public COL getColumn() {

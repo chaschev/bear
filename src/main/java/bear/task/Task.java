@@ -55,6 +55,7 @@ public class Task<TASK_DEF extends TaskDef> extends HavingContext<Task<TaskDef>,
 
     protected TaskCallable taskCallable;
     protected final TaskContext<TASK_DEF> taskContext;
+    protected Object input;
 
     public Task(TaskContext<TASK_DEF> taskContext, TaskCallable taskCallable) {
         super(taskContext.$());
@@ -94,6 +95,7 @@ public class Task<TASK_DEF extends TaskDef> extends HavingContext<Task<TaskDef>,
                 result = exec(runner, input);
             } else {
                 result = taskCallable.call($, this, input);
+                if(result == null) result = TaskResult.OK;
             }
         } catch (Exception e) {
             result = new TaskResult(e);
@@ -143,7 +145,7 @@ public class Task<TASK_DEF extends TaskDef> extends HavingContext<Task<TaskDef>,
     @Override
     public String toString() {
         String defName = getDefinition() == null ? getClass().getSimpleName() : getDefinition().getDisplayName();
-        return defName + " (" + $.getName() + ")";
+        return defName + ($ == null ? "" : " (" + $.getName() + ")");
     }
 
     public Task<TASK_DEF> addDependency(Dependency... dependencies) {

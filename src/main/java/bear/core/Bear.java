@@ -19,7 +19,6 @@ package bear.core;
 import bear.context.AbstractContext;
 import bear.context.Fun;
 import bear.context.VarFun;
-import bear.plugins.Plugin;
 import bear.session.Address;
 import bear.session.BearVariables;
 import bear.session.DynamicVariable;
@@ -124,9 +123,7 @@ public class Bear extends BearApp<GlobalContext> {
 
     tempUserInput = strVar(""),
 
-    deployScript = strVar("Script to use").defaultTo("CreateNewScript"),
-
-    applicationPath = joinPath(applicationsPath, name).desc("Current release dir"),
+    applicationPath = joinPath(applicationsPath, name),
     appLogsPath = condition(isNativeUnix, joinPath(sysLogsPath, name), concat(applicationPath, "log")),
 
     sharedDirName = strVar("").defaultTo("shared"),
@@ -256,17 +253,11 @@ public class Bear extends BearApp<GlobalContext> {
 
     public final DynamicVariable<VCSSession> vcs = new DynamicVariable<VCSSession>("vcs", "VCS adapter").setDynamic(new Fun<SessionContext, VCSSession>() {
         public VCSSession apply(SessionContext $) {
-            Class<? extends VcsCLIPlugin> vcsCLI = null;
+            Optional<VcsCLIPlugin> vcsCLI = global.pluginOfInstance(VcsCLIPlugin.class);
 
-            for (Class<? extends Plugin> aClass : global.getPluginClasses()) {
-                if(VcsCLIPlugin.class.isAssignableFrom(aClass)){
-                    vcsCLI = (Class<? extends VcsCLIPlugin>) aClass;
-                }
-            }
+            Preconditions.checkArgument(vcsCLI.isPresent(), "add a VCS plugin!");
 
-            Preconditions.checkNotNull(vcsCLI, "add a VCS plugin!");
-
-            return (VCSSession) global.newPluginSession(vcsCLI, $, $.getCurrentTask());
+            return (VCSSession) global.plugins.newSession(vcsCLI.get(), $, $.getCurrentTask());
         }
     }).memoizeIn(SessionContext.class);
 

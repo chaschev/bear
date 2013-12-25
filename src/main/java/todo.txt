@@ -1,14 +1,19 @@
 top priority:
 
 - (ok) recheck demos with CentOS
-- Ubuntu
+- (ok) Ubuntu
 - Refactor
-- recheck demos
+- (ok) recheck demos
 - Integration tests
 - (ok) put logs into separate files for sessions
 - (ok) create project a from template
 - ui: autosize for code area ?
 - (ok) quick setup task recipe (i.e. [new empty bear script], :run (rename :ref) {task: 'tasks.setup'}   at the moment its _.runner.run(_.getGlobal().tasks.setup, )
+
+- smoke tests:
+-- releases plugin test (dump files)
+-- test params passing
+-- test phases syncing
 
 - service interface: check live status on hosts
 - read repos from pom.xml

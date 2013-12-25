@@ -35,8 +35,8 @@ public class BearScriptPhase {
 
     int partiesCount = -1;
 
-    public int partiesPending;
-    public int partiesFailed = 0;
+    public volatile int partiesPending;
+    public volatile int partiesFailed = 0;
 
     public BearScriptPhase(TaskDef<Task> taskDef, BearFX bearFX, GroupDivider<SessionContext> groupDivider) {
         this.taskDef = taskDef;
@@ -113,5 +113,15 @@ public class BearScriptPhase {
         SessionContext.ui.info(
             new PhaseFinishedEventToUI(duration, groups, getName())
                 .setParentId(id));
+    }
+
+    @Override
+    public String toString() {
+        final StringBuilder sb = new StringBuilder("BearScriptPhase{");
+        sb.append("id='").append(id).append('\'');
+        sb.append(", taskDef=").append(taskDef);
+        sb.append(", partiesPending=").append(partiesPending);
+        sb.append('}');
+        return sb.toString();
     }
 }

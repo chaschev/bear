@@ -114,10 +114,13 @@ public class TaskDef<TASK extends Task>{
     private List<TASK> createNewSessions(SessionContext $, final Task parent){
         Preconditions.checkArgument(isMultitask(), "task is multi");
 
-        List<TASK> tasks = multitaskSupplier.createNewSessions($, parent);
+        List<TaskDef<Task>> defs = multitaskSupplier.getTaskDefs();
+        List<TASK> tasks = new ArrayList<TASK>();
 
-        for (TASK task : tasks) {
-            task.wire($);
+        for (TaskDef<Task> def : defs) {
+            TASK task = (TASK) def.createNewSession($, parent).wire($);
+
+            tasks.add(task);
         }
 
         return tasks;
@@ -184,7 +187,7 @@ public class TaskDef<TASK extends Task>{
 
     @Override
     public String toString() {
-        final StringBuilder sb = new StringBuilder("Task{");
+        final StringBuilder sb = new StringBuilder("TaskDef{");
         sb.append("name='").append(name).append('\'');
         sb.append(", description='").append(description).append('\'');
         sb.append(", roles=").append(roles);
@@ -270,16 +273,20 @@ public class TaskDef<TASK extends Task>{
             for (int i = 0; i < multitaskSupplier.size(); i++) {
                 final int finalI = i;
 
-                taskDefs.add(new TaskDef<TASK>(new SingleTaskSupplier<TASK>() {
+                final TaskDef<TASK> taskDef = new TaskDef<TASK>(new SingleTaskSupplier<TASK>() {
                     @Override
                     public TASK createNewSession(SessionContext $, Task parent, TaskDef<TASK> def) {
                         Task.wrongThreadCheck($);
+
                         List<TASK> tasks = $.var(taskListInASession);
 
                         return tasks.get(finalI);
-//                        return $.var(sessionMemMultiTask).createNewSessions($, parent).get(finalI);
                     }
-                }));
+                });
+
+
+
+                taskDefs.add(taskDef);
             }
 
             return taskDefs;
@@ -289,7 +296,7 @@ public class TaskDef<TASK extends Task>{
     public List<TaskDef<TASK>> asList(){
         Preconditions.checkArgument(isMultitask(), "task is not multi");
 
-        return multiDefsSupplier.get();
+        return (List) Collections.unmodifiableList(multitaskSupplier.getTaskDefs());
     }
 
     public TaskDef<TASK> onRollback(TaskDef<Task> rollback) {
