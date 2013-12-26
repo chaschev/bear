@@ -18,6 +18,7 @@ package bear.core;
 
 import bear.console.ConsoleCallback;
 import bear.context.AbstractContext;
+import bear.main.phaser.SettableFuture;
 import bear.maven.LoggingBooter;
 import bear.plugins.Plugin;
 import bear.plugins.sh.*;
@@ -26,6 +27,7 @@ import bear.session.DynamicVariable;
 import bear.session.SshAddress;
 import bear.session.Variables;
 import bear.task.*;
+import chaschev.util.Exceptions;
 import com.google.common.base.Optional;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.logging.log4j.Level;
@@ -41,6 +43,7 @@ import org.slf4j.MDC;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
 
 import static bear.session.Variables.*;
 import static org.apache.logging.log4j.core.Filter.Result.ACCEPT;
@@ -66,7 +69,7 @@ public class SessionContext extends AbstractContext {
 
     protected ExecutionContext executionContext = new ExecutionContext();
 
-    protected GlobalTaskRunner globalTaskRunner;
+    protected GlobalTaskRunner globalRunner;
 
     public final String id = randomId();
     protected Thread thread;
@@ -226,6 +229,35 @@ public class SessionContext extends AbstractContext {
         return SystemEnvironmentPlugin.println(var(bear.sshPassword));
     }
 
+    public SettableFuture<TaskResult> future(String taskDefName, String sessionName) {
+        return globalRunner.future(taskDefName, sessionName);
+    }
+
+    public <I, O extends TaskResult> SettableFuture<O> future(TaskDef<I, O> taskDef, String sessionName) {
+        return (SettableFuture<O>) globalRunner.future(taskDef.getName(), sessionName);
+    }
+
+    public <I, O extends TaskResult> SettableFuture<O> future(NamedCallable<I, O> namedCallable, String sessionName) {
+        return (SettableFuture<O>) globalRunner.future(namedCallable.getName(), sessionName);
+    }
+
+    public <I, O extends TaskResult> O getPreviousResult(TaskDef<I, O> taskDef) {
+        return (O) getPreviousResult(taskDef.getName());
+    }
+
+    public <I, O extends TaskResult> O getPreviousResult(NamedCallable<I, O> callable) {
+        return (O) getPreviousResult(callable.getName());
+    }
+
+    public TaskResult getPreviousResult(String taskDefName) {
+        try {
+            return globalRunner.future(taskDefName, getName()).get();
+        } catch (InterruptedException e) {
+            throw new IllegalStateException("future must be completed when retrieving result in the same session");
+        } catch (ExecutionException e) {
+            throw Exceptions.runtime(e.getCause());
+        }
+    }
 
     public static class ExecutionHistoryEntry {
 
@@ -360,8 +392,8 @@ public class SessionContext extends AbstractContext {
         return Variables.concat(this, varsAndStrings);
     }
 
-    public void setGlobalTaskRunner(GlobalTaskRunner globalTaskRunner) {
-        this.globalTaskRunner = globalTaskRunner;
+    public void setGlobalRunner(GlobalTaskRunner globalRunner) {
+        this.globalRunner = globalRunner;
     }
 
     public <T extends Plugin> T plugin(Class<T> pluginClass) {

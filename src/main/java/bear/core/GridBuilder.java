@@ -45,7 +45,7 @@ public class GridBuilder {
     }
 
     public GridBuilder add(TaskCallable<Object, TaskResult> callable){
-        return add(Tasks.newSingleTask(callable));
+        return add(Tasks.newSingleSupplier(callable));
     }
 
     public GridBuilder add(SingleTaskSupplier<Object, TaskResult> supplier){
@@ -64,6 +64,8 @@ public class GridBuilder {
 
         return _addTask(taskDef);
     }
+
+    //this seems to be the heart of grid execution
 
     protected List<Phase<TaskResult, BearScriptPhase<Object, TaskResult>>> _addTask(final TaskDef<Object, TaskResult> taskDef){
         List<TaskDef<Object, TaskResult>> listOfDefs;
@@ -149,7 +151,7 @@ public class GridBuilder {
                                     throw PartyResultException.create(result, party, phase);
                                 }
 
-                                return result;
+                                return $.runner.getMyLastResult();
                             } catch (PartyResultException e) {
                                 throw e;
                             } catch (Throwable e) {

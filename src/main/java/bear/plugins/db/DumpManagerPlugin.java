@@ -57,7 +57,7 @@ public class DumpManagerPlugin extends Plugin {
 
     @Override
     public InstallationTaskDef<? extends InstallationTask> getInstall() {
-        return new InstallationTaskDef<InstallationTask>(new SingleTaskSupplier<Object, TaskResult>() {
+        return new InstallationTaskDef<InstallationTask>(new NamedSupplier<Object, TaskResult>("dumpManager.install", new SingleTaskSupplier<Object, TaskResult>() {
             @Override
             public Task<Object, TaskResult> createNewSession(SessionContext $, Task<Object, TaskResult> parent, TaskDef<Object, TaskResult> def) {
                 return new InstallationTask<InstallationTaskDef>(parent, (InstallationTaskDef) def, $){
@@ -72,6 +72,6 @@ public class DumpManagerPlugin extends Plugin {
                     }
                 };
             }
-        });
+        }));
     }
 }

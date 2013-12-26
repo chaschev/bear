@@ -40,6 +40,7 @@ public class SessionRunner extends HavingContext<SessionRunner, SessionContext>{
     public final GlobalContext global;
     public final Bear bear;
     public Function<Task<Object, TaskResult>, Task<Object, TaskResult>> taskPreRun; //a hack
+    private TaskResult myLastResult;
 
     public SessionRunner(SessionContext $, GlobalContext global) {
         super($);
@@ -81,7 +82,7 @@ public class SessionRunner extends HavingContext<SessionRunner, SessionContext>{
             runCollectionOfTasks(taskDef.dependsOnTasks, taskDef.name + ": depending tasks", false);
 
         last = last.nok() ? last : runCollectionOfTasks(taskDef.beforeTasks, taskDef.name + ": before tasks", false);
-        last = last.nok() ? last : runMe(taskDef);
+        last = last.nok() ? last : (myLastResult = runMe(taskDef));
         last = last.nok() ? last : runCollectionOfTasks(taskDef.afterTasks, taskDef.name + ": after tasks", false);
 
         return last;
@@ -125,6 +126,10 @@ public class SessionRunner extends HavingContext<SessionRunner, SessionContext>{
 
                     if(taskPreRun != null){
                         taskSession = taskPreRun.apply(taskSession);
+                    }
+
+                    if(taskSession.input == null){
+                        taskSession.input = myLastResult;
                     }
 
                     result = runSession(taskSession);
@@ -198,5 +203,9 @@ public class SessionRunner extends HavingContext<SessionRunner, SessionContext>{
         if($ != null) sb.append("name=").append($.getName());
         sb.append('}');
         return sb.toString();
+    }
+
+    public TaskResult getMyLastResult() {
+        return myLastResult;
     }
 }

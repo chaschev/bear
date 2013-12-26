@@ -83,7 +83,7 @@ public class PlayPlugin extends ServerToolPlugin {
             }
         });
 
-        start.addBeforeTask(new TaskDef<Object, TaskResult>(new TaskCallable<Object, TaskResult>() {
+        start.addBeforeTask(new TaskDef<Object, TaskResult>(new NamedCallable<Object, TaskResult>("play - find exec path", new TaskCallable<Object, TaskResult>() {
             @Override
             public TaskResult call(SessionContext $, Task<Object, TaskResult> task) throws Exception {
                 Optional<Release> active = $.var(releases.activatedRelease);
@@ -102,7 +102,7 @@ public class PlayPlugin extends ServerToolPlugin {
 
                 return TaskResult.OK;
             }
-        }).setName("play - find exec path"));
+        })));
     }
 
     private Optional<String> getExecPath(SessionContext $, Release release) {

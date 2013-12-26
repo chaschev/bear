@@ -84,7 +84,7 @@ public class ZippedToolPlugin extends Plugin<Task, TaskDef<Object, TaskResult>> 
 
         @Override
         public InstallationTaskDef<? extends InstallationTask> getInstall() {
-            return new InstallationTaskDef<InstallationTask>(new SingleTaskSupplier<Object, TaskResult>() {
+            return new InstallationTaskDef<InstallationTask>(new NamedSupplier<Object, TaskResult>("zippedTool.nopInstall", new SingleTaskSupplier<Object, TaskResult>() {
                 @Override
                 public Task<Object, TaskResult> createNewSession(SessionContext $, Task<Object, TaskResult> parent, TaskDef<Object, TaskResult> def) {
                     return new Task<Object, TaskResult>(parent, new TaskCallable<Object, TaskResult>() {
@@ -95,7 +95,7 @@ public class ZippedToolPlugin extends Plugin<Task, TaskDef<Object, TaskResult>> 
                         }
                     });
                 }
-            });
+            }));
         }
     }
 
@@ -108,7 +108,7 @@ public class ZippedToolPlugin extends Plugin<Task, TaskDef<Object, TaskResult>> 
                     "unzip -v | head -n 1",
                     "wget --version | head -n 1"
                 )
-                .setInstaller(new TaskCallable<Object, TaskResult>() {
+                .setInstaller(new NamedCallable<Object, TaskResult>("zippedTool.basicDeps", new TaskCallable<Object, TaskResult>() {
                     @Override
                     public TaskResult call(SessionContext $, Task<Object, TaskResult> task) throws Exception {
                         SystemEnvironmentPlugin.PackageManager manager = $.sys.getPackageManager();
@@ -118,7 +118,7 @@ public class ZippedToolPlugin extends Plugin<Task, TaskDef<Object, TaskResult>> 
 
                         return TaskResult.OK;
                     }
-                })
+                }))
             );
         }
 

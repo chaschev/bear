@@ -9,7 +9,6 @@ import bear.plugins.db.DumpManagerPlugin
 import bear.plugins.misc.ReleasesPlugin
 import bear.plugins.mongo.MongoDbPlugin
 import bear.plugins.nodejs.NodeJsPlugin
-import bear.task.Task
 import bear.task.TaskCallable
 import bear.task.TaskDef
 import bear.vcs.GitCLIPlugin
@@ -76,8 +75,8 @@ public class NodeExpressMongooseDemoProject extends BearProject<NodeExpressMongo
         defaultDeployment = deployment.newBuilder()
             .CheckoutFiles_2({_, task -> _.run(global.tasks.vcsUpdate); } as TaskCallable)
             .BuildAndCopy_3({_, task -> _.run(nodeJs.build, copyConfiguration); } as TaskCallable)
-            .StopService_5({_, task -> _.run(nodeJs.stop); OK; } as TaskCallable)
-            .StartService_8({_, task -> _.run(nodeJs.start, nodeJs.watchStart); } as TaskCallable)
+            .StopService_4({_, task -> _.run(nodeJs.stop); OK; } as TaskCallable)
+            .StartService_6({_, task -> _.run(nodeJs.start, nodeJs.watchStart); } as TaskCallable)
             .endDeploy()
             .ifRollback()
             .beforeLinkSwitch({_, task -> _.run(nodeJs.stop); } as TaskCallable)
@@ -87,7 +86,7 @@ public class NodeExpressMongooseDemoProject extends BearProject<NodeExpressMongo
         return global;
     }
 
-    def copyConfiguration = new TaskDef<Task>({ SessionContext_, task ->
+    def copyConfiguration = new TaskDef({ SessionContext_, task ->
         final String dir = _.var(releases.pendingRelease).path + "/config"
 
         _.sys.copy("config.example.js").to("config.js").inDir(dir).force().run().throwIfError();

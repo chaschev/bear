@@ -167,7 +167,7 @@ public class MongoDbPlugin extends Plugin {
         WriteStringResult result = $.sys.writeString(script).toPath(tempPath).run();
 
         if(!result.ok()){
-            return new TaskResult(result);
+            return TaskResult.value(result);
         }
 
         CommandLineResult lineResult = $.sys.captureBuilder("mongo " + $.var(connectionString) + " " + tempPath).run();

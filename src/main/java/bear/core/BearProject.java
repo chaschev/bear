@@ -48,6 +48,10 @@ import static java.util.Collections.singletonList;
  * @author Andrey Chaschev chaschev@gmail.com
  */
 public abstract class BearProject<SELF extends BearProject> {
+    /**
+     * Typically you would want to turn it off when you do several calls one of which redefines configuration.
+     */
+    protected boolean useAnnotations = true;
     protected GlobalContextFactory factory;
     protected GlobalContext global;
     private boolean configured;
@@ -232,7 +236,7 @@ public abstract class BearProject<SELF extends BearProject> {
             public List<TaskDef<Object, TaskResult>> get() {
                 return startServiceTaskDefs();
             }
-        });
+        }, useAnnotations);
     }
 
     public void stop(){
@@ -241,7 +245,7 @@ public abstract class BearProject<SELF extends BearProject> {
             public List<TaskDef<Object, TaskResult>> get() {
                 return stopServiceTaskDefs();
             }
-        });
+        }, useAnnotations);
     }
 
     public GlobalTaskRunner deploy(){
@@ -250,7 +254,7 @@ public abstract class BearProject<SELF extends BearProject> {
             public List<TaskDef<Object, TaskResult>> get() {
                 return singletonList(defaultDeployment.build());
             }
-        });
+        }, useAnnotations);
     }
 
     public void setup(){
@@ -305,26 +309,38 @@ public abstract class BearProject<SELF extends BearProject> {
         System.out.println("returned result: " + result);
     }
 
-    public GlobalTaskRunner run(final List<TaskCallable<Object, TaskResult>> callables) {
+    public GlobalTaskRunner run(final List<? extends TaskCallable> callables) {
+        return run(callables, useAnnotations);
+    }
+
+    public GlobalTaskRunner run(final List<? extends TaskCallable> callables, boolean useAnnotations) {
         return runTasksWithAnnotations(new Supplier<List<? extends TaskDef>>() {
             @Override
             public List<? extends TaskDef> get() {
-                return Lists.newArrayList(Lists.transform(callables, new Function<TaskCallable<Object, TaskResult>, TaskDef>() {
+                return Lists.newArrayList(Lists.transform(callables, new Function<TaskCallable, TaskDef>() {
                     @Override
-                    public TaskDef apply(TaskCallable<Object, TaskResult> input) {
+                    public TaskDef apply(TaskCallable input) {
                         return new TaskDef(input);
                     }
                 }));
             }
-        });
+        }, useAnnotations);
     }
 
     protected Function<GridBuilder, Void> preRunHook;
 
     public GlobalTaskRunner runTasksWithAnnotations(Supplier<? extends List<? extends TaskDef>> taskList) {
+        return runTasksWithAnnotations(taskList, useAnnotations);
+    }
+
+    public GlobalTaskRunner runTasksWithAnnotations(Supplier<? extends List<? extends TaskDef>> taskList, boolean useAnnotations) {
         setProjectVars();
 
-        Configuration projectConf = load(projectConf());
+        Configuration projectConf = projectConf();
+
+        if(useAnnotations){
+            load(projectConf);
+        }
 
         if(!configured){
             configure();
@@ -339,7 +355,7 @@ public abstract class BearProject<SELF extends BearProject> {
 
         grid.addAll(taskList.get());
 
-        if(useUI(projectConf)){
+        if(useUI(useAnnotations ? projectConf : null)){
             return grid.run();
         }else{
             return grid.runCli();

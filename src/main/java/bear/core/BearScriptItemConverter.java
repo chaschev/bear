@@ -79,7 +79,7 @@ class BearScriptItemConverter {
         scriptItem.assignVariables(global);
 
         if (!executableLines.isEmpty()) {
-            return new TaskDef<Object, TaskResult>(scriptItem.getScriptName(), new SingleTaskSupplier<Object, TaskResult>() {
+            return new TaskDef<Object, TaskResult>(scriptItem.getScriptName(), new NamedSupplier<Object, TaskResult>(scriptItem.asOneLineDesc(),new SingleTaskSupplier<Object, TaskResult>() {
                 @Override
                 public Task<Object, TaskResult> createNewSession(SessionContext $, Task<Object, TaskResult> parent, TaskDef<Object, TaskResult> def) {
                     scriptItem.assignVariables($);
@@ -112,7 +112,7 @@ class BearScriptItemConverter {
 
                     return task;
                 }
-            });
+            }));
         } else {
             return TaskDef.EMPTY;
         }

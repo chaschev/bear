@@ -161,7 +161,7 @@ public abstract class ServerToolPlugin extends ZippedToolPlugin {
         return CommandLineResult.OK;
     }
 
-    public final TaskDef<Object, TaskResult> start = new TaskDef<Object, TaskResult>(new SingleTaskSupplier<Object, TaskResult>() {
+    public final TaskDef<Object, TaskResult> start = new TaskDef<Object, TaskResult>(new NamedSupplier<Object, TaskResult>("server.start", new SingleTaskSupplier<Object, TaskResult>() {
         @Override
         public Task<Object, TaskResult> createNewSession(SessionContext $, final Task<Object, TaskResult> parent, final TaskDef<Object, TaskResult> def) {
             return new Task<Object, TaskResult>(parent, def, $) {
@@ -201,7 +201,7 @@ public abstract class ServerToolPlugin extends ZippedToolPlugin {
                 }
             };
         }
-    });
+    }));
 
     public String instancePath(String port, SessionContext $) {
         return path(instancePath, port, $);
@@ -216,7 +216,7 @@ public abstract class ServerToolPlugin extends ZippedToolPlugin {
 
     protected abstract void spawnStartWatchDogs(final SessionContext $, List<String> ports);
 
-    public final TaskDef<Object, TaskResult> stop = new TaskDef<Object, TaskResult>(new SingleTaskSupplier<Object, TaskResult>() {
+    public final TaskDef<Object, TaskResult> stop = new TaskDef<Object, TaskResult>(new NamedSupplier<Object, TaskResult>("server.stop", new SingleTaskSupplier<Object, TaskResult>() {
         @Override
         public Task<Object, TaskResult> createNewSession(SessionContext $, Task<Object, TaskResult> parent, TaskDef<Object, TaskResult> def) {
             return new Task<Object, TaskResult>(parent, def, $) {
@@ -242,9 +242,9 @@ public abstract class ServerToolPlugin extends ZippedToolPlugin {
             };
 
         }
-    });
+    }));
 
-    public final TaskDef<Object, TaskResult> watchStart = new TaskDef<Object, TaskResult>(new SingleTaskSupplier<Object, TaskResult>() {
+    public final TaskDef<Object, TaskResult> watchStart = new TaskDef<Object, TaskResult>(new NamedSupplier<Object, TaskResult>("server.watchStart", new SingleTaskSupplier<Object, TaskResult>() {
         @Override
         public Task<Object, TaskResult> createNewSession(SessionContext $, Task<Object, TaskResult> parent, TaskDef<Object, TaskResult> def) {
             return new Task<Object, TaskResult>(parent, new TaskCallable<Object, TaskResult>() {
@@ -272,7 +272,7 @@ public abstract class ServerToolPlugin extends ZippedToolPlugin {
                 }
             });
         }
-    });
+    }));
 
     private void printCurrentReleases(SessionContext $) {
         logger.info("current releases:\n{}", $.var(releases.session).show());

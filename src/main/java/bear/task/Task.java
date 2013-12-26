@@ -94,8 +94,14 @@ public class Task<I, O extends TaskResult> extends HavingContext<Task<I, O>, Ses
             if (taskCallable == null) {
                 result = exec(runner);
             } else {
-                result = taskCallable.call($, this);
-                if(result == null) result = (O) TaskResult.OK;
+                try {
+                    result = taskCallable.call($, this);
+                    if(result == null) {
+                        result = (O) TaskResult.OK;
+                    }
+                } catch (ClassCastException e) {
+                    throw new RuntimeException(e.toString() + " for callable " + taskCallable);
+                }
             }
         } catch (Exception e) {
             result = (O) new TaskResult(e);

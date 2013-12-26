@@ -23,7 +23,7 @@ import static bear.session.Variables.*;
  */
 public class ReleasesPlugin extends Plugin {
     public static final DateTimeZone GMT = DateTimeZone.forTimeZone(TimeZone.getTimeZone("GMT"));
-    public static final DateTimeFormatter RELEASE_FORMATTER = DateTimeFormat.forPattern("yyyyMMdd.HHmmss").withZone(GMT);
+    public static final DateTimeFormatter RELEASE_FORMATTER = DateTimeFormat.forPattern("yyyyMMdd.HHmmss");
 
     public final DynamicVariable<PendingRelease> pendingRelease = undefined();
 
@@ -78,7 +78,7 @@ public class ReleasesPlugin extends Plugin {
     }
 
     public TaskDef<Object, TaskResult> findReleaseToRollbackTo(final String labelOrPath) {
-        return new TaskDef<Object, TaskResult>(new TaskCallable<Object, TaskResult>() {
+        return new TaskDef<Object, TaskResult>(new NamedCallable<Object, TaskResult>("releases.findReleaseToRollbackTo", new TaskCallable<Object, TaskResult>() {
             @Override
             public TaskResult call(SessionContext $, Task<Object, TaskResult> task) throws Exception {
                 Releases session = $.var(ReleasesPlugin.this.session);
@@ -92,6 +92,6 @@ public class ReleasesPlugin extends Plugin {
 
                 return TaskResult.OK;
             }
-        });
+        }));
     }
 }

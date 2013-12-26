@@ -410,12 +410,12 @@ public class GitCLIPlugin extends VcsCLIPlugin<Task, TaskDef<Object, TaskResult>
         private GitCLIPlugin git;
 
         GitTaskDef() {
-            super(new SingleTaskSupplier<Object, TaskResult>() {
+            super(new NamedSupplier<Object, TaskResult>("git.session", new SingleTaskSupplier<Object, TaskResult>() {
                 @Override
                 public Task<Object, TaskResult> createNewSession(SessionContext $, Task<Object, TaskResult> parent, TaskDef<Object, TaskResult> def) {
                     return def.singleTaskSupplier().createNewSession($, parent, def);
                 }
-            });
+            }));
         }
     }
 

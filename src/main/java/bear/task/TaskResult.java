@@ -39,7 +39,7 @@ public class TaskResult {
         exception = Optional.absent();
     }
 
-    public TaskResult(TaskResult other) {
+    TaskResult(TaskResult other) {
         this.result = other.result;
         this.exception = other.exception;
     }
@@ -62,6 +62,14 @@ public class TaskResult {
     public static <T extends TaskResult> Optional<T> okOrAbsent(@Nullable T result){
         if(result != null && result.ok()) return Optional.of(result);
         return Optional.absent();
+    }
+
+    public static TaskResult value(TaskResult other) {
+        return createTaskResult(other);
+    }
+
+    static TaskResult createTaskResult(TaskResult other) {
+        return new TaskResult(other);
     }
 
     public TaskResult and(TaskResult... results){

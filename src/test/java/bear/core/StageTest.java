@@ -10,9 +10,6 @@ import static org.fest.assertions.api.Assertions.fail;
  * @author Andrey Chaschev chaschev@gmail.com
  */
 public class StageTest {
-
-    public static final Role db = role("db");
-    public static final Role web = role("web");
     private final Stages stages = sample1();
     private final GlobalContext global = new GlobalContext();
     private final Bear bear = global.bear;
@@ -81,9 +78,9 @@ public class StageTest {
     public void testStageCreation() {
         Stages stages = sample1();
 
-        assertThat(stages.getRoles("vm1")).contains(web);
-        assertThat(stages.getRoles("vm2")).contains(db, web);
-        assertThat(stages.getRoles("vm3")).contains(web);
+        assertThat(stages.getRoles("vm1")).contains(Role.web);
+        assertThat(stages.getRoles("vm2")).contains(Role.db, Role.web);
+        assertThat(stages.getRoles("vm3")).contains(Role.web);
         assertThat(stages.getRoles("vm4")).isEmpty();
     }
 
@@ -96,13 +93,9 @@ public class StageTest {
         ;
 
         stages
-            .assignRoleToStage(web, "1")
-            .assignRoleToHosts(db, "vm2");
+            .assignRoleToStage(Role.web, "1")
+            .assignRoleToHosts(Role.db, "vm2");
 
         return stages;
-    }
-
-    private static Role role(String s) {
-        return new Role(s);
     }
 }

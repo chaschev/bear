@@ -118,7 +118,7 @@ public class DownloadPlugin extends Plugin{
         }
     }
 
-    private final SingleTaskSupplier<DownloadSupplier,TaskResult> singleTaskSupplier = new SingleTaskSupplier<DownloadSupplier, TaskResult>() {
+    public final TaskDef<DownloadSupplier, TaskResult> downloadTask = new TaskDef<DownloadSupplier, TaskResult>(new NamedSupplier<DownloadSupplier, TaskResult>("download", new SingleTaskSupplier<DownloadSupplier, TaskResult>() {
         @Override
         public Task<DownloadSupplier, TaskResult> createNewSession(SessionContext $, Task<Object, TaskResult> parent, TaskDef<DownloadSupplier, TaskResult> def) {
             TaskCallable<DownloadSupplier, TaskResult> taskCallable = new TaskCallable<DownloadSupplier, TaskResult>() {
@@ -174,7 +174,5 @@ public class DownloadPlugin extends Plugin{
             };
             return new Task<DownloadSupplier, TaskResult>(parent, taskCallable);
         }
-    };
-
-    public final TaskDef<DownloadSupplier, TaskResult> downloadTask = new TaskDef<DownloadSupplier, TaskResult>(singleTaskSupplier);
+    }));
 }

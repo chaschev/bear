@@ -21,7 +21,6 @@ import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static com.google.common.base.Optional.absent;
 import static com.google.common.base.Optional.of;
 
 /**
@@ -154,32 +153,28 @@ public class ComputingGrid<C, PHASE> {
         return Optional.absent();
     }
 
-    public <V> Optional<SettableFuture<V>> future(String phaseName, String partyName, Class<V> vClass) {
-        Optional<GridCell<C, V, PHASE>> cell = cell(phaseName, partyName, vClass);
-
-        if(cell.isPresent()){
-            return of(cell.get().getFuture());
-        }
-
-        return absent();
+    public <V> SettableFuture<V> future(String phaseName, String partyName, Class<V> vClass) {
+        return cell(phaseName, partyName, vClass).getFuture();
     }
 
-    public <V> Optional<GridCell<C, V, PHASE>> cell(String phaseName, String partyName, Class<V> vClass) {
+    public <V> GridCell cell(String phaseName, String partyName, Class<V> vClass) {
         Optional<Phase<GridCell, PHASE>> phase = phase(phaseName);
 
-        if(!phase.isPresent()) return Optional.absent();
+        if(!phase.isPresent()) throw new IllegalArgumentException("didn't find phase: " + phaseName);
 
         Optional<PhaseParty<C, PHASE>> party = party(partyName);
 
-        if(!party.isPresent()) return absent();
+        if(!party.isPresent()) {
+            throw new IllegalArgumentException("didn't find party: " + partyName);
+        }
 
-        return (Optional) of(cellAt(phase.get().rowIndex, party.get().index));
+        return cellAt(phase.get().rowIndex, party.get().index);
     }
 
     @Nonnull
     private Optional<PhaseParty<C, PHASE>> party(String partyName) {
         for (PhaseParty<C, PHASE> party : parties) {
-            if(partyName.equals(OpenBean.invoke(party.column, "getName"))){
+            if(partyName.equals(party.getName())){
                 return of(party);
             }
         }
@@ -252,7 +247,8 @@ public class ComputingGrid<C, PHASE> {
                                         new GridException(e, phase, party)
                                 );
                                 partiesFailed.incrementAndGet();
-                                LoggerFactory.getLogger("log").warn(e.toString(), new GridException(e, phase, party));
+
+                                LoggerFactory.getLogger("log").warn(e.toString(), e);
 
                                 break;
                             } finally {

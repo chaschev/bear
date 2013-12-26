@@ -24,12 +24,21 @@ import javax.annotation.Nonnull;
  * @author Andrey Chaschev chaschev@gmail.com
  */
 public class Role {
+    public static final Role
+        db = role("db"),
+        web = role("web"),
+        backend = role("backend");
+
     @Nonnull
     public final String role;
 
     public Role(String role) {
         Preconditions.checkNotNull(role);
         this.role = role;
+    }
+
+    public static Role role(String s) {
+        return new Role(s);
     }
 
     @Override

@@ -60,7 +60,7 @@ public class GrailsPlugin2 extends ServerToolPlugin {
 //        releaseWarPath = condition(bear.isRemoteEnv, joinPath(releases.releasePath, warName), projectWarPath);
     }
 
-    public final TaskDef<Object, TaskResult> build = new TaskDef<Object, TaskResult>(new SingleTaskSupplier<Object, TaskResult>() {
+    public final TaskDef<Object, TaskResult> build = new TaskDef<Object, TaskResult>(new NamedSupplier<Object, TaskResult>("grails.build", new SingleTaskSupplier<Object, TaskResult>() {
         @Override
         public Task<Object, TaskResult> createNewSession(SessionContext $, Task<Object, TaskResult> parent, TaskDef<Object, TaskResult> def) {
             return new Task<Object, TaskResult>(parent, def, $) {
@@ -96,7 +96,7 @@ public class GrailsPlugin2 extends ServerToolPlugin {
                 }
             };
         }
-    });
+    }));
 
     private CommandLine grails(SessionContext $) {
         return $.sys.line()

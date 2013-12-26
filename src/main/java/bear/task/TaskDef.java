@@ -49,16 +49,27 @@ public class TaskDef<I, O extends TaskResult>{
     private final SingleTaskSupplier<I, O> singleTaskSupplier;
 
     public TaskDef(TaskCallable<I, O> callable) {
-        this(Tasks.<I, O>newSingleTask(callable));
+        this(Tasks.<I, O>newSingleSupplier(callable));
+
+        if (callable instanceof NamedCallable<?, ?>) {
+            NamedCallable<I, O> namedCallable = (NamedCallable<I, O>) callable;
+            setName(namedCallable.name);
+
+        }
     }
 
     public TaskDef(String name, TaskCallable<I, O> callable) {
-        this(Tasks.<I,O>newSingleTask(callable));
+        this(Tasks.<I,O>newSingleSupplier(callable));
         this.name = name;
     }
 
     public TaskDef(SingleTaskSupplier<I, O> singleTaskSupplier) {
         this(null, singleTaskSupplier);
+
+        if (singleTaskSupplier instanceof NamedSupplier<?, ?>) {
+            NamedSupplier<?, ?> taskSupplier = (NamedSupplier<?, ?>) singleTaskSupplier;
+            this.name = taskSupplier.name;
+        }
     }
 
     public TaskDef(String name, SingleTaskSupplier<I, O> singleTaskSupplier) {

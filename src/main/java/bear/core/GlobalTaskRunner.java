@@ -11,11 +11,12 @@ import bear.main.phaser.PhaseParty;
 import bear.main.phaser.SettableFuture;
 import bear.session.DynamicVariable;
 import bear.session.Variables;
+import bear.task.NamedCallable;
 import bear.task.Task;
 import bear.task.TaskDef;
 import bear.task.TaskResult;
+import chaschev.util.Exceptions;
 import com.google.common.base.Function;
-import com.google.common.base.Optional;
 import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import org.slf4j.Logger;
@@ -23,6 +24,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static bear.core.SessionContext.ui;
@@ -58,6 +60,10 @@ public class GlobalTaskRunner {
         this.bear = global.bear;
         this.$s = preparationResult.getSessions();
         this.bearSettings = preparationResult.bearSettings;
+
+        for (SessionContext $ : $s) {
+            $.setGlobalRunner(this);
+        }
 
         stats = Variables.dynamic(Stats.class)
             .defaultTo(new Stats($s.size(), TaskDef.EMPTY));
@@ -231,10 +237,33 @@ public class GlobalTaskRunner {
         return this;
     }
 
-    /**
-     * @return Absent if the future was not found in the grid by the names provided.
-     */
-    public Optional<SettableFuture<TaskResult>> future(String taskDefName, String sessionName){
+    public SettableFuture<TaskResult> future(String taskDefName, String sessionName){
         return grid.future(taskDefName, sessionName, TaskResult.class);
+    }
+
+    public <I, O extends TaskResult> SettableFuture<O> future(NamedCallable<I, O> namedCallable, String sessionName) {
+        return (SettableFuture<O>) future(namedCallable.getName(), sessionName);
+    }
+
+    public <I, O extends TaskResult> SettableFuture<O> future(TaskDef<I, O> taskDef, String sessionName) {
+        return (SettableFuture<O>) future(taskDef.getName(), sessionName);
+    }
+
+    public TaskResult result(String taskDefName, String sessionName){
+        try {
+            return future(taskDefName, sessionName).get();
+        } catch (InterruptedException e) {
+            throw Exceptions.runtime(e);
+        } catch (ExecutionException e) {
+            throw Exceptions.runtime(e.getCause());
+        }
+    }
+
+    public <I, O extends TaskResult> O result(NamedCallable<I, O> namedCallable, String sessionName) {
+        return (O) result(namedCallable.getName(), sessionName);
+    }
+
+    public <I, O extends TaskResult> O result(TaskDef<I, O> taskDef, String sessionName) {
+        return (O) result(taskDef.getName(), sessionName);
     }
 }

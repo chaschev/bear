@@ -10,16 +10,16 @@ top priority:
 - ui: autosize for code area ?
 - (ok) quick setup task recipe (i.e. [new empty bear script], :run (rename :ref) {task: 'tasks.setup'}   at the moment its _.runner.run(_.getGlobal().tasks.setup, )
 
-- smoke tests:
--- releases plugin test (dump files)
--- test params passing
--- test phases syncing
+- (ok) smoke tests:
+-- (ok) releases plugin test (dump files)
+-- (ok) test params passing
+-- (ok) test phases syncing
+-- (ok) test roles and hosts
 
 - service interface: check live status on hosts
 - read repos from pom.xml
 
-- Ubuntu!
-- deploy Hadoop
+- (ok) Ubuntu!
 - run all demos with Bear
 - refactor: remove addRaw
 - release bear with bear (this should be an exciting feature!)

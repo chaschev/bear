@@ -190,7 +190,7 @@ public class Tasks {
         return new TaskResult(ex);
     }
 
-    public static <I, O extends TaskResult> SingleTaskSupplier<I, O> newSingleTask(final TaskCallable<I, O> taskCallable) {
+    public static <I, O extends TaskResult> SingleTaskSupplier<I, O> newSingleSupplier(final TaskCallable<I, O> taskCallable) {
         return new SingleTaskSupplier<I, O>() {
             @Override
             public Task<I, O> createNewSession(SessionContext $, Task<Object, TaskResult> parent, TaskDef<I, O> def) {

@@ -180,6 +180,7 @@ public class Stage {
 
     public Collection<? extends Address> getHostsForRoles(List<String> stringRoles) {
         List<Role> roles;
+
         try {
             roles = newArrayList(transform(stringRoles, forMap(stages.get().rolenameToRole)));
         } catch (IllegalArgumentException e) {
@@ -228,11 +229,11 @@ public class Stage {
         if (!addresses.containsAll(providedAddresses)) {
             Sets.SetView<Address> missingHosts = Sets.difference(Sets.newHashSet(providedAddresses), addresses);
 
-            throw new StagesException("hosts don't exist on stage '" + name + "': " +
+            throw new StagesException("hosts doesn't exist on stage '" + name + "': " +
                 transform(missingHosts, Functions2.method("getName")));
         }
         }catch (IllegalArgumentException e){
-            throw new StagesException("host don't exist on any stage: " +
+            throw new StagesException("host doesn't exist on any stage: " +
                 e.getMessage());
         }
     }
@@ -243,5 +244,9 @@ public class Stage {
         }
 
         return this;
+    }
+
+    public Stages getStages() {
+        return stages.get();
     }
 }

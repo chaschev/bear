@@ -12,7 +12,6 @@ import com.google.common.util.concurrent.ListenableFuture;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
@@ -195,7 +194,7 @@ public class DeploymentPlugin extends Plugin {
                 return stopService;
             }
 
-            public StopService StopService_5(TaskCallable<Object, TaskResult> t) {
+            public StopService StopService_4(TaskCallable<Object, TaskResult> t) {
                 return stopService.setTaskCallable(t);
             }
         }
@@ -205,7 +204,7 @@ public class DeploymentPlugin extends Plugin {
                 return updateLinks;
             }
 
-            public StartService StartService_8() {
+            public StartService StartService_6() {
                 return startService;
             }
 
@@ -214,7 +213,7 @@ public class DeploymentPlugin extends Plugin {
                 return this;
             }
 
-            public StartService StartService_8(TaskCallable<Object, TaskResult> t) {
+            public StartService StartService_6(TaskCallable<Object, TaskResult> t) {
                 return startService.setTaskCallable(t);
             }
         }
@@ -385,7 +384,7 @@ public class DeploymentPlugin extends Plugin {
                 deploymentStep.createTasksToList(taskDefs);
             }
 
-            TaskDef<Object, TaskResult> rollback = new TaskDef<Object, TaskResult>("deployment rollback", Tasks.newSingleTask(ifRollbackCallable));
+            TaskDef<Object, TaskResult> rollback = new TaskDef<Object, TaskResult>("deployment rollback", Tasks.newSingleSupplier(ifRollbackCallable));
 
             for (TaskDef<Object, TaskResult> taskDef : taskDefs) {
                 taskDef.onRollback(rollback);
@@ -417,32 +416,6 @@ public class DeploymentPlugin extends Plugin {
         public IfRollback getIfRollback() {
             return ifRollback;
         }
-    }
-
-    public static void main(String[] args) {
-        LinkedHashMap map = new LinkedHashMap();
-
-        TaskDef<Object, TaskResult> taskDef = new DeploymentPlugin(null).new Builder()
-            .$1_SetFilesLocation()
-            .setTaskCallable(new TaskCallable<Object, TaskResult>() {
-                @Override
-                public TaskResult call(SessionContext $, Task<Object, TaskResult> task) throws Exception {
-                    throw new UnsupportedOperationException("todo .call");
-                }
-            })
-            .$2_CheckoutFiles()
-            .setTaskCallable(new TaskCallable<Object, TaskResult>() {
-                @Override
-                public TaskResult call(SessionContext $, Task<Object, TaskResult> task) throws Exception {
-                    throw new UnsupportedOperationException("todo .call");
-                }
-            })
-            .BuildAndCopy_3()
-//            .$4_WaitForParties()
-            .StopService_5()
-            .$6_UpdateLinks()
-            .endDeploy()
-            .build();
     }
 
     @Override
