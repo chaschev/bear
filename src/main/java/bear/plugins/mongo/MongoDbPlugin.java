@@ -107,12 +107,12 @@ public class MongoDbPlugin extends Plugin {
         shell = new MongoDbShellMode(MongoDbPlugin.this);
     }
 
-    public final InstallationTaskDef<InstallationTask> setup = new InstallationTaskDef<InstallationTask>(new SingleTaskSupplier() {
+    public final InstallationTaskDef<InstallationTask> setup = new InstallationTaskDef<InstallationTask>(new SingleTaskSupplier<Object, TaskResult>() {
         @Override
-        public Task createNewSession(SessionContext $, Task parent, TaskDef def) {
+        public Task<Object, TaskResult> createNewSession(SessionContext $, Task<Object, TaskResult> parent, TaskDef<Object, TaskResult> def) {
             return new InstallationTask<InstallationTaskDef>(parent, setup, $) {
                 @Override
-                protected TaskResult exec(SessionRunner runner, Object input) {
+                protected TaskResult exec(SessionRunner runner) {
                     final Version clientVersion = computeInstalledClientVersion($.sys);
                     final Version serverVersion = computeInstalledServerVersion(runner);
 
@@ -152,10 +152,10 @@ public class MongoDbPlugin extends Plugin {
         }
     });
 
-    public Task<TaskDef> scriptTask(final String script,  Task parent, final TaskDef def, final SessionContext $){
-        return new Task<TaskDef>(parent, def, $) {
+    public Task<Object, TaskResult> scriptTask(final String script,  Task parent, final TaskDef def, final SessionContext $){
+        return new Task<Object, TaskResult>(parent, def, $) {
             @Override
-            protected TaskResult exec(SessionRunner runner, Object input) {
+            protected TaskResult exec(SessionRunner runner) {
                 return runScript($, script);
             }
         };

@@ -4,7 +4,6 @@ import bear.console.ConsolesDivider;
 import bear.console.GroupDivider;
 import bear.main.BearFX;
 import bear.main.event.PhaseFinishedEventToUI;
-import bear.task.Task;
 import bear.task.TaskDef;
 import bear.task.TaskResult;
 import chaschev.util.CatchyCallable;
@@ -19,9 +18,11 @@ import java.util.concurrent.atomic.AtomicLong;
 /**
 * @author Andrey Chaschev chaschev@gmail.com
 */
-public class BearScriptPhase {
+public class BearScriptPhase<I, O extends TaskResult> {
     public final String id = SessionContext.randomId();
-    TaskDef<Task> taskDef;
+
+    TaskDef<I, O> taskDef;
+
     final AtomicInteger partiesArrived = new AtomicInteger();
     public final AtomicInteger partiesOk = new AtomicInteger();
 
@@ -38,7 +39,7 @@ public class BearScriptPhase {
     public volatile int partiesPending;
     public volatile int partiesFailed = 0;
 
-    public BearScriptPhase(TaskDef<Task> taskDef, BearFX bearFX, GroupDivider<SessionContext> groupDivider) {
+    public BearScriptPhase(TaskDef<I, O> taskDef, BearFX bearFX, GroupDivider<SessionContext> groupDivider) {
         this.taskDef = taskDef;
         this.bearFX = bearFX;
         this.groupDivider = groupDivider;

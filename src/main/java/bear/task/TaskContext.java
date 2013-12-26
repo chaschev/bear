@@ -12,19 +12,20 @@ import bear.main.phaser.PhaseParty;
 import javax.annotation.Nullable;
 
 /**
-* @author Andrey Chaschev chaschev@gmail.com
-*/
-public class TaskContext<TASK_DEF extends TaskDef> extends HavingContext<TaskContext<TASK_DEF>, SessionContext>{
+ * @author Andrey Chaschev chaschev@gmail.com
+ */
+public class TaskContext<I, O extends TaskResult> extends HavingContext<TaskContext<Object, TaskResult>, SessionContext> {
     Task me;
 
     @Nullable
     Task parent;
-    TASK_DEF definition;
+
+    TaskDef<I, O> definition;
     SessionRunner runner;
-    ComputingGrid<SessionContext, BearScriptPhase> grid;
-    Phase<?, BearScriptPhase> phase;
+    ComputingGrid<SessionContext, BearScriptPhase<Object, TaskResult>> grid;
+    Phase<O, BearScriptPhase<I, O>> phase;
     Bear bear;
-    PhaseParty<SessionContext, BearScriptPhase> phaseParty;
+    PhaseParty<SessionContext, BearScriptPhase<I, O>> phaseParty;
 
     TaskExecutionContext executionContext;
     GlobalTaskRunner globalRunner;
@@ -35,14 +36,19 @@ public class TaskContext<TASK_DEF extends TaskDef> extends HavingContext<TaskCon
         this.parent = parent;
     }
 
-    public TaskContext(Task me, Task parent, SessionContext $, TASK_DEF definition) {
+    public TaskContext(Task me, Task parent, SessionContext $, TaskDef definition) {
         super($);
         this.me = me;
         this.parent = parent;
         this.definition = definition;
     }
 
-    public TaskContext(Task parent, SessionContext $, SessionRunner runner, Task me, TASK_DEF definition, ComputingGrid<SessionContext, BearScriptPhase> grid, Phase<?, BearScriptPhase> phase, Bear bear, PhaseParty<SessionContext, BearScriptPhase> phaseParty, TaskExecutionContext executionContext) {
+    public TaskContext(
+        Task parent, SessionContext $, SessionRunner runner,
+        Task me, TaskDef definition,
+        ComputingGrid<SessionContext, BearScriptPhase<Object, TaskResult>> grid,
+        Phase<O, BearScriptPhase<I, O>> phase, Bear bear, PhaseParty<SessionContext, BearScriptPhase<I, O>> phaseParty, TaskExecutionContext executionContext) {
+
         super($);
         this.parent = parent;
         this.runner = runner;
@@ -54,15 +60,16 @@ public class TaskContext<TASK_DEF extends TaskDef> extends HavingContext<TaskCon
         this.phaseParty = phaseParty;
         this.executionContext = executionContext;
     }
-    
-    public TaskContext<TASK_DEF> dup(Task me){
-        return new TaskContext<TASK_DEF>(
-            parent, $, runner, me, definition, grid, phase, bear, phaseParty, executionContext
+
+    public TaskContext<I, O> dup(Task me) {
+        return new TaskContext<I, O>(
+            parent, $, runner, me, definition, grid, phase, bear,
+            phaseParty, executionContext
         );
     }
 
-    public TaskContext<TASK_DEF> dup(Task me, TaskDef def, Task parent){
-        TaskContext r = dup(me);
+    public TaskContext<I, O> dup(Task me, TaskDef def, Task parent) {
+        TaskContext<I, O> r = dup(me);
 
         r.parent = parent;
         r.definition = def;

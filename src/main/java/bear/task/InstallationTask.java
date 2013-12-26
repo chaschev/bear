@@ -21,10 +21,10 @@ import bear.core.SessionContext;
 /**
 * @author Andrey Chaschev chaschev@gmail.com
 */
-public abstract class InstallationTask<TASK_DEF extends InstallationTaskDef> extends Task<TASK_DEF> {
+public abstract class InstallationTask<TASK_DEF extends InstallationTaskDef> extends Task<Object, TaskResult> {
     private boolean wasInsideInstallationBefore;
 
-    public InstallationTask(Task<TaskDef> parent, TASK_DEF def, SessionContext $) {
+    public InstallationTask(Task<Object, TaskResult> parent, TASK_DEF def, SessionContext $) {
         super(parent, def, $);
     }
 
@@ -55,7 +55,7 @@ public abstract class InstallationTask<TASK_DEF extends InstallationTaskDef> ext
         }
 
         @Override
-        protected TaskResult exec(SessionRunner runner, Object input) {
+        protected TaskResult exec(SessionRunner runner) {
             return TaskResult.OK;
         }
     };

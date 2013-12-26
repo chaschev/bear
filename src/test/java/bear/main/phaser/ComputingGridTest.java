@@ -42,7 +42,7 @@ public class ComputingGridTest {
             public PhaseCallable<Integer, String, Integer> apply(@Nullable Integer input) {
                 return new PhaseCallable<Integer, String, Integer>() {
                     @Override
-                    public String call(PhaseParty<Integer, Integer> party, int phaseIndex, Phase<?, Integer> phase) throws Exception {
+                    public String call(PhaseParty<Integer, Integer> party, int phaseIndex, Phase<String, Integer> phase) throws Exception {
                         return "phase 1, party " + party.column;
                     }
                 };
@@ -68,7 +68,7 @@ public class ComputingGridTest {
             public PhaseCallable<Integer, String, Integer> apply(@Nullable Integer input) {
                 return new PhaseCallable<Integer, String, Integer>() {
                     @Override
-                    public String call(PhaseParty<Integer, Integer> party, int phaseIndex, Phase<?, Integer> phase) throws Exception {
+                    public String call(PhaseParty<Integer, Integer> party, int phaseIndex, Phase<String, Integer> phase) throws Exception {
                         return party.getName(phaseIndex);
                     }
                 };
@@ -80,7 +80,7 @@ public class ComputingGridTest {
             public PhaseCallable<Integer, String, Integer> apply(@Nullable Integer input) {
                 return new PhaseCallable<Integer, String, Integer>() {
                     @Override
-                    public String call(PhaseParty<Integer, Integer> party, int phaseIndex, Phase<?, Integer> phase) throws Exception {
+                    public String call(PhaseParty<Integer, Integer> party, int phaseIndex, Phase<String, Integer> phase) throws Exception {
                         return party.getName(phaseIndex) + ": we all depend on a cell " +
                             party.grid.cell(phase1, 2).getFuture().get(500, TimeUnit.MILLISECONDS);
                     }
@@ -114,7 +114,7 @@ public class ComputingGridTest {
             public PhaseCallable<Integer, String, Integer> apply(Integer input) {
                 return new PhaseCallable<Integer, String, Integer>() {
                     @Override
-                    public String call(final PhaseParty<Integer, Integer> party, final int phaseIndex, Phase<?, Integer> phase) throws Exception {
+                    public String call(final PhaseParty<Integer, Integer> party, final int phaseIndex, Phase<String, Integer> phase) throws Exception {
                         if(party.index != 2){
                             Thread.sleep(300);
                         }
@@ -138,7 +138,7 @@ public class ComputingGridTest {
             public PhaseCallable<Integer, String, Integer> apply(@Nullable Integer input) {
                 return new PhaseCallable<Integer, String, Integer>() {
                     @Override
-                    public String call(PhaseParty<Integer, Integer> party, int phaseIndex, Phase<?, Integer> phase) throws Exception {
+                    public String call(PhaseParty<Integer, Integer> party, int phaseIndex, Phase<String, Integer> phase) throws Exception {
                         return party.getName(phaseIndex) + ": " + party.grid.cell(phase1, 1).getFuture().get();
                     }
                 };
@@ -189,7 +189,7 @@ public class ComputingGridTest {
             public PhaseCallable<Integer, Phase1Result, Integer> apply(Integer input) {
                 return new PhaseCallable<Integer, Phase1Result, Integer>() {
                     @Override
-                    public Phase1Result call(final PhaseParty<Integer, Integer> party, final int phaseIndex, Phase<?, Integer> phase) throws Exception {
+                    public Phase1Result call(final PhaseParty<Integer, Integer> party, final int phaseIndex, Phase<Phase1Result, Integer> phase) throws Exception {
                         if(party.index != 2){
                             Thread.sleep(300);
                         }
@@ -223,7 +223,7 @@ public class ComputingGridTest {
             public PhaseCallable<Integer, String, Integer> apply(@Nullable Integer input) {
                 return new PhaseCallable<Integer, String, Integer>() {
                     @Override
-                    public String call(PhaseParty<Integer, Integer> party, int phaseIndex, Phase<?, Integer> phase) throws Exception {
+                    public String call(PhaseParty<Integer, Integer> party, int phaseIndex, Phase<String, Integer> phase) throws Exception {
                         logger.debug("{}: entered phase2", party.getName(phaseIndex));
 
                         List<ListenableFuture<Phase1Result>> results = party.grid.phaseFutures(phase1);
@@ -330,7 +330,7 @@ public class ComputingGridTest {
             public PhaseCallable<Integer, String, Integer> apply(@Nullable Integer input) {
                 return new PhaseCallable<Integer, String, Integer>() {
                     @Override
-                    public String call(PhaseParty<Integer, Integer> party, int phaseIndex, Phase<?, Integer> phase) throws Exception {
+                    public String call(PhaseParty<Integer, Integer> party, int phaseIndex, Phase<String, Integer> phase) throws Exception {
                         if(whoThrows == party.index){
                             throw new RuntimeException(party.index + "");
                         }
@@ -345,7 +345,7 @@ public class ComputingGridTest {
             public PhaseCallable<Integer, String, Integer> apply(@Nullable Integer input) {
                 return new PhaseCallable<Integer, String, Integer>() {
                     @Override
-                    public String call(PhaseParty<Integer, Integer> party, int phaseIndex, Phase<?, Integer> phase) throws Exception {
+                    public String call(PhaseParty<Integer, Integer> party, int phaseIndex, Phase<String, Integer> phase) throws Exception {
                         if(allDepend){
                             return party.getName(phaseIndex) + ": we all depend on a cell " +
                                 party.grid.cell(phase1, 2).getFuture().get(500, TimeUnit.MILLISECONDS);

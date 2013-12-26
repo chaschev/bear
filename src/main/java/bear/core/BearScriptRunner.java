@@ -5,7 +5,6 @@ import bear.main.Response;
 import bear.main.event.RMIEventToUI;
 import bear.main.phaser.Phase;
 import bear.plugins.Plugin;
-import bear.task.Task;
 import bear.task.TaskDef;
 import bear.task.TaskResult;
 import com.google.common.base.Function;
@@ -59,10 +58,10 @@ public class BearScriptRunner {
 
         final BearScriptItemConverter scriptExecContext = new BearScriptItemConverter(global);
 
-        List<TaskDef<Task>> taskList = newArrayList(transform(scriptItems, new Function<ScriptItem, TaskDef<Task>>() {
+        List<TaskDef<Object, TaskResult>> taskList = newArrayList(transform(scriptItems, new Function<ScriptItem, TaskDef<Object, TaskResult>>() {
             @Nullable
             @Override
-            public TaskDef<Task> apply(ScriptItem scriptItem) {
+            public TaskDef<Object, TaskResult> apply(ScriptItem scriptItem) {
                 return scriptExecContext.convertItemToTask(scriptItem);
             }
         }));
@@ -70,14 +69,14 @@ public class BearScriptRunner {
         return exec(taskList, interactive);
     }
 
-    public RunResponse exec(List<TaskDef<Task>> taskList, boolean interactive) {
+    public RunResponse exec(List<TaskDef<Object, TaskResult>> taskList, boolean interactive) {
         GridBuilder gridBuilder = new GridBuilder().addAll(taskList);
 
         return exec(gridBuilder, interactive);
     }
 
     public RunResponse exec(GridBuilder gridBuilder, boolean interactive) {
-        List<Phase<TaskResult,BearScriptPhase>> phases = gridBuilder.build();
+        List<Phase<TaskResult,BearScriptPhase<Object, TaskResult>>> phases = gridBuilder.build();
 
 
         if (interactive) {

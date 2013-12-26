@@ -74,20 +74,20 @@ public class NodeExpressMongooseDemoProject extends BearProject<NodeExpressMongo
 
         // this defines the deployment task
         defaultDeployment = deployment.newBuilder()
-            .CheckoutFiles_2({ _, task, input -> _.run(global.tasks.vcsUpdate); } as TaskCallable)
-            .BuildAndCopy_3({ _, task, input -> _.run(nodeJs.build, copyConfiguration); } as TaskCallable)
-            .StopService_5({ _, task, input -> _.run(nodeJs.stop); OK; } as TaskCallable)
-            .StartService_8({ _, task, input -> _.run(nodeJs.start, nodeJs.watchStart); } as TaskCallable)
+            .CheckoutFiles_2({_, task -> _.run(global.tasks.vcsUpdate); } as TaskCallable)
+            .BuildAndCopy_3({_, task -> _.run(nodeJs.build, copyConfiguration); } as TaskCallable)
+            .StopService_5({_, task -> _.run(nodeJs.stop); OK; } as TaskCallable)
+            .StartService_8({_, task -> _.run(nodeJs.start, nodeJs.watchStart); } as TaskCallable)
             .endDeploy()
             .ifRollback()
-            .beforeLinkSwitch({ _, task, input -> _.run(nodeJs.stop); } as TaskCallable)
-            .afterLinkSwitch({ _, task, input -> _.run(nodeJs.start, nodeJs.watchStart); } as TaskCallable)
+            .beforeLinkSwitch({_, task -> _.run(nodeJs.stop); } as TaskCallable)
+            .afterLinkSwitch({_, task -> _.run(nodeJs.start, nodeJs.watchStart); } as TaskCallable)
             .endRollback();
 
         return global;
     }
 
-    def copyConfiguration = new TaskDef<Task>({ SessionContext _, task, input ->
+    def copyConfiguration = new TaskDef<Task>({ SessionContext_, task ->
         final String dir = _.var(releases.pendingRelease).path + "/config"
 
         _.sys.copy("config.example.js").to("config.js").inDir(dir).force().run().throwIfError();

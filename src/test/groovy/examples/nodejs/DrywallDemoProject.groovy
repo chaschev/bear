@@ -9,7 +9,6 @@ import bear.plugins.db.DumpManagerPlugin
 import bear.plugins.misc.ReleasesPlugin
 import bear.plugins.mongo.MongoDbPlugin
 import bear.plugins.nodejs.NodeJsPlugin
-import bear.task.Task
 import bear.task.TaskCallable
 import bear.task.TaskDef
 import bear.vcs.GitCLIPlugin
@@ -38,9 +37,9 @@ public class DrywallDemoProject extends BearProject<DrywallDemoProject> {
     ReleasesPlugin releases
     DumpManagerPlugin dumpManager
 
-    public TaskDef<Task> deployProject;
+    public TaskDef deployProject;
 
-    def copyConfiguration = new TaskDef<Task>({ SessionContext _, Task<TaskDef> task, Object input ->
+    def copyConfiguration = new TaskDef({_, task ->
         final String dir = _.var(releases.pendingRelease).path
 
         if(!_.sys.exists(dir + "/config.js")){
@@ -48,7 +47,7 @@ public class DrywallDemoProject extends BearProject<DrywallDemoProject> {
         }
 
         OK
-    } as TaskCallable<TaskDef>);
+    } as TaskCallable);
 
     @Override
     protected GlobalContext configureMe(GlobalContextFactory factory) throws Exception
@@ -74,14 +73,14 @@ public class DrywallDemoProject extends BearProject<DrywallDemoProject> {
 
         // this defines the deployment task
         defaultDeployment = deployment.newBuilder()
-            .CheckoutFiles_2({ _, task, input -> _.run(global.tasks.vcsUpdate); } as TaskCallable)
-            .BuildAndCopy_3({ _, task, input -> _.run(nodeJs.build, copyConfiguration); } as TaskCallable)
-            .StopService_5({ _, task, input -> _.run(nodeJs.stop); OK; } as TaskCallable)
-            .StartService_8({ _, task, input -> _.run(nodeJs.start, nodeJs.watchStart); } as TaskCallable)
+            .CheckoutFiles_2({_, task -> _.run(global.tasks.vcsUpdate); } as TaskCallable)
+            .BuildAndCopy_3({_, task -> _.run(nodeJs.build, copyConfiguration); } as TaskCallable)
+            .StopService_5({_, task -> _.run(nodeJs.stop); OK; } as TaskCallable)
+            .StartService_8({_, task -> _.run(nodeJs.start, nodeJs.watchStart); } as TaskCallable)
             .endDeploy()
             .ifRollback()
-            .beforeLinkSwitch({ _, task, input -> _.run(nodeJs.stop); } as TaskCallable)
-            .afterLinkSwitch({ _, task, input -> _.run(nodeJs.start, nodeJs.watchStart); } as TaskCallable)
+            .beforeLinkSwitch({_, task -> _.run(nodeJs.stop); } as TaskCallable)
+            .afterLinkSwitch({_, task -> _.run(nodeJs.start, nodeJs.watchStart); } as TaskCallable)
             .endRollback();
 
         return global;
@@ -94,7 +93,7 @@ public class DrywallDemoProject extends BearProject<DrywallDemoProject> {
 
     public void setup()
     {
-        global.tasks.setup.before({ _, task, i -> _.sys.packageManager.installPackage("ImageMagick"); OK } as TaskCallable)
+        global.tasks.setup.before({_, task -> _.sys.packageManager.installPackage("ImageMagick"); OK } as TaskCallable)
 
         super.setup()
     }

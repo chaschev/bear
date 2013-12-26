@@ -83,9 +83,9 @@ public class PlayPlugin extends ServerToolPlugin {
             }
         });
 
-        start.addBeforeTask(new TaskDef<Task>(new TaskCallable<TaskDef>() {
+        start.addBeforeTask(new TaskDef<Object, TaskResult>(new TaskCallable<Object, TaskResult>() {
             @Override
-            public TaskResult call(SessionContext $, Task<TaskDef> task, Object input) throws Exception {
+            public TaskResult call(SessionContext $, Task<Object, TaskResult> task) throws Exception {
                 Optional<Release> active = $.var(releases.activatedRelease);
 
                 if(active.isPresent()){
@@ -118,12 +118,12 @@ public class PlayPlugin extends ServerToolPlugin {
         return execPath;
     }
 
-    public final TaskDef<Task> build = new TaskDef<Task>(new SingleTaskSupplier<Task>() {
+    public final TaskDef<Object, TaskResult> build = new TaskDef<Object, TaskResult>(new SingleTaskSupplier<Object, TaskResult>() {
         @Override
-        public Task createNewSession(SessionContext $, Task parent, TaskDef<Task> def) {
-            return new Task<TaskDef>(parent, def, $) {
+        public Task<Object, TaskResult> createNewSession(SessionContext $, Task<Object, TaskResult> parent, TaskDef<Object, TaskResult> def) {
+            return new Task<Object, TaskResult>(parent, def, $) {
                 @Override
-                protected TaskResult exec(SessionRunner runner, Object input) {
+                protected TaskResult exec(SessionRunner runner) {
                     $.log("building the project (stage)...");
 
                     CommandLineResult result;
@@ -166,12 +166,12 @@ public class PlayPlugin extends ServerToolPlugin {
         logger.info("current releases:\n{}", $.var(releases.session).show());
     }
 
-    public final InstallationTaskDef<ZippedTool> install = new ZippedToolTaskDef<ZippedTool>(new SingleTaskSupplier() {
+    public final InstallationTaskDef<ZippedTool> install = new ZippedToolTaskDef<ZippedTool>(new SingleTaskSupplier<Object, TaskResult>() {
         @Override
-        public Task createNewSession(SessionContext $, Task parent, TaskDef def) {
+        public Task<Object, TaskResult> createNewSession(SessionContext $, Task<Object, TaskResult> parent, TaskDef<Object, TaskResult> def) {
             return new ZippedTool(parent, (InstallationTaskDef) def, $) {
                 @Override
-                protected DependencyResult exec(SessionRunner runner, Object input) {
+                protected TaskResult exec(SessionRunner runner) {
                     clean();
 
                     download();

@@ -118,15 +118,15 @@ public class DownloadPlugin extends Plugin{
         }
     }
 
-    public final TaskDef<Task> downloadTask = new TaskDef<Task>(new SingleTaskSupplier<Task>() {
+    private final SingleTaskSupplier<DownloadSupplier,TaskResult> singleTaskSupplier = new SingleTaskSupplier<DownloadSupplier, TaskResult>() {
         @Override
-        public Task<TaskDef> createNewSession(SessionContext $, Task parent, TaskDef def) {
-            return new Task<TaskDef>(parent, new TaskCallable<TaskDef>() {
+        public Task<DownloadSupplier, TaskResult> createNewSession(SessionContext $, Task<Object, TaskResult> parent, TaskDef<DownloadSupplier, TaskResult> def) {
+            TaskCallable<DownloadSupplier, TaskResult> taskCallable = new TaskCallable<DownloadSupplier, TaskResult>() {
                 @Override
-                public TaskResult call(final SessionContext $, final Task<TaskDef> task, final Object input) throws Exception {
+                public TaskResult call(final SessionContext $, final Task<DownloadSupplier, TaskResult> task) throws Exception {
                     final ImmutableList<SessionContext> parties = task.getGrid().parties();
 
-                    final DownloadSupplier downloadSupplier = (DownloadSupplier) input;
+                    final DownloadSupplier downloadSupplier = task.getInput();
 
                     ListenableFuture<PartyWithFileResult> future = task.callOnce(new Callable<PartyWithFileResult>() {
                         @Override
@@ -141,8 +141,8 @@ public class DownloadPlugin extends Plugin{
                             }
 
                             if (i == parties.size()) {
-                                if (!((DownloadSupplier) input).download($).ok()) {
-                                    throw new RuntimeException("could not download with " + input);
+                                if (!downloadSupplier.download($).ok()) {
+                                    throw new RuntimeException("could not download with " + downloadSupplier);
                                 }
 
                                 i = task.getPhaseParty().getIndex();
@@ -154,15 +154,15 @@ public class DownloadPlugin extends Plugin{
 
                     PartyWithFileResult result = future.get(10, TimeUnit.MINUTES);
 
-                    if(!result.ok()){
+                    if (!result.ok()) {
                         return result;
                     }
 
-                    if(result.partyIndex == task.getPhaseParty().getIndex()){
+                    if (result.partyIndex == task.getPhaseParty().getIndex()) {
                         return TaskResult.OK;
                     }
 
-                    if(downloadSupplier.exists($)){
+                    if (downloadSupplier.exists($)) {
                         return TaskResult.OK;
                     }
 
@@ -171,7 +171,10 @@ public class DownloadPlugin extends Plugin{
 
                     return new TaskResult(r);
                 }
-            });
+            };
+            return new Task<DownloadSupplier, TaskResult>(parent, taskCallable);
         }
-    });
+    };
+
+    public final TaskDef<DownloadSupplier, TaskResult> downloadTask = new TaskDef<DownloadSupplier, TaskResult>(singleTaskSupplier);
 }

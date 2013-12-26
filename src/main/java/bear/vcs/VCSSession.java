@@ -16,13 +16,13 @@ import java.util.Map;
 /**
 * @author Andrey Chaschev chaschev@gmail.com
 */
-public abstract class VCSSession extends Task<TaskDef> {
-    VCSSession(Task<TaskDef> parent, TaskDef def, SessionContext $) {
+public abstract class VCSSession extends Task<Object, TaskResult> {
+    VCSSession(Task<Object, TaskResult> parent, TaskDef def, SessionContext $) {
         super(parent, def, $);
     }
 
     @Override
-    protected TaskResult exec(SessionRunner runner, Object input) {
+    protected TaskResult exec(SessionRunner runner) {
         throw new UnsupportedOperationException("VCS task cannot be run");
     }
 

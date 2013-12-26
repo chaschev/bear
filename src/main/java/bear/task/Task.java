@@ -46,64 +46,64 @@ import static bear.session.Variables.newVar;
 /**
  * @author Andrey Chaschev chaschev@gmail.com
  */
-public class Task<TASK_DEF extends TaskDef> extends HavingContext<Task<TaskDef>, SessionContext> {
+public class Task<I, O extends TaskResult> extends HavingContext<Task<I, O>, SessionContext> {
     private static final Logger logger = LoggerFactory.getLogger(Task.class);
 
     private Dependencies dependencies = new Dependencies();
 
     private final String id = SessionContext.randomId();
 
-    protected TaskCallable taskCallable;
-    protected final TaskContext<TASK_DEF> taskContext;
-    protected Object input;
+    protected TaskCallable<I, O> taskCallable;
+    protected final TaskContext<I, O> taskContext;
+    protected I input;
 
-    public Task(TaskContext<TASK_DEF> taskContext, TaskCallable taskCallable) {
+    public Task(TaskContext<I, O> taskContext, TaskCallable<I, O> taskCallable) {
         super(taskContext.$());
         taskContext.me = this;
         this.taskContext = taskContext;
         this.taskCallable = taskCallable;
 
-        setExecutionContext(new TaskExecutionContext($, this));
+        setExecutionContext(new TaskExecutionContext($, (Task)this));
     }
 
-    public Task(Task<TaskDef> parent, TaskCallable<TaskDef> taskCallable) {
+    public Task(Task<Object, TaskResult> parent, TaskCallable<I, O> taskCallable) {
         super(parent.$);
 
-        this.taskContext = (TaskContext)parent.taskContext.dup(this, null, parent);
+        this.taskContext = (TaskContext) parent.taskContext.dup(this, null, parent);
         this.taskCallable = taskCallable;
 
-        setExecutionContext(new TaskExecutionContext($, this));
+        setExecutionContext(new TaskExecutionContext($, (Task)this));
     }
 
-    public Task(Task parent, TASK_DEF definition, SessionContext $) {
+    public Task(Task<Object, TaskResult> parent, TaskDef definition, SessionContext $) {
         super($);
 
-        this.taskContext = new TaskContext<TASK_DEF>(this, parent, $, definition);
+        this.taskContext = new TaskContext<I, O>(this, parent, $, definition);
 
-        setExecutionContext(new TaskExecutionContext($, this));
+        setExecutionContext(new TaskExecutionContext($, (Task)this));
     }
 
-    public TaskResult run(SessionRunner runner, Object input) {
+    public O run(SessionRunner runner, I input) {
         if (getParent() != null) {
-            getParent().getExecutionContext().addNewSubTask(this);
+            getParent().getExecutionContext().addNewSubTask((Task)this);
         }
 
-        TaskResult result = null;
+        O result = null;
 
         try {
             if (taskCallable == null) {
-                result = exec(runner, input);
+                result = exec(runner);
             } else {
-                result = taskCallable.call($, this, input);
-                if(result == null) result = TaskResult.OK;
+                result = taskCallable.call($, this);
+                if(result == null) result = (O) TaskResult.OK;
             }
         } catch (Exception e) {
-            result = new TaskResult(e);
+            result = (O) new TaskResult(e);
         } finally {
             getExecutionContext().taskResult = result;
 
             if (getParent() != null) {
-                getParent().getExecutionContext().onEndSubTask(this, result);
+                getParent().getExecutionContext().onEndSubTask((Task)this, result);
             }
         }
 
@@ -119,18 +119,18 @@ public class Task<TASK_DEF extends TaskDef> extends HavingContext<Task<TaskDef>,
     }
 
     @Deprecated
-    protected TaskResult exec(SessionRunner runner, Object input) {
+    protected O exec(SessionRunner runner) {
         throw new UnsupportedOperationException("todo: implement or use nop() task or set callable!");
     }
 
-    private static final Task<TaskDef> NOP_TASK = new Task<TaskDef>(null, null, null) {
+    private static final Task<Object, TaskResult> NOP_TASK = new Task<Object, TaskResult>(null, null, null) {
         @Override
-        protected TaskResult exec(SessionRunner runner, Object input) {
+        protected TaskResult exec(SessionRunner runner) {
             return TaskResult.OK;
         }
     };
 
-    public static Task<TaskDef> nop() {
+    public static Task<Object, TaskResult> nop() {
         return NOP_TASK;
     }
 
@@ -148,7 +148,7 @@ public class Task<TASK_DEF extends TaskDef> extends HavingContext<Task<TaskDef>,
         return defName + ($ == null ? "" : " (" + $.getName() + ")");
     }
 
-    public Task<TASK_DEF> addDependency(Dependency... dependencies) {
+    public Task<I, O> addDependency(Dependency... dependencies) {
         this.dependencies.addDependencies(dependencies);
         return this;
     }
@@ -162,17 +162,17 @@ public class Task<TASK_DEF extends TaskDef> extends HavingContext<Task<TaskDef>,
     }
 
     @Nullable
-    public Task<TaskDef> getParent() {
+    public Task<I, O> getParent() {
         return taskContext.parent;
     }
 
-    public Task<TASK_DEF> setParent(Task parent) {
+    public Task<I, O> setParent(Task parent) {
         taskContext.parent = parent;
         return this;
     }
 
     public boolean isRootTask() {
-        Task<TaskDef> parent = getParent();
+        Task<I, O> parent = getParent();
         return parent == null || parent.getDefinition() == TaskDef.ROOT;
     }
 
@@ -181,8 +181,8 @@ public class Task<TASK_DEF extends TaskDef> extends HavingContext<Task<TaskDef>,
     }
 
     public void init(
-        Phase<?, BearScriptPhase> phase,
-        PhaseParty<SessionContext, BearScriptPhase> party, ComputingGrid<SessionContext, ?> grid, GlobalTaskRunner globalTaskRunner) {
+        Phase<O, BearScriptPhase<I, O>> phase,
+        PhaseParty<SessionContext, BearScriptPhase<I, O>> party, ComputingGrid<SessionContext, ?> grid, GlobalTaskRunner globalTaskRunner) {
         taskContext.phase = phase;
         taskContext.phaseParty = party;
         taskContext.grid = (ComputingGrid) party.grid;
@@ -192,11 +192,11 @@ public class Task<TASK_DEF extends TaskDef> extends HavingContext<Task<TaskDef>,
         taskContext.set$($);
     }
 
-    public TASK_DEF getDefinition() {
+    public TaskDef<I, O> getDefinition() {
         return taskContext.definition;
     }
 
-    public void setDefinition(TASK_DEF definition) {
+    public void setDefinition(TaskDef<I, O> definition) {
         taskContext.definition = definition;
     }
 
@@ -232,27 +232,27 @@ public class Task<TASK_DEF extends TaskDef> extends HavingContext<Task<TaskDef>,
         taskContext.runner = runner;
     }
 
-    public ComputingGrid<SessionContext, BearScriptPhase> getGrid() {
+    public ComputingGrid<SessionContext, BearScriptPhase<Object, TaskResult>> getGrid() {
         return taskContext.grid;
     }
 
-    public void setGrid(ComputingGrid<SessionContext, BearScriptPhase> grid) {
+    public void setGrid(ComputingGrid<SessionContext, BearScriptPhase<Object, TaskResult>> grid) {
         taskContext.grid = grid;
     }
 
-    public PhaseParty<SessionContext, BearScriptPhase> getPhaseParty() {
+    public PhaseParty<SessionContext, BearScriptPhase<I, O>> getPhaseParty() {
         return taskContext.phaseParty;
     }
 
-    public void setPhaseParty(PhaseParty<SessionContext, BearScriptPhase> phaseParty) {
+    public void setPhaseParty(PhaseParty<SessionContext, BearScriptPhase<I, O>> phaseParty) {
         taskContext.phaseParty = phaseParty;
     }
 
-    public Phase<?, BearScriptPhase> getPhase() {
+    public Phase<?, BearScriptPhase<I, O>> getPhase() {
         return taskContext.phase;
     }
 
-    public void setPhase(Phase<?, BearScriptPhase> phase) {
+    public void setPhase(Phase<O, BearScriptPhase<I, O>> phase) {
         taskContext.phase = phase;
     }
 
@@ -264,7 +264,7 @@ public class Task<TASK_DEF extends TaskDef> extends HavingContext<Task<TaskDef>,
         return getPhase().callOnce(callable);
     }
 
-    public <T> Phase<T, BearScriptPhase> getRelativePhase(int offset, Class<T> tClass) {
+    public <T> Phase<T, BearScriptPhase<I, O>> getRelativePhase(int offset, Class<T> tClass) {
         return getPhase().getRelativePhase(offset, tClass);
     }
 
@@ -293,14 +293,14 @@ public class Task<TASK_DEF extends TaskDef> extends HavingContext<Task<TaskDef>,
         aggregateRelatively(-1, Object.class).get(timeout, unit);
     }
 
-    public static TaskCallable<TaskDef> awaitOthersCallable(final int timeout, final TimeUnit unit) {
+    public static TaskCallable<Object, TaskResult> awaitOthersCallable(final int timeout, final TimeUnit unit) {
         return awaitOthersCallable(newVar(timeout), unit);
     }
 
-    public static TaskCallable<TaskDef> awaitOthersCallable(final DynamicVariable<Integer> timeout, final TimeUnit unit) {
-        return new TaskCallable<TaskDef>() {
+    public static TaskCallable<Object, TaskResult> awaitOthersCallable(final DynamicVariable<Integer> timeout, final TimeUnit unit) {
+        return new TaskCallable<Object, TaskResult>() {
             @Override
-            public TaskResult call(SessionContext $, Task<TaskDef> task, Object input) throws Exception {
+            public TaskResult call(SessionContext $, Task<Object, TaskResult> task) throws Exception {
                 try {
                     task.awaitOthers($.var(timeout), unit);
                     return TaskResult.OK;
@@ -311,10 +311,17 @@ public class Task<TASK_DEF extends TaskDef> extends HavingContext<Task<TaskDef>,
         };
     }
 
-    public Task<TASK_DEF> wire(AbstractContext $) {
+    public Task<I, O> wire(AbstractContext $) {
         $.wire(taskContext);
         return this;
     }
 
+    public Task<I, O> setInput(I input) {
+        this.input = input;
+        return this;
+    }
 
+    public I getInput() {
+        return input;
+    }
 }

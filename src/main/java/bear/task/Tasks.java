@@ -40,19 +40,19 @@ public class Tasks {
         Preconditions.checkNotNull(bear);
     }
 
-    public final TaskDef restartApp = new TaskDef<Task>("Restart App", new SingleTaskSupplier<Task>() {
+    public final TaskDef restartApp = new TaskDef<Object, TaskResult>("Restart App", new SingleTaskSupplier<Object, TaskResult>() {
         @Override
-        public Task createNewSession(SessionContext $, Task parent, TaskDef def) {
+        public Task<Object, TaskResult> createNewSession(SessionContext $, Task<Object, TaskResult> parent, TaskDef<Object, TaskResult> def) {
             return Task.nop();
         }
     });
 
-    public final InstallationTaskDef<InstallationTask> setup = new InstallationTaskDef<InstallationTask>(new SingleTaskSupplier<Task>() {
+    public final InstallationTaskDef<InstallationTask> setup = new InstallationTaskDef<InstallationTask>(new SingleTaskSupplier<Object, TaskResult>() {
         @Override
-        public Task createNewSession(SessionContext $, Task parent, TaskDef<Task> def) {
-            return new Task<TaskDef>(parent, setup, $) {
+        public Task<Object, TaskResult> createNewSession(SessionContext $, Task<Object, TaskResult> parent, TaskDef<Object, TaskResult> def) {
+            return new Task<Object, TaskResult>(parent, setup, $) {
                 @Override
-                protected TaskResult exec(SessionRunner runner, Object input) {
+                protected TaskResult exec(SessionRunner runner) {
                     $.putConst(bear.installationInProgress, true);
 
                     final String[] dirs = {
@@ -81,11 +81,12 @@ public class Tasks {
                         List<Plugin<Task, TaskDef>> plugins = global.getOrderedPlugins();
 
                         for (Plugin<Task, ? extends TaskDef> plugin : plugins) {
-                            InstallationTaskDef<? extends InstallationTask> installTask = plugin.getInstall();
-                            if (installTask.singleTaskSupplier().createNewSession($, getParent(), (TaskDef)installTask).asInstalledDependency().checkDeps().nok()) {
+                            InstallationTaskDef<? extends InstallationTask> installTaskDef = plugin.getInstall();
+                            InstallationTask session = (InstallationTask) installTaskDef.singleTaskSupplier().createNewSession($, getParent(), installTaskDef);
+                            if (session.asInstalledDependency().checkDeps().nok()) {
                                 if ($(bear.autoInstallPlugins)) {
                                     $.log("plugin %s was not installed. installing it...", plugin);
-                                    TaskResult run = runner.run(installTask);
+                                    TaskResult run = runner.run(installTaskDef);
                                     if (!run.ok()) {
                                         $.error("could not install %s:%n%s", plugin, run);
                                         break;
@@ -105,12 +106,12 @@ public class Tasks {
         .setSetupTask(true);
 
 
-    public final TaskDef vcsUpdate = new TaskDef<Task>(new SingleTaskSupplier<Task>() {
+    public final TaskDef vcsUpdate = new TaskDef<Object, TaskResult>(new SingleTaskSupplier<Object, TaskResult>() {
         @Override
-        public Task createNewSession(SessionContext $, Task parent, TaskDef<Task> def) {
-            return new Task<TaskDef>(parent, vcsUpdate, $) {
+        public Task<Object, TaskResult> createNewSession(SessionContext $, Task<Object, TaskResult> parent, TaskDef<Object, TaskResult> def) {
+            return new Task<Object, TaskResult>(parent, vcsUpdate, $) {
                 @Override
-                protected TaskResult exec(SessionRunner runner, Object input) {
+                protected TaskResult exec(SessionRunner runner) {
                     $.log("updating the project, please wait...");
 
                     if (!$.sys.exists($(bear.vcsBranchLocalPath))) {
@@ -123,11 +124,11 @@ public class Tasks {
         }
     });
 
-    public static TaskCallable<TaskDef> andThen(final TaskCallable<TaskDef>... callables) {
+    public static TaskCallable<Object, TaskResult> andThen(final TaskCallable<Object, TaskResult>... callables) {
         int nullCount = 0;
         int lastNullIndex = -1;
         for (int i = 0; i < callables.length; i++) {
-            TaskCallable<TaskDef> callable = callables[i];
+            TaskCallable<Object, TaskResult> callable = callables[i];
             if (callable == null) {
                 nullCount++;
                 lastNullIndex = i;
@@ -138,14 +139,14 @@ public class Tasks {
             return callables[lastNullIndex];
         }
 
-        return new TaskCallable<TaskDef>() {
+        return new TaskCallable<Object, TaskResult>() {
             @Override
-            public TaskResult call(SessionContext $, Task<TaskDef> task, Object input) throws Exception {
+            public TaskResult call(SessionContext $, Task<Object, TaskResult> task) throws Exception {
                 TaskResult lastResult = null;
 
-                for (TaskCallable<TaskDef> callable : callables) {
+                for (TaskCallable<Object, TaskResult> callable : callables) {
                     if (callable == null) continue;
-                    lastResult = callable.call($, task, input);
+                    lastResult = callable.call($, task);
                 }
 
                 return lastResult;
@@ -189,12 +190,16 @@ public class Tasks {
         return new TaskResult(ex);
     }
 
-    public static <TASK extends Task> SingleTaskSupplier<TASK> newSingleTask(final TaskCallable<TaskDef> taskCallable) {
-        return new SingleTaskSupplier<TASK>() {
+    public static <I, O extends TaskResult> SingleTaskSupplier<I, O> newSingleTask(final TaskCallable<I, O> taskCallable) {
+        return new SingleTaskSupplier<I, O>() {
             @Override
-            public TASK createNewSession(SessionContext $, Task parent, TaskDef<TASK> def) {
-                return (TASK) new Task(parent,  taskCallable);
+            public Task<I, O> createNewSession(SessionContext $, Task<Object, TaskResult> parent, TaskDef<I, O> def) {
+                return new Task<I, O>(parent, taskCallable);
             }
         };
+    }
+
+    public static <I, O extends TaskResult> TaskCallable<I, O> nopCallable(){
+        return (TaskCallable) TaskCallable.NOP;
     }
 }

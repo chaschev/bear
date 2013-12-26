@@ -101,11 +101,11 @@ public class GroovyShellMode extends PluginShellMode<GroovyShellPlugin> implemen
     }
 
     public Task interpret(final String command, SessionContext $, final Task _parent, final TaskDef taskDef) {
-        Task<TaskDef> task = new Task<TaskDef>(_parent, taskDef, $) {
+        Task<Object, TaskResult> task = new Task<Object, TaskResult>(_parent, taskDef, $) {
             @Override
-            protected TaskResult exec(final SessionRunner runner, Object input) {
+            protected TaskResult exec(final SessionRunner runner) {
                 CatchyCallable<TaskResult> callable = null;
-                final Task<TaskDef> $this = this;
+                final Task<Object, TaskResult> $this = this;
                 try {
                     callable = new CatchyCallable<TaskResult>(new Callable<TaskResult>() {
                         public TaskResult call() {

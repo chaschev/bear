@@ -71,25 +71,25 @@ public class DeploymentPlugin extends Plugin {
             String afterCallableName = stepNameAfter(getClass());
 
             @Nullable
-            protected TaskCallable<TaskDef> beforeCallable;
-            @Nullable protected TaskCallable<TaskDef> taskCallable;
+            protected TaskCallable<Object, TaskResult> beforeCallable;
+            @Nullable protected TaskCallable<Object, TaskResult> taskCallable;
 
             @Nullable
-            protected TaskCallable<TaskDef> afterCallable;
+            protected TaskCallable<Object, TaskResult> afterCallable;
 
-            protected DeploymentStep(final TaskCallable<TaskDef> taskCallable) {
+            protected DeploymentStep(final TaskCallable<Object, TaskResult> taskCallable) {
                 this.taskCallable = taskCallable;
             }
 
             protected DeploymentStep() {
             }
 
-            public SELF setTaskCallable(TaskCallable<TaskDef> taskCallable) {
+            public SELF setTaskCallable(TaskCallable<Object, TaskResult> taskCallable) {
                 this.taskCallable = taskCallable;
                 return self();
             }
 
-            public SELF setTaskCallable(String name, TaskCallable<TaskDef> taskCallable) {
+            public SELF setTaskCallable(String name, TaskCallable<Object, TaskResult> taskCallable) {
                 this.taskCallable = taskCallable;
                 this.taskCallableName = name;
                 return self();
@@ -104,7 +104,7 @@ public class DeploymentPlugin extends Plugin {
                 return Builder.this;
             }
 
-            public List<TaskDef<Task>> createTasksToList(List<TaskDef<Task>> tasks){
+            public List<TaskDef<Object, TaskResult>> createTasksToList(List<TaskDef<Object, TaskResult>> tasks){
                 addTask(tasks, beforeCallable, beforeCallableName);
                 addTask(tasks, taskCallable, taskCallableName);
                 addTask(tasks, afterCallable, afterCallableName);
@@ -112,10 +112,10 @@ public class DeploymentPlugin extends Plugin {
                 return tasks;
             }
 
-            private void addTask(List<TaskDef<Task>> tasks, TaskCallable<TaskDef> callable, String callableName) {
+            private void addTask(List<TaskDef<Object, TaskResult>> tasks, TaskCallable<Object, TaskResult> callable, String callableName) {
                 if(callable == null) return;
 
-                tasks.add(new TaskDef<Task>(callable).setName(callableName));
+                tasks.add(new TaskDef<Object, TaskResult>(callable).setName(callableName));
             }
 
             public SELF setBeforeCallableName(String beforeCallableName) {
@@ -155,15 +155,15 @@ public class DeploymentPlugin extends Plugin {
             return checkoutFiles;
         }
 
-        public CheckoutFiles CheckoutFiles_2(TaskCallable<TaskDef> t){
+        public CheckoutFiles CheckoutFiles_2(TaskCallable<Object, TaskResult> t){
             return checkoutFiles.setTaskCallable(t);
         }
 
         public class SetFilesLocation extends DeploymentStep<SetFilesLocation> {
             public SetFilesLocation() {
-                beforeCallable = new TaskCallable<TaskDef>() {
+                beforeCallable = new TaskCallable<Object, TaskResult>() {
                     @Override
-                    public TaskResult call(SessionContext $, Task<TaskDef> task, Object input) throws Exception {
+                    public TaskResult call(SessionContext $, Task<Object, TaskResult> task) throws Exception {
                         $.var(releases.session).newPendingRelease();
 
                         return TaskResult.OK;
@@ -185,7 +185,7 @@ public class DeploymentPlugin extends Plugin {
                 return buildAndCopy;
             }
 
-            public BuildAndCopy BuildAndCopy_3(TaskCallable<TaskDef> t){
+            public BuildAndCopy BuildAndCopy_3(TaskCallable<Object, TaskResult> t){
                 return buildAndCopy.setTaskCallable(t);
             }
         }
@@ -195,7 +195,7 @@ public class DeploymentPlugin extends Plugin {
                 return stopService;
             }
 
-            public StopService StopService_5(TaskCallable<TaskDef> t) {
+            public StopService StopService_5(TaskCallable<Object, TaskResult> t) {
                 return stopService.setTaskCallable(t);
             }
         }
@@ -214,7 +214,7 @@ public class DeploymentPlugin extends Plugin {
                 return this;
             }
 
-            public StartService StartService_8(TaskCallable<TaskDef> t) {
+            public StartService StartService_8(TaskCallable<Object, TaskResult> t) {
                 return startService.setTaskCallable(t);
             }
         }
@@ -230,9 +230,9 @@ public class DeploymentPlugin extends Plugin {
 
         public class StartService extends DeploymentStep<StartService> {
             public StartService() {
-                beforeCallable = new TaskCallable<TaskDef>() {
+                beforeCallable = new TaskCallable<Object, TaskResult>() {
                     @Override
-                    public TaskResult call(SessionContext $, Task<TaskDef> task, Object input) throws Exception {
+                    public TaskResult call(SessionContext $, Task<Object, TaskResult> task) throws Exception {
                         ReleasesPlugin releases = $.getGlobal().plugin(ReleasesPlugin.class);
                         PendingRelease pendingRelease = $.var(releases.pendingRelease);
 
@@ -267,9 +267,9 @@ public class DeploymentPlugin extends Plugin {
             }
 
             public WhenStarted failIfAnyFails(){
-                TaskCallable<TaskDef> waitOthers = new TaskCallable<TaskDef>() {
+                TaskCallable<Object, TaskResult> waitOthers = new TaskCallable<Object, TaskResult>() {
                     @Override
-                    public TaskResult call(SessionContext $, Task<TaskDef> task, Object input) throws Exception {
+                    public TaskResult call(SessionContext $, Task<Object, TaskResult> task) throws Exception {
                         ListenableFuture<List<TaskResult>> prevResults = task.aggregateRelatively(-1, TaskResult.class);
 
                         List<TaskResult> results = prevResults.get($.var(bear.appWaitOthersTimeoutSec), SECONDS);
@@ -285,8 +285,8 @@ public class DeploymentPlugin extends Plugin {
         }
 
         public class IfRollback extends DeploymentStep<WhenStarted> {
-            protected TaskCallable<TaskDef> beforeLinkSwitch;
-            protected TaskCallable<TaskDef> afterLinkSwitch;
+            protected TaskCallable<Object, TaskResult> beforeLinkSwitch;
+            protected TaskCallable<Object, TaskResult> afterLinkSwitch;
 
             IfRollback() {
             }
@@ -295,12 +295,12 @@ public class DeploymentPlugin extends Plugin {
                 return Builder.this;
             }
 
-            public IfRollback beforeLinkSwitch(TaskCallable<TaskDef> beforeLabelSwitch) {
+            public IfRollback beforeLinkSwitch(TaskCallable<Object, TaskResult> beforeLabelSwitch) {
                 this.beforeLinkSwitch = beforeLabelSwitch;
                 return this;
             }
 
-            public IfRollback afterLinkSwitch(TaskCallable<TaskDef> afterLabelSwitch) {
+            public IfRollback afterLinkSwitch(TaskCallable<Object, TaskResult> afterLabelSwitch) {
                 this.afterLinkSwitch = afterLabelSwitch;
                 return this;
             }
@@ -335,10 +335,10 @@ public class DeploymentPlugin extends Plugin {
         }
 
         //todo each step could provide it's own implementation for the task
-        public TaskDef<Task> build(){
-            final TaskCallable<TaskDef> ifRollbackCallable = new TaskCallable<TaskDef>() {
+        public TaskDef<Object, TaskResult> build(){
+            final TaskCallable<Object, TaskResult> ifRollbackCallable = new TaskCallable<Object, TaskResult>() {
                 @Override
-                public TaskResult call(SessionContext $, Task<TaskDef> task, Object input) throws Exception {
+                public TaskResult call(SessionContext $, Task<Object, TaskResult> task) throws Exception {
                     Optional<Release> activatedRelease = $.var(releases.activatedRelease);
 
                     if($.var(releases.manualRollback)){
@@ -356,7 +356,7 @@ public class DeploymentPlugin extends Plugin {
                     TaskResult result = TaskResult.OK;
 
                     if(ifRollback.beforeLinkSwitch != null){
-                        result = ifRollback.beforeLinkSwitch.call($, task, input);
+                        result = ifRollback.beforeLinkSwitch.call($, task);
                     }
 
                     Releases r = $.var(releases.session);
@@ -370,7 +370,7 @@ public class DeploymentPlugin extends Plugin {
                     }
 
                     if(ifRollback.afterLinkSwitch != null){
-                        result = result.and(ifRollback.afterLinkSwitch.call($, task, input));
+                        result = result.and(ifRollback.afterLinkSwitch.call($, task));
                     }
 
                     return result;
@@ -379,32 +379,22 @@ public class DeploymentPlugin extends Plugin {
 
 
 
-            final List<TaskDef<Task>> taskDefs = new ArrayList<TaskDef<Task>>();
+            final List<TaskDef<Object, TaskResult>> taskDefs = new ArrayList<TaskDef<Object, TaskResult>>();
 
             for (DeploymentStep deploymentStep : deploymentSteps) {
                 deploymentStep.createTasksToList(taskDefs);
             }
 
-            TaskDef<Task> rollback = new TaskDef<Task>("deployment rollback", Tasks.newSingleTask(ifRollbackCallable));
+            TaskDef<Object, TaskResult> rollback = new TaskDef<Object, TaskResult>("deployment rollback", Tasks.newSingleTask(ifRollbackCallable));
 
-            for (TaskDef<Task> taskDef : taskDefs) {
+            for (TaskDef<Object, TaskResult> taskDef : taskDefs) {
                 taskDef.onRollback(rollback);
             }
 
-            return new TaskDef<Task>("deployment multitask", new MultitaskSupplier<Task>() {
-                @Override
-                public List<Task> createNewSessions(SessionContext $, Task parent) {
-                    final List<Task> tasks = new ArrayList<Task>();
-
-                    for (TaskDef<Task> taskDef : taskDefs) {
-                        tasks.add(taskDef.singleTaskSupplier().createNewSession($, parent, taskDef));
-                    }
-
-                    return tasks;
-                }
+            return new TaskDef<Object, TaskResult>("deployment multitask", new MultitaskSupplier() {
 
                 @Override
-                public List<TaskDef<Task>> getTaskDefs() {
+                public List<TaskDef<Object, TaskResult>> getTaskDefs() {
                     return taskDefs;
                 }
 
@@ -432,18 +422,18 @@ public class DeploymentPlugin extends Plugin {
     public static void main(String[] args) {
         LinkedHashMap map = new LinkedHashMap();
 
-        TaskDef<Task> taskDef = new DeploymentPlugin(null).new Builder()
+        TaskDef<Object, TaskResult> taskDef = new DeploymentPlugin(null).new Builder()
             .$1_SetFilesLocation()
-            .setTaskCallable(new TaskCallable<TaskDef>() {
+            .setTaskCallable(new TaskCallable<Object, TaskResult>() {
                 @Override
-                public TaskResult call(SessionContext $, Task<TaskDef> task, Object input) throws Exception {
+                public TaskResult call(SessionContext $, Task<Object, TaskResult> task) throws Exception {
                     throw new UnsupportedOperationException("todo .call");
                 }
             })
             .$2_CheckoutFiles()
-            .setTaskCallable(new TaskCallable<TaskDef>() {
+            .setTaskCallable(new TaskCallable<Object, TaskResult>() {
                 @Override
-                public TaskResult call(SessionContext $, Task<TaskDef> task, Object input) throws Exception {
+                public TaskResult call(SessionContext $, Task<Object, TaskResult> task) throws Exception {
                     throw new UnsupportedOperationException("todo .call");
                 }
             })

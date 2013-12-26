@@ -49,10 +49,10 @@ public class TaskExecutionContext extends ExecContext<TaskExecutionContext> {
 //    TaskExecutionEntry selfEntry;
     List<ExecContext> execEntries = new ArrayList<ExecContext>();
     public TaskResult taskResult;
-    protected Task<? extends TaskDef> task;
+    protected Task<Object, TaskResult> task;
 
 
-    public TaskExecutionContext(SessionContext $, Task<? extends TaskDef> task) {
+    public TaskExecutionContext(SessionContext $, Task<Object, TaskResult> task) {
         super($, getParentContext(task));
         this.task = task;
 
@@ -61,8 +61,8 @@ public class TaskExecutionContext extends ExecContext<TaskExecutionContext> {
 //        selfEntry = new TaskExecutionEntry(task.getParentEntry(), task);
     }
 
-    private static TaskExecutionContext getParentContext(@Nonnull Task<? extends TaskDef> task) {
-        Task<TaskDef> parent = task.getParent();
+    private static TaskExecutionContext getParentContext(@Nonnull Task<Object, TaskResult> task) {
+        Task<Object, TaskResult> parent = task.getParent();
 
         if (parent == null) return null;
 
@@ -70,7 +70,7 @@ public class TaskExecutionContext extends ExecContext<TaskExecutionContext> {
     }
 
     //null when there is an exception
-    protected ExecContext findEntryByTask(Task<? extends TaskDef> task) {
+    protected ExecContext findEntryByTask(Task<Object, TaskResult> task) {
         for (ExecContext e : execEntries) {
             if (e instanceof TaskExecutionContext) {
                 TaskExecutionContext context = (TaskExecutionContext) e;
@@ -98,12 +98,12 @@ public class TaskExecutionContext extends ExecContext<TaskExecutionContext> {
         return null;
     }
 
-    public void addNewSubTask(Task<? extends TaskDef> subTask) {
+    public void addNewSubTask(Task<Object, TaskResult> subTask) {
 //        executionEntries.add(new TaskExecutionEntry(subTask.getParentEntry(), subTask));
         execEntries.add(new TaskExecutionContext($, subTask));
     }
 
-    public void onEndSubTask(Task<? extends TaskDef> task, TaskResult result) {
+    public void onEndSubTask(Task<Object, TaskResult> task, TaskResult result) {
         ExecContext entry = findEntryByTask(task);
         if(entry != null){
             entry.onEnd(result);
@@ -210,7 +210,7 @@ public class TaskExecutionContext extends ExecContext<TaskExecutionContext> {
         return absent();
     }
 
-    public Optional<TaskResult> findResult(final TaskDef<Task> def){
+    public Optional<TaskResult> findResult(final TaskDef<Object, TaskResult> def){
         final TaskResult[] r = new TaskResult[1];
 
         visit(new ExecutionVisitor() {

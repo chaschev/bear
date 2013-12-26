@@ -60,13 +60,13 @@ public class GrailsPlugin2 extends ServerToolPlugin {
 //        releaseWarPath = condition(bear.isRemoteEnv, joinPath(releases.releasePath, warName), projectWarPath);
     }
 
-    public final TaskDef<Task> build = new TaskDef<Task>(new SingleTaskSupplier<Task>() {
+    public final TaskDef<Object, TaskResult> build = new TaskDef<Object, TaskResult>(new SingleTaskSupplier<Object, TaskResult>() {
         @Override
-        public Task createNewSession(SessionContext $, Task parent, TaskDef<Task> def) {
-            return new Task<TaskDef>(parent, def, $) {
+        public Task<Object, TaskResult> createNewSession(SessionContext $, Task<Object, TaskResult> parent, TaskDef<Object, TaskResult> def) {
+            return new Task<Object, TaskResult>(parent, def, $) {
 
                 @Override
-                protected TaskResult exec(SessionRunner runner, Object input) {
+                protected TaskResult exec(SessionRunner runner) {
                     $.log("building the Grails project ...");
 
                     PendingRelease pendingRelease = $.var(releases.pendingRelease);
@@ -110,13 +110,13 @@ public class GrailsPlugin2 extends ServerToolPlugin {
         throw new UnsupportedOperationException("todo GrailsPlugin2.spawnStartWatchDogs");
     }
 
-    public final InstallationTaskDef<ZippedTool> install = new ZippedToolTaskDef<ZippedTool>(new SingleTaskSupplier<ZippedTool>(){
+    public final InstallationTaskDef<ZippedTool> install = new ZippedToolTaskDef<ZippedTool>(new SingleTaskSupplier<Object, TaskResult>(){
 
         @Override
-        public ZippedTool createNewSession(SessionContext $, Task parent, TaskDef<ZippedTool> def) {
+        public Task<Object, TaskResult> createNewSession(SessionContext $, Task<Object, TaskResult> parent, TaskDef<Object, TaskResult> def) {
             return new ZippedTool(parent, (InstallationTaskDef) def, $) {
                 @Override
-                protected DependencyResult exec(SessionRunner runner, Object input) {
+                protected TaskResult exec(SessionRunner runner) {
                     clean();
 
                     download();

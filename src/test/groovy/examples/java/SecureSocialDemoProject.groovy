@@ -85,14 +85,14 @@ public class SecureSocialDemoProject extends BearProject<SecureSocialDemoProject
 
         // this defines the deployment task
         defaultDeployment = deployment.newBuilder()
-            .CheckoutFiles_2({ _, task, i -> _.run(global.tasks.vcsUpdate); } as TaskCallable)
-            .BuildAndCopy_3({ _, task, i -> updateDbConf(_); _.run(play.build); } as TaskCallable)
-            .StopService_5({ _, task, i -> _.run(play.stop); OK; } as TaskCallable)
-            .StartService_8({ _, task, i -> _.run(play.start, play.watchStart); } as TaskCallable)
+            .CheckoutFiles_2({_, task -> _.run(global.tasks.vcsUpdate); } as TaskCallable)
+            .BuildAndCopy_3({_, task -> updateDbConf(_); _.run(play.build); } as TaskCallable)
+            .StopService_5({_, task -> _.run(play.stop); OK; } as TaskCallable)
+            .StartService_8({_, task -> _.run(play.start, play.watchStart); } as TaskCallable)
             .endDeploy()
             .ifRollback()
-            .beforeLinkSwitch({ _, task, input -> _.run(play.stop); } as TaskCallable)
-            .afterLinkSwitch({ _, task, input -> _.run(play.start, play.watchStart); } as TaskCallable)
+            .beforeLinkSwitch({_, task -> _.run(play.stop); } as TaskCallable)
+            .afterLinkSwitch({_, task -> _.run(play.start, play.watchStart); } as TaskCallable)
             .endRollback()
 
         return global;

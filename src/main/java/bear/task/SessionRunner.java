@@ -39,7 +39,7 @@ public class SessionRunner extends HavingContext<SessionRunner, SessionContext>{
 
     public final GlobalContext global;
     public final Bear bear;
-    public Function<Task<TaskDef>, Task<TaskDef>> taskPreRun; //a hack
+    public Function<Task<Object, TaskResult>, Task<Object, TaskResult>> taskPreRun; //a hack
 
     public SessionRunner(SessionContext $, GlobalContext global) {
         super($);
@@ -112,13 +112,13 @@ public class SessionRunner extends HavingContext<SessionRunner, SessionContext>{
         return runResult;
     }
 
-    private TaskResult _runSingleTask(TaskDef<Task> taskDef, boolean thisIsMe) {
+    private TaskResult _runSingleTask(TaskDef<Object, TaskResult> taskDef, boolean thisIsMe) {
         TaskResult result = TaskResult.OK;
         try {
             if (!thisIsMe) {
                 result = runWithDependencies(taskDef);
             } else {
-                List<Task> tasks = taskDef.createNewSessionsAsList($, $.getCurrentTask());
+                List<Task<Object, TaskResult>> tasks = taskDef.createNewSessionsAsList($, $.getCurrentTask());
 
                 for (Task taskSession : tasks) {
                     if(taskSession == Task.nop()) continue;
@@ -147,11 +147,11 @@ public class SessionRunner extends HavingContext<SessionRunner, SessionContext>{
         return result;
     }
 
-    public TaskResult runSession(Task<?> taskSession) {
+    public <I, O extends TaskResult> O runSession(Task<I, O> taskSession) {
         return runSession(taskSession, null);
     }
 
-    public TaskResult runSession(Task<?> taskSession, Object input) {
+    public <I, O extends TaskResult> O runSession(Task<I, O> taskSession, I input) {
         {
             SessionContext taskCtx = taskSession.$();
             boolean sameContexts = taskCtx == null || taskCtx == $;
@@ -179,13 +179,17 @@ public class SessionRunner extends HavingContext<SessionRunner, SessionContext>{
 
         $.setCurrentTask(taskSession);
 
+        O myResult = null;
+
         if(result.ok()){
             taskSession.beforeExec();
-            result = taskSession.run(this, input);
+            myResult = taskSession.run(this, input);
             taskSession.afterExec();
+        } else{
+            myResult = (O) result;
         }
 
-        return result;
+        return myResult;
     }
 
     @Override

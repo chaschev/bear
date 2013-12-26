@@ -43,7 +43,7 @@ import static com.google.common.collect.Iterables.find;
 /**
  * A class that simplifies operations (i.e. installation) of tools like Maven, Grails, Play, Tomcat, etc
  */
-public class ZippedToolPlugin extends Plugin<Task, TaskDef<?>> {
+public class ZippedToolPlugin extends Plugin<Task, TaskDef<Object, TaskResult>> {
 
 
     public final DynamicVariable<String>
@@ -77,19 +77,19 @@ public class ZippedToolPlugin extends Plugin<Task, TaskDef<?>> {
     }
 
 
-    public static class SystemDependencyPlugin extends Plugin<Task, TaskDef<Task>> {
+    public static class SystemDependencyPlugin extends Plugin<Task, TaskDef<Object, TaskResult>> {
         public SystemDependencyPlugin(GlobalContext global) {
             super(global);
         }
 
         @Override
         public InstallationTaskDef<? extends InstallationTask> getInstall() {
-            return new InstallationTaskDef<InstallationTask>(new SingleTaskSupplier() {
+            return new InstallationTaskDef<InstallationTask>(new SingleTaskSupplier<Object, TaskResult>() {
                 @Override
-                public Task createNewSession(SessionContext $, Task parent, TaskDef def) {
-                    return new Task(parent, new TaskCallable<TaskDef>() {
+                public Task<Object, TaskResult> createNewSession(SessionContext $, Task<Object, TaskResult> parent, TaskDef<Object, TaskResult> def) {
+                    return new Task<Object, TaskResult>(parent, new TaskCallable<Object, TaskResult>() {
                         @Override
-                        public TaskResult call(SessionContext $, Task<TaskDef> task, Object input) throws Exception {
+                        public TaskResult call(SessionContext $, Task<Object, TaskResult> task) throws Exception {
 //                            $.sys.getPackageManager()
                             return TaskResult.OK;
                         }
@@ -100,7 +100,7 @@ public class ZippedToolPlugin extends Plugin<Task, TaskDef<?>> {
     }
 
     protected abstract class ZippedTool extends InstallationTask<InstallationTaskDef> {
-        protected ZippedTool(Task<TaskDef> parent, InstallationTaskDef def, SessionContext $) {
+        protected ZippedTool(Task<Object, TaskResult> parent, InstallationTaskDef def, SessionContext $) {
             super(parent, def, $);
 
             addDependency(new Dependency(toString(), $)
@@ -108,9 +108,9 @@ public class ZippedToolPlugin extends Plugin<Task, TaskDef<?>> {
                     "unzip -v | head -n 1",
                     "wget --version | head -n 1"
                 )
-                .setInstaller(new TaskCallable<TaskDef>() {
+                .setInstaller(new TaskCallable<Object, TaskResult>() {
                     @Override
-                    public TaskResult call(SessionContext $, Task<TaskDef> task, Object input) throws Exception {
+                    public TaskResult call(SessionContext $, Task<Object, TaskResult> task) throws Exception {
                         SystemEnvironmentPlugin.PackageManager manager = $.sys.getPackageManager();
 
                         manager.installPackage("unzip").throwIfError();
@@ -123,7 +123,7 @@ public class ZippedToolPlugin extends Plugin<Task, TaskDef<?>> {
         }
 
         @Override
-        protected DependencyResult exec(SessionRunner runner, Object input) {
+        protected TaskResult exec(SessionRunner runner) {
             throw new UnsupportedOperationException("todo implement!");
         }
 

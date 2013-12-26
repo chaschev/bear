@@ -5,8 +5,8 @@ import bear.core.SessionContext;
 /**
 * @author Andrey Chaschev chaschev@gmail.com
 */
-public interface SingleTaskSupplier<TASK extends Task> extends TaskDef.TaskSupplier<TASK> {
-    TASK createNewSession(SessionContext $, final Task parent, TaskDef<TASK> def);
+public interface SingleTaskSupplier<I, O extends TaskResult> extends TaskDef.TaskSupplier {
+    Task<I, O> createNewSession(SessionContext $, final Task<Object, TaskResult> parent, TaskDef<I, O> def);
 
-    public static final SingleTaskSupplier<Task> NOP = Tasks.newSingleTask(TaskCallable.NOP);
+    public static final SingleTaskSupplier<Object, TaskResult> NOP = Tasks.newSingleTask(TaskCallable.NOP);
 }

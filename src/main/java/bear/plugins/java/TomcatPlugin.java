@@ -157,9 +157,9 @@ public class TomcatPlugin extends ServerToolPlugin {
         watchDogGroup.scheduleForcedShutdown($.getGlobal().scheduler, $.var(bear.appStartTimeoutSec), TimeUnit.SECONDS);
     }
 
-    public final TaskDef<Task> deployWar = new TaskDef<Task>(new TaskCallable<TaskDef>() {
+    public final TaskDef<Object, TaskResult> deployWar = new TaskDef<Object, TaskResult>(new TaskCallable<Object, TaskResult>() {
         @Override
-        public TaskResult call(SessionContext $, Task<TaskDef> task, Object input) throws Exception {
+        public TaskResult call(SessionContext $, Task<Object, TaskResult> task) throws Exception {
             String warSourcePath = $.var(releases.activatedRelease).get().path + "/" + $.var(warName);
 
             for (String port : $.var(portsSplit)) {
@@ -177,12 +177,12 @@ public class TomcatPlugin extends ServerToolPlugin {
 
     // todo add                         $.sys.rm(RmInput.newRm($(warCacheDirs)).sudo());
 
-    public final InstallationTaskDef<ZippedTool> install = new ZippedToolTaskDef<ZippedTool>(new SingleTaskSupplier() {
+    public final InstallationTaskDef<ZippedTool> install = new ZippedToolTaskDef<ZippedTool>(new SingleTaskSupplier<Object, TaskResult>() {
         @Override
-        public Task createNewSession(SessionContext $, final Task parent, final TaskDef def) {
+        public Task<Object, TaskResult> createNewSession(SessionContext $, final Task<Object, TaskResult> parent, final TaskDef<Object, TaskResult> def) {
             return new ZippedTool(parent, (InstallationTaskDef) def, $) {
                 @Override
-                protected DependencyResult exec(SessionRunner runner, Object input) {
+                protected TaskResult exec(SessionRunner runner) {
                     clean();
 
                     download();

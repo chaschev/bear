@@ -46,7 +46,7 @@ import static bear.plugins.sh.SystemEnvironmentPlugin.sshPassword;
 /**
  * @author Andrey Chaschev chaschev@gmail.com
  */
-public abstract class SystemSession extends Task<SystemEnvironmentPlugin.SystemSessionDef> implements AbstractConsole {
+public abstract class SystemSession extends Task<Object, TaskResult> implements AbstractConsole {
     public static final String THROW_ON_ERROR = "THROW_ON_ERROR";
     private static final Logger logger = LoggerFactory.getLogger(SystemSession.class);
     public static final Splitter LINE_SPLITTER = Splitter.on("\n").trimResults();
@@ -63,7 +63,7 @@ public abstract class SystemSession extends Task<SystemEnvironmentPlugin.SystemS
 
     @Override
     public <T extends CommandLineResult> T sendCommand(AbstractConsoleCommand<T> command) {
-        Task<?> task = $.getCurrentTask();
+        Task<Object, TaskResult> task = $.getCurrentTask();
 
         task.onCommandExecutionStart(command);
 
@@ -423,7 +423,7 @@ public abstract class SystemSession extends Task<SystemEnvironmentPlugin.SystemS
         }
     }
 
-    protected TaskResult exec(SessionRunner runner, Object input) {
+    protected TaskResult exec(SessionRunner runner) {
         throw new UnsupportedOperationException("todo .exec");
     }
 

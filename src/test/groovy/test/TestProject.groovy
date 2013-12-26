@@ -67,14 +67,14 @@ public class TestProject extends BearProject<TestProject> {
     DeploymentPlugin.Builder newDefaultDeployment()
     {
         return deployment.newBuilder()
-            .CheckoutFiles_2({ _, task, i -> println "HEHEHE"; OK } as TaskCallable)
-            .BuildAndCopy_3({ _, task, i -> } as TaskCallable)
-            .StopService_5({ _, task, i -> OK; } as TaskCallable)
-            .StartService_8({ _, task, i -> OK; } as TaskCallable)
+            .CheckoutFiles_2({_, task -> OK } as TaskCallable)
+            .BuildAndCopy_3({_, task -> } as TaskCallable)
+            .StopService_5({_, task -> OK; } as TaskCallable)
+            .StartService_8({_, task -> OK; } as TaskCallable)
             .endDeploy()
             .ifRollback()
-            .beforeLinkSwitch({ _, task, input -> OK; } as TaskCallable)
-            .afterLinkSwitch({ _, task, input -> OK; } as TaskCallable)
+            .beforeLinkSwitch({_, task -> OK; } as TaskCallable)
+            .afterLinkSwitch({_, task -> OK; } as TaskCallable)
             .endRollback()
     }
 
@@ -94,7 +94,7 @@ public class TestProject extends BearProject<TestProject> {
 
         def setupNeeded = new AtomicBoolean(false)
 
-        test.run([{ _, task, i ->
+        test.run([{_, task ->
             if (!_.sys.exists(_.var(_.bear.applicationPath))) {
                 setupNeeded.set(true)
             }
@@ -117,12 +117,11 @@ public class TestProject extends BearProject<TestProject> {
 
     private static errorInAll_Checkout(TestProject test)
     {
-
         given(test)
 
         def hosts = test.global.var(test.bear.getStage).addresses.collect { it.name }
 
-        test.getDefaultDeployment().CheckoutFiles_2().setTaskCallable("checkout", { _, task, input ->
+        test.getDefaultDeployment().CheckoutFiles_2().setTaskCallable("checkout", {_, task ->
             return TaskResult.error("error on ${_.sys.name}");
         } as TaskCallable);
 
@@ -140,8 +139,6 @@ public class TestProject extends BearProject<TestProject> {
             (hosts[0]): [pendingCount: 1, releasesCount: 1],
             (hosts[1]): [pendingCount: 1, releasesCount: 1]
         ]);
-
-
     }
 
     private static errorInOne_Start(TestProject test)
@@ -151,7 +148,7 @@ public class TestProject extends BearProject<TestProject> {
 
         AtomicReference<Release> currentRelease = new AtomicReference<>(null)
 
-        test.run([{ _, task, input ->
+        test.run([{_, task ->
             currentRelease.set(_.var(test.releases.session).currentRelease.get())
             OK
         } as TaskCallable]).throwIfAnyFailed()
@@ -160,7 +157,7 @@ public class TestProject extends BearProject<TestProject> {
 
         //WHEN
 
-        test.getDefaultDeployment().startService.setTaskCallable("start", { _, task, input ->
+        test.getDefaultDeployment().startService.setTaskCallable("start", {_, task ->
             return task.phaseParty.index == 0 ?  TaskResult.error("error on ${_.sys.name}") : OK;
         } as TaskCallable);
 
@@ -179,7 +176,7 @@ public class TestProject extends BearProject<TestProject> {
             (hosts[1]): [pendingCount: 0, releasesCount: 2]
         ]);
 
-        test.run([{ _, task, input ->
+        test.run([{_, task ->
             // optimistic deployment: few will fall
             // manual rollback in case it's different
             if(_.name == hosts[0]){
@@ -196,7 +193,7 @@ public class TestProject extends BearProject<TestProject> {
 
         AtomicReference<Release> currentRelease = new AtomicReference<>(null)
 
-        test.run([{ _, task, input ->
+        test.run([{_, task ->
             currentRelease.set(_.var(test.releases.session).currentRelease.get())
             OK
         } as TaskCallable]).throwIfAnyFailed()
@@ -205,7 +202,7 @@ public class TestProject extends BearProject<TestProject> {
 
         //WHEN
 
-        test.getDefaultDeployment().checkoutFiles.setTaskCallable("checkout", { _, task, input ->
+        test.getDefaultDeployment().checkoutFiles.setTaskCallable("checkout", {_, task ->
             return task.phaseParty.index == 0 ?  TaskResult.error("error on ${_.sys.name}") : OK;
         } as TaskCallable);
 
@@ -224,7 +221,7 @@ public class TestProject extends BearProject<TestProject> {
             (hosts[1]): [pendingCount: 0, releasesCount: 1]
         ]);
 
-        test.run([{ _, task, input ->
+        test.run([{_, task ->
             assertThat(_.var(test.releases.session).currentRelease.get().path).isEqualTo(currentRelease.get().path)
             OK
         } as TaskCallable]).throwIfAnyFailed()
@@ -232,7 +229,7 @@ public class TestProject extends BearProject<TestProject> {
 
     private static assertReleasesCount(TestProject test, Map<String, Map> map)
     {
-        test.run([{ _, task, i ->
+        test.run([{_, task ->
             final List<String> dirs = _.sys.lsQuick(_.var(test.releases.path))
 
 
@@ -249,7 +246,7 @@ public class TestProject extends BearProject<TestProject> {
         test.defaultDeployment = test
             .newDefaultDeployment()
 
-        test.run([{ _, task, i ->
+        test.run([{_, task ->
             _.sys.rm(_.var(test.releases.path)).run()
         } as TaskCallable])
 

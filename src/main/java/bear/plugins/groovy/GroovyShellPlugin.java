@@ -21,10 +21,7 @@ import bear.annotations.Shell;
 import bear.plugins.Plugin;
 import bear.session.DynamicVariable;
 import bear.session.Variables;
-import bear.task.InstallationTask;
-import bear.task.InstallationTaskDef;
-import bear.task.Task;
-import bear.task.TaskDef;
+import bear.task.*;
 
 /**
  * @author Andrey Chaschev chaschev@gmail.com
@@ -39,7 +36,7 @@ public class GroovyShellPlugin extends Plugin {
         this.shell = global.wire(new GroovyShellMode(this, cmdAnnotation()));
     }
 
-    public GroovyShellPlugin(GlobalContext global, TaskDef<? extends Task> taskDef) {
+    public GroovyShellPlugin(GlobalContext global, TaskDef<Object, TaskResult> taskDef) {
         super(global, taskDef);
     }
 

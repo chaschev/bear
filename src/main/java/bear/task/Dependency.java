@@ -30,14 +30,14 @@ import java.util.List;
 /**
  * @author Andrey Chaschev chaschev@gmail.com
  */
-public class Dependency extends Task<TaskDef> {
+public class Dependency extends Task<Object, TaskResult> {
 
     String name;
     String actual;
 
     List<Check> checks = new ArrayList<Check>();
 
-    TaskCallable<TaskDef> installer;
+    TaskCallable<Object, TaskResult> installer;
 
     public static DependencyResult checkDeps(Iterable<Dependency> transform) {
         DependencyResult r = new DependencyResult(Result.OK);
@@ -85,7 +85,7 @@ public class Dependency extends Task<TaskDef> {
 
     public TaskResult install() {
         try {
-            return installer.call($, this, null);
+            return installer.call($, this);
         } catch (Exception e) {
             return new TaskResult(e);
         }
@@ -123,7 +123,7 @@ public class Dependency extends Task<TaskDef> {
         }
     }
 
-    public Dependency setInstaller(TaskCallable<TaskDef> installer) {
+    public Dependency setInstaller(TaskCallable<Object, TaskResult> installer) {
         this.installer = installer;
         return this;
     }
@@ -143,7 +143,7 @@ public class Dependency extends Task<TaskDef> {
         this.name = name;
     }
 
-    public Dependency(TaskDef def, String name, SessionContext $, Task<TaskDef> parent) {
+    public Dependency(TaskDef def, String name, SessionContext $, Task<Object, TaskResult> parent) {
         super(parent,def, $);
 
         this.name = name;
@@ -221,7 +221,7 @@ public class Dependency extends Task<TaskDef> {
     }
 
     @Override
-    protected DependencyResult exec(SessionRunner runner, Object input) {
+    protected TaskResult exec(SessionRunner runner) {
         return checkDeps();
     }
 

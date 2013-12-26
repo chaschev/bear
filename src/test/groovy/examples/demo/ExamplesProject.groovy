@@ -34,7 +34,7 @@ public class ExamplesProject extends BearProject<ExamplesProject> {
         return global;
     }
 
-    static TaskCallable fileOperations = { _, task, i ->
+    static TaskCallable fileOperations = {_, task ->
         final user = _.var(_.bear.sshUsername)
 
         println "${_.host}: ${_.sys.fileSizeAsLong('texty')}";

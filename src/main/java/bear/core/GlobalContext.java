@@ -27,10 +27,7 @@ import bear.plugins.sh.GenericUnixLocalEnvironmentPlugin;
 import bear.plugins.sh.GenericUnixRemoteEnvironmentPlugin;
 import bear.plugins.sh.SystemSession;
 import bear.session.LocalAddress;
-import bear.task.SessionRunner;
-import bear.task.Task;
-import bear.task.TaskDef;
-import bear.task.Tasks;
+import bear.task.*;
 import com.google.common.base.Optional;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.ListeningScheduledExecutorService;
@@ -206,7 +203,7 @@ public class GlobalContext extends AppGlobalContext<GlobalContext, Bear> {
         return plugins.get(pluginClass);
     }
 
-    public <T extends Plugin> Task<TaskDef> newPluginSession(Class<T> pluginClass, SessionContext $, Task<?> parentTask) {
+    public <T extends Plugin> Task<Object, TaskResult> newPluginSession(Class<T> pluginClass, SessionContext $, Task<Object, TaskResult> parentTask) {
         return plugins.getSessionContext(pluginClass, $, parentTask);
     }
 

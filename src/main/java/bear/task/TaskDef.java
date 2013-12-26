@@ -16,11 +16,8 @@
 
 package bear.task;
 
-import bear.context.Fun;
 import bear.core.Role;
 import bear.core.SessionContext;
-import bear.session.DynamicVariable;
-import bear.session.Variables;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
@@ -33,7 +30,7 @@ import java.util.*;
  */
 
 
-public class TaskDef<TASK extends Task>{
+public class TaskDef<I, O extends TaskResult>{
     String name;
     public String description;
 
@@ -41,29 +38,30 @@ public class TaskDef<TASK extends Task>{
 
     Set<Role> roles = new HashSet<Role>();
 
-    List<TaskDef<Task>> beforeTasks = new ArrayList<TaskDef<Task>>();
-    List<TaskDef<Task>> afterTasks = new ArrayList<TaskDef<Task>>();
-    List<TaskDef<Task>> dependsOnTasks = new ArrayList<TaskDef<Task>>();
-    private final MultitaskSupplier<TASK> multitaskSupplier;
+    List<TaskDef<Object, TaskResult>> beforeTasks = new ArrayList<TaskDef<Object, TaskResult>>();
+    List<TaskDef<Object, TaskResult>> afterTasks = new ArrayList<TaskDef<Object, TaskResult>>();
+    List<TaskDef<Object, TaskResult>> dependsOnTasks = new ArrayList<TaskDef<Object, TaskResult>>();
 
-    TaskDef<Task> rollback;
+    private final MultitaskSupplier multitaskSupplier;
 
-    private final SingleTaskSupplier<TASK> singleTaskSupplier;
+    TaskDef<Object, TaskResult> rollback;
 
-    public TaskDef(TaskCallable<TaskDef> callable) {
-        this(Tasks.<TASK>newSingleTask(callable));
+    private final SingleTaskSupplier<I, O> singleTaskSupplier;
+
+    public TaskDef(TaskCallable<I, O> callable) {
+        this(Tasks.<I, O>newSingleTask(callable));
     }
 
-    public TaskDef(String name, TaskCallable<TaskDef> callable) {
-        this(Tasks.<TASK>newSingleTask(callable));
+    public TaskDef(String name, TaskCallable<I, O> callable) {
+        this(Tasks.<I,O>newSingleTask(callable));
         this.name = name;
     }
 
-    public TaskDef(SingleTaskSupplier<TASK> singleTaskSupplier) {
+    public TaskDef(SingleTaskSupplier<I, O> singleTaskSupplier) {
         this(null, singleTaskSupplier);
     }
 
-    public TaskDef(String name, SingleTaskSupplier<TASK> singleTaskSupplier) {
+    public TaskDef(String name, SingleTaskSupplier<I, O> singleTaskSupplier) {
         this(null, singleTaskSupplier, null);
         this.name = name;
     }
@@ -72,7 +70,7 @@ public class TaskDef<TASK extends Task>{
         this(name, null, multitaskSupplier);
     }
 
-    public TaskDef(String name, SingleTaskSupplier<TASK> singleTaskSupplier, MultitaskSupplier<TASK> multitaskSupplier) {
+    public TaskDef(String name, SingleTaskSupplier<I, O> singleTaskSupplier, MultitaskSupplier multitaskSupplier) {
         this.name = name;
         this.singleTaskSupplier = singleTaskSupplier;
         this.multitaskSupplier = multitaskSupplier;
@@ -94,10 +92,10 @@ public class TaskDef<TASK extends Task>{
     }
 
 
-    private TASK createNewSession(SessionContext $, final Task parent){
+    private Task<I, O> createNewSession(SessionContext $, final Task parent){
         Preconditions.checkArgument(!isMultitask(), "task is not multi");
 
-        TASK task = singleTaskSupplier.createNewSession($, parent, this);
+        Task task = singleTaskSupplier.createNewSession($, parent, this);
 
         task.wire($);
 
@@ -111,14 +109,14 @@ public class TaskDef<TASK extends Task>{
         return TaskResult.OK;
     }
 
-    private List<TASK> createNewSessions(SessionContext $, final Task parent){
+    private List<Task> createNewSessions(SessionContext $, final Task parent){
         Preconditions.checkArgument(isMultitask(), "task is multi");
 
-        List<TaskDef<Task>> defs = multitaskSupplier.getTaskDefs();
-        List<TASK> tasks = new ArrayList<TASK>();
+        List<TaskDef<Object, TaskResult>> defs = multitaskSupplier.getTaskDefs();
+        List<Task> tasks = new ArrayList<Task>();
 
-        for (TaskDef<Task> def : defs) {
-            TASK task = (TASK) def.createNewSession($, parent).wire($);
+        for (TaskDef<Object, TaskResult> def : defs) {
+            Task task = (Task) def.createNewSession($, parent).wire($);
 
             tasks.add(task);
         }
@@ -126,35 +124,35 @@ public class TaskDef<TASK extends Task>{
         return tasks;
     }
 
-    public TaskDef<TASK> setName(String name) {
+    public TaskDef<I, O> setName(String name) {
         this.name = name;
         return this;
     }
 
-    public static interface TaskSupplier<TASK extends Task>{
+    public static interface TaskSupplier {
 
     }
 
-    public List<TASK> createNewSessionsAsList(SessionContext $, final Task parent){
+    public List<Task<Object, TaskResult>> createNewSessionsAsList(SessionContext $, final Task parent){
         if(isMultitask()){
-            return createNewSessions($, parent);
+            return (List)createNewSessions($, parent);
         }else{
-            return Collections.singletonList(createNewSession($, parent));
+            return (List)Collections.singletonList(createNewSession($, parent));
         }
     }
 
-    public SingleTaskSupplier<TASK> singleTaskSupplier(){
+    public SingleTaskSupplier<I, O> singleTaskSupplier(){
         Preconditions.checkArgument(!isMultitask(), "task is multi");
 
-        return new SingleTaskSupplier<TASK>() {
+        return new SingleTaskSupplier<I, O>() {
             @Override
-            public TASK createNewSession(SessionContext $, Task parent, TaskDef<TASK> def) {
+            public Task<I, O> createNewSession(SessionContext $, Task<Object, TaskResult> parent, TaskDef<I, O> def) {
                 return TaskDef.this.createNewSession($, parent);
             }
         };
     }
 
-    public MultitaskSupplier<TASK> multitaskSupplier(){
+    public MultitaskSupplier multitaskSupplier(){
         Preconditions.checkArgument(isMultitask(), "task is not multi");
 
         return multitaskSupplier;
@@ -164,23 +162,23 @@ public class TaskDef<TASK extends Task>{
         return !Sets.intersection(this.roles, roles).isEmpty();
     }
 
-    public TaskDef depends(Task<TaskDef>... tasks) {
+    public TaskDef depends(Task<Object, TaskResult>... tasks) {
         Collections.addAll((List) dependsOnTasks, tasks);
 
         return this;
     }
 
-    public TaskDef<TASK> before(String name, TaskCallable<TaskDef> callable) {
-        beforeTasks.add(new TaskDef<Task>(name, callable));
+    public TaskDef<I, O> before(String name, TaskCallable<Object, TaskResult> callable) {
+        beforeTasks.add(new TaskDef<Object, TaskResult>(name, callable));
         return this;
     }
 
-    public TaskDef<TASK> before(TaskCallable<TaskDef> callable) {
-        beforeTasks.add(new TaskDef<Task>(callable));
+    public TaskDef<I, O> before(TaskCallable<Object, TaskResult> callable) {
+        beforeTasks.add(new TaskDef<Object, TaskResult>(callable));
         return this;
     }
 
-    public TaskDef<TASK> addBeforeTask(TaskDef<Task> task) {
+    public TaskDef<I, O> addBeforeTask(TaskDef<Object, TaskResult> task) {
         beforeTasks.add(task);
         return this;
     }
@@ -221,9 +219,9 @@ public class TaskDef<TASK extends Task>{
         return this;
     }
 
-    public static final TaskDef EMPTY = new TaskDef<Task>("EMPTY", SingleTaskSupplier.NOP);
+    public static final TaskDef EMPTY = new TaskDef<Object, TaskResult>("EMPTY", SingleTaskSupplier.NOP);
 
-    public static final TaskDef ROOT = new TaskDef<Task>("ROOT", SingleTaskSupplier.NOP);
+    public static final TaskDef ROOT = new TaskDef<Object, TaskResult>("ROOT", SingleTaskSupplier.NOP);
 
     public Set<Role> getRoles() {
         return roles;
@@ -247,59 +245,59 @@ public class TaskDef<TASK extends Task>{
 
     //the purpose is to lazy-initialize this factory
     //memoize is required because task is single, sub-taskdefs are created in a single thread...
-    protected final Supplier<List<TaskDef<TASK>>> multiDefsSupplier = Suppliers.memoize(new Supplier<List<TaskDef<TASK>>>() {
+    protected final Supplier<List<TaskDef<Object, TaskResult>>> multiDefsSupplier = Suppliers.memoize(new Supplier<List<TaskDef<Object, TaskResult>>>() {
         @Override
-        public List<TaskDef<TASK>> get() {
-            final TaskDef<TASK> enclosingTaskDef = TaskDef.this;
+        public List<TaskDef<Object, TaskResult>> get() {
+            final TaskDef<I, O> enclosingTaskDef = TaskDef.this;
 
-            MultitaskSupplier<TASK> multitaskSupplier = multitaskSupplier();
-            List<TaskDef<TASK>> taskDefs = new ArrayList<TaskDef<TASK>>(multitaskSupplier.size());
+            MultitaskSupplier multitaskSupplier = multitaskSupplier();
+            List<TaskDef<Object, TaskResult>> taskDefs = new ArrayList<TaskDef<Object, TaskResult>>(multitaskSupplier.size());
 
             //attached to a task def, value memoized in a session
-            final DynamicVariable<List<TASK>> taskListInASession = Variables.dynamic(new Fun<SessionContext, List<TASK>>() {
-                @Override
-                public List<TASK> apply(SessionContext $) {
-                    // LoggerFactory.getLogger("log").info("created tasks: {}, $: {}, @{}", tasks, $.getName(), System.identityHashCode(list));
-
-                    return enclosingTaskDef.multitaskSupplier().createNewSessions($, $.getCurrentTask());
-                }
-            })  .setName(enclosingTaskDef.getName())
-                .memoizeIn(SessionContext.class);
+//            final DynamicVariable<List<Task<Object, TaskResult>>> taskListInASession = Variables.dynamic(new Fun<SessionContext, List<Task<Object, TaskResult>>>() {
+//                @Override
+//                public List<Task<Object, TaskResult>> apply(SessionContext $) {
+//                    // LoggerFactory.getLogger("log").info("created tasks: {}, $: {}, @{}", tasks, $.getName(), System.identityHashCode(list));
+//
+//                    return enclosingTaskDef.multitaskSupplier().createNewSessions($, $.getCurrentTask());
+//                }
+//            })  .setName(enclosingTaskDef.getName())
+//                .memoizeIn(SessionContext.class);
 
             // "for this task def"
             // "in this session"
             // multitask is created once
 
-            for (int i = 0; i < multitaskSupplier.size(); i++) {
-                final int finalI = i;
-
-                final TaskDef<TASK> taskDef = new TaskDef<TASK>(new SingleTaskSupplier<TASK>() {
-                    @Override
-                    public TASK createNewSession(SessionContext $, Task parent, TaskDef<TASK> def) {
-                        Task.wrongThreadCheck($);
-
-                        List<TASK> tasks = $.var(taskListInASession);
-
-                        return tasks.get(finalI);
-                    }
-                });
-
-
-
-                taskDefs.add(taskDef);
-            }
+//            for (int i = 0; i < multitaskSupplier.size(); i++) {
+//                final int finalI = i;
+//
+//                final TaskDef<Object, TaskResult> taskDef = new TaskDef<Object, TaskResult>(new SingleTaskSupplier<Object, TaskResult>() {
+//                    @Override
+//                    public Task<Object, TaskResult> createNewSession(SessionContext $, Task<Object, TaskResult> parent, TaskDef<Object, TaskResult> def) {
+//                        Task.wrongThreadCheck($);
+//
+//                        List<Task<Object, TaskResult>> tasks = $.var(taskListInASession);
+//
+//                        return tasks.get(finalI);
+//                    }
+//                });
+//
+//
+//
+//                taskDefs.add(taskDef);
+//            }
 
             return taskDefs;
         }
     });
 
-    public List<TaskDef<TASK>> asList(){
+    public List<TaskDef<Object, TaskResult>> asList(){
         Preconditions.checkArgument(isMultitask(), "task is not multi");
 
         return (List) Collections.unmodifiableList(multitaskSupplier.getTaskDefs());
     }
 
-    public TaskDef<TASK> onRollback(TaskDef<Task> rollback) {
+    public TaskDef<I, O> onRollback(TaskDef<Object, TaskResult> rollback) {
         this.rollback = rollback;
         return this;
     }
@@ -308,7 +306,7 @@ public class TaskDef<TASK extends Task>{
         return classNameToTaskName(getClass().getSimpleName()).toString();
     }
 
-    public TaskDef<Task> getRollback() {
+    public TaskDef<Object, TaskResult> getRollback() {
         return rollback;
     }
 }

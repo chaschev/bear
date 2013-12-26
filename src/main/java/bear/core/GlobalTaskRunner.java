@@ -36,10 +36,10 @@ public class GlobalTaskRunner {
     private final Bear bear;
     private final BearProject bearSettings;
 
-    List<TaskDef<Task>> taskDefs;
+    List<TaskDef<Object, TaskResult>> taskDefs;
     private final List<SessionContext> $s;
 
-    ComputingGrid<SessionContext, BearScriptPhase> grid;
+    ComputingGrid<SessionContext, BearScriptPhase<Object, TaskResult>> grid;
 
     private final long startedAtMs = System.currentTimeMillis();
     private final GlobalContext global;
@@ -52,7 +52,7 @@ public class GlobalTaskRunner {
     public final DynamicVariable<Stats> stats;
     public final DynamicVariable<AtomicInteger> arrivedCount = Variables.newVar(new AtomicInteger(0));
 
-    public GlobalTaskRunner(final GlobalContext global, List<Phase<TaskResult, BearScriptPhase>> phaseList, final PreparationResult preparationResult) {
+    public GlobalTaskRunner(final GlobalContext global, List<Phase<TaskResult, BearScriptPhase<Object, TaskResult>>> phaseList, final PreparationResult preparationResult) {
         this.global = global;
         this.shellContext = new BearScriptRunner.ShellSessionContext();
         this.bear = global.bear;
@@ -69,11 +69,11 @@ public class GlobalTaskRunner {
             }
         });
 
-        grid = new ComputingGrid<SessionContext, BearScriptPhase>(phaseList, $s);
+        grid = new ComputingGrid<SessionContext, BearScriptPhase<Object, TaskResult>>(phaseList, $s);
 
-        grid.setPhaseEnterListener(new ComputingGrid.PartyListener<BearScriptPhase, SessionContext>() {
+        grid.setPhaseEnterListener(new ComputingGrid.PartyListener<BearScriptPhase<Object, TaskResult>, SessionContext>() {
             @Override
-            public void handle(Phase<?, BearScriptPhase> phase, PhaseParty<SessionContext, BearScriptPhase> party) {
+            public void handle(Phase<?, BearScriptPhase<Object, TaskResult>> phase, PhaseParty<SessionContext, BearScriptPhase<Object, TaskResult>> party) {
                 ui.info(new NewPhaseConsoleEventToUI("shell", shellContext.sessionId, phase.getPhase().id));
                 ui.info(new TaskConsoleEventToUI("shell", "step " + phase.getName() + "(" + phase.getPhase().id + ")", phase.getPhase().id)
                      .setId(phase.getPhase().id)
@@ -82,9 +82,9 @@ public class GlobalTaskRunner {
             }
         });
 
-        grid.setPartyFinishListener(new ComputingGrid.PartyListener<BearScriptPhase, SessionContext>() {
+        grid.setPartyFinishListener(new ComputingGrid.PartyListener<BearScriptPhase<Object, TaskResult>, SessionContext>() {
             @Override
-            public void handle(Phase<?, BearScriptPhase> phase, PhaseParty<SessionContext, BearScriptPhase> party) {
+            public void handle(Phase<?, BearScriptPhase<Object, TaskResult>> phase, PhaseParty<SessionContext, BearScriptPhase<Object, TaskResult>> party) {
                 String name = phase.getPhase().getName();
                 if(party.failed()){
                     SessionContext.ui.error(new NoticeEventToUI(
@@ -150,7 +150,7 @@ public class GlobalTaskRunner {
         });
     }
 
-    public ComputingGrid<SessionContext, BearScriptPhase> getGrid() {
+    public ComputingGrid<SessionContext, BearScriptPhase<Object, TaskResult>> getGrid() {
         return grid;
     }
 

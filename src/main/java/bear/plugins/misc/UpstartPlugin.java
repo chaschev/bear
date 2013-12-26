@@ -38,18 +38,18 @@ public class UpstartPlugin extends Plugin {
 
     }
 
-    public final TaskDef<Task> create = new TaskDef<Task>(new SingleTaskSupplier<Task>() {
+    public final TaskDef<UpstartServices, TaskResult> create = new TaskDef<UpstartServices, TaskResult>(new SingleTaskSupplier<UpstartServices, TaskResult>() {
         @Override
-        public Task createNewSession(SessionContext $, Task parent, TaskDef<Task> def) {
-            return new Task(parent, new TaskCallable<TaskDef>() {
+        public Task<UpstartServices, TaskResult> createNewSession(SessionContext $, Task<Object, TaskResult> parent, TaskDef<UpstartServices, TaskResult> def) {
+            return new Task<UpstartServices, TaskResult>(parent, new TaskCallable<UpstartServices, TaskResult>() {
                 @Override
-                public TaskResult call(SessionContext $, Task task, Object input) throws Exception {
-                    UpstartServices upstartServices = (UpstartServices) input;
-                    Preconditions.checkNotNull(upstartServices, "You need to specify upstart services.");
+                public TaskResult call(SessionContext $, Task<UpstartServices, TaskResult> task) throws Exception {
+                    UpstartServices services = task.getInput();
+                    Preconditions.checkNotNull(services, "You need to specify upstart services.");
 
                     StringBuilder sb = new StringBuilder();
 
-                    for (UpstartService service : upstartServices.services) {
+                    for (UpstartService service : services.services) {
                         sb.setLength(0);
 
                         for (Map.Entry<String, String> e : service.exportVars.entrySet()) {
@@ -78,21 +78,20 @@ public class UpstartPlugin extends Plugin {
                                 "script\n" +
                                 "    " + service.script + "\n" +
                                 "end script\n" +
-                                section(service.custom)
-                            ;
+                                section(service.custom);
 
                         $.sys.writeString(text).toPath("/etc/init/" + service.name + ".conf").sudo().withPermissions("u+x,g+x,o+x").ifDiffers().run();
                     }
 
-                    Optional<String> groupName = upstartServices.groupName;
+                    Optional<String> groupName = services.groupName;
 
-                    if(groupName.isPresent()){
-                        for(String command : new String[]{"start", "stop", "status", "restart"}){
+                    if (groupName.isPresent()) {
+                        for (String command : new String[]{"start", "stop", "status", "restart"}) {
                             String scriptName = groupName.get() + "-" + command;
 
                             String text = "";
 
-                            for (UpstartService service : upstartServices.services) {
+                            for (UpstartService service : services.services) {
                                 text += "sudo " + $.sys.getOsInfo().getHelper().upstartCommand(service.name, command) + "\n";
                             }
 
@@ -102,7 +101,7 @@ public class UpstartPlugin extends Plugin {
                                 .withPermissions("u+x,g+x,o+x")
                                 .run();
 
-                            if(!r.ok()){
+                            if (!r.ok()) {
                                 return r;
                             }
                         }

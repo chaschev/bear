@@ -28,45 +28,45 @@ public class GridBuilder {
     //globalRunner is inject on execution
     final MutableSupplier<GlobalTaskRunner> globalRunner = new MutableSupplier<GlobalTaskRunner>();
 
-    List<Phase<TaskResult, BearScriptPhase>> phases = new ArrayList<Phase<TaskResult, BearScriptPhase>>();
+    List<Phase<TaskResult, BearScriptPhase<Object, TaskResult>>> phases = new ArrayList<Phase<TaskResult, BearScriptPhase<Object, TaskResult>>>();
     private Map<Object, Object> variables;
 
     protected BearProject project;
     private boolean shutdownAfterRun = true;
 
-    public GridBuilder add(final TaskDef<Task> taskDef){
+    public GridBuilder add(final TaskDef<Object, TaskResult> taskDef){
         _addTask(taskDef);
 
         return this;
     }
 
-    public Phase<TaskResult, BearScriptPhase> addSingle(SingleTaskSupplier<Task> supplier){
-        return _addTask(new TaskDef<Task>(supplier)).get(0);
+    public Phase<TaskResult, BearScriptPhase<Object, TaskResult>> addSingle(SingleTaskSupplier<Object, TaskResult> supplier){
+        return _addTask(new TaskDef<Object, TaskResult>(supplier)).get(0);
     }
 
-    public GridBuilder add(TaskCallable<TaskDef> callable){
+    public GridBuilder add(TaskCallable<Object, TaskResult> callable){
         return add(Tasks.newSingleTask(callable));
     }
 
-    public GridBuilder add(SingleTaskSupplier<Task> supplier){
-        _addTask(new TaskDef<Task>(supplier)).get(0);
+    public GridBuilder add(SingleTaskSupplier<Object, TaskResult> supplier){
+        _addTask(new TaskDef<Object, TaskResult>(supplier)).get(0);
         return this;
     }
 
-    public Phase<TaskResult, BearScriptPhase> addSingleTask(final TaskDef<Task> taskDef){
+    public Phase<TaskResult, BearScriptPhase<Object, TaskResult>> addSingleTask(final TaskDef<Object, TaskResult> taskDef){
         Preconditions.checkArgument(!taskDef.isMultitask(), "expecting a single task");
 
         return _addTask(taskDef).get(0);
     }
 
-    public List<Phase<TaskResult, BearScriptPhase>> addMultitask(final TaskDef<Task> taskDef){
+    public List<Phase<TaskResult, BearScriptPhase<Object, TaskResult>>> addMultitask(final TaskDef<Object, TaskResult> taskDef){
         Preconditions.checkArgument(taskDef.isMultitask(), "expecting a multi task");
 
         return _addTask(taskDef);
     }
 
-    protected List<Phase<TaskResult, BearScriptPhase>> _addTask(final TaskDef<Task> taskDef){
-        List<TaskDef<Task>> listOfDefs;
+    protected List<Phase<TaskResult, BearScriptPhase<Object, TaskResult>>> _addTask(final TaskDef<Object, TaskResult> taskDef){
+        List<TaskDef<Object, TaskResult>> listOfDefs;
 
         if (taskDef.isMultitask()) {
             listOfDefs = taskDef.asList();
@@ -74,23 +74,23 @@ public class GridBuilder {
             listOfDefs = Collections.singletonList(taskDef);
         }
 
-        List<Phase<TaskResult, BearScriptPhase>> subPhases = new ArrayList<Phase<TaskResult, BearScriptPhase>>();
+        List<Phase<TaskResult, BearScriptPhase<Object, TaskResult>>> subPhases = new ArrayList<Phase<TaskResult, BearScriptPhase<Object, TaskResult>>>();
 
         //for multitasks verifications are applied only for the first task
         boolean isFirstCallable = true;
 
-        for (final TaskDef<Task> def : listOfDefs) {
+        for (final TaskDef<Object, TaskResult> def : listOfDefs) {
 
             final boolean isFirstCallableFinal = isFirstCallable;
 
-            subPhases.add(new Phase<TaskResult, BearScriptPhase>(new BearScriptPhase(def, null, GlobalTaskRunner.createGroupDivider()),
-                new Function<Integer, PhaseCallable<SessionContext, TaskResult, BearScriptPhase>>() {
+            subPhases.add(new Phase<TaskResult, BearScriptPhase<Object, TaskResult>>(new BearScriptPhase<Object, TaskResult>(def, null, GlobalTaskRunner.createGroupDivider()),
+                new Function<Integer, PhaseCallable<SessionContext, TaskResult, BearScriptPhase<Object, TaskResult>>>() {
                 @Override
-                public PhaseCallable<SessionContext, TaskResult, BearScriptPhase> apply(final Integer partyIndex) {
+                public PhaseCallable<SessionContext, TaskResult, BearScriptPhase<Object, TaskResult>> apply(final Integer partyIndex) {
 
-                    return new PhaseCallable<SessionContext, TaskResult, BearScriptPhase>() {
+                    return new PhaseCallable<SessionContext, TaskResult, BearScriptPhase<Object, TaskResult>>() {
                         @Override
-                        public TaskResult call(final PhaseParty<SessionContext, BearScriptPhase> party, int phaseIndex, final Phase<?, BearScriptPhase> phase) throws Exception {
+                        public TaskResult call(final PhaseParty<SessionContext, BearScriptPhase<Object, TaskResult>> party, int phaseIndex, final Phase<TaskResult, BearScriptPhase<Object, TaskResult>> phase) throws Exception {
                             final List<SessionContext> $s = globalRunner.get().getSessions();
 
                             // this is ugly and I know it
@@ -115,11 +115,12 @@ public class GridBuilder {
 
                                         //todo replace with insideInstallation? - no!
                                         if (!taskDef.isSetupTask()) {
-                                            InstallationTaskDef<? extends InstallationTask> installTask = plugin.getInstall();
-
-                                            Dependency dependency = installTask
+                                            InstallationTaskDef<? extends InstallationTask> installTaskDef = plugin.getInstall();
+                                            InstallationTask session = (InstallationTask) installTaskDef
                                                 .singleTaskSupplier()
-                                                .createNewSession($, $.currentTask, (TaskDef) installTask)
+                                                .createNewSession($, $.currentTask, installTaskDef);
+
+                                            Dependency dependency = session
                                                 .asInstalledDependency();
 
                                             result = $.runner.runSession(dependency);
@@ -133,9 +134,9 @@ public class GridBuilder {
                                     }
                                 }
 
-                                $.runner.taskPreRun = new Function<Task<TaskDef>, Task<TaskDef>>() {
+                                $.runner.taskPreRun = new Function<Task<Object, TaskResult>, Task<Object, TaskResult>>() {
                                     @Override
-                                    public Task<TaskDef> apply(Task<TaskDef> task) {
+                                    public Task<Object, TaskResult> apply(Task<Object, TaskResult> task) {
                                         task.init(phase, party, party.grid, globalRunner.get());
 
                                         return task;
@@ -190,15 +191,15 @@ public class GridBuilder {
     }
 
     public GridBuilder addAll(List<? extends TaskDef> taskList) {
-        for (TaskDef<Task> def : taskList) {
+        for (TaskDef<Object, TaskResult> def : taskList) {
             add(def);
         }
 
         return this;
     }
 
-    public List<Phase<TaskResult, BearScriptPhase>> build() {
-        List<Phase<TaskResult, BearScriptPhase>> r = phases;
+    public List<Phase<TaskResult, BearScriptPhase<Object, TaskResult>>> build() {
+        List<Phase<TaskResult, BearScriptPhase<Object, TaskResult>>> r = phases;
 //        phases = null;
         return r;
     }

@@ -209,45 +209,45 @@ public abstract class BearProject<SELF extends BearProject> {
         return gb;
     }
 
-    public TaskDef<Task> newDeployTask(){
+    public TaskDef<Object, TaskResult> newDeployTask(){
         checkDeployment();
         return defaultDeployment.build();
     }
 
-    protected List<TaskDef<Task>> startServiceTaskDefs(){
+    protected List<TaskDef<Object, TaskResult>> startServiceTaskDefs(){
         checkDeployment();
 
-        return defaultDeployment.getStartService().createTasksToList(new ArrayList<TaskDef<Task>>());
+        return defaultDeployment.getStartService().createTasksToList(new ArrayList<TaskDef<Object, TaskResult>>());
     }
 
-    protected List<TaskDef<Task>> stopServiceTaskDefs(){
+    protected List<TaskDef<Object, TaskResult>> stopServiceTaskDefs(){
         checkDeployment();
 
-        return defaultDeployment.getStopService().createTasksToList(new ArrayList<TaskDef<Task>>());
+        return defaultDeployment.getStopService().createTasksToList(new ArrayList<TaskDef<Object, TaskResult>>());
     }
 
     public void start(){
-        runTasksWithAnnotations(new Supplier<List<TaskDef<Task>>>() {
+        runTasksWithAnnotations(new Supplier<List<TaskDef<Object, TaskResult>>>() {
             @Override
-            public List<TaskDef<Task>> get() {
+            public List<TaskDef<Object, TaskResult>> get() {
                 return startServiceTaskDefs();
             }
         });
     }
 
     public void stop(){
-        runTasksWithAnnotations(new Supplier<List<TaskDef<Task>>>() {
+        runTasksWithAnnotations(new Supplier<List<TaskDef<Object, TaskResult>>>() {
             @Override
-            public List<TaskDef<Task>> get() {
+            public List<TaskDef<Object, TaskResult>> get() {
                 return stopServiceTaskDefs();
             }
         });
     }
 
     public GlobalTaskRunner deploy(){
-        return runTasksWithAnnotations(new Supplier<List<TaskDef<Task>>>() {
+        return runTasksWithAnnotations(new Supplier<List<TaskDef<Object, TaskResult>>>() {
             @Override
-            public List<TaskDef<Task>> get() {
+            public List<TaskDef<Object, TaskResult>> get() {
                 return singletonList(defaultDeployment.build());
             }
         });
@@ -273,9 +273,9 @@ public abstract class BearProject<SELF extends BearProject> {
     }
 
     public void rollbackTo(final String ref){
-        runTasksWithAnnotations(new Supplier<List<TaskDef<Task>>>() {
+        runTasksWithAnnotations(new Supplier<List<TaskDef<Object, TaskResult>>>() {
             @Override
-            public List<TaskDef<Task>> get() {
+            public List<TaskDef<Object, TaskResult>> get() {
                 return singletonList(rollbackToTask(ref));
             }
         });
@@ -305,13 +305,13 @@ public abstract class BearProject<SELF extends BearProject> {
         System.out.println("returned result: " + result);
     }
 
-    public GlobalTaskRunner run(final List<TaskCallable<TaskDef>> callables) {
+    public GlobalTaskRunner run(final List<TaskCallable<Object, TaskResult>> callables) {
         return runTasksWithAnnotations(new Supplier<List<? extends TaskDef>>() {
             @Override
             public List<? extends TaskDef> get() {
-                return Lists.newArrayList(Lists.transform(callables, new Function<TaskCallable<TaskDef>, TaskDef>() {
+                return Lists.newArrayList(Lists.transform(callables, new Function<TaskCallable<Object, TaskResult>, TaskDef>() {
                     @Override
-                    public TaskDef apply(TaskCallable<TaskDef> input) {
+                    public TaskDef apply(TaskCallable<Object, TaskResult> input) {
                         return new TaskDef(input);
                     }
                 }));
@@ -397,7 +397,7 @@ public abstract class BearProject<SELF extends BearProject> {
     }
 
 
-    protected TaskDef<Task> rollbackToTask(final String labelOrPath){
+    protected TaskDef<Object, TaskResult> rollbackToTask(final String labelOrPath){
         Preconditions.checkArgument(Strings.isNotEmpty(labelOrPath), "release reference string is empty");
 
         return  defaultDeployment.build()

@@ -64,7 +64,7 @@ public class CompileManager {
             lastCompilationResult = groovyCompiler.compile(dependenciesCL.or(getClass().getClassLoader()));
         }
 
-        logger.info("compilation finished in {}", LangUtils.millisToSec(sw.elapsed(TimeUnit.MILLISECONDS)));
+        logger.info("compilation finished in {}s", LangUtils.millisToSec(sw.elapsed(TimeUnit.MILLISECONDS)));
 
         return lastCompilationResult;
     }

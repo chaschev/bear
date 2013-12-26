@@ -77,14 +77,14 @@ public class GrailsTomcatDemoProject extends BearProject<GrailsTomcatDemoProject
 
         // this defines the deployment task
         defaultDeployment = deployment.newBuilder()
-            .CheckoutFiles_2({ _, task, input -> _.run(global.tasks.vcsUpdate); } as TaskCallable)
-            .BuildAndCopy_3({ _, task, input -> _.run(grails.build); } as TaskCallable)
-            .StopService_5({ _, task, input -> _.run(tomcat.stop); OK; } as TaskCallable)
-            .StartService_8({ _, task, input -> _.run(updateUpstart, tomcat.deployWar, tomcat.start, tomcat.watchStart); } as TaskCallable)
+            .CheckoutFiles_2({_, task -> _.run(global.tasks.vcsUpdate); } as TaskCallable)
+            .BuildAndCopy_3({_, task -> _.run(grails.build); } as TaskCallable)
+            .StopService_5({_, task -> _.run(tomcat.stop); OK; } as TaskCallable)
+            .StartService_8({_, task -> _.run(updateUpstart, tomcat.deployWar, tomcat.start, tomcat.watchStart); } as TaskCallable)
             .endDeploy()
             .ifRollback()
-            .beforeLinkSwitch({ _, task, input -> _.run(tomcat.stop); } as TaskCallable)
-            .afterLinkSwitch({ _, task, input -> _.run(tomcat.start, tomcat.watchStart); } as TaskCallable)
+            .beforeLinkSwitch({_, task -> _.run(tomcat.stop); } as TaskCallable)
+            .afterLinkSwitch({_, task -> _.run(tomcat.start, tomcat.watchStart); } as TaskCallable)
             .endRollback()
 
         return global;
@@ -95,7 +95,7 @@ public class GrailsTomcatDemoProject extends BearProject<GrailsTomcatDemoProject
     // not used, left for reference only
     // it recreates tomcat upstart scripts from scratch by reusing tomcat's upstart implementation
     // may be there is a more simple way to do this with tomcat...
-    def updateUpstart = new TaskDef<Task>({ SessionContext _, task, input ->
+    def updateUpstart = new TaskDef<Task>({ SessionContext_, task ->
         def defaultUpstartConfigurator = tomcat.newBasicUpstartConfigurator(_)
 
         _.putConst(tomcat.createScriptText, tomcat.newBasicUpstartScriptText(_))

@@ -20,10 +20,7 @@ import bear.context.DependencyInjection;
 import bear.core.GlobalContext;
 import bear.core.SessionContext;
 import bear.plugins.graph.DirectedGraph;
-import bear.task.DependencyException;
-import bear.task.DependencyResult;
-import bear.task.Task;
-import bear.task.TaskDef;
+import bear.task.*;
 import chaschev.lang.OpenBean;
 import chaschev.util.Exceptions;
 import com.google.common.base.Optional;
@@ -244,7 +241,7 @@ public class Plugins {
         return Optional.fromNullable((T)pluginMap.get(pluginClass));
     }
 
-    public <T extends Plugin> Task<TaskDef> getSessionContext(Class<T> aClass, SessionContext $, Task<?> parent){
+    public <T extends Plugin> Task<Object, TaskResult> getSessionContext(Class<T> aClass, SessionContext $, Task<Object, TaskResult> parent){
         try {
             final T plugin = globalContext.plugin(aClass);
 
@@ -254,7 +251,7 @@ public class Plugins {
         }
     }
 
-    public <T extends Plugin> Task<TaskDef> newSession(T plugin, SessionContext $, Task<?> parent) {
+    public <T extends Plugin> Task<Object, TaskResult> newSession(T plugin, SessionContext $, Task<Object, TaskResult> parent) {
         Task task = plugin.newSession($, parent);
 
         task.wire($);

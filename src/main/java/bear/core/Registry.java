@@ -17,7 +17,7 @@
 package bear.core;
 
 import bear.task.Task;
-import bear.task.TaskDef;
+import bear.task.TaskResult;
 import chaschev.lang.OpenBean;
 import org.apache.commons.lang3.StringUtils;
 
@@ -27,7 +27,7 @@ import org.apache.commons.lang3.StringUtils;
 public enum Registry {
     INSTANCE;
 
-    public Task<TaskDef> getByName(String name) {
+    public Task<Object, TaskResult> getByName(String name) {
         String className;
         String taskName;
 
@@ -42,11 +42,11 @@ public enum Registry {
         return getTask(className, taskName);
     }
 
-    private Task<TaskDef> getTask(String className, String taskName) {
+    private Task<Object, TaskResult> getTask(String className, String taskName) {
         if (!className.equals("Bear")) {
             throw new UnsupportedOperationException("todo");
         }
 
-        return (Task<TaskDef>) OpenBean.getFieldValue(Bear.class, taskName);
+        return (Task<Object, TaskResult>) OpenBean.getFieldValue(Bear.class, taskName);
     }
 }

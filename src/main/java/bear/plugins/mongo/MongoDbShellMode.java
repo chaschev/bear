@@ -20,6 +20,7 @@ import bear.core.SessionContext;
 import bear.plugins.PluginShellMode;
 import bear.task.Task;
 import bear.task.TaskDef;
+import bear.task.TaskResult;
 
 /**
 * @author Andrey Chaschev chaschev@gmail.com
@@ -30,7 +31,7 @@ class MongoDbShellMode extends PluginShellMode<MongoDbPlugin> {
     }
 
     @Override
-    public Task<?> interpret(String command, SessionContext $, Task parent, TaskDef taskDef) {
+    public Task<Object, TaskResult> interpret(String command, SessionContext $, Task parent, TaskDef taskDef) {
         return plugin.scriptTask(command, parent, taskDef, $);
     }
 }

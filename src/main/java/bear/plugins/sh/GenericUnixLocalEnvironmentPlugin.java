@@ -23,7 +23,7 @@ import bear.annotations.Shell;
 import bear.session.ProcessRunner;
 import bear.session.Result;
 import bear.task.Task;
-import bear.task.TaskDef;
+import bear.task.TaskResult;
 import bear.vcs.CommandLineResult;
 import bear.vcs.LocalCommandLine;
 import com.google.common.base.Preconditions;
@@ -54,7 +54,7 @@ public class GenericUnixLocalEnvironmentPlugin extends SystemEnvironmentPlugin {
     }
 
     @Override
-    public SystemSession newSession(SessionContext $, Task<TaskDef> parent) {
+    public SystemSession newSession(SessionContext $, Task<Object, TaskResult> parent) {
         return new SystemSession(parent, taskDefMixin, $) {
             {
                 this.address = $.address;

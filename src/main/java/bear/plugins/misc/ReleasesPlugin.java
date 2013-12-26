@@ -77,10 +77,10 @@ public class ReleasesPlugin extends Plugin {
         return InstallationTaskDef.EMPTY;
     }
 
-    public TaskDef<Task> findReleaseToRollbackTo(final String labelOrPath) {
-        return new TaskDef<Task>(new TaskCallable<TaskDef>() {
+    public TaskDef<Object, TaskResult> findReleaseToRollbackTo(final String labelOrPath) {
+        return new TaskDef<Object, TaskResult>(new TaskCallable<Object, TaskResult>() {
             @Override
-            public TaskResult call(SessionContext $, Task<TaskDef> task, Object input) throws Exception {
+            public TaskResult call(SessionContext $, Task<Object, TaskResult> task) throws Exception {
                 Releases session = $.var(ReleasesPlugin.this.session);
                 Optional<Release> release = session.findAny(labelOrPath);
 

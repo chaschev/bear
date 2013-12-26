@@ -91,7 +91,7 @@ public abstract class SystemEnvironmentPlugin extends Plugin<SystemSession, Syst
     }
 
     @Override
-    public abstract SystemSession newSession(SessionContext $, Task<TaskDef> parent);
+    public abstract SystemSession newSession(SessionContext $, Task<Object, TaskResult> parent);
 
     public static abstract class PackageManager {
         protected SystemSession sys;
@@ -111,13 +111,13 @@ public abstract class SystemEnvironmentPlugin extends Plugin<SystemSession, Syst
         public abstract String command();
     }
 
-    public static class SystemSessionDef extends TaskDef<SystemSession> {
+    public static class SystemSessionDef extends TaskDef<Object, TaskResult> {
         private SystemEnvironmentPlugin plugin;
 
         public SystemSessionDef() {
-            super(new SingleTaskSupplier<SystemSession>() {
+            super(new SingleTaskSupplier<Object, TaskResult>() {
                 @Override
-                public SystemSession createNewSession(SessionContext $, Task parent, TaskDef<SystemSession> def) {
+                public Task<Object, TaskResult> createNewSession(SessionContext $, Task<Object, TaskResult> parent, TaskDef<Object, TaskResult> def) {
                     return ((SystemSessionDef)def).plugin.newSession($, parent);
                 }
             });
