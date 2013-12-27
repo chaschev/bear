@@ -57,6 +57,7 @@ import static org.apache.commons.lang3.StringUtils.substringBetween;
 public class TomcatPlugin extends ServerToolPlugin {
     UpstartPlugin upstart;
     ReleasesPlugin releases;
+    JavaPlugin java;
 
     public final DynamicVariable<String>
         webappsUnix = joinPath(homePath, "webapps"),

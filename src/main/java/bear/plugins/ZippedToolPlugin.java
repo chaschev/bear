@@ -16,6 +16,7 @@
 
 package bear.plugins;
 
+import bear.context.Fun;
 import bear.core.GlobalContext;
 import bear.core.SessionContext;
 import bear.plugins.java.JavaPlugin;
@@ -28,6 +29,7 @@ import bear.vcs.CommandLineResult;
 import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
+import org.slf4j.LoggerFactory;
 
 import static bear.session.Variables.*;
 import static chaschev.lang.Predicates2.contains;
@@ -141,7 +143,11 @@ public class ZippedToolPlugin extends Plugin<Task, TaskDef<Object, TaskResult>> 
             Optional<JavaPlugin> java = global.getPlugin(JavaPlugin.class);
 
             if (java.isPresent()) {
-                line.setVar("JAVA_HOME", $(java.get().homePath));
+                try {
+                    line.setVar("JAVA_HOME", $(java.get().homePath));
+                } catch (Fun.UndefinedException e) {
+                    LoggerFactory.getLogger("log").debug("ignoring JAVA_HOME as the version is not set");
+                }
             }
 
             line.addRaw(createVersionCommandLine());

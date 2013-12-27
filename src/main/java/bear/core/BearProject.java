@@ -21,24 +21,34 @@ import bear.annotations.Project;
 import bear.annotations.Variable;
 import bear.plugins.DeploymentPlugin;
 import bear.plugins.Plugin;
+import bear.plugins.ServerToolPlugin;
 import bear.plugins.misc.ReleasesPlugin;
+import bear.session.Address;
 import bear.session.DynamicVariable;
+import bear.session.Result;
 import bear.task.*;
 import chaschev.lang.OpenBean;
 import chaschev.lang.reflect.Annotations;
 import chaschev.lang.reflect.MethodDesc;
 import chaschev.util.Exceptions;
-import com.google.common.base.Function;
-import com.google.common.base.Preconditions;
-import com.google.common.base.Supplier;
+import com.google.common.base.*;
 import com.google.common.collect.Lists;
+import org.apache.commons.io.IOUtils;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.utils.URIBuilder;
+import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.logging.log4j.core.helpers.Strings;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.lang.reflect.Field;
+import java.net.URI;
 import java.util.*;
 
 import static com.google.common.base.Objects.firstNonNull;
@@ -48,6 +58,8 @@ import static java.util.Collections.singletonList;
  * @author Andrey Chaschev chaschev@gmail.com
  */
 public abstract class BearProject<SELF extends BearProject> {
+    private static final Logger logger = LoggerFactory.getLogger(BearProject.class);
+
     /**
      * Typically you would want to turn it off when you do several calls one of which redefines configuration.
      */
@@ -64,6 +76,8 @@ public abstract class BearProject<SELF extends BearProject> {
     protected DeploymentPlugin.Builder defaultDeployment;
 
     protected ReleasesPlugin releases;
+    private boolean unblockUninstall;
+    private Object input;
 
     protected BearProject() {
         this(GlobalContextFactory.INSTANCE);
@@ -89,7 +103,7 @@ public abstract class BearProject<SELF extends BearProject> {
         }
     }
 
-    public BearProject withMap(Map<Object, Object> variables){
+    public BearProject withMap(Map<Object, Object> variables) {
         this.variables = Collections.unmodifiableMap(variables);
         return this;
     }
@@ -126,7 +140,7 @@ public abstract class BearProject<SELF extends BearProject> {
         Iterable<Field> fields = OpenBean.fieldsOfType(this, GridBuilder.class);
 
         for (Field field : fields) {
-            ((GridBuilder)field.get(this)).init(this);
+            ((GridBuilder) field.get(this)).init(this);
         }
 
 //        List<MethodDesc<? extends GridBuilder>> list = OpenBean.methodsReturning(this.getClass(), GridBuilder.class);
@@ -177,12 +191,15 @@ public abstract class BearProject<SELF extends BearProject> {
         return configured;
     }
 
-    public void run(){
+    public void run() {
         BearMain.run(this, variables, true);
     }
 
     public <T> SELF set(DynamicVariable<T> var, T value) {
-        global.putConst(var, value);
+        if (!global.isSet(var)) {
+            global.putConst(var, value);
+        }
+
         return self();
     }
 
@@ -191,13 +208,13 @@ public abstract class BearProject<SELF extends BearProject> {
         return (SELF) this;
     }
 
-    SELF injectMain(BearMain bearMain){
+    SELF injectMain(BearMain bearMain) {
         this.bearMain = bearMain;
         return self();
     }
 
     public synchronized BearMain main() {
-        if(bearMain == null){
+        if (bearMain == null) {
             bearMain = new BearMain(global, BearMain.createCompilerManager());
         }
 
@@ -213,24 +230,24 @@ public abstract class BearProject<SELF extends BearProject> {
         return gb;
     }
 
-    public TaskDef<Object, TaskResult> newDeployTask(){
+    public TaskDef<Object, TaskResult> newDeployTask() {
         checkDeployment();
         return defaultDeployment.build();
     }
 
-    protected List<TaskDef<Object, TaskResult>> startServiceTaskDefs(){
+    protected List<TaskDef<Object, TaskResult>> startServiceTaskDefs() {
         checkDeployment();
 
         return defaultDeployment.getStartService().createTasksToList(new ArrayList<TaskDef<Object, TaskResult>>());
     }
 
-    protected List<TaskDef<Object, TaskResult>> stopServiceTaskDefs(){
+    protected List<TaskDef<Object, TaskResult>> stopServiceTaskDefs() {
         checkDeployment();
 
         return defaultDeployment.getStopService().createTasksToList(new ArrayList<TaskDef<Object, TaskResult>>());
     }
 
-    public void start(){
+    public void start() {
         runTasksWithAnnotations(new Supplier<List<TaskDef<Object, TaskResult>>>() {
             @Override
             public List<TaskDef<Object, TaskResult>> get() {
@@ -239,8 +256,8 @@ public abstract class BearProject<SELF extends BearProject> {
         }, useAnnotations);
     }
 
-    public void stop(){
-        runTasksWithAnnotations(new Supplier<List<TaskDef<Object, TaskResult>>>() {
+    public GlobalTaskRunner stop() {
+        return runTasksWithAnnotations(new Supplier<List<TaskDef<Object, TaskResult>>>() {
             @Override
             public List<TaskDef<Object, TaskResult>> get() {
                 return stopServiceTaskDefs();
@@ -248,7 +265,7 @@ public abstract class BearProject<SELF extends BearProject> {
         }, useAnnotations);
     }
 
-    public GlobalTaskRunner deploy(){
+    public GlobalTaskRunner deploy() {
         return runTasksWithAnnotations(new Supplier<List<TaskDef<Object, TaskResult>>>() {
             @Override
             public List<TaskDef<Object, TaskResult>> get() {
@@ -257,16 +274,18 @@ public abstract class BearProject<SELF extends BearProject> {
         }, useAnnotations);
     }
 
-    public void setup(){
-        setup(true);
+    public GlobalTaskRunner setup() {
+        return setup(true);
     }
 
-    public GlobalTaskRunner setup(boolean autoInstall){
-        if(autoInstall){
+    public GlobalTaskRunner setup(boolean autoInstall) {
+        if (autoInstall) {
             set(bear.verifyPlugins, true);
             set(bear.autoInstallPlugins, true);
             set(bear.checkDependencies, true);
         }
+
+        input = this;
 
         return runTasksWithAnnotations(new Supplier<List<InstallationTaskDef<InstallationTask>>>() {
             @Override
@@ -276,7 +295,7 @@ public abstract class BearProject<SELF extends BearProject> {
         });
     }
 
-    public void rollbackTo(final String ref){
+    public void rollbackTo(final String ref) {
         runTasksWithAnnotations(new Supplier<List<TaskDef<Object, TaskResult>>>() {
             @Override
             public List<TaskDef<Object, TaskResult>> get() {
@@ -285,7 +304,7 @@ public abstract class BearProject<SELF extends BearProject> {
         });
     }
 
-    public void invoke(){
+    public void invoke() {
         String method = getClass().getAnnotation(Project.class).method();
 
         Preconditions.checkArgument(!method.isEmpty(), "method() must not be empty for @Project when not providing a invoking a project");
@@ -293,7 +312,7 @@ public abstract class BearProject<SELF extends BearProject> {
         invoke(method);
     }
 
-    public void invoke(String method, Object... params){
+    public void invoke(String method, Object... params) {
         setProjectVars();
 
         Configuration projectConfiguration = load(projectConf());
@@ -338,30 +357,34 @@ public abstract class BearProject<SELF extends BearProject> {
 
         Configuration projectConf = projectConf();
 
-        if(useAnnotations){
+        if (useAnnotations) {
             load(projectConf);
         }
 
-        if(!configured){
+        if (!configured) {
             configure();
         }
 
         GridBuilder grid = newGrid()
             .setShutdownAfterRun(shutdownAfterRun);
 
-        if(preRunHook != null){
+        if(input != null){
+            grid.setInput(input);
+            input = null;
+        }
+
+        if (preRunHook != null) {
             preRunHook.apply(grid);
         }
 
         grid.addAll(taskList.get());
 
-        if(useUI(useAnnotations ? projectConf : null)){
+        if (useUI(useAnnotations ? projectConf : null)) {
             return grid.run();
-        }else{
+        } else {
             return grid.runCli();
         }
     }
-
 
 
     private Configuration projectConf() {
@@ -369,18 +392,18 @@ public abstract class BearProject<SELF extends BearProject> {
     }
 
     private boolean useUI(Configuration annotation) {
-        if(global.isSet(bear.useUI)) return global.var(bear.useUI);
+        if (global.isSet(bear.useUI)) return global.var(bear.useUI);
 
         return annotation == null || Annotations.defaultBoolean(annotation, "useUI");
     }
 
     private Configuration load(Configuration annotation) {
-        if(annotation == null) return null;
-        if(!"".equals(annotation.properties())) {
+        if (annotation == null) return null;
+        if (!"".equals(annotation.properties())) {
             File file = new File(annotation.properties());
 
-            if(!file.exists() && !file.getName().endsWith(".properties")){
-                 file = new File(annotation.properties() + ".properties");
+            if (!file.exists() && !file.getName().endsWith(".properties")) {
+                file = new File(annotation.properties() + ".properties");
             }
 
             Preconditions.checkArgument(file.exists(), "properties file does not exist: %s", file.getAbsolutePath());
@@ -395,7 +418,7 @@ public abstract class BearProject<SELF extends BearProject> {
         setAnnotation(bear.sshUsername, annotation.user());
         setAnnotation(bear.sshPassword, annotation.password());
 
-        if(annotation.variables() != null){
+        if (annotation.variables() != null) {
             for (Variable variable : annotation.variables()) {
                 String name = variable.name();
                 Preconditions.checkArgument(global.variableRegistry.contains(name), "variable %s was not found in the registry", name);
@@ -407,16 +430,15 @@ public abstract class BearProject<SELF extends BearProject> {
     }
 
     private void setAnnotation(DynamicVariable<String> var, String value) {
-        if(!"".equals(value)) {
+        if (!"".equals(value)) {
             set(var, value);
         }
     }
 
-
-    protected TaskDef<Object, TaskResult> rollbackToTask(final String labelOrPath){
+    protected TaskDef<Object, TaskResult> rollbackToTask(final String labelOrPath) {
         Preconditions.checkArgument(Strings.isNotEmpty(labelOrPath), "release reference string is empty");
 
-        return  defaultDeployment.build()
+        return defaultDeployment.build()
             .getRollback()
             .addBeforeTask(releases.findReleaseToRollbackTo(labelOrPath));
     }
@@ -440,6 +462,102 @@ public abstract class BearProject<SELF extends BearProject> {
 
     public DeploymentPlugin.Builder getDefaultDeployment() {
         return defaultDeployment;
+    }
+
+    public List<Plugin<Task, TaskDef>> getAllOrderedPlugins() {
+        try {
+            Set<Plugin<Task, TaskDef>> plugins = new HashSet<Plugin<Task, TaskDef>>();
+
+            for (Field field : OpenBean.fieldsOfType(this, Plugin.class)) {
+                Plugin plugin = (Plugin) field.get(this);
+                Set<Plugin<Task, TaskDef>> set = plugin.getAllPluginDependencies();
+
+                plugins.add(plugin);
+                plugins.addAll(set);
+            }
+
+            return global.plugins.orderPlugins(plugins);
+        } catch (IllegalAccessException e) {
+            throw Exceptions.runtime(e);
+        }
+    }
+
+    public static class PulseResult extends TaskResult {
+        public PulseResult(Result result) {
+            super(result);
+        }
+
+        public PulseResult(Throwable e) {
+            super(e);
+        }
+    }
+
+    public DependencyResult pulse() {
+        DependencyResult result = new DependencyResult(Result.OK);
+
+        for (Field field : OpenBean.fieldsOfType(this, ServerToolPlugin.class)) {
+            try {
+                ServerToolPlugin plugin = (ServerToolPlugin) field.get(this);
+
+                result.join(pulse(plugin, Predicates.<String>alwaysTrue()));
+            } catch (IllegalAccessException e) {
+                throw Exceptions.runtime(e);
+            }
+        }
+
+        return result;
+    }
+
+    protected DependencyResult pulse(ServerToolPlugin serverTool, Predicate<String> bodyPredicate) {
+        DependencyResult result = new DependencyResult("pulse from " + serverTool.getClass().getSimpleName());
+
+        HttpClient httpClient = new DefaultHttpClient();
+
+        for (Address address : global.var(global.bear.getStage).addresses) {
+            List<String> ports = global.var(serverTool.portsSplit);
+
+            for (String port : ports) {
+                URI uri = null;
+
+                try {
+
+
+                    uri = new URIBuilder()
+                        .setScheme("http")
+                        .setHost(address.getAddress())
+                        .setPort(Integer.parseInt(port))
+                        .build();
+
+                    logger.info("sending pulse to {}", uri);
+
+                    HttpGet httpget = new HttpGet(uri);
+                    HttpResponse response = httpClient.execute(httpget);
+
+                    int code = response.getStatusLine().getStatusCode();
+
+                    if (code != 200) {
+                        result.add("code " + code + " for " + uri);
+                        continue;
+                    }
+
+                    String body = IOUtils.toString(response.getEntity().getContent());
+
+                    if (!bodyPredicate.apply(body)) {
+                        result.add("predicate doesn't match for " + uri);
+                        //                        throw new RuntimeException("predicate doesn't match for " + uri);
+                    }
+                } catch (Exception e) {
+                    result.add(String.valueOf(uri) + ": " + e.toString());
+                }
+            }
+        }
+
+        return result;
+    }
+
+    public SELF setInput(Object input) {
+        this.input = input;
+        return self();
     }
 }
 

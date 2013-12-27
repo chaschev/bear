@@ -95,7 +95,7 @@ public class GrailsTomcatDemoProject extends BearProject<GrailsTomcatDemoProject
     // not used, left for reference only
     // it recreates tomcat upstart scripts from scratch by reusing tomcat's upstart implementation
     // may be there is a more simple way to do this with tomcat...
-    def updateUpstart = new TaskDef<Task>({ SessionContext_, task ->
+    def updateUpstart = new TaskDef({ SessionContext _, task ->
         def defaultUpstartConfigurator = tomcat.newBasicUpstartConfigurator(_)
 
         _.putConst(tomcat.createScriptText, tomcat.newBasicUpstartScriptText(_))
@@ -118,7 +118,7 @@ public class GrailsTomcatDemoProject extends BearProject<GrailsTomcatDemoProject
 
     static main(def args)
     {
-        new GrailsTomcatDemoProject().deploy()
+        new GrailsTomcatDemoProject().stop()
     }
 
     GridBuilder dumpSampleGrid = new GridBuilder()

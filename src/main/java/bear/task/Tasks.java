@@ -17,6 +17,7 @@
 package bear.task;
 
 import bear.core.Bear;
+import bear.core.BearProject;
 import bear.core.GlobalContext;
 import bear.core.SessionContext;
 import bear.plugins.Plugin;
@@ -47,62 +48,7 @@ public class Tasks {
         }
     });
 
-    public final InstallationTaskDef<InstallationTask> setup = new InstallationTaskDef<InstallationTask>(new SingleTaskSupplier<Object, TaskResult>() {
-        @Override
-        public Task<Object, TaskResult> createNewSession(SessionContext $, Task<Object, TaskResult> parent, TaskDef<Object, TaskResult> def) {
-            return new Task<Object, TaskResult>(parent, setup, $) {
-                @Override
-                protected TaskResult exec(SessionRunner runner) {
-                    $.putConst(bear.installationInProgress, true);
-
-                    final String[] dirs = {
-                        $(bear.applicationPath), $(bear.vcsCheckoutPath),
-                        $(bear.bearPath),
-                        $(bear.sharedPath), $(bear.tempDirPath), $(bear.projectSharedPath),
-                        $(bear.appLogsPath), $(bear.downloadDirPath),
-                        $(bear.toolsInstallDirPath)
-                    };
-
-                    final String sshUser = $(bear.sshUsername);
-                    final String appUser = $(bear.appUsername);
-
-                    $.sys.mkdirs(dirs).sudo().withPermissions("g+w").withUser(sshUser + "." + sshUser).run();
-
-
-//                    $.sys.chown(sshUser + "." + sshUser, true, dirs);
-//                    $.sys.chmod("g+w", true, dirs);
-
-                    if (!appUser.equals(sshUser)) {
-                        //this part might be changed
-                        $.sys.permissions($(bear.appLogsPath)).sudo().withUser(appUser + "." + appUser).run();
-                    }
-
-                    if ($(bear.autoInstallPlugins) || $(bear.verifyPlugins)) {
-                        List<Plugin<Task, TaskDef>> plugins = global.getOrderedPlugins();
-
-                        for (Plugin<Task, ? extends TaskDef> plugin : plugins) {
-                            InstallationTaskDef<? extends InstallationTask> installTaskDef = plugin.getInstall();
-                            InstallationTask session = (InstallationTask) installTaskDef.singleTaskSupplier().createNewSession($, getParent(), installTaskDef);
-                            if (session.asInstalledDependency().checkDeps().nok()) {
-                                if ($(bear.autoInstallPlugins)) {
-                                    $.log("plugin %s was not installed. installing it...", plugin);
-                                    TaskResult run = runner.run(installTaskDef);
-                                    if (!run.ok()) {
-                                        $.error("could not install %s:%n%s", plugin, run);
-                                        break;
-                                    }
-                                } else {
-                                    $.warn("plugin %s was not installed (autoSetup is off)", plugin);
-                                }
-                            }
-                        }
-                    }
-
-                    return TaskResult.OK;
-                }
-            };
-        }
-    })  .setName("Generic Setup")
+    public final InstallationTaskDef<InstallationTask> setup = new InstallationTaskDef<InstallationTask>(new SetupTaskSupplier())  .setName("Generic Setup")
         .setSetupTask(true);
 
 
@@ -201,5 +147,63 @@ public class Tasks {
 
     public static <I, O extends TaskResult> TaskCallable<I, O> nopCallable(){
         return (TaskCallable) TaskCallable.NOP;
+    }
+
+    private class SetupTaskSupplier implements SingleTaskSupplier<BearProject, TaskResult> {
+        @Override
+        public Task<BearProject, TaskResult> createNewSession(SessionContext $, Task<Object, TaskResult> parent, TaskDef<BearProject, TaskResult> def) {
+            return new Task<BearProject, TaskResult>(parent, setup, $) {
+                @Override
+                protected TaskResult exec(SessionRunner runner) {
+                    $.putConst(bear.installationInProgress, true);
+
+                    final String[] dirs = {
+                        $(bear.applicationPath), $(bear.vcsCheckoutPath),
+                        $(bear.bearPath),
+                        $(bear.sharedPath), $(bear.tempDirPath), $(bear.projectSharedPath),
+                        $(bear.appLogsPath), $(bear.downloadDirPath),
+                        $(bear.toolsInstallDirPath)
+                    };
+
+                    final String sshUser = $(bear.sshUsername);
+                    final String appUser = $(bear.appUsername);
+
+                    $.sys.mkdirs(dirs).sudo().withPermissions("g+w").withUser(sshUser + "." + sshUser).run();
+
+
+//                    $.sys.chown(sshUser + "." + sshUser, true, dirs);
+//                    $.sys.chmod("g+w", true, dirs);
+
+                    if (!appUser.equals(sshUser)) {
+                        //this part might be changed
+                        $.sys.permissions($(bear.appLogsPath)).sudo().withUser(appUser + "." + appUser).run();
+                    }
+
+                    if ($(bear.autoInstallPlugins) || $(bear.verifyPlugins)) {
+                        List<Plugin<Task, TaskDef>> plugins = getInput() == null ? global.getOrderedPlugins()
+                                : getInput().getAllOrderedPlugins();
+
+                        for (Plugin<Task, ? extends TaskDef> plugin : plugins) {
+                            InstallationTaskDef<? extends InstallationTask> installTaskDef = plugin.getInstall();
+                            InstallationTask session = (InstallationTask) installTaskDef.singleTaskSupplier().createNewSession($, (Task)getParent(), installTaskDef);
+                            if (session.asInstalledDependency().checkDeps().nok()) {
+                                if ($(bear.autoInstallPlugins)) {
+                                    $.log("plugin %s was not installed. installing it...", plugin);
+                                    TaskResult run = runner.run(installTaskDef);
+                                    if (!run.ok()) {
+                                        $.error("could not install %s:%n%s", plugin, run);
+                                        break;
+                                    }
+                                } else {
+                                    $.warn("plugin %s was not installed (autoSetup is off)", plugin);
+                                }
+                            }
+                        }
+                    }
+
+                    return TaskResult.OK;
+                }
+            };
+        }
     }
 }

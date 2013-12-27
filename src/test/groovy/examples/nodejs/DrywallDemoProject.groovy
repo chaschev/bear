@@ -23,8 +23,8 @@ import static bear.task.TaskResult.OK
 @Project(shortName =  "drywall-demo", name = "Drywall Demo Deployment")
 @Configuration(
     properties = ".bear/drywall",
-    stage = "three",
-    vcs = "git@github.com:jedireza/drywall.git",
+    stage = "u-3",
+    vcs = "https://github.com/jedireza/drywall.git",
     branch = "master",
     useUI = false
 )
@@ -69,7 +69,11 @@ public class DrywallDemoProject extends BearProject<DrywallDemoProject> {
         bear.stages.set(new Stages(global)
             .addQuick("one", "vm01")
             .addQuick("two", "vm01, vm02")
-            .addQuick("three", "vm01, vm02, vm03"));
+            .addQuick("three", "vm01, vm02, vm03")
+            .addQuick("u-1", "vm04")
+            .addQuick("u-2", "vm04, vm05")
+            .addQuick("u-3", "vm04, vm05, vm06")
+        );
 
         // this defines the deployment task
         defaultDeployment = deployment.newBuilder()
@@ -88,10 +92,10 @@ public class DrywallDemoProject extends BearProject<DrywallDemoProject> {
 
     static main(args)
     {
-        new DrywallDemoProject().stop()
+        new DrywallDemoProject().setup()
     }
 
-    public void setup()
+    public GlobalTaskRunner setup()
     {
         global.tasks.setup.before({_, task -> _.sys.packageManager.installPackage("ImageMagick"); OK } as TaskCallable)
 

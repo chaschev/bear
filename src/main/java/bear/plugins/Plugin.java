@@ -28,6 +28,7 @@ import bear.task.*;
 import org.apache.commons.lang3.text.WordUtils;
 import org.slf4j.LoggerFactory;
 
+import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -152,6 +153,18 @@ public abstract class Plugin<TASK extends Task, TASK_DEF extends TaskDef> {
 
     public Set<Plugin<Task, TaskDef>> getPluginDependencies() {
         return pluginDependencies;
+    }
+
+    public Set<Plugin<Task, TaskDef>> getAllPluginDependencies() {
+        Set<Plugin<Task, TaskDef>> result = new HashSet<Plugin<Task, TaskDef>>();
+
+        for (Plugin<Task, TaskDef> dep : pluginDependencies) {
+            result.add(dep);
+
+            result.addAll(dep.getAllPluginDependencies());
+        }
+
+        return result;
     }
 
     public Set<Role> getRoles() {

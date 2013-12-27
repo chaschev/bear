@@ -10,6 +10,7 @@ top priority:
 - ui: autosize for code area ?
 - (ok) quick setup task recipe (i.e. [new empty bear script], :run (rename :ref) {task: 'tasks.setup'}   at the moment its _.runner.run(_.getGlobal().tasks.setup, )
 
+
 - (ok) smoke tests:
 -- (ok) releases plugin test (dump files)
 -- (ok) test params passing

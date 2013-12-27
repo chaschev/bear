@@ -26,7 +26,6 @@ import bear.core.SessionContext;
 import bear.core.except.NoSuchFileException;
 import bear.main.event.NoticeEventToUI;
 import bear.plugins.misc.*;
-import bear.plugins.nodejs.NodeJsPlugin;
 import bear.plugins.sh.SystemSession;
 import bear.session.DynamicVariable;
 import bear.session.Variables;
@@ -50,7 +49,7 @@ import static java.lang.String.format;
  * @author Andrey Chaschev chaschev@gmail.com
  */
 public abstract class ServerToolPlugin extends ZippedToolPlugin {
-    public static final org.apache.logging.log4j.Logger logger = LogManager.getLogger(NodeJsPlugin.class);
+    public static final org.apache.logging.log4j.Logger logger = LogManager.getLogger(ServerToolPlugin.class);
 
     protected UpstartPlugin upstart;
     protected FileWatchDogPlugin watchDog;
@@ -273,6 +272,7 @@ public abstract class ServerToolPlugin extends ZippedToolPlugin {
             });
         }
     }));
+
 
     private void printCurrentReleases(SessionContext $) {
         logger.info("current releases:\n{}", $.var(releases.session).show());

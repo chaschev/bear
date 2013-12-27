@@ -53,11 +53,13 @@ public class SessionRunner extends HavingContext<SessionRunner, SessionContext>{
     }
 
     public TaskResult run(TaskDef... tasks) {
-        return runMany((List) Arrays.asList(tasks));
+        return run(null, tasks);
     }
 
-    public TaskResult runMany(Iterable<TaskDef> tasks) {
-        for (TaskDef task : tasks) {
+    public TaskResult run(Object input, TaskDef... tasks) {
+//        this.input = input;
+
+        for (TaskDef task : (Iterable<TaskDef>) (List) Arrays.asList(tasks)) {
             final TaskResult result = runWithDependencies(task);
 
             if (!result.ok()) {
@@ -128,8 +130,8 @@ public class SessionRunner extends HavingContext<SessionRunner, SessionContext>{
                         taskSession = taskPreRun.apply(taskSession);
                     }
 
-                    if(taskSession.input == null){
-                        taskSession.input = myLastResult;
+                    if(taskSession.getInput() == null){
+                        taskSession.setInput(myLastResult);
                     }
 
                     result = runSession(taskSession);

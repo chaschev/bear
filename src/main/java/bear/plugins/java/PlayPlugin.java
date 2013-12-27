@@ -48,6 +48,8 @@ import static com.google.common.collect.Iterables.tryFind;
  * @author Andrey Chaschev chaschev@gmail.com
  */
 public class PlayPlugin extends ServerToolPlugin {
+    JavaPlugin java;
+
     public static final Logger logger = LoggerFactory.getLogger(PlayPlugin.class);
 
     public final DynamicVariable<String>

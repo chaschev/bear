@@ -101,7 +101,7 @@ public class DynamicVariable<T> implements Nameable<T> {
     public final Object apply(AbstractContext $, Object _default) {
         if(_default != Fun.UNDEFINED){
             if (defaultValue == null && fun == null) {
-                throw new UnsupportedOperationException("you should implement dynamic variable :" + name + " or set its default value");
+                throw new Fun.UndefinedException("you should implement dynamic variable :" + name + " or set its default value");
             }
         }
 

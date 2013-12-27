@@ -20,6 +20,7 @@ import bear.context.Fun;
 import bear.core.GlobalContext;
 import bear.core.SessionContext;
 import bear.plugins.ZippedToolPlugin;
+import bear.plugins.java.JavaPlugin;
 import bear.task.*;
 import org.apache.commons.lang3.StringUtils;
 
@@ -27,6 +28,8 @@ import org.apache.commons.lang3.StringUtils;
  * @author Andrey Chaschev chaschev@gmail.com
  */
 public class MavenPlugin extends ZippedToolPlugin {
+    JavaPlugin java;
+
     public MavenPlugin(GlobalContext global) {
         super(global);
 

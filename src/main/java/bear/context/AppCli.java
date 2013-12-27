@@ -84,7 +84,7 @@ public abstract class AppCli<
 
     //todo move to vars framework
     public AppCli configure() throws IOException {
-Map<String, String> env = System.getenv();
+        Map<String, String> env = System.getenv();
 
         for (Map.Entry<String, String> entry : env.entrySet()) {
             $.convertAndPutConst(entry.getKey(), entry.getValue(),

@@ -29,8 +29,8 @@ Bear is in it's early development stages now. Questions, concerns? Just drop me 
 | Refactoring, simplifying API                 | Finished.      |
 | Installer, launcher                          | Finished.      |
 | Support Ubuntu                               | Finished.      |
+| Integration & unit tests                     | Finished.      |
 | Finishing TODOs                              | In progress... |
-| Integration & unit tests                     |                |
 | UI bugfixing                                 |                |
 | Refactoring, simplifying API                 |                |
 

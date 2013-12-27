@@ -18,7 +18,7 @@ public class TaskContext<I, O extends TaskResult> extends HavingContext<TaskCont
     Task me;
 
     @Nullable
-    Task parent;
+    Task<Object, TaskResult> parent;
 
     TaskDef<I, O> definition;
     SessionRunner runner;
@@ -29,6 +29,8 @@ public class TaskContext<I, O extends TaskResult> extends HavingContext<TaskCont
 
     TaskExecutionContext executionContext;
     GlobalTaskRunner globalRunner;
+
+    I input;
 
     public TaskContext(Task me, Task parent, SessionContext $) {
         super($);

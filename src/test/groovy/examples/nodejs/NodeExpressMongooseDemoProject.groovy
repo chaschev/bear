@@ -86,7 +86,7 @@ public class NodeExpressMongooseDemoProject extends BearProject<NodeExpressMongo
         return global;
     }
 
-    def copyConfiguration = new TaskDef({ SessionContext_, task ->
+    def copyConfiguration = new TaskDef({ SessionContext _, task ->
         final String dir = _.var(releases.pendingRelease).path + "/config"
 
         _.sys.copy("config.example.js").to("config.js").inDir(dir).force().run().throwIfError();

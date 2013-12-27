@@ -40,7 +40,7 @@ import java.util.*;
 public class Plugins {
     private static final Logger logger = LoggerFactory.getLogger(Plugins.class);
 
-    protected final Map<Class<? extends Plugin>, Plugin<Task, TaskDef>> pluginMap = new LinkedHashMap<Class<? extends Plugin>, Plugin<Task, TaskDef>>();
+    protected final Map<String, Plugin<Task, TaskDef>> pluginMap = new LinkedHashMap<String, Plugin<Task, TaskDef>>();
     public final Map<String, Plugin> shortcutsPluginMap = new LinkedHashMap<String, Plugin>();
 
     private GlobalContext globalContext;
@@ -61,7 +61,14 @@ public class Plugins {
                 }
             }
 
-            pluginMap.put(plugin.getClass(), plugin);
+            Plugin<Task, TaskDef> origPlugin = pluginMap.get(plugin.getName());
+
+            if (origPlugin == null) {
+                pluginMap.put(plugin.getClass().getName(), plugin);
+            } else {
+                logger.warn("skipped {}@{} (there is already {}@{})", plugin, System.identityHashCode(plugin),
+                    origPlugin, System.identityHashCode(origPlugin));
+            }
 
             if(plugin.getShell()!=null){
                 shortcutsPluginMap.put(plugin.getShell().getCommandName(), plugin);
@@ -81,9 +88,14 @@ public class Plugins {
      * Returns plugins in the order of initialization. First are the most basic.
      */
     public List<Plugin<Task, TaskDef>> getOrderedPlugins() {
-        LinkedHashSet<Plugin<Task, TaskDef>> tempSet = new LinkedHashSet<Plugin<Task, TaskDef>>();
 
         Collection<Plugin<Task, TaskDef>> plugins = pluginMap.values();
+
+        return orderPlugins(plugins);
+    }
+
+    public List<Plugin<Task, TaskDef>> orderPlugins(Collection<Plugin<Task, TaskDef>> plugins) {
+        LinkedHashSet<Plugin<Task, TaskDef>> tempSet = new LinkedHashSet<Plugin<Task, TaskDef>>();
 
         for (Plugin<Task, TaskDef> plugin : plugins) {
             _addOrderedPlugin(plugin, tempSet);
@@ -159,7 +171,8 @@ public class Plugins {
 
             for (Class pluginClass : pluginClasses) {
                 try {
-                    Plugin plugin = globalContext.plugins.pluginMap.get(pluginClass);
+                    Plugin plugin = globalContext.plugins.pluginMap.get(pluginClass.getName());
+
                     if(plugin == null){
                         plugins.add(newPluginInstance(pluginClass));
                     }else {
@@ -227,7 +240,7 @@ public class Plugins {
     }
 
     public <T extends Plugin> T get(Class<T> aClass){
-        final Plugin plugin = pluginMap.get(aClass);
+        final Plugin plugin = pluginMap.get(aClass.getName());
 
         if(plugin == null){
             throw new RuntimeException("plugin " + aClass.getSimpleName() + " has not been loaded yet");
@@ -238,7 +251,7 @@ public class Plugins {
 
     @Nonnull
     public <T extends Plugin> Optional<T> getOptional(Class<T> pluginClass) {
-        return Optional.fromNullable((T)pluginMap.get(pluginClass));
+        return Optional.fromNullable((T)pluginMap.get(pluginClass.getName()));
     }
 
     public <T extends Plugin> Task<Object, TaskResult> getSessionContext(Class<T> aClass, SessionContext $, Task<Object, TaskResult> parent){
@@ -266,7 +279,7 @@ public class Plugins {
         return task;
     }
 
-    public Map<Class<? extends Plugin>, Plugin<Task, TaskDef>> getPluginMap() {
+    public Map<String, Plugin<Task, TaskDef>> getPluginMap() {
         return pluginMap;
     }
 }

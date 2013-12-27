@@ -38,6 +38,7 @@ import org.slf4j.LoggerFactory;
 import javax.annotation.Nonnull;
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.*;
 
 import static com.google.common.util.concurrent.MoreExecutors.listeningDecorator;
@@ -49,7 +50,7 @@ public class GlobalContext extends AppGlobalContext<GlobalContext, Bear> {
     private static final Logger logger = LoggerFactory.getLogger(GlobalContext.class);
 
     //    public static final GlobalContext INSTANCE = new GlobalContext();
-    private static final GlobalContext INSTANCE = new GlobalContext();
+    private static GlobalContext INSTANCE = new GlobalContext();
 
     public final Console console = new Console(this);
     public final Tasks tasks;
@@ -57,17 +58,20 @@ public class GlobalContext extends AppGlobalContext<GlobalContext, Bear> {
     public final Plugins plugins = new Plugins(this);
 
         public <T extends Plugin> Optional<T> pluginOfInstance(Class<? extends T> pluginClass) {
-            Class<T> result = null;
+            Class result = null;
 
-            for (Class<? extends Plugin> aClass : getPluginClasses()) {
+            for (Plugin<Task, TaskDef> plugin : getPlugins()) {
+//                    Class<?> canonical = Class.forName(plugin.getClass().getName());
+                Class<? extends Plugin> aClass = plugin.getClass();
                 if(pluginClass.isAssignableFrom(aClass)){
-                    result = (Class<T>) aClass;
+                    result = aClass;
+                    break;
                 }
             }
 
             if(result == null) return Optional.absent();
 
-            return Optional.fromNullable(plugin(pluginClass));
+            return (Optional<T>) plugins.getOptional(result);
         }
 
     public static class ProjectRegistry{
@@ -207,8 +211,12 @@ public class GlobalContext extends AppGlobalContext<GlobalContext, Bear> {
         return plugins.getSessionContext(pluginClass, $, parentTask);
     }
 
-    public Collection<Class<? extends Plugin>> getPluginClasses() {
+    public Set<String> getPluginClasses() {
         return plugins.getPluginMap().keySet();
+    }
+
+    public Collection<Plugin<Task, TaskDef>> getPlugins() {
+        return plugins.getPluginMap().values();
     }
 
     public List<Plugin<Task, TaskDef>> getOrderedPlugins() {

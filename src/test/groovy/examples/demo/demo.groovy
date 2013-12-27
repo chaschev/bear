@@ -2,6 +2,7 @@ package examples.demo
 import bear.console.ConsoleCallback
 import bear.console.ConsoleCallbackResult
 import bear.core.GridBuilder
+import bear.core.SessionContext
 import bear.task.TaskCallable
 /**
  * @author Andrey Chaschev chaschev@gmail.com
@@ -31,6 +32,6 @@ def sample()
                 }
             }
         },
-        call: { SessionContext_, task -> }
+        call: { SessionContext _, task -> }
     ] as TaskCallable)
 }

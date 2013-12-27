@@ -68,7 +68,6 @@ public class LoggingBooter {
             = (org.apache.logging.log4j.core.Logger) LogManager.getLogger(loggerName);
 
         coreLogger.setLevel(level);
-        System.out.println(coreLogger.getLevel());
 
         LoggerContext context = coreLogger.getContext();
 

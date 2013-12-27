@@ -86,32 +86,33 @@ public class TestProject extends BearProject<TestProject> {
     static main(args)
     {
         // SETUP
-        final TestProject test = new TestProject()
+        final TestProject project = new TestProject()
             .setShutdownAfterRun(false)
 
         def setupNeeded = new AtomicBoolean(false)
 
-        test.run([{_, task ->
+        project.run([{_, task ->
             if (!_.sys.exists(_.var(_.bear.applicationPath))) {
                 setupNeeded.set(true)
             }
 
-            _.sys.rm(_.var(test.releases.path)).run()
+            _.sys.rm(_.var(project.releases.path)).run()
         } as TaskCallable])
 
 
         if (setupNeeded.get()) {
-            test.setup()
+            project.setup()
         }
 
         //these are copy-pasted with slight changes
-//        test.invoke('referencingPhasesAndAccessingFutures_Test')
-        test.invoke('rolesAndHosts_Test')
-//        test.invoke('syncingPhases_Test')
-//        errorInOne_Checkout(test);
-//        errorInOne_Start(test);
+//        project.invoke('referencingPhasesAndAccessingFutures_Test')
+//        project.invoke('rolesAndHosts_Test')
+//        project.invoke('syncingPhases_Test')
+//        project.invoke('errorInOne_Checkout');
+//        project.invoke('errorInOne_Start');
+        project.invoke('errorInAll_Checkout');
 
-        test.global.shutdown()
+        project.global.shutdown()
     }
 
     static class MyResult1 extends TaskResult{
@@ -145,7 +146,7 @@ public class TestProject extends BearProject<TestProject> {
     }
 
     @Configuration(stage = "u-1")
-    private referencingPhasesAndAccessingFutures_Test()
+    referencingPhasesAndAccessingFutures_Test()
     {
         useAnnotations = false
 
@@ -171,7 +172,7 @@ public class TestProject extends BearProject<TestProject> {
     }
 
     @Configuration(stage = "u-3")
-    private rolesAndHosts_Test()
+    def rolesAndHosts_Test()
     {
         useAnnotations = false
 
@@ -205,7 +206,7 @@ public class TestProject extends BearProject<TestProject> {
 
 
     @Configuration(stage = "u-2")
-    private syncingPhases_Test()
+    def syncingPhases_Test()
     {
         useAnnotations = false
 
@@ -238,13 +239,12 @@ public class TestProject extends BearProject<TestProject> {
         assertThat(runner.result(ph2, host2).value).isEqualTo("h1, ph1, h2, ph2")
     }
 
-
-    private errorInAll_Checkout()
+    def errorInAll_Checkout()
     {
         useAnnotations = false;
-        givenNoReleases(this)
+        givenNoReleases()
 
-        def hosts = global.var(bear.getStage).addresses.collect { it.name }
+        def (String h1, String h2)  = global.var(bear.getStage).addresses.collect { it.name }
 
         defaultDeployment.CheckoutFiles_2().setTaskCallable("checkout", {_, task ->
             return TaskResult.error("error on ${_.sys.name}");
@@ -257,97 +257,100 @@ public class TestProject extends BearProject<TestProject> {
 
         //THEN
 
-        assertThat(runner.future("checkout", hosts[0]).get().exception.cause).hasMessage("error on ${hosts[0]}")
-        assertThat(runner.future("checkout", hosts[1]).get().exception.cause).hasMessage("error on ${hosts[1]}")
+        assertThat(runner.future("checkout", h1).exception.cause).hasMessage("error on $h1")
+        assertThat(runner.future("checkout", h2).exception.cause).hasMessage("error on $h2")
 
         assertReleasesCount(this, [
-            (hosts[0]): [pendingCount: 1, releasesCount: 1],
-            (hosts[1]): [pendingCount: 1, releasesCount: 1]
+            (h1): [pendingCount: 1, releasesCount: 1],
+            (h2): [pendingCount: 1, releasesCount: 1]
         ]);
     }
 
-    private static errorInOne_Start(TestProject test)
+    def errorInOne_Start()
     {
-        givenNoReleases(test)
-        test.global.removeConst(test.releases.releaseName)
+        useAnnotations = false;
+
+        givenNoReleases()
+        global.removeConst(releases.releaseName)
 
         AtomicReference<Release> currentRelease = new AtomicReference<>(null)
 
-        test.run([{_, task ->
-            currentRelease.set(_.var(test.releases.session).currentRelease.get())
+        run([{_, task ->
+            currentRelease.set(_.var(releases.session).currentRelease.get())
             OK
         } as TaskCallable]).throwIfAnyFailed()
 
-        def hosts = test.global.var(test.bear.getStage).addresses.collect { it.name }
+        def (String h1, String h2)  = global.var(bear.getStage).addresses.collect { it.name }
 
         //WHEN
 
-        test.getDefaultDeployment().startService.setTaskCallable("start", {_, task ->
+        getDefaultDeployment().startService.setTaskCallable("start", {_, task ->
             return task.phaseParty.index == 0 ?  TaskResult.error("error on ${_.sys.name}") : OK;
         } as TaskCallable);
 
 
-        def runner = test.runTasksWithAnnotations({ ->
-            singletonList(test.defaultDeployment.build())
+        def runner = runTasksWithAnnotations({ ->
+            singletonList(defaultDeployment.build())
         } as Supplier);
 
         //THEN
 
-        assertThat(runner.future("start", hosts[0]).get().exception.cause).hasMessage("error on ${hosts[0]}")
-        assertThat(runner.future("start", hosts[1]).get().get().ok()).isTrue()
+        assertThat(runner.future("start", h1).exception.cause).hasMessage("error on $h1")
+        assertThat(runner.future("start", h2).get().ok()).isTrue()
 
-        assertReleasesCount(test, [
-            (hosts[0]): [pendingCount: 0, releasesCount: 2],
-            (hosts[1]): [pendingCount: 0, releasesCount: 2]
+        assertReleasesCount(this, [
+            (h1): [pendingCount: 0, releasesCount: 2],
+            (h2): [pendingCount: 0, releasesCount: 2]
         ]);
 
-        test.run([{_, task ->
+        run([{_, task ->
             // optimistic deployment: few will fall
             // manual rollback in case it's different
-            if(_.name == hosts[0]){
-                assertThat(_.var(test.releases.session).currentRelease.get().path).isEqualTo(currentRelease.get().path)
+            if(_.name == h1){
+                assertThat(_.var(releases.session).currentRelease.get().path).isEqualTo(currentRelease.get().path)
             }
             OK
         } as TaskCallable]).throwIfAnyFailed()
     }
 
 
-    private static errorInOne_Checkout(TestProject test)
+    def errorInOne_Checkout()
     {
-        givenNoReleases(test)
+        useAnnotations = false;
+        givenNoReleases()
 
         AtomicReference<Release> currentRelease = new AtomicReference<>(null)
 
-        test.run([{_, task ->
-            currentRelease.set(_.var(test.releases.session).currentRelease.get())
+        run([{_, task ->
+            currentRelease.set(_.var(releases.session).currentRelease.get())
             OK
         } as TaskCallable]).throwIfAnyFailed()
 
-        def hosts = test.global.var(test.bear.getStage).addresses.collect { it.name }
+        def (String h1, String h2)  = global.var(bear.getStage).addresses.collect { it.name }
 
         //WHEN
 
-        test.getDefaultDeployment().checkoutFiles.setTaskCallable("checkout", {_, task ->
+        getDefaultDeployment().checkoutFiles.setTaskCallable("checkout", {_, task ->
             return task.phaseParty.index == 0 ?  TaskResult.error("error on ${_.sys.name}") : OK;
         } as TaskCallable);
 
 
-        def runner = test.runTasksWithAnnotations({ ->
-            singletonList(test.defaultDeployment.build())
+        def runner = runTasksWithAnnotations({ ->
+            singletonList(defaultDeployment.build())
         } as Supplier);
 
         //THEN
 
-        assertThat(runner.future("checkout", hosts[0]).get().exception.cause).hasMessage("error on ${hosts[0]}")
-        assertThat(runner.future("checkout", hosts[1]).get().get().ok()).isTrue()
+        assertThat(runner.future("checkout", h1).exception.cause).hasMessage("error on $h1")
+        assertThat(runner.future("checkout", h2).get().ok()).isTrue()
 
-        assertReleasesCount(test, [
-            (hosts[0]): [pendingCount: 1, releasesCount: 1],
-            (hosts[1]): [pendingCount: 0, releasesCount: 1]
+        assertReleasesCount(this, [
+            (h1): [pendingCount: 1, releasesCount: 1],
+            (h2): [pendingCount: 0, releasesCount: 1]
         ]);
 
-        test.run([{_, task ->
-            assertThat(_.var(test.releases.session).currentRelease.get().path).isEqualTo(currentRelease.get().path)
+        run([{_, task ->
+            assertThat(_.var(releases.session).currentRelease.get().path).isEqualTo(currentRelease.get().path)
             OK
         } as TaskCallable]).throwIfAnyFailed()
     }
@@ -355,8 +358,7 @@ public class TestProject extends BearProject<TestProject> {
     private static assertReleasesCount(TestProject test, Map<String, Map> map)
     {
         test.run([{_, task ->
-            final List<String> dirs = _.sys.lsQuick(_.var(test.releases.path))
-
+            def dirs = _.sys.lsQuick(_.var(test.releases.path))
 
             assertThat(dirs.findAll { it.startsWith("pending_") }).hasSize(map[_.name].pendingCount)
             assertThat(dirs.findAll { !it.startsWith("pending_") && !it.contains("releases.json") && !it.contains("current") }).hasSize(map[_.name].releasesCount)
@@ -366,12 +368,12 @@ public class TestProject extends BearProject<TestProject> {
     }
 
 
-    private givenNoReleases(TestProject test)
+    private givenNoReleases()
     {
         defaultDeployment = newDefaultDeployment()
 
         run([{_, task ->
-            _.sys.rm(_.var(test.releases.path)).run()
+            _.sys.rm(_.var(releases.path)).run()
         } as TaskCallable])
 
         // do a successful deployment

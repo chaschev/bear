@@ -31,8 +31,10 @@ public class GridBuilder {
     List<Phase<TaskResult, BearScriptPhase<Object, TaskResult>>> phases = new ArrayList<Phase<TaskResult, BearScriptPhase<Object, TaskResult>>>();
     private Map<Object, Object> variables;
 
-    protected BearProject project;
+    protected BearProject<?> project;
     private boolean shutdownAfterRun = true;
+
+    Object input;
 
     public GridBuilder add(final TaskDef<Object, TaskResult> taskDef){
         _addTask(taskDef);
@@ -112,7 +114,7 @@ public class GridBuilder {
                                 if (isFirstCallableFinal && $.var($.bear.verifyPlugins)) {
                                     DependencyResult r = new DependencyResult(Result.OK);
 
-                                    for (Plugin<Task, TaskDef> plugin : $.getGlobal().getOrderedPlugins()) {
+                                    for (Plugin<Task, TaskDef> plugin : project.getAllOrderedPlugins()) {
                                         r.join(plugin.checkPluginDependencies());
 
                                         //todo replace with insideInstallation? - no!
@@ -136,10 +138,11 @@ public class GridBuilder {
                                     }
                                 }
 
+
                                 $.runner.taskPreRun = new Function<Task<Object, TaskResult>, Task<Object, TaskResult>>() {
                                     @Override
                                     public Task<Object, TaskResult> apply(Task<Object, TaskResult> task) {
-                                        task.init(phase, party, party.grid, globalRunner.get());
+                                        task.init(phase, party, party.grid, globalRunner.get(), input);
 
                                         return task;
                                     }
@@ -243,6 +246,11 @@ public class GridBuilder {
 
     public GridBuilder setShutdownAfterRun(boolean shutdownAfterRun) {
         this.shutdownAfterRun = shutdownAfterRun;
+        return this;
+    }
+
+    public GridBuilder setInput(Object input) {
+        this.input = input;
         return this;
     }
 }

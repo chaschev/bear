@@ -55,7 +55,6 @@ public class Task<I, O extends TaskResult> extends HavingContext<Task<I, O>, Ses
 
     protected TaskCallable<I, O> taskCallable;
     protected final TaskContext<I, O> taskContext;
-    protected I input;
 
     public Task(TaskContext<I, O> taskContext, TaskCallable<I, O> taskCallable) {
         super(taskContext.$());
@@ -168,7 +167,7 @@ public class Task<I, O extends TaskResult> extends HavingContext<Task<I, O>, Ses
     }
 
     @Nullable
-    public Task<I, O> getParent() {
+    public Task<Object, TaskResult> getParent() {
         return taskContext.parent;
     }
 
@@ -178,7 +177,7 @@ public class Task<I, O extends TaskResult> extends HavingContext<Task<I, O>, Ses
     }
 
     public boolean isRootTask() {
-        Task<I, O> parent = getParent();
+        Task<Object, TaskResult> parent = getParent();
         return parent == null || parent.getDefinition() == TaskDef.ROOT;
     }
 
@@ -188,7 +187,7 @@ public class Task<I, O extends TaskResult> extends HavingContext<Task<I, O>, Ses
 
     public void init(
         Phase<O, BearScriptPhase<I, O>> phase,
-        PhaseParty<SessionContext, BearScriptPhase<I, O>> party, ComputingGrid<SessionContext, ?> grid, GlobalTaskRunner globalTaskRunner) {
+        PhaseParty<SessionContext, BearScriptPhase<I, O>> party, ComputingGrid<SessionContext, ?> grid, GlobalTaskRunner globalTaskRunner, Object input) {
         taskContext.phase = phase;
         taskContext.phaseParty = party;
         taskContext.grid = (ComputingGrid) party.grid;
@@ -196,6 +195,7 @@ public class Task<I, O extends TaskResult> extends HavingContext<Task<I, O>, Ses
         set$(party.getColumn());
         taskContext.executionContext.set$($);
         taskContext.set$($);
+        taskContext.input = (I) input;
     }
 
     public TaskDef<I, O> getDefinition() {
@@ -323,11 +323,11 @@ public class Task<I, O extends TaskResult> extends HavingContext<Task<I, O>, Ses
     }
 
     public Task<I, O> setInput(I input) {
-        this.input = input;
+        this.taskContext.input = input;
         return this;
     }
 
     public I getInput() {
-        return input;
+        return taskContext.input;
     }
 }

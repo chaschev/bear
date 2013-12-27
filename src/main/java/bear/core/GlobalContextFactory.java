@@ -35,7 +35,7 @@ public class GlobalContextFactory {
 
     public static GlobalContextFactory INSTANCE = new GlobalContextFactory();
 
-    private final GlobalContext global = GlobalContext.getInstance();
+    private GlobalContext global = GlobalContext.getInstance();
 
     public GlobalContextFactory() {
         File file = global.localCtx.var(global.bear.globalPropertiesFile);
