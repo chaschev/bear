@@ -21,6 +21,7 @@ import bear.annotations.Project;
 import bear.annotations.Variable;
 import bear.plugins.DeploymentPlugin;
 import bear.plugins.Plugin;
+import bear.plugins.PluginShellMode;
 import bear.plugins.ServerToolPlugin;
 import bear.plugins.misc.ReleasesPlugin;
 import bear.session.Address;
@@ -78,6 +79,7 @@ public abstract class BearProject<SELF extends BearProject> {
     protected ReleasesPlugin releases;
     private boolean unblockUninstall;
     private Object input;
+    private boolean async;
 
     protected BearProject() {
         this(GlobalContextFactory.INSTANCE);
@@ -130,7 +132,7 @@ public abstract class BearProject<SELF extends BearProject> {
         Preconditions.checkArgument(!configured, "already configured");
 
         for (Field field : OpenBean.fieldsOfType(this.getClass(), Plugin.class)) {
-            Class<? extends Plugin<Task, TaskDef>> aClass = (Class<? extends Plugin<Task, TaskDef>>) field.getType();
+            Class<? extends Plugin<TaskDef>> aClass = (Class<? extends Plugin<TaskDef>>) field.getType();
 
             factory.requirePlugins(aClass);
         }
@@ -315,13 +317,14 @@ public abstract class BearProject<SELF extends BearProject> {
     public void invoke(String method, Object... params) {
         setProjectVars();
 
-        Configuration projectConfiguration = load(projectConf());
+        MethodDesc methodDesc = OpenBean.getClassDesc(getClass()).getMethodDesc(method, false, params);
 
-        MethodDesc methodDesc = OpenBean.getClassDesc(this.getClass()).getMethodDesc(method, false, params);
+        Configuration projectAnnotation = projectConf();
+        Configuration methodAnnotation = methodDesc.getMethod().getAnnotation(Configuration.class);
 
-        Configuration methodConfiguration = load(methodDesc.getMethod().getAnnotation(Configuration.class));
+        load(methodAnnotation, projectAnnotation);
 
-        global.put(bear.useUI, useUI(firstNonNull(methodConfiguration, projectConfiguration)));
+        global.put(bear.useUI, useUI(firstNonNull(methodAnnotation, projectAnnotation)));
 
         Object result = methodDesc.invoke(this, params);
 
@@ -358,7 +361,7 @@ public abstract class BearProject<SELF extends BearProject> {
         Configuration projectConf = projectConf();
 
         if (useAnnotations) {
-            load(projectConf);
+            load(projectConf, null);
         }
 
         if (!configured) {
@@ -397,13 +400,19 @@ public abstract class BearProject<SELF extends BearProject> {
         return annotation == null || Annotations.defaultBoolean(annotation, "useUI");
     }
 
-    private Configuration load(Configuration annotation) {
-        if (annotation == null) return null;
-        if (!"".equals(annotation.properties())) {
-            File file = new File(annotation.properties());
+    private Configuration load(
+        @Nullable Configuration annotation,
+        @Nullable Configuration fallbackTo) {
+
+        if (annotation == null && fallbackTo == null) return null;
+
+        String properties = (String) chooseValue("properties", annotation, fallbackTo);
+
+        if (properties != null) {
+            File file = new File(properties);
 
             if (!file.exists() && !file.getName().endsWith(".properties")) {
-                file = new File(annotation.properties() + ".properties");
+                file = new File(properties + ".properties");
             }
 
             Preconditions.checkArgument(file.exists(), "properties file does not exist: %s", file.getAbsolutePath());
@@ -411,15 +420,17 @@ public abstract class BearProject<SELF extends BearProject> {
             set(main().propertiesFile, file);
         }
 
-        setAnnotation(bear.repositoryURI, annotation.vcs());
-        setAnnotation(bear.vcsBranchName, annotation.branch());
-        setAnnotation(bear.vcsTag, annotation.tag());
-        setAnnotation(bear.stage, annotation.stage());
-        setAnnotation(bear.sshUsername, annotation.user());
-        setAnnotation(bear.sshPassword, annotation.password());
+        setAnnotation(bear.repositoryURI, chooseValue("vcs", annotation, fallbackTo));
+        setAnnotation(bear.vcsBranchName, chooseValue("branch", annotation, fallbackTo));
+        setAnnotation(bear.vcsTag, chooseValue("tag", annotation, fallbackTo));
+        setAnnotation(bear.stage, chooseValue("stage", annotation, fallbackTo));
+        setAnnotation(bear.sshUsername, chooseValue("user", annotation, fallbackTo));
+        setAnnotation(bear.sshPassword, chooseValue("password", annotation, fallbackTo));
 
-        if (annotation.variables() != null) {
-            for (Variable variable : annotation.variables()) {
+        Variable[] vars = (Variable[]) chooseValue("variables", annotation, fallbackTo);
+
+        if (vars != null) {
+            for (Variable variable : vars) {
                 String name = variable.name();
                 Preconditions.checkArgument(global.variableRegistry.contains(name), "variable %s was not found in the registry", name);
                 global.putConst(name, variable.value());
@@ -429,9 +440,27 @@ public abstract class BearProject<SELF extends BearProject> {
         return annotation;
     }
 
-    private void setAnnotation(DynamicVariable<String> var, String value) {
-        if (!"".equals(value)) {
-            set(var, value);
+    private Object chooseValue(String property, Configuration annotation, Configuration fallbackTo) {
+        Object value = null;
+
+        if(annotation != null) {
+            Object defaultValue = Annotations.defaultValue(annotation, property);
+            value = OpenBean.invoke(annotation, property);
+            if(defaultValue.equals(value)) value = null;
+        }
+
+        if(value == null && fallbackTo != null) {
+            Object defaultValue = Annotations.defaultValue(fallbackTo, property);
+            value = OpenBean.invoke(fallbackTo, property);
+            if(defaultValue.equals(value)) value = null;
+        }
+
+        return value;
+    }
+
+    private void setAnnotation(DynamicVariable<String> var, Object value) {
+        if (value != null) {
+            set(var, (String) value);
         }
     }
 
@@ -464,13 +493,13 @@ public abstract class BearProject<SELF extends BearProject> {
         return defaultDeployment;
     }
 
-    public List<Plugin<Task, TaskDef>> getAllOrderedPlugins() {
+    public List<Plugin<TaskDef>> getAllOrderedPlugins() {
         try {
-            Set<Plugin<Task, TaskDef>> plugins = new HashSet<Plugin<Task, TaskDef>>();
+            Set<Plugin<TaskDef>> plugins = new HashSet<Plugin<TaskDef>>();
 
             for (Field field : OpenBean.fieldsOfType(this, Plugin.class)) {
                 Plugin plugin = (Plugin) field.get(this);
-                Set<Plugin<Task, TaskDef>> set = plugin.getAllPluginDependencies();
+                Set<Plugin<TaskDef>> set = plugin.getAllPluginDependencies();
 
                 plugins.add(plugin);
                 plugins.addAll(set);
@@ -480,6 +509,48 @@ public abstract class BearProject<SELF extends BearProject> {
         } catch (IllegalAccessException e) {
             throw Exceptions.runtime(e);
         }
+    }
+
+    public List<Plugin<TaskDef>> getAllShellPlugins() {
+        try {
+            Set<Plugin<TaskDef>> plugins = new HashSet<Plugin<TaskDef>>();
+
+            for (Field field : OpenBean.fieldsOfType(this, Plugin.class)) {
+                Plugin plugin = (Plugin) field.get(this);
+
+                addIfHasShell(plugins, plugin);
+
+                for (Plugin<TaskDef> pl : (Set<Plugin<TaskDef>>) plugin.getAllPluginDependencies()) {
+                    addIfHasShell(plugins, pl);
+                }
+            }
+
+            return global.plugins.orderPlugins(plugins);
+        } catch (IllegalAccessException e) {
+            throw Exceptions.runtime(e);
+        }
+    }
+
+    private static void addIfHasShell(Set<Plugin<TaskDef>> plugins, Plugin plugin) {
+        PluginShellMode shell = plugin.getShell();
+
+        if(shell != null){
+            plugins.add(plugin);
+        }
+    }
+
+    public SELF setInteractiveMode(){
+        async = true;
+        shutdownAfterRun = false;
+        return self();
+    }
+
+    public void setAsync(boolean async) {
+        this.async = async;
+    }
+
+    public boolean isAsync() {
+        return async;
     }
 
     public static class PulseResult extends TaskResult {

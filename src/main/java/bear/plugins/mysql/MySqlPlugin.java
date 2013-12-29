@@ -49,7 +49,7 @@ import static bear.session.Variables.strVar;
 /**
  * @author Andrey Chaschev chaschev@gmail.com
  */
-public class MySqlPlugin extends Plugin<Task, TaskDef<Object, TaskResult>> {
+public class MySqlPlugin extends Plugin<TaskDef<Object, TaskResult>> {
     private static final Logger logger = LoggerFactory.getLogger(MySqlPlugin.class);
 
     public final DynamicVariable<String>

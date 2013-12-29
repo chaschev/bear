@@ -60,7 +60,7 @@ public class GlobalContext extends AppGlobalContext<GlobalContext, Bear> {
         public <T extends Plugin> Optional<T> pluginOfInstance(Class<? extends T> pluginClass) {
             Class result = null;
 
-            for (Plugin<Task, TaskDef> plugin : getPlugins()) {
+            for (Plugin<TaskDef> plugin : getPlugins()) {
 //                    Class<?> canonical = Class.forName(plugin.getClass().getName());
                 Class<? extends Plugin> aClass = plugin.getClass();
                 if(pluginClass.isAssignableFrom(aClass)){
@@ -215,11 +215,11 @@ public class GlobalContext extends AppGlobalContext<GlobalContext, Bear> {
         return plugins.getPluginMap().keySet();
     }
 
-    public Collection<Plugin<Task, TaskDef>> getPlugins() {
+    public Collection<Plugin<TaskDef>> getPlugins() {
         return plugins.getPluginMap().values();
     }
 
-    public List<Plugin<Task, TaskDef>> getOrderedPlugins() {
+    public List<Plugin<TaskDef>> getOrderedPlugins() {
         return plugins.getOrderedPlugins();
     }
 

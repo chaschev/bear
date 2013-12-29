@@ -31,8 +31,8 @@ Bear is in it's early development stages now. Questions, concerns? Just drop me 
 | Support Ubuntu                               | Finished.      |
 | Integration & unit tests                     | Finished.      |
 | Finishing TODOs                              | In progress... |
-| UI bugfixing                                 |                |
-| Refactoring, simplifying API                 |                |
+| UI bugfixing                                 | In progress... |
+| Refactoring, simplifying API                 | In progress... |
 
 
 ### Project Samples
@@ -192,4 +192,4 @@ Bear has a UI written in AngularJS inside a JavaFX's WebView. It's probably the 
 | Deployments to Heroku, AWS, GCE, Azure, Rackspace |                |
 | Run via a Maven Plugin                            |                |
 | Support JDK 6 for CLI, JDK 7 for GUI              |                |
-| Documentation
+| Documentation                                     |                |

@@ -32,7 +32,7 @@ import javax.annotation.Nonnull;
 /**
  * @author Andrey Chaschev chaschev@gmail.com
  */
-public abstract class SystemEnvironmentPlugin extends Plugin<SystemSession, SystemEnvironmentPlugin.SystemSessionDef> {
+public abstract class SystemEnvironmentPlugin extends Plugin<SystemEnvironmentPlugin.SystemSessionDef> {
     private static final Logger logger = LoggerFactory.getLogger(SystemEnvironmentPlugin.class);
 
     private int defaultTimeout = 5000;

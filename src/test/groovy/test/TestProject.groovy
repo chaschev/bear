@@ -239,6 +239,7 @@ public class TestProject extends BearProject<TestProject> {
         assertThat(runner.result(ph2, host2).value).isEqualTo("h1, ph1, h2, ph2")
     }
 
+    @Configuration(stage = "u-2")
     def errorInAll_Checkout()
     {
         useAnnotations = false;
@@ -266,6 +267,7 @@ public class TestProject extends BearProject<TestProject> {
         ]);
     }
 
+    @Configuration(stage = "u-2")
     def errorInOne_Start()
     {
         useAnnotations = false;
@@ -314,6 +316,7 @@ public class TestProject extends BearProject<TestProject> {
     }
 
 
+    @Configuration(stage = "u-2")
     def errorInOne_Checkout()
     {
         useAnnotations = false;

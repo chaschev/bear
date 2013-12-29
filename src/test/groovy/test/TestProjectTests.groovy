@@ -1,6 +1,7 @@
 package test
 
 import bear.task.TaskCallable
+import org.junit.Before
 import org.junit.BeforeClass
 import org.junit.FixMethodOrder
 import org.junit.Test
@@ -30,10 +31,18 @@ public class TestProjectTests {
             _.sys.rm(_.var(project.releases.path)).run()
         } as TaskCallable])
 
-
         if (setupNeeded.get()) {
             project.setup()
         }
+    }
+
+    @Before
+    public void setUp() throws Exception
+    {
+        // a hack for speed up (should reload global instead)
+        // stage is set to 'u-2' in the clean up above
+        // so it can't be redefined in the following annotations
+        project.global.removeConst(project.bear.stage)
     }
 
     @Test

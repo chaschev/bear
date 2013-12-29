@@ -50,15 +50,24 @@
     </properties>
 
     <profiles>
-<!--
+
         <profile>
-            <id>freaking-java-fx</id>
+            <id>development</id>
             <build>
-                <plugins>
-                </plugins>
+                <resources>
+                    <resource>
+                        <directory>src/main/resources</directory>
+                        <filtering>false</filtering>
+                        <includes>
+                            <include>**/metis/img/**/*.*</include>
+                            <include>**/*firebug*.*</include>
+                            <include>**/js/content/**/*.*</include>
+                            <include>**/js/sandbox/**/*.*</include>
+                        </includes>
+                    </resource>
+                </resources>
             </build>
         </profile>
--->
         <profile>
             <id>allow-snapshots</id>
             <activation>

@@ -40,7 +40,7 @@ import java.util.*;
 public class Plugins {
     private static final Logger logger = LoggerFactory.getLogger(Plugins.class);
 
-    protected final Map<String, Plugin<Task, TaskDef>> pluginMap = new LinkedHashMap<String, Plugin<Task, TaskDef>>();
+    protected final Map<String, Plugin<TaskDef>> pluginMap = new LinkedHashMap<String, Plugin<TaskDef>>();
     public final Map<String, Plugin> shortcutsPluginMap = new LinkedHashMap<String, Plugin>();
 
     private GlobalContext globalContext;
@@ -61,7 +61,7 @@ public class Plugins {
                 }
             }
 
-            Plugin<Task, TaskDef> origPlugin = pluginMap.get(plugin.getName());
+            Plugin<TaskDef> origPlugin = pluginMap.get(plugin.getName());
 
             if (origPlugin == null) {
                 pluginMap.put(plugin.getClass().getName(), plugin);
@@ -87,27 +87,27 @@ public class Plugins {
     /**
      * Returns plugins in the order of initialization. First are the most basic.
      */
-    public List<Plugin<Task, TaskDef>> getOrderedPlugins() {
+    public List<Plugin<TaskDef>> getOrderedPlugins() {
 
-        Collection<Plugin<Task, TaskDef>> plugins = pluginMap.values();
+        Collection<Plugin<TaskDef>> plugins = pluginMap.values();
 
         return orderPlugins(plugins);
     }
 
-    public List<Plugin<Task, TaskDef>> orderPlugins(Collection<Plugin<Task, TaskDef>> plugins) {
-        LinkedHashSet<Plugin<Task, TaskDef>> tempSet = new LinkedHashSet<Plugin<Task, TaskDef>>();
+    public List<Plugin<TaskDef>> orderPlugins(Collection<Plugin<TaskDef>> plugins) {
+        LinkedHashSet<Plugin<TaskDef>> tempSet = new LinkedHashSet<Plugin<TaskDef>>();
 
-        for (Plugin<Task, TaskDef> plugin : plugins) {
+        for (Plugin<TaskDef> plugin : plugins) {
             _addOrderedPlugin(plugin, tempSet);
         }
 
-        return new ArrayList<Plugin<Task, TaskDef>>(tempSet);
+        return new ArrayList<Plugin<TaskDef>>(tempSet);
     }
 
-    private void _addOrderedPlugin(Plugin<Task, TaskDef> plugin, LinkedHashSet<Plugin<Task, TaskDef>> tempSet) {
+    private void _addOrderedPlugin(Plugin<TaskDef> plugin, LinkedHashSet<Plugin<TaskDef>> tempSet) {
         if(tempSet.contains(plugin)) return;
 
-        for (Plugin<Task, TaskDef> pluginDep : plugin.getPluginDependencies()) {
+        for (Plugin<TaskDef> pluginDep : plugin.getPluginDependencies()) {
             _addOrderedPlugin(pluginDep, tempSet);
         }
 
@@ -279,7 +279,7 @@ public class Plugins {
         return task;
     }
 
-    public Map<String, Plugin<Task, TaskDef>> getPluginMap() {
+    public Map<String, Plugin<TaskDef>> getPluginMap() {
         return pluginMap;
     }
 }

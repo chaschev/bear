@@ -208,8 +208,7 @@ app.controller('HistoryController', ['historyManager', '$scope', function(histor
 app.directive('chosen',function() {
     return {
         restrict: 'A',
-        link: function (scope, element, attrs)
-        {
+        link: function (scope, element, attrs) {
             var $element = $(element[0]);
 
             scope.$watch(attrs['chosen'], function ()
@@ -810,21 +809,31 @@ app.controller('BearCtrl', ['fileManager', '$scope', function (fileManager, $sco
 
     $scope.terminals = new Terminals();
 
-    $scope.terminals.updateHosts([
-        {
+    $scope.terminals.updateHosts([{
             name: 'shell',
             address: 'shell'
-        },
-        {
+        }, {
             name: 'status',
             address: 'status'
         }]);
 
     $scope.initScripts = function(){
-        $scope.settingsScript = JSON.parse(window.bear.jsonCall('conf', 'getPropertyAsFile', 'bear-fx.settings'));
-        $scope.runScript = JSON.parse(window.bear.jsonCall('conf', 'getPropertyAsFile', 'bear-fx.script'));
+        $scope.projectFile = JSON.parse(window.bear.jsonCall('conf', 'getPropertyAsFile', 'bear-fx.project'));
 
-        Java.log('initScripts, files: ', $scope.settingsScript, $scope.runScript);
+        Java.log('initScripts, files: ', $scope.projectFile);
+    };
+
+    $scope.runProject = function(){
+        var runObject = {
+            projectName: $scope.projectFile.name,
+            projectMethodName: $scope.projectMethodName,
+            shell: 'shell'
+        };
+
+        Java.log("about to send: ", runObject);
+
+        var response = JSON.parse(window.bear.jsonCall('conf', 'run',
+            JSON.stringify(runObject)));
     };
 
     $scope.$watch('lastBuildTime', function(){
@@ -861,7 +870,7 @@ app.controller('BearCtrl', ['fileManager', '$scope', function (fileManager, $sco
             case 'rmi':
                 if(e.subType === 'rootCtrl'){
                     var field = e.bean;
-                    var bean ;
+                    var bean;
                     var method = e.method;
                     var params = JSON.parse(e.jsonArrayOfParams);
 
@@ -895,13 +904,12 @@ app.controller('BearCtrl', ['fileManager', '$scope', function (fileManager, $sco
                 break;
             case 'notice':
                 $scope.showNotice(e);
-                break;
 
+                break;
             case 'phaseFinished':
                 $scope.$broadcast('phaseFinished', e);
 
                 break;
-
             case 'status':
                 $scope.$apply(function(){
                     $scope.terminals.updateStats(e.stats);
@@ -954,18 +962,6 @@ app.controller('BearCtrl', ['fileManager', '$scope', function (fileManager, $sco
 }]);
 
 
-function DropdownCtrl($scope) {
-    $scope.items = [
-        "The first choice!",
-        "And another choice for you.",
-        "but wait! A third!"
-    ];
-
-    $scope.init = function(items){
-        $scope.items = items;
-    }
-}
-
 app.controller('FileTabsCtrl', ['$scope', '$q', function($scope, $q) {
     Java.log("FileTabsCtrl init");
 
@@ -974,7 +970,7 @@ app.controller('FileTabsCtrl', ['$scope', '$q', function($scope, $q) {
 
     $scope.selectedTab = 'script';
 
-//    $scope.settingsScript = {
+//    $scope.projectFile = {
 //        dir: '.',
 //        filename: 'loading'
 //    };
@@ -982,27 +978,6 @@ app.controller('FileTabsCtrl', ['$scope', '$q', function($scope, $q) {
     $scope.createPom = function(){
         window.bear.call('conf', 'createPom');
     };
-
-//    //todo remove
-//    $scope.runScript = function(){
-//        try {
-////            var scope = angular.element('#FileTabsCtrl').scope();
-//
-////            Java.log('scope', scope);
-//            Java.log('running script', $scope.scripts.selectedFile);
-//
-//            Java.log('my scope ', $scope, 'parent scope: ', $scope.$parent);
-//
-//            var hosts = JSON.parse(window.bear.jsonCall('conf', 'run',
-//                $scope.runScript.dir + '/' + $scope.runScript.filename,
-//                $scope.settingsScript.path));
-//
-//            $scope.terminals.onScriptStart(hosts.hosts);
-//        } catch (e) {
-//            Java.log(e);
-//        }
-//    };
-
 
     function mapArray(arr){
         for (var i = 0; i < arr.length; i++) {
@@ -1035,8 +1010,7 @@ app.controller('FileTabsCtrl', ['$scope', '$q', function($scope, $q) {
         }
     };
 
-    // triggered by
-    // this update is needed and is triggered for each build
+    // this update is needed and is triggered for each build (2013.12.29: ??)
     $scope.$on('buildFinished', function(e, args){
         Java.log("buildFinished - $on - updating files");
 
@@ -1049,47 +1023,39 @@ var ConsoleTabsCtrl = function ($scope) {
 
 //app.controller('FileTabsCtrl', ['$scope', function($scope) {
 app.controller('ConsoleTabsChildCtrl', ['$scope', '$q', '$timeout', 'historyManager', function ($scope, $q, $timeout, historyManager) {
-    var updateShell = function (remoteEnv, shellPlugin)
+    var updateShell = function (shellPlugin)
     {
-        Java.log('updating shell to', remoteEnv, shellPlugin);
+        Java.log('updating shell to', shellPlugin);
+
         var commandText = '';
 
         switch (shellPlugin) {
             case 'sh':
-                commandText = ':use shell ' + (remoteEnv ? 'ssh' : 'sh') + '\n';
+                commandText = ':use shell ssh\n';
                 break;
             case 'groovy':
-                commandText = ':use shell ' + shellPlugin + "\n" +
-                    ':set groovyShell.sendToHosts=' + remoteEnv;
-
+                commandText = ':use shell groovy\n';
                 break;
         }
 
         $scope.sendCommand(commandText);
     };
 
-    $scope.$watch('remoteEnv', function(newVal, oldVal){
-        if (newVal !== oldVal) {
-            Java.log("'remoteEnv' changed to:" + newVal);
-
-            updateShell(newVal, $scope.shellPlugin);
-        }
-    });
-
     $scope.$watch('shellPlugin', function(newVal, oldVal){
         if (newVal !== oldVal) {
             Java.log("'shellPlugin' changed to:" + newVal);
-            updateShell($scope.remoteEnv, newVal);
+            updateShell(newVal);
         }
     });
 
-    var readRunScript = function (runScript) {
-        return $scope.fileManager.readFile(
-            runScript.dir,
-            runScript.filename
-        );
-    };
+//    var readRunScript = function (runScript) {
+//        return $scope.fileManager.readFile(
+//            runScript.dir,
+//            runScript.filename
+//        );
+//    };
 
+    //todo change this to the project file
     var refreshScriptText = function(runScript) {
         console.log('refreshScriptText - click!');
 
@@ -1113,43 +1079,32 @@ app.controller('ConsoleTabsChildCtrl', ['$scope', '$q', '$timeout', 'historyMana
         var editor = $scope.editor;
         commandText = commandText || editor.getValue();
 
-        Java.log('sendCommand \'' + commandText +"', terminal:", $scope.terminal.name);
+        Java.log('sendCommand \'' + commandText +"', terminal: ", $scope.terminal.name);
 
 //        var scriptName = $scope.scripts.selectedFile;
-        var settingsName = $scope.settingsScript.path;
+        var projectName = $scope.projectFile.path;
 
-        if(!settingsName || settingsName === 'Loading'){
-            Java.log('cancelled sending a command, because settings is:', settingsName);
+        if(!projectName || projectName === 'Loading'){
+            Java.log('cancelled sending a command, because project is: ', projectName);
             return;
         }
 
         var response = JSON.parse(window.bear.jsonCall('conf', 'interpret',
             commandText,
             JSON.stringify({
-                script: $scope.runScript.dir + '/' + $scope.runScript.filename,
-                settingsName: settingsName,
+                projectName: projectName,
+                projectMethodName: $scope.projectMethodName,
                 shell: $scope.terminal.name
             })));
 
         Java.log('interpret response:', response);
 
-        if($scope.runScriptModified){
-            console.log("adding file script:", commandText);
-            historyManager.addScript(commandText);
-        } else{
-            console.log("adding file ref:", $scope.runScript);
-            historyManager.addFileRef($scope.runScript.path);
-        }
+        historyManager.addScript(commandText);
 
         $scope.addCommand(commandText);
         editor.setValue('');
-
     };
 
-
-    $scope.refreshRunScript = function(){
-        refreshScriptText($scope.runScript);
-    };
 
     $scope.$on('setActiveEditorValue', function(event, text){
 //        console.log('setActiveEditorValue', $scope.terminal);
@@ -1169,17 +1124,6 @@ app.controller('ConsoleTabsChildCtrl', ['$scope', '$q', '$timeout', 'historyMana
                 refreshScriptText(newVal);
             }
         }, true);
-
-        $scope.$watch('runScript.path', function(newVal, oldVal){
-            Java.log('runScript.path watch:', newVal, oldVal);
-
-            if(newVal && newVal !== oldVal){
-                editor.setValue($scope.fileManager.readFile(
-                    $scope.runScript.dir,
-                    $scope.runScript.filename
-                ));
-            }
-        });
 
         var session = editor.getSession();
 
@@ -1233,7 +1177,7 @@ app.controller('ConsoleTabsChildCtrl', ['$scope', '$q', '$timeout', 'historyMana
             var prevRow = pos.row - 1;
             var r = 0;
 
-            for(var i = 0;i < prevRow;i++){
+            for(var i = 0;i < prevRow; i++){
                 r += session.getLine(i).length;
             }
 

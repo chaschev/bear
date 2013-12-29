@@ -48,7 +48,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.IOException;
 import java.util.Properties;
 
 import static bear.core.SessionContext.randomId;
@@ -81,14 +80,6 @@ public class BearFX {
             try {
                 Object delegateBean = OpenBean.getFieldValue(BearFX.this, delegate);
                 return OpenBean.invoke(delegateBean, method, params);
-            } catch (Exception e) {
-                return new ExceptionWrapper(e);
-            }
-        }
-
-        public Object getScriptText() throws IOException {
-            try {
-                return conf.getScriptText();
             } catch (Exception e) {
                 return new ExceptionWrapper(e);
             }

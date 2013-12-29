@@ -18,7 +18,6 @@ package bear.core;
 
 import bear.context.VariablesLayer;
 import bear.plugins.Plugin;
-import bear.task.Task;
 import bear.task.TaskDef;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -47,7 +46,7 @@ public class GlobalContextFactory {
 
     public void initPluginsAndWire(BearProject project) {
         if (userRegisteredPlugins != null) {
-            for (Class<? extends Plugin<Task, TaskDef>> aClass : userRegisteredPlugins) {
+            for (Class<? extends Plugin<TaskDef>> aClass : userRegisteredPlugins) {
                 global.addPlugin(aClass);
             }
 
@@ -63,10 +62,10 @@ public class GlobalContextFactory {
 
 //    public GlobalVarsInitPhase globalVarsInitPhase;
 
-    private final List<Class<? extends Plugin<Task, TaskDef>>> userRegisteredPlugins = new ArrayList<Class<? extends Plugin<Task, TaskDef>>>();
+    private final List<Class<? extends Plugin<TaskDef>>> userRegisteredPlugins = new ArrayList<Class<? extends Plugin<TaskDef>>>();
 
-    public GlobalContextFactory requirePlugins(Class<? extends Plugin<Task, TaskDef>>... plugins){
-        for (Class<? extends Plugin<Task, TaskDef>> plugin : plugins) {
+    public GlobalContextFactory requirePlugins(Class<? extends Plugin<TaskDef>>... plugins){
+        for (Class<? extends Plugin<TaskDef>> plugin : plugins) {
             synchronized (userRegisteredPlugins) {
                 if (!userRegisteredPlugins.contains(plugin)) {
                     userRegisteredPlugins.add(plugin);

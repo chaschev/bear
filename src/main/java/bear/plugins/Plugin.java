@@ -34,7 +34,7 @@ import java.util.Set;
 /**
  * @author Andrey Chaschev chaschev@gmail.com
  */
-public abstract class Plugin<TASK extends Task, TASK_DEF extends TaskDef> {
+public abstract class Plugin<TASK_DEF extends TaskDef> {
     public String name;
     protected String desc;
 
@@ -44,12 +44,11 @@ public abstract class Plugin<TASK extends Task, TASK_DEF extends TaskDef> {
 
     protected boolean transitiveDependency;
 
-    Set<Plugin<Task, TaskDef>> pluginDependencies;
+    Set<Plugin<TaskDef>> pluginDependencies;
 
     protected final TASK_DEF taskDefMixin;
 
     protected PluginShellMode shell;
-
 
     public Plugin(GlobalContext global) {
         this(global, null);
@@ -118,8 +117,8 @@ public abstract class Plugin<TASK extends Task, TASK_DEF extends TaskDef> {
         }
     }
 
-    protected void require(DependencyResult r, Class<? extends Plugin<Task, ? extends TaskDef>> pluginClass) {
-        final Plugin<Task, ? extends TaskDef> plugin = global.plugin(pluginClass);
+    protected void require(DependencyResult r, Class<? extends Plugin<? extends TaskDef>> pluginClass) {
+        final Plugin<? extends TaskDef> plugin = global.plugin(pluginClass);
 
         if (plugin == null) {
             r.add(plugin.getClass().getSimpleName() + " plugin is required");
@@ -139,7 +138,7 @@ public abstract class Plugin<TASK extends Task, TASK_DEF extends TaskDef> {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
 
-        Plugin<Task, ? extends TaskDef> plugin = (Plugin<Task, ? extends TaskDef>) o;
+        Plugin<? extends TaskDef> plugin = (Plugin<? extends TaskDef>) o;
 
         if (!name.equals(plugin.name)) return false;
 
@@ -151,14 +150,14 @@ public abstract class Plugin<TASK extends Task, TASK_DEF extends TaskDef> {
         return name.hashCode();
     }
 
-    public Set<Plugin<Task, TaskDef>> getPluginDependencies() {
+    public Set<Plugin<TaskDef>> getPluginDependencies() {
         return pluginDependencies;
     }
 
-    public Set<Plugin<Task, TaskDef>> getAllPluginDependencies() {
-        Set<Plugin<Task, TaskDef>> result = new HashSet<Plugin<Task, TaskDef>>();
+    public Set<Plugin<TaskDef>> getAllPluginDependencies() {
+        Set<Plugin<TaskDef>> result = new HashSet<Plugin<TaskDef>>();
 
-        for (Plugin<Task, TaskDef> dep : pluginDependencies) {
+        for (Plugin<TaskDef> dep : pluginDependencies) {
             result.add(dep);
 
             result.addAll(dep.getAllPluginDependencies());

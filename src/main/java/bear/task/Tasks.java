@@ -180,10 +180,10 @@ public class Tasks {
                     }
 
                     if ($(bear.autoInstallPlugins) || $(bear.verifyPlugins)) {
-                        List<Plugin<Task, TaskDef>> plugins = getInput() == null ? global.getOrderedPlugins()
+                        List<Plugin<TaskDef>> plugins = getInput() == null ? global.getOrderedPlugins()
                                 : getInput().getAllOrderedPlugins();
 
-                        for (Plugin<Task, ? extends TaskDef> plugin : plugins) {
+                        for (Plugin<? extends TaskDef> plugin : plugins) {
                             InstallationTaskDef<? extends InstallationTask> installTaskDef = plugin.getInstall();
                             InstallationTask session = (InstallationTask) installTaskDef.singleTaskSupplier().createNewSession($, (Task)getParent(), installTaskDef);
                             if (session.asInstalledDependency().checkDeps().nok()) {

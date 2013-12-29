@@ -45,7 +45,7 @@ import static com.google.common.collect.Iterables.find;
 /**
  * A class that simplifies operations (i.e. installation) of tools like Maven, Grails, Play, Tomcat, etc
  */
-public class ZippedToolPlugin extends Plugin<Task, TaskDef<Object, TaskResult>> {
+public class ZippedToolPlugin extends Plugin<TaskDef<Object, TaskResult>> {
 
 
     public final DynamicVariable<String>
@@ -79,7 +79,7 @@ public class ZippedToolPlugin extends Plugin<Task, TaskDef<Object, TaskResult>> 
     }
 
 
-    public static class SystemDependencyPlugin extends Plugin<Task, TaskDef<Object, TaskResult>> {
+    public static class SystemDependencyPlugin extends Plugin<TaskDef<Object, TaskResult>> {
         public SystemDependencyPlugin(GlobalContext global) {
             super(global);
         }

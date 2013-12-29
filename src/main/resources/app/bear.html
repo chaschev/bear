@@ -41,14 +41,15 @@
     <script src="js/angular-perfect-scrollbar.js"></script>
 -->
     <!-- 1.2 -->
+
     <script src='js/firebug-lite-compressed.js'></script>
+    <!--<script type="text/javascript" src="https://getfirebug.com/firebug-lite.js"></script>-->
     <!--<link rel="stylesheet" type="text/css" href="metis/lib/gritter/css/jquery.gritter.css" />-->
     <link rel="stylesheet" href="metis/lib/bootstrap/css/bootstrap.css">
     <link rel="stylesheet" href="metis/css/main.css">
     <!--<link rel="stylesheet" href="metis/lib/Font-Awesome/css/font-awesome.css">-->
     <link href="http://netdna.bootstrapcdn.com/font-awesome/4.0.1/css/font-awesome.css" rel="stylesheet">
     <link rel="stylesheet" href="metis/css/theme.css">
-
 
     <!--<link rel="stylesheet" href="css/bootstrap.min.css"/>-->
     <link rel="stylesheet" href="css/chosen.css"/>
@@ -59,16 +60,6 @@
 
     <style>
         html,body { height:100% !important; }
-
-        /*.wrapper {*/
-            /*min-height: 100%;*/
-            /*height: auto !important;*/
-            /*height: 100%;*/
-            /*margin: 0 auto -25px; *//* the bottom margin is the negative value of the footer's height */
-        /*}*/
-        /*.footer, .push {*/
-            /*height: 25px; *//* .push must be the same height as .footer */
-        /*}*/
 
         .wrapper{
             background-color: #333;
@@ -459,73 +450,24 @@
             </form>
         </div>
         </div>
-
-        <!--<div class="box inverse">
-            <header>
-                <div class="icons"><i class="fa fa-desktop"></i></div>
-                <h5>Environment</h5>
-            </header>
-            <div class="accordion-body collapse in body">
-                <div class="input-group input-group-sm">
-                    <span class="input-group-addon">Stage</span>
-                    <div class="input-group">
-                        <div class="input-group-btn">
-                            <div class="dropdown" ng-controller="DropdownCtrl">
-                                <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown">Action <span class="caret"></span></button>
-                                <ul class="dropdown-menu">
-                                    <li ng-repeat="choice in items">
-                                        <a>{{choice}}</a>
-                                    </li>
-                                </ul>
-                            </div>
-                        </div>&lt;!&ndash; /btn-group &ndash;&gt;
-                    </div>
-                </div>
-                <div class="input-group input-group-sm">
-                    <span class="input-group-addon">Roles</span>
-                    <div class="input-group">
-                        <div class="input-group-btn">
-                            <div class="dropdown" ng-controller="DropdownCtrl">
-                                <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown">Action <span class="caret"></span></button>
-                                <ul class="dropdown-menu">
-                                    <li ng-repeat="choice in items">
-                                        <a>{{choice}}</a>
-                                    </li>
-                                </ul>
-                            </div>
-                        </div>&lt;!&ndash; /btn-group &ndash;&gt;
-                    </div>
-                </div>
-                <div class="input-group input-group-sm">
-                    <span class="input-group-addon">Hosts</span>
-                    <div class="input-group">
-                        <div class="input-group-btn">
-                            <div class="dropdown" ng-controller="DropdownCtrl">
-                                <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown">Action <span class="caret"></span></button>
-                                <ul class="dropdown-menu">
-                                    <li ng-repeat="choice in items">
-                                        <a>{{choice}}</a>
-                                    </li>
-                                </ul>
-                            </div>
-                        </div>&lt;!&ndash; /btn-group &ndash;&gt;
-                    </div>
-                </div>
-            </div>
-        </div>-->
         <div class="box inverse">
             <header>
                 <div class="icons"><i class="fa fa-cogs"></i></div>
-                <h5>Edit script</h5>
+                <h5>Project</h5>
             </header>
             <div class="accordion-body collapse in body">
                 <form class="form-horizontal">
-
                     <div class="well well-small dark">
                         <div id="FileTabsCtrl" ng-controller="FileTabsCtrl" ng-init="initScripts()">
-                            <div fx-editor-button selected="settingsScript" file-manager="fileManager"></div>
+                            <div fx-editor-button selected="projectFile" file-manager="fileManager"></div>
+                        </div>
 
-                            <button class="btn btn-success" ng-click="createPom()">Create POM</button>
+                        <select id="projectMethodNameId" chosen="projectMethodName">
+                            <option value="deploy">deploy</option>
+                        </select>
+
+                        <div style="text-align: right">
+                            <button class="btn btn-sm btn-success" ng-click="runProject()">Run</button>
                         </div>
                     </div>
 
@@ -607,15 +549,14 @@
                                     <div><table style="width: 100%">
                                         <tr>
                                             <td style="width: 90%" colspan="3">
-                                                <div ng-init="classes='btn btn-success btn-sm';" fx-editor-button selected="runScript" file-manager="fileManager" style="display:inline-block;"></div>
-                                                <button class="btn btn-sm btn-default" style="display: inline-block"><i class="fa fa-refresh" ng-click="refreshRunScript()"></i></button>
-                                            </td>
-                                            <!--<td>
                                                 <div class="input-group input-group-sm">
                                                     <select class="chzn-select" ng-init="shellPlugin='sh'"
                                                             ng-model="shellPlugin" ng-options="s for s in ['sh', 'groovy']">
                                                     </select>
                                                 </div>
+                                            </td>
+                                            <!--<td>
+
                                             </td>
                                             <td>
                                                 <div switch="remoteEnv" ng-init="remoteEnv=true">

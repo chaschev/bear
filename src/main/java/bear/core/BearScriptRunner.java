@@ -166,9 +166,9 @@ public class BearScriptRunner {
     }
 
     public static class UIContext {
-        public String settingsName;
-        public String script;
+        public String projectName;
         public String shell;
+        public String projectMethodName;
     }
 
     public static class SwitchResponse extends MessageResponse {

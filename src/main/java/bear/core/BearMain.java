@@ -184,7 +184,7 @@ public class BearMain extends AppCli<GlobalContext, Bear, BearMain.AppOptions2> 
         LoggingBooter.loggerDiagnostics();
     }
 
-    static CompileManager createCompilerManager() {
+    protected static CompileManager createCompilerManager() {
         List<File> folders = Lists.newArrayList(BEAR_DIR);
 
         Optional<ClassLoader> dependenciesCL = createDepsClassLoader(folders);
@@ -419,11 +419,15 @@ public class BearMain extends AppCli<GlobalContext, Bear, BearMain.AppOptions2> 
         shell.evaluate("project." + method);
     }
 
-    public static void run(BearProject project, boolean shutdown) {
-        run(project, null, shutdown);
+    public static GlobalTaskRunner run(BearProject project, boolean shutdown) {
+        return run(project, null, shutdown, false);
     }
 
-    public static void run(BearProject project, @Nullable Map<Object, Object> variables, boolean shutdown) {
+    public static GlobalTaskRunner run(BearProject project, @Nullable Map<Object, Object> variables, boolean shutdown) {
+        return run(project, variables, shutdown, false);
+    }
+
+    public static GlobalTaskRunner run(BearProject project, @Nullable Map<Object, Object> variables, boolean shutdown, boolean async) {
         GlobalContext global = project.global;
 
         String script = global.var(project.main().script);
@@ -434,10 +438,14 @@ public class BearMain extends AppCli<GlobalContext, Bear, BearMain.AppOptions2> 
             throw new IllegalArgumentException("did not find field: " + script);
         }
 
-        run(project, gridOptional.get(), variables, shutdown);
+        return run(project, gridOptional.get(), variables, shutdown, async);
     }
 
     public static GlobalTaskRunner run(BearProject project, GridBuilder grid, Map<Object, Object> variables, boolean shutdown) {
+        return run(project, grid, variables, shutdown, true);
+    }
+
+    public static GlobalTaskRunner run(BearProject project, GridBuilder grid, Map<Object, Object> variables, boolean shutdown, boolean async) {
         try {
             GlobalContext global = project.global;
 
@@ -448,9 +456,11 @@ public class BearMain extends AppCli<GlobalContext, Bear, BearMain.AppOptions2> 
             try {
                 GlobalTaskRunner runner = response.getGlobalRunner();
 
-                runner.getFinishedLatch().await();
+                if(!async){
+                    runner.getFinishedLatch().await();
 
-                System.out.println("finished: " + runner.stats.getDefaultValue().toString());
+                    System.out.println("finished: " + runner.stats.getDefaultValue().toString());
+                }
 
                 return runner;
             } finally {

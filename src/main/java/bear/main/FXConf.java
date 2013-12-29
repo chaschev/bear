@@ -16,10 +16,10 @@
 
 package bear.main;
 
-import bear.core.BearMain;
 import bear.core.*;
 import bear.main.event.LogEventToUI;
 import bear.main.event.NoticeEventToUI;
+import bear.main.event.RMIEventToUI;
 import bear.main.phaser.SettableFuture;
 import bear.plugins.CommandInterpreter;
 import bear.plugins.Plugin;
@@ -27,21 +27,20 @@ import bear.plugins.PomPlugin;
 import bear.plugins.groovy.Replacement;
 import bear.plugins.groovy.Replacements;
 import bear.plugins.sh.GenericUnixRemoteEnvironmentPlugin;
+import bear.task.*;
 import chaschev.json.JacksonMapper;
 import chaschev.lang.Lists2;
 import chaschev.lang.Predicates2;
 import chaschev.util.Exceptions;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.google.common.base.Charsets;
-import com.google.common.base.Optional;
+import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
-import com.google.common.base.Supplier;
 import com.google.common.collect.Iterables;
 import com.google.common.io.CharStreams;
 import com.google.common.io.Files;
 import javafx.scene.input.Clipboard;
 import javafx.scene.input.DataFormat;
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
@@ -51,15 +50,13 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.IOException;
 import java.io.StringWriter;
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 
-import static chaschev.lang.Maps2.newHashMap;
-import static java.util.Collections.emptyList;
-import static java.util.Collections.singletonList;
+import static com.google.common.collect.Lists.transform;
 
 /**
  * @author Andrey Chaschev chaschev@gmail.com
@@ -71,23 +68,7 @@ public class FXConf extends BearMain {
     protected BearCommandInterpreter commandInterpreter;
 
     public FXConf(String... args) {
-        super(GlobalContextFactory.INSTANCE.getGlobal(), null, args);
-    }
-
-    protected String getScriptText() throws IOException {
-        return compileManager.findClass($(script)).get().getText();
-    }
-
-    public String getSettingsText() throws IOException {
-        return FileUtils.readFileToString($(projectFile));
-    }
-
-    public String[] getScriptNames() {
-        return new String[]{"todo"};
-    }
-
-    public String[] getSettingsNames() {
-        return getNames(new ArrayList(compileManager.lastCompilationResult.getEntries()));
+        super(GlobalContextFactory.INSTANCE.getGlobal(), createCompilerManager(), args);
     }
 
     public String getFileText(String className) {
@@ -107,20 +88,25 @@ public class FXConf extends BearMain {
 
         BearScriptRunner.UIContext uiContext = commandInterpreter.mapper.fromJSON(uiContextS, BearScriptRunner.UIContext.class);
 
-        File file = compileManager.findScript(uiContext.script);
+        GlobalTaskRunner runner = run(newProject(uiContext.projectName).setInteractiveMode(), null, false, true);
 
-        Preconditions.checkNotNull(file.exists(), "%s not found", uiContext.script);
-
-        String s = FileUtils.readFileToString(file);
-
-        return runWithScript(s, uiContext.settingsName);
+        return sendHostsEtc(runner);
     }
 
-    public Response runWithScript(String bearScript, String settingsName) throws Exception {
-        BearProject settings = newProject(new File(settingsName));
+    private Response sendHostsEtc(GlobalTaskRunner runner) {
+        List<BearScriptRunner.RunResponse.Host> hosts = getHosts(runner.getSessions());
 
-        return new BearScriptRunner(getGlobal(), null, settings)
-            .exec(new BearParserScriptSupplier(null, bearScript), true);
+        ui.info(new RMIEventToUI("terminals", "onScriptStart", hosts));
+
+        return new BearScriptRunner.RunResponse(runner, hosts);
+    }
+
+    public static List<BearScriptRunner.RunResponse.Host> getHosts(List<SessionContext> $s) {
+        return transform($s, new Function<SessionContext, BearScriptRunner.RunResponse.Host>() {
+            public BearScriptRunner.RunResponse.Host apply(SessionContext $) {
+                return new BearScriptRunner.RunResponse.Host($.sys.getName(), $.sys.getAddress());
+            }
+        });
     }
 
     public Response interpret(String command, String uiContextS) throws Exception {
@@ -280,36 +266,29 @@ public class FXConf extends BearMain {
 
             final BearScriptRunner.UIContext uiContext = mapper.fromJSON(uiContextS, BearScriptRunner.UIContext.class);
 
-            final BearProject project = newProject(uiContext.settingsName);
+            final BearProject<?> project = newProject(uiContext.projectName)
+                .setInteractiveMode();
 
-            Callable<BearScriptRunner.MessageResponse> execScriptCallable = new Callable<BearScriptRunner.MessageResponse>() {
-                @Override
-                public BearScriptRunner.MessageResponse call() throws Exception {
-                    Supplier<BearParserScriptSupplier.BearScriptParseResult> supplier;
+            Plugin<TaskDef> shellPlugin = null;
 
-                    if(uiContext.script.endsWith(".groovy")){
-                        supplier = new GroovyScriptSupplier(global, command, Optional.fromNullable(uiContext.script));
-                    } else {
-                        supplier = new BearParserScriptSupplier(currentShellPlugin, command);
-                    }
-
-                    new BearScriptRunner(getGlobal(), currentShellPlugin, project).exec(supplier, true);
-
-                    return new BearScriptRunner.MessageResponse("started script execution");
+            for (Plugin<TaskDef> plugin : project.getAllShellPlugins()) {
+                if(uiContext.shell.equals(plugin.cmdAnnotation())){
+                    shellPlugin = plugin;
+                    break;
                 }
-            };
-
-            if(!"shell".equals(uiContext.shell) && !"status".equals(uiContext.shell)){
-                return global.withMap(
-                    newHashMap(
-                        bear.activeHosts, singletonList(uiContext.shell),
-                        bear.activeRoles, emptyList()
-                    ),
-                    execScriptCallable
-                );
-            } else{
-                return execScriptCallable.call();
             }
+
+            final Plugin<TaskDef> finalShellPlugin = shellPlugin;
+
+            GlobalTaskRunner runner = project.run(Collections.singletonList(new NamedCallable<Object, TaskResult>(new TaskCallable<Object, TaskResult>() {
+                @Override
+                public TaskResult call(SessionContext $, Task<Object, TaskResult> task) throws Exception {
+                    Task<Object, TaskResult> interpretedTask = finalShellPlugin.getShell().interpret(command, $, task, task.getDefinition());
+                    return $.runner.runSession(interpretedTask);
+                }
+            })));
+
+            return sendHostsEtc(runner);
         }
 
         private void switchToPlugin(Class<? extends Plugin> aClass) {
