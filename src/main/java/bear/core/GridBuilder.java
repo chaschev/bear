@@ -1,7 +1,6 @@
 package bear.core;
 
 import bear.main.event.NewPhaseConsoleEventToUI;
-import bear.main.event.PhasePartyFinishedEventToUI;
 import bear.main.phaser.Phase;
 import bear.main.phaser.PhaseCallable;
 import bear.main.phaser.PhaseParty;
@@ -35,6 +34,7 @@ public class GridBuilder {
     private boolean shutdownAfterRun = true;
 
     Object input;
+    private boolean async;
 
     public GridBuilder add(final TaskDef<Object, TaskResult> taskDef){
         _addTask(taskDef);
@@ -169,10 +169,6 @@ public class GridBuilder {
                                     long duration = System.currentTimeMillis() - phase.getPhase().startedAtMs;
                                     phase.getPhase().addArrival($, duration, result);
                                     $.executionContext.rootExecutionContext.fireExternalModification();
-
-                                    BearMain.ui.info(new PhasePartyFinishedEventToUI($.getName(), duration, result));
-
-                                    $.whenSessionComplete(globalRunner.get());
                                 } catch (Exception e) {
                                     BearMain.logger.warn("", e);
                                 }
@@ -226,7 +222,6 @@ public class GridBuilder {
     }
 
     public GlobalTaskRunner run() {
-
         if(bearMain == null){
             try {
                 bearMain = new BearMain(GlobalContext.getInstance(), null)
@@ -236,7 +231,7 @@ public class GridBuilder {
             }
         }
 
-        return BearMain.run(project, this, variables, shutdownAfterRun);
+        return bearMain.run(project, this, variables, shutdownAfterRun, async);
     }
 
     public void init(BearProject<?> project) {
@@ -252,5 +247,13 @@ public class GridBuilder {
     public GridBuilder setInput(Object input) {
         this.input = input;
         return this;
+    }
+
+    public void setAsync(boolean async) {
+        this.async = async;
+    }
+
+    public boolean isAsync() {
+        return async;
     }
 }

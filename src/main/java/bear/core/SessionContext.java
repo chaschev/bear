@@ -18,6 +18,7 @@ package bear.core;
 
 import bear.console.ConsoleCallback;
 import bear.context.AbstractContext;
+import bear.main.event.PartyFinishedEventToUI;
 import bear.main.phaser.SettableFuture;
 import bear.maven.LoggingBooter;
 import bear.plugins.Plugin;
@@ -194,13 +195,17 @@ public class SessionContext extends AbstractContext {
 
         DynamicVariable<TaskExecutionContext> execCtx = executionContext.rootExecutionContext;
 
-        boolean isOk = execCtx.getDefaultValue().taskResult.ok();
+        TaskExecutionContext execCtx2 = execCtx.getDefaultValue();
+
+        boolean isOk = execCtx2.taskResult.ok();
 
         globalTaskRunner.stats.getDefaultValue().addArrival(isOk);
         globalTaskRunner.stats.fireExternalModification();
 
         globalTaskRunner.arrivedCount.getDefaultValue().incrementAndGet();
         globalTaskRunner.arrivedCount.fireExternalModification();
+
+        BearMain.ui.info(new PartyFinishedEventToUI(getName(), execCtx2.getDuration(), execCtx2.taskResult));
     }
 
     public void cancel() {

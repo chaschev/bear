@@ -192,7 +192,7 @@ public class NodeJsPlugin extends ServerToolPlugin {
 
         watchDogGroup.startThreads();
 
-        watchDogGroup.scheduleForcedShutdown($.getGlobal().scheduler, $.var(bear.appStartTimeoutSec), TimeUnit.SECONDS);
+        watchDogGroup.scheduleForcedShutdown($.getGlobal().getScheduler(), $.var(bear.appStartTimeoutSec), TimeUnit.SECONDS);
     }
 
     public final TaskDef<Object, TaskResult> build = new TaskDef<Object, TaskResult>(new SingleTaskSupplier<Object, TaskResult>() {

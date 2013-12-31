@@ -28,6 +28,7 @@ import bear.plugins.sh.GenericUnixRemoteEnvironmentPlugin;
 import bear.plugins.sh.SystemSession;
 import bear.session.LocalAddress;
 import bear.task.*;
+import chaschev.util.Exceptions;
 import com.google.common.base.Optional;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.ListeningScheduledExecutorService;
@@ -57,22 +58,33 @@ public class GlobalContext extends AppGlobalContext<GlobalContext, Bear> {
 
     public final Plugins plugins = new Plugins(this);
 
-        public <T extends Plugin> Optional<T> pluginOfInstance(Class<? extends T> pluginClass) {
-            Class result = null;
+    public <T extends Plugin> Optional<T> pluginOfInstance(Class<? extends T> pluginClass) {
+        Class result = null;
 
-            for (Plugin<TaskDef> plugin : getPlugins()) {
+        for (Plugin<TaskDef> plugin : getPlugins()) {
 //                    Class<?> canonical = Class.forName(plugin.getClass().getName());
-                Class<? extends Plugin> aClass = plugin.getClass();
-                if(pluginClass.isAssignableFrom(aClass)){
-                    result = aClass;
-                    break;
-                }
+            Class<? extends Plugin> aClass = plugin.getClass();
+
+            if(pluginClass.isAssignableFrom(aClass)){
+                result = aClass;
+                break;
             }
-
-            if(result == null) return Optional.absent();
-
-            return (Optional<T>) plugins.getOptional(result);
         }
+
+        if(result == null) return Optional.absent();
+
+        return (Optional<T>) plugins.getOptional(result);
+    }
+
+    public void interruptAll() {
+        try {
+            shutdown();
+        } catch (InterruptedException e) {
+            throw Exceptions.runtime(e);
+        } finally {
+            initExecutors();
+        }
+    }
 
     public static class ProjectRegistry{
         CompileManager manager;
@@ -118,31 +130,11 @@ public class GlobalContext extends AppGlobalContext<GlobalContext, Bear> {
         }
     }
 
-    public final ListeningExecutorService localExecutor = listeningDecorator(new ThreadPoolExecutor(4, 32,
-        5L, TimeUnit.SECONDS,
-        new SynchronousQueue<Runnable>(),
-        new ThreadFactory() {
-            @Override
-            public Thread newThread(Runnable r) {
-                final AwareThread thread = new AwareThread(r);
-                thread.setDaemon(true);
-                return thread;
-            }
-        }));
+    protected ListeningExecutorService localExecutor;
 
-    public final ListeningExecutorService sessionsExecutor = listeningDecorator(new ThreadPoolExecutor(4, 32,
-        5L, TimeUnit.SECONDS,
-        new SynchronousQueue<Runnable>(),
-        new ThreadFactory() {
-            @Override
-            public Thread newThread(Runnable r) {
-                final AwareThread thread = new AwareThread(r);
-                thread.setDaemon(true);
-                return thread;
-            }
-        }));
+    protected ListeningExecutorService sessionsExecutor;
 
-    public final ListeningScheduledExecutorService scheduler = MoreExecutors.listeningDecorator(Executors.newScheduledThreadPool(3));
+    protected ListeningScheduledExecutorService scheduler;
 
     public final SystemSession local;
 
@@ -171,6 +163,36 @@ public class GlobalContext extends AppGlobalContext<GlobalContext, Bear> {
         localStage = new Stage("localStage").add(new LocalAddress());
 
         tasks = new Tasks(this);
+
+        initExecutors();
+    }
+
+    private void initExecutors() {
+        sessionsExecutor = listeningDecorator(new ThreadPoolExecutor(4, 32,
+            5L, TimeUnit.SECONDS,
+            new SynchronousQueue<Runnable>(),
+            new ThreadFactory() {
+                @Override
+                public Thread newThread(Runnable r) {
+                    final AwareThread thread = new AwareThread(r);
+                    thread.setDaemon(true);
+                    return thread;
+                }
+            }));
+
+        localExecutor = listeningDecorator(new ThreadPoolExecutor(4, 32,
+            5L, TimeUnit.SECONDS,
+            new SynchronousQueue<Runnable>(),
+            new ThreadFactory() {
+                @Override
+                public Thread newThread(Runnable r) {
+                    final AwareThread thread = new AwareThread(r);
+                    thread.setDaemon(true);
+                    return thread;
+                }
+            }));
+
+        scheduler = MoreExecutors.listeningDecorator(Executors.newScheduledThreadPool(3));
     }
 
     public Console console() {
@@ -188,6 +210,11 @@ public class GlobalContext extends AppGlobalContext<GlobalContext, Bear> {
     public void shutdown() throws InterruptedException {
         scheduler.shutdown();
         sessionsExecutor.shutdown();
+        localExecutor.shutdown();
+
+        if(!localExecutor.awaitTermination(3, TimeUnit.SECONDS)){
+            localExecutor.shutdownNow();
+        }
 
         if(!sessionsExecutor.awaitTermination(5, TimeUnit.SECONDS)){
             sessionsExecutor.shutdownNow();
@@ -243,5 +270,17 @@ public class GlobalContext extends AppGlobalContext<GlobalContext, Bear> {
     @Override
     public GlobalContext getGlobal() {
         return this;
+    }
+
+    public ListeningScheduledExecutorService getScheduler() {
+        return scheduler;
+    }
+
+    public ListeningExecutorService getSessionsExecutor() {
+        return sessionsExecutor;
+    }
+
+    public ListeningExecutorService getLocalExecutor() {
+        return localExecutor;
     }
 }

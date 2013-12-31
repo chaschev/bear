@@ -19,6 +19,7 @@ package bear.task;
 import bear.core.except.ValidationException;
 import bear.session.Result;
 import chaschev.util.Exceptions;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
@@ -169,10 +170,12 @@ public class TaskResult {
         return this;
     }
 
+    @JsonIgnore
     public boolean isValidationError() {
         return exception.isPresent() && (exception.get() instanceof ValidationException);
     }
 
+    @JsonIgnore
     public boolean isErrorOf(Class<?> aClass) {
         return exception.isPresent() && (aClass.isAssignableFrom(exception.get().getClass()));
     }

@@ -155,7 +155,7 @@ public class TomcatPlugin extends ServerToolPlugin {
 
         watchDogGroup.startThreads();
 
-        watchDogGroup.scheduleForcedShutdown($.getGlobal().scheduler, $.var(bear.appStartTimeoutSec), TimeUnit.SECONDS);
+        watchDogGroup.scheduleForcedShutdown($.getGlobal().getScheduler(), $.var(bear.appStartTimeoutSec), TimeUnit.SECONDS);
     }
 
     public final TaskDef<Object, TaskResult> deployWar = new TaskDef<Object, TaskResult>(new TaskCallable<Object, TaskResult>() {

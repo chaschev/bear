@@ -239,7 +239,7 @@ public class TaskDef<I, O extends TaskResult>{
     }
 
     public String getName() {
-        return name == null ? "@" + hashCode() : name;
+        return name == null ? getClass().getSimpleName() + "@" + hashCode() : name;
     }
 
     public String getDisplayName() {

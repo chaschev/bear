@@ -40,14 +40,15 @@ public class DependencyInjection {
         final Class<?> aClass = obj.getClass();
         final String className = Plugin.shortenName(aClass.getSimpleName());
         final Field[] fields = OpenBean.getClassDesc(aClass).fields;
+        final boolean isPlugin = Plugin.class.isAssignableFrom(aClass);
 
         try {
             for (Field field : fields) {
-                if(TaskDef.class.isAssignableFrom(field.getType())){
+                if (isPlugin && TaskDef.class.isAssignableFrom(field.getType())) {
                     TaskDef<Object, TaskResult> taskDef = (TaskDef<Object, TaskResult>) field.get(obj);
 
-                    if(taskDef!=null){
-                        taskDef.setName("task def " + shortName(aClass, className, field));
+                    if (taskDef != null) {
+                        taskDef.setName(shortName(aClass, className, field) + "." + field.getName());
                     }
 
                     continue;
@@ -76,52 +77,45 @@ public class DependencyInjection {
         return aClass == thisFieldClass ? className : Plugin.shortenName(aClass.getSimpleName());
     }
 
-    public static void inject(Object obj, SessionContext $){
+    public static void inject(Object obj, SessionContext $) {
         inject(obj, $.getGlobal(), $);
     }
 
-    public static void inject(Object obj, GlobalContext global){
+    public static void inject(Object obj, GlobalContext global) {
         inject(obj, global, null);
     }
 
-    public static void inject(Object obj, GlobalContext global, @Nullable SessionContext $){
+    public static void inject(Object obj, GlobalContext global, @Nullable SessionContext $) {
         Field[] fields = OpenBean.getClassDesc(obj.getClass()).fields;
         try {
             for (Field field : fields) {
                 Class fieldClass = field.getType();
 
-                if(GlobalContext.class == fieldClass){
+                if (GlobalContext.class == fieldClass) {
                     field.set(obj, global);
-                } else
-                if(Tasks.class == fieldClass){
+                } else if (Tasks.class == fieldClass) {
                     field.set(obj, global.tasks);
-                } else
-                if(Bear.class == fieldClass){
+                } else if (Bear.class == fieldClass) {
                     field.set(obj, global.bear);
-                } else
-                if(Plugins.class == fieldClass){
+                } else if (Plugins.class == fieldClass) {
                     field.set(obj, global.plugins);
-                } else
-                if(Plugins.class == fieldClass){
+                } else if (Plugins.class == fieldClass) {
                     field.set(obj, global.plugins);
-                } else
-                if(Plugin.class.isAssignableFrom(fieldClass)){
+                } else if (Plugin.class.isAssignableFrom(fieldClass)) {
                     field.set(obj, global.plugin(fieldClass));
                 } else {
                     String fieldName = field.getName();
 
-                    if(SystemEnvironmentPlugin.class.isAssignableFrom(fieldClass)){
-                        if("local".equals(fieldName)){
+                    if (SystemEnvironmentPlugin.class.isAssignableFrom(fieldClass)) {
+                        if ("local".equals(fieldName)) {
                             field.set(obj, global.local);
-                        }else{
-                            if($!=null) field.set(obj, $.getSys());
+                        } else {
+                            if ($ != null) field.set(obj, $.getSys());
                         }
-                    } else
-                    if(SessionContext.class.isAssignableFrom(fieldClass)){
-                        if("localCtx".equals(fieldName)){
+                    } else if (SessionContext.class.isAssignableFrom(fieldClass)) {
+                        if ("localCtx".equals(fieldName)) {
                             field.set(obj, global.localCtx);
-                        }else
-                        if("$".equals(fieldName)){
+                        } else if ("$".equals(fieldName)) {
                             field.set(obj, $);
                         }
                     }

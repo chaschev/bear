@@ -193,9 +193,9 @@ public abstract class BearProject<SELF extends BearProject> {
         return configured;
     }
 
-    public void run() {
-        BearMain.run(this, variables, true);
-    }
+//    public void run() {
+//        BearMain.run(this, variables, true);
+//    }
 
     public <T> SELF set(DynamicVariable<T> var, T value) {
         if (!global.isSet(var)) {
@@ -210,7 +210,7 @@ public abstract class BearProject<SELF extends BearProject> {
         return (SELF) this;
     }
 
-    SELF injectMain(BearMain bearMain) {
+    public SELF injectMain(BearMain bearMain) {
         this.bearMain = bearMain;
         return self();
     }
@@ -249,8 +249,8 @@ public abstract class BearProject<SELF extends BearProject> {
         return defaultDeployment.getStopService().createTasksToList(new ArrayList<TaskDef<Object, TaskResult>>());
     }
 
-    public void start() {
-        runTasksWithAnnotations(new Supplier<List<TaskDef<Object, TaskResult>>>() {
+    public GlobalTaskRunner start() {
+        return runTasksWithAnnotations(new Supplier<List<TaskDef<Object, TaskResult>>>() {
             @Override
             public List<TaskDef<Object, TaskResult>> get() {
                 return startServiceTaskDefs();
@@ -315,6 +315,8 @@ public abstract class BearProject<SELF extends BearProject> {
     }
 
     public void invoke(String method, Object... params) {
+        Preconditions.checkNotNull(method, "method must not be null");
+
         setProjectVars();
 
         MethodDesc methodDesc = OpenBean.getClassDesc(getClass()).getMethodDesc(method, false, params);
@@ -381,6 +383,8 @@ public abstract class BearProject<SELF extends BearProject> {
         }
 
         grid.addAll(taskList.get());
+
+        grid.setAsync(async);
 
         if (useUI(useAnnotations ? projectConf : null)) {
             return grid.run();

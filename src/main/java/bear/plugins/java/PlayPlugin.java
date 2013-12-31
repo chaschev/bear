@@ -245,6 +245,6 @@ public class PlayPlugin extends ServerToolPlugin {
 
         watchDogGroup.startThreads();
 
-        watchDogGroup.scheduleForcedShutdown($.getGlobal().scheduler, $.var(bear.appStartTimeoutSec), TimeUnit.SECONDS);
+        watchDogGroup.scheduleForcedShutdown($.getGlobal().getScheduler(), $.var(bear.appStartTimeoutSec), TimeUnit.SECONDS);
     }
 }

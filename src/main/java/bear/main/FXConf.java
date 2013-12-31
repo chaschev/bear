@@ -16,6 +16,7 @@
 
 package bear.main;
 
+import bear.annotations.Project;
 import bear.core.*;
 import bear.main.event.LogEventToUI;
 import bear.main.event.NoticeEventToUI;
@@ -30,11 +31,14 @@ import bear.plugins.sh.GenericUnixRemoteEnvironmentPlugin;
 import bear.task.*;
 import chaschev.json.JacksonMapper;
 import chaschev.lang.Lists2;
+import chaschev.lang.OpenBean;
 import chaschev.lang.Predicates2;
+import chaschev.lang.reflect.MethodDesc;
 import chaschev.util.Exceptions;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.google.common.base.Charsets;
 import com.google.common.base.Function;
+import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Iterables;
 import com.google.common.io.CharStreams;
@@ -50,9 +54,9 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.IOException;
 import java.io.StringWriter;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
+import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 
@@ -69,6 +73,8 @@ public class FXConf extends BearMain {
 
     public FXConf(String... args) {
         super(GlobalContextFactory.INSTANCE.getGlobal(), createCompilerManager(), args);
+
+        fxApp = true;
     }
 
     public String getFileText(String className) {
@@ -88,9 +94,15 @@ public class FXConf extends BearMain {
 
         BearScriptRunner.UIContext uiContext = commandInterpreter.mapper.fromJSON(uiContextS, BearScriptRunner.UIContext.class);
 
-        GlobalTaskRunner runner = run(newProject(uiContext.projectName).setInteractiveMode(), null, false, true);
+        BearProject<?> project = ((BearProject<?>) OpenBean.newInstance((Class) findEntry(new File(uiContext.projectPath)).get().aClass))
+                .injectMain(this)
+                .setInteractiveMode();
 
-        return sendHostsEtc(runner);
+        project.invoke(uiContext.projectMethodName);
+
+//        run(newProject(new File(uiContext.projectPath)).setInteractiveMode(), null, false, true);
+
+        return sendHostsEtc(lastRunner);
     }
 
     private Response sendHostsEtc(GlobalTaskRunner runner) {
@@ -120,6 +132,7 @@ public class FXConf extends BearMain {
     public void copyToClipboard(String text) {
         HashMap<DataFormat, Object> map = new HashMap<DataFormat, Object>();
         map.put(DataFormat.PLAIN_TEXT, text);
+
         Clipboard.getSystemClipboard().setContent(map);
     }
 
@@ -225,6 +238,8 @@ public class FXConf extends BearMain {
                 }
             }
         }
+
+        global.interruptAll();
     }
 
     public void cancelThread(String name){
@@ -266,7 +281,7 @@ public class FXConf extends BearMain {
 
             final BearScriptRunner.UIContext uiContext = mapper.fromJSON(uiContextS, BearScriptRunner.UIContext.class);
 
-            final BearProject<?> project = newProject(uiContext.projectName)
+            final BearProject<?> project = newProject(uiContext.projectPath)
                 .setInteractiveMode();
 
             Plugin<TaskDef> shellPlugin = null;
@@ -320,6 +335,101 @@ public class FXConf extends BearMain {
             } catch (IOException e) {
                 throw Exceptions.runtime(e);
             }
+        }
+    }
+
+    public ProjectInfosResponse getProjectInfos(){
+        List<CompiledEntry<? extends BearProject>> list = compileManager.findProjects();
+
+        List<ProjectInfo> infos = new ArrayList<ProjectInfo>();
+
+        for (CompiledEntry<? extends BearProject> compiledEntry : list) {
+            infos.add(new ProjectInfo(compiledEntry.aClass)
+                .setPath(compiledEntry.file.getAbsolutePath()));
+        }
+
+        File currentProjectFile = new File(bearFX.bearProperties.getProperty("bear-fx.project"));
+
+        Optional<CompiledEntry<?>> aClass = compileManager.findClass(currentProjectFile);
+
+        return new ProjectInfosResponse(infos)
+            .setSelectedProject(aClass.get().aClass.getSimpleName());
+    }
+
+    public static class ProjectInfo{
+        public String shortName;
+        public String name;
+        public List<String> methods;
+        public String path;
+        public String defaultMethod;
+
+        public ProjectInfo() {
+        }
+
+        public ProjectInfo(Class<? extends BearProject> project) {
+            Project projectAnnotation = project.getAnnotation(Project.class);
+
+            shortName = projectAnnotation.shortName();
+            name = project.getSimpleName();
+            defaultMethod = projectAnnotation.method();
+            methods = new ArrayList<String>();
+
+            List<MethodDesc<? extends GlobalTaskRunner>> list = OpenBean.methodsReturning(project, GlobalTaskRunner.class);
+
+            Set<String> temp = new LinkedHashSet<String>();
+
+            for (MethodDesc<? extends GlobalTaskRunner> methodDesc : list) {
+                if(methodDesc.getMethod().getParameterTypes().length == 0){
+                    temp.add(methodDesc.getName());
+                }
+            }
+
+            for (Method method : project.getClass().getDeclaredMethods()) {
+                if(Modifier.isPublic(method.getModifiers())
+                    && method.getReturnType().equals(void.class)
+                    && method.getParameterTypes().length == 0
+                    ){
+                    temp.add(method.getName());
+                }
+            }
+
+            for (String s : temp) {
+                if(s.contains("$2")) continue;
+
+                methods.add(s);
+            }
+        }
+
+        public ProjectInfo setPath(String path) {
+            this.path = path;
+            return this;
+        }
+    }
+
+    public static class ProjectInfosResponse {
+        public String selectedProject;
+        public String selectedMethod;
+
+        public List<ProjectInfo> infos;
+
+        public ProjectInfosResponse() {
+        }
+
+        public ProjectInfosResponse(List<ProjectInfo> infos) {
+            this.infos = infos;
+        }
+
+        public ProjectInfosResponse setSelectedProject(String selectedProject) {
+            this.selectedProject = selectedProject;
+
+            for (ProjectInfo info : infos) {
+                if(info.name.equals(selectedProject)){
+                    selectedMethod = info.defaultMethod;
+                    break;
+                }
+            }
+
+            return this;
         }
     }
 }

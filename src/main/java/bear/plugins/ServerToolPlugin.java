@@ -313,7 +313,7 @@ public abstract class ServerToolPlugin extends ZippedToolPlugin {
     }
 
     protected void seemsHaveStarted(final AbstractConsole.Terminal console, final SessionContext $, final String port) {
-        $.getGlobal().scheduler.schedule(new Runnable() {
+        $.getGlobal().getScheduler().schedule(new Runnable() {
             @Override
             public void run() {
                 if(!console.isDone()){

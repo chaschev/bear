@@ -61,6 +61,8 @@ public class GlobalTaskRunner {
         this.$s = preparationResult.getSessions();
         this.bearSettings = preparationResult.bearSettings;
 
+        global.currentGlobalRunner = this;
+
         for (SessionContext $ : $s) {
             $.setGlobalRunner(this);
         }
@@ -92,6 +94,9 @@ public class GlobalTaskRunner {
             @Override
             public void handle(Phase<?, BearScriptPhase<Object, TaskResult>> phase, PhaseParty<SessionContext, BearScriptPhase<Object, TaskResult>> party) {
                 String name = phase.getPhase().getName();
+
+                party.getColumn().whenSessionComplete(GlobalTaskRunner.this);
+
                 if(party.failed()){
                     SessionContext.ui.error(new NoticeEventToUI(
                         party.getColumn().getName() +
@@ -146,7 +151,7 @@ public class GlobalTaskRunner {
             @Override
             public void changedValue(DynamicVariable<AtomicInteger> var, AtomicInteger oldValue, AtomicInteger newValue) {
                 if (newValue.get() == $s.size()) {
-                    logger.info("finally home. removing stage from global scope");
+                    logger.info("finally home. removing interactive run from global scope");
 
                     global.currentGlobalRunner = null;
 

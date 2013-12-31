@@ -29,6 +29,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
+import static com.google.common.base.Optional.absent;
 import static com.google.common.base.Optional.fromNullable;
 import static com.google.common.base.Optional.of;
 
@@ -39,7 +40,6 @@ public class GroovyCompiler extends Compiler {
     private static final Logger logger = LoggerFactory.getLogger(GroovyCompiler.class);
     private GroovyClassLoader gcl;
     private final Map<File,GroovyCodeSource> sourceMap = new HashMap<File, GroovyCodeSource>();
-    private final Map<File, CompiledEntry> fileMap = new HashMap<File, CompiledEntry>();
     private final Map<String,CompiledEntry> simpleNameMap = new HashMap<String, CompiledEntry>();
     private final Map<String,CompiledEntry> nameMap = new HashMap<String, CompiledEntry>();
 
@@ -71,7 +71,17 @@ public class GroovyCompiler extends Compiler {
 
             @Override
             public Optional<? extends CompiledEntry> byFile(File file) {
-                return fromNullable(fileMap.get(file));
+                try {
+                    for (CompiledEntry e : nameMap.values()) {
+                        if(e.file.getCanonicalPath().equals(file.getCanonicalPath())){
+                            return of(e);
+                        }
+                    }
+
+                    return absent();
+                } catch (IOException e) {
+                    throw Exceptions.runtime(e);
+                }
             }
 
             @Override
@@ -81,13 +91,12 @@ public class GroovyCompiler extends Compiler {
 
             @Override
             public Collection<? extends CompiledEntry> getEntries() {
-                return fileMap.values();
+                return nameMap.values();
             }
         };
     }
 
     public synchronized GroovyClassLoader compileScripts(List<File> sourceDirs, ClassLoader parentCL) {
-        fileMap.clear();
         nameMap.clear();
         simpleNameMap.clear();
 
@@ -114,7 +123,6 @@ public class GroovyCompiler extends Compiler {
 
                     CompiledEntry<?> e = new CompiledEntry(aClass, file, "groovy");
 
-                    fileMap.put(file, e);
                     simpleNameMap.put(aClass.getSimpleName(), e);
                     nameMap.put(aClass.getName(), e);
                 }

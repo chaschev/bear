@@ -142,7 +142,7 @@ public class RemoteSystemSession extends SystemSession {
                     }
                 })
                     .bufSize(session.getRemoteMaxPacketSize())
-                    .spawn(global.localExecutor, (int) getTimeout(command), TimeUnit.MILLISECONDS);
+                    .spawn(global.getLocalExecutor(), (int) getTimeout(command), TimeUnit.MILLISECONDS);
 
                 Stopwatch sw = Stopwatch.createStarted();
 

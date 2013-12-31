@@ -21,18 +21,18 @@ import bear.task.TaskResult;
 /**
  * @author Andrey Chaschev chaschev@gmail.com
  */
-public class RootTaskFinishedEventToUI extends ConsoleEventToUI {
+public class CellFinishedEventToUI extends ConsoleEventToUI {
     public TaskResult result;
     public long duration;
 
-    public RootTaskFinishedEventToUI(TaskResult result, long duration, String console) {
-        super(console, "rootTaskFinished");
+    public CellFinishedEventToUI(TaskResult result, long duration, String console) {
+        super(console, "cellFinished");
         this.result = result;
         this.duration = duration;
     }
 
     @Override
     public String getFormattedMessage() {
-        return "rootTaskFinished, result=" + result + ", duration: " + String.format("%.2fs", duration *1.0 / 1000);
+        return "cellFinished, result=" + result + ", duration: " + String.format("%.2fs", duration *1.0 / 1000);
     }
 }

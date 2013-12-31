@@ -15,7 +15,7 @@
         </File>
     </Appenders>
     <Loggers>
-        <Logger name="net.schmizz" level="info">
+        <Logger name="net.schmizz" level="warn">
             <AppenderRef ref="File"/>
         </Logger>
 

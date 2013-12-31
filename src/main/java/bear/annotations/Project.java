@@ -26,5 +26,5 @@ import java.lang.annotation.Target;
 public @interface Project {
     String shortName();
     String name();
-    String method() default "";
+    String method() default "deploy";
 }

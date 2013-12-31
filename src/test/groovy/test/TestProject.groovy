@@ -13,7 +13,6 @@ import com.google.common.base.Supplier
 
 import java.util.concurrent.Callable
 import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
 
 import static bear.core.Role.db
@@ -89,20 +88,20 @@ public class TestProject extends BearProject<TestProject> {
         final TestProject project = new TestProject()
             .setShutdownAfterRun(false)
 
-        def setupNeeded = new AtomicBoolean(false)
-
-        project.run([{_, task ->
-            if (!_.sys.exists(_.var(_.bear.applicationPath))) {
-                setupNeeded.set(true)
-            }
-
-            _.sys.rm(_.var(project.releases.path)).run()
-        } as TaskCallable])
-
-
-        if (setupNeeded.get()) {
-            project.setup()
-        }
+//        def setupNeeded = new AtomicBoolean(false)
+//
+//        project.run([{_, task ->
+//            if (!_.sys.exists(_.var(_.bear.applicationPath))) {
+//                setupNeeded.set(true)
+//            }
+//
+//            _.sys.rm(_.var(project.releases.path)).run()
+//        } as TaskCallable])
+//
+//
+//        if (setupNeeded.get()) {
+//            project.setup()
+//        }
 
         //these are copy-pasted with slight changes
 //        project.invoke('referencingPhasesAndAccessingFutures_Test')
@@ -110,7 +109,8 @@ public class TestProject extends BearProject<TestProject> {
 //        project.invoke('syncingPhases_Test')
 //        project.invoke('errorInOne_Checkout');
 //        project.invoke('errorInOne_Start');
-        project.invoke('errorInAll_Checkout');
+//        project.invoke('errorInAll_Checkout');
+        project.invoke('deploy');
 
         project.global.shutdown()
     }
@@ -146,7 +146,7 @@ public class TestProject extends BearProject<TestProject> {
     }
 
     @Configuration(stage = "u-1")
-    referencingPhasesAndAccessingFutures_Test()
+    public void referencingPhasesAndAccessingFutures_Test()
     {
         useAnnotations = false
 
@@ -172,7 +172,7 @@ public class TestProject extends BearProject<TestProject> {
     }
 
     @Configuration(stage = "u-3")
-    def rolesAndHosts_Test()
+    public void rolesAndHosts_Test()
     {
         useAnnotations = false
 
@@ -206,7 +206,7 @@ public class TestProject extends BearProject<TestProject> {
 
 
     @Configuration(stage = "u-2")
-    def syncingPhases_Test()
+    public void  syncingPhases_Test()
     {
         useAnnotations = false
 
@@ -240,7 +240,7 @@ public class TestProject extends BearProject<TestProject> {
     }
 
     @Configuration(stage = "u-2")
-    def errorInAll_Checkout()
+    public void  errorInAll_Checkout()
     {
         useAnnotations = false;
         givenNoReleases()
@@ -268,7 +268,7 @@ public class TestProject extends BearProject<TestProject> {
     }
 
     @Configuration(stage = "u-2")
-    def errorInOne_Start()
+    public void errorInOne_Start()
     {
         useAnnotations = false;
 
@@ -317,7 +317,7 @@ public class TestProject extends BearProject<TestProject> {
 
 
     @Configuration(stage = "u-2")
-    def errorInOne_Checkout()
+    public void  errorInOne_Checkout()
     {
         useAnnotations = false;
         givenNoReleases()

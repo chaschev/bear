@@ -154,25 +154,6 @@ public class BearFX {
 
                 stage.initStyle(StageStyle.UNDECORATED);
 
-                logger.info("creating fx appender...");
-
-                //createFilter("DEBUG", "INFO", null, null)
-
-                FXAppender fxAppDebug =
-                    new FXAppender("fxAppDebug", ThresholdRangeFilter.createFilter("DEBUG", "INFO", null, null),
-                        PatternLayout.createLayout("%highlight{%d{HH:mm:ss.S} %-5level %c{1.} - %msg%n}", null, null, null, null), true, bearFX);
-
-                FXAppender fxAppInfo =
-                    new FXAppender("fxAppInfo", ThresholdRangeFilter.createFilter("INFO", "OFF", null, null),
-                        PatternLayout.createLayout("%highlight{%d{HH:mm:ss.S} %-5level %c{1.} - %msg%n}", null, null, null, null), true, bearFX);
-
-//                FXAppender fxAppInfo =
-//                    new FXAppender("fxAppInfo", createFilter("info", null, null), PatternLayout.createLayout("%highlight{%d{HH:mm:ss.S} %-5level %c{1.} - %msg%n}", null, null, null, null), true, bearFX);
-
-
-                LoggingBooter.addLog4jAppender("fx", fxAppInfo, null, null, false);
-                LoggingBooter.addLog4jAppender("fx", fxAppDebug, null, null, false);
-
                 fxConf.configure();
 
                 final WebView webView = new WebView();
@@ -209,6 +190,10 @@ public class BearFX {
                             window.setMember("OpenBean", OpenBean.INSTANCE);
                             window.setMember("Bindings", bindings);
 
+                            logger.info("creating fx appender...");
+
+                            configureFxAppenders();
+
                             logger.debug("[JAVA INIT] calling bindings JS initializer...");
                             webEngine.executeScript("Java.init(window);");
                             logger.debug("[JAVA INIT] calling app JS initializer...");
@@ -224,6 +209,19 @@ public class BearFX {
             } catch (Exception e) {
                 e.printStackTrace();
             }
+        }
+
+        private void configureFxAppenders() {
+            FXAppender fxAppDebug =
+                new FXAppender("fxAppDebug", ThresholdRangeFilter.createFilter("DEBUG", "INFO", null, null),
+                    PatternLayout.createLayout("%highlight{%d{HH:mm:ss.S} %-5level %c{1.} - %msg%n}", null, null, null, null), true, bearFX);
+
+            FXAppender fxAppInfo =
+                new FXAppender("fxAppInfo", ThresholdRangeFilter.createFilter("INFO", "OFF", null, null),
+                    PatternLayout.createLayout("%highlight{%d{HH:mm:ss.S} %-5level %c{1.} - %msg%n}", null, null, null, null), true, bearFX);
+
+            LoggingBooter.addLog4jAppender("fx", fxAppInfo, null, null, false);
+//                            LoggingBooter.addLog4jAppender("fx", fxAppDebug, null, null, false);
         }
 
         public void sendMessageToUI(EventToUI eventToUI) {

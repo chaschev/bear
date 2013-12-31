@@ -61,6 +61,7 @@ public class LoggingBooter {
         LoggerFactory.getLogger(BearFX.class).warn("started the Bear - 3!");
         LogManager.getLogger(BearFX.class).warn("started the Bear - 4!");
         LoggerFactory.getLogger("fx").debug("started the Bear - 5!");
+        LoggerFactory.getLogger("fx").info("started the Bear - 6!");
     }
 
     public static void changeLogLevel(String loggerName, Level level){

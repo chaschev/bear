@@ -83,7 +83,7 @@ public class GenericUnixRemoteEnvironmentPlugin extends SystemEnvironmentPlugin 
         public SshSession(final SshAddress sshAddress, GlobalContext global) {
             this.sshAddress = sshAddress;
 
-            sshFuture = global.sessionsExecutor.submit(new CatchyCallable<SSHClient>(new Callable<SSHClient>() {
+            sshFuture = global.getSessionsExecutor().submit(new CatchyCallable<SSHClient>(new Callable<SSHClient>() {
                 @Override
                 public SSHClient call() throws Exception {
                     try {

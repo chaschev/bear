@@ -21,12 +21,12 @@ import bear.task.TaskResult;
 /**
  * @author Andrey Chaschev chaschev@gmail.com
  */
-public class PhasePartyFinishedEventToUI extends ConsoleEventToUI {
+public class PartyFinishedEventToUI extends ConsoleEventToUI {
     public long duration;
     public final TaskResult result;
 
-    public PhasePartyFinishedEventToUI(String console, long duration, TaskResult result) {
-        super(console, "phasePartyFinished");
+    public PartyFinishedEventToUI(String console, long duration, TaskResult result) {
+        super(console, "partyFinished");
 
         this.duration = duration;
         this.result = result;
@@ -34,6 +34,6 @@ public class PhasePartyFinishedEventToUI extends ConsoleEventToUI {
 
     @Override
     public String getFormattedMessage() {
-        return "phasePartyFinished, result=" + result + ", duration: " + String.format("%.2fs", duration *1.0 / 1000);
+        return "partyFinished, result=" + result + ", duration: " + String.format("%.2fs", duration *1.0 / 1000);
     }
 }

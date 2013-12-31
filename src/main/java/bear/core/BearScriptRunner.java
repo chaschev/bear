@@ -7,6 +7,7 @@ import bear.main.phaser.Phase;
 import bear.plugins.Plugin;
 import bear.task.TaskDef;
 import bear.task.TaskResult;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.google.common.base.Function;
 import com.google.common.base.Supplier;
 import org.apache.logging.log4j.LogManager;
@@ -45,7 +46,10 @@ public class BearScriptRunner {
 
     /**
      * @param scriptSupplier A supplier for a script, i.e. a parser or a single item (at the moment a groovy script).
+     *
      */
+
+    //todo remove, not used
     public RunResponse exec(Supplier<BearParserScriptSupplier.BearScriptParseResult> scriptSupplier, boolean interactive) {
 
         final BearParserScriptSupplier.BearScriptParseResult parseResult = scriptSupplier.get();
@@ -148,10 +152,12 @@ public class BearScriptRunner {
             this.hosts = hosts;
         }
 
+        @JsonIgnore
         public GlobalTaskRunner getGlobalRunner() {
             return globalRunner;
         }
 
+        @JsonIgnore
         public Map<Object, Object> getSavedVariables() {
             return savedVariables;
         }
@@ -166,7 +172,7 @@ public class BearScriptRunner {
     }
 
     public static class UIContext {
-        public String projectName;
+        public String projectPath;
         public String shell;
         public String projectMethodName;
     }

@@ -154,7 +154,7 @@ public class GenericUnixLocalEnvironmentPlugin extends SystemEnvironmentPlugin {
 
                 logger.debug("command: {}", command);
 
-                final ProcessRunner.ProcessResult r = new ProcessRunner<T>(command, global.sessionsExecutor)
+                final ProcessRunner.ProcessResult r = new ProcessRunner<T>(command, global.getSessionsExecutor())
                     .setInputCallback(command.getCallback())
                     .setProcessTimeoutMs((int) command.getTimeoutMs())
                     .run();

@@ -67,6 +67,9 @@ public class BearMain extends AppCli<GlobalContext, Bear, BearMain.AppOptions2> 
     public static final File BEAR_DIR = new File(".bear");
     public static final File BUILD_DIR = new File(BEAR_DIR, "classes");
 
+    protected GlobalTaskRunner lastRunner;
+    protected boolean fxApp;
+
     static {
         if (!BUILD_DIR.exists()) BUILD_DIR.mkdirs();
     }
@@ -129,7 +132,9 @@ public class BearMain extends AppCli<GlobalContext, Bear, BearMain.AppOptions2> 
 
         super.configure();
 
-        configureLoggersForConsole();
+//        if(!fxApp){
+          configureLoggersForConsole();
+//        }
 
 //        global.loadProperties(new File(global.var(appConfigDir), "bootstrap.properties"));
 
@@ -142,13 +147,13 @@ public class BearMain extends AppCli<GlobalContext, Bear, BearMain.AppOptions2> 
         return this;
     }
 
-    protected static void configureLoggersForConsole() {
+    protected void configureLoggersForConsole() {
         Appender fxAppDebug =
             FileAppender.createAppender(
                 ".bear/logs/ui-cli-debug.log",
                 null,
                 null,
-                "fxAppDebug",
+                "cliDebug",
                 null,
                 null,
                 null,
@@ -164,7 +169,7 @@ public class BearMain extends AppCli<GlobalContext, Bear, BearMain.AppOptions2> 
                 ".bear/logs/ui-cli.log",
                 null,
                 null,
-                "fxAppInfo",
+                "cliInfo",
                 null,
                 null,
                 null,
@@ -302,14 +307,20 @@ public class BearMain extends AppCli<GlobalContext, Bear, BearMain.AppOptions2> 
 
     public BearProject newProject(File bearProjectFile) {
         try {
-            final Optional<CompiledEntry<?>> settingsEntry = compileManager.findClass(bearProjectFile);
-
-            Preconditions.checkArgument(settingsEntry.isPresent(), "%s not found", bearProjectFile);
+            final Optional<CompiledEntry<?>> settingsEntry = findEntry(bearProjectFile);
 
             return newProject(settingsEntry.get());
         } catch (Exception e) {
             throw Exceptions.runtime(e);
         }
+    }
+
+    protected Optional<CompiledEntry<?>> findEntry(File bearProjectFile) {
+        final Optional<CompiledEntry<?>> settingsEntry = compileManager.findClass(bearProjectFile);
+
+        Preconditions.checkArgument(settingsEntry.isPresent(), "%s not found", bearProjectFile);
+
+        return settingsEntry;
     }
 
     protected BearProject newProject(CompiledEntry entry) throws Exception {
@@ -419,15 +430,15 @@ public class BearMain extends AppCli<GlobalContext, Bear, BearMain.AppOptions2> 
         shell.evaluate("project." + method);
     }
 
-    public static GlobalTaskRunner run(BearProject project, boolean shutdown) {
+    public GlobalTaskRunner run(BearProject project, boolean shutdown) {
         return run(project, null, shutdown, false);
     }
 
-    public static GlobalTaskRunner run(BearProject project, @Nullable Map<Object, Object> variables, boolean shutdown) {
+    public GlobalTaskRunner run(BearProject project, @Nullable Map<Object, Object> variables, boolean shutdown) {
         return run(project, variables, shutdown, false);
     }
 
-    public static GlobalTaskRunner run(BearProject project, @Nullable Map<Object, Object> variables, boolean shutdown, boolean async) {
+    public GlobalTaskRunner run(BearProject project, @Nullable Map<Object, Object> variables, boolean shutdown, boolean async) {
         GlobalContext global = project.global;
 
         String script = global.var(project.main().script);
@@ -441,11 +452,11 @@ public class BearMain extends AppCli<GlobalContext, Bear, BearMain.AppOptions2> 
         return run(project, gridOptional.get(), variables, shutdown, async);
     }
 
-    public static GlobalTaskRunner run(BearProject project, GridBuilder grid, Map<Object, Object> variables, boolean shutdown) {
+    public GlobalTaskRunner run(BearProject project, GridBuilder grid, Map<Object, Object> variables, boolean shutdown) {
         return run(project, grid, variables, shutdown, true);
     }
 
-    public static GlobalTaskRunner run(BearProject project, GridBuilder grid, Map<Object, Object> variables, boolean shutdown, boolean async) {
+    public GlobalTaskRunner run(BearProject project, GridBuilder grid, Map<Object, Object> variables, boolean shutdown, boolean async) {
         try {
             GlobalContext global = project.global;
 
@@ -462,7 +473,7 @@ public class BearMain extends AppCli<GlobalContext, Bear, BearMain.AppOptions2> 
                     System.out.println("finished: " + runner.stats.getDefaultValue().toString());
                 }
 
-                return runner;
+                return lastRunner = runner;
             } finally {
                 try {
                     if (shutdown) {
@@ -472,12 +483,10 @@ public class BearMain extends AppCli<GlobalContext, Bear, BearMain.AppOptions2> 
                     logger.warn("exception during shutdown", e);
                 }
 
-                if (response.getSavedVariables() != null) {
+                if (!async && response.getSavedVariables() != null) {
                     global.putMap(response.getSavedVariables());
                 }
             }
-
-
         } catch (InterruptedException e) {
             throw Exceptions.runtime(e);
         }

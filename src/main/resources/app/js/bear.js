@@ -362,21 +362,23 @@ app.directive("consoleMessages", ['$timeout', '$compile', '$ekathuwa', 'ansi2htm
                     return false;
                 }
 
-                var text = e.textAdded;
+                var text;
 
-//                text = text
-//                    .replace(/\r\n/g,'<br>')
-//                    .replace(/\n/g,'<br>')
-//                ;
+                if(e.textAdded){
+                    text = e.textAdded;
 
-                text = ansi2html.toHtml(angular.element('<div/>').text(text).html());
-
+                    text = ansi2html.toHtml(angular.element('<div/>').text(text).html());
+                }else{
+                    text = e.htmlAdded;
+                }
 
                 var $span = angular.element('<span timestamp="' + e.timestamp + '"' +
                     (e.level != null ? ' level=' + e.level + '"' : '') +
                     '>' + text + '</span>');
 
                 $compile($span.contents())($scope);
+
+                console.log('$span: ', $span.html());
 
                 $parent.append($span);
 
@@ -414,10 +416,9 @@ app.directive("consoleMessages", ['$timeout', '$compile', '$ekathuwa', 'ansi2htm
 
                     if($parent.length === 0) return false;
                     var date = new Date();
-                    var $el = $(
-                        '<div class="task" timestamp="' + e.timestamp + '" id="' + e.id + '" phaseId="' + e.phaseId +'">' +
+                    var $el = $('<div class="task" timestamp="' + e.timestamp + '" id="' + e.id + '" phaseId="' + e.phaseId +'">' +
                             '<div class="taskName"><i>' + e.task + '</i><span class="pull-right">{{' + date.getTime() +
-                            '|date:"MMM dd, yyyy HH:mm:ss Z"}}</span></div>' +
+                            '| date:"MMM dd, yyyy HH:mm:ss Z"}}</span></div>' +
                             '</div>'
                     );
 
@@ -462,13 +463,15 @@ app.directive("consoleMessages", ['$timeout', '$compile', '$ekathuwa', 'ansi2htm
                     case 'newPhase':
                         quicklyInsertSession(e);
                         break;
-                    case 'rootTaskFinished':
+                    case 'cellFinished':
                         $scope.$apply(function(){
-                            $scope.terminal.taskCompleted(e);
+                            $scope.terminal.cellCompleted(e);
                         });
                         break;
-                    case 'phasePartyFinished':
-                        $scope.terminal.phaseCompleted(e);
+                    case 'partyFinished':
+                        $scope.$apply(function(){
+                            $scope.terminal.partyCompleted(e);
+                        });
                         break;
                     default:
                         throw "not yet supported subType:" + e.subType;
@@ -603,10 +606,11 @@ app.directive("consoleMessages", ['$timeout', '$compile', '$ekathuwa', 'ansi2htm
                 }
 
                 if(groups.length > 0){
-                    e.textAdded = "took " + durationToString(e.duration, true) + "s " +
-                        (addLink ? '<a ng-click="' + comparisonLink + '">' +diffLinkCaption + '</a>' : diffLinkCaption) +
+                    e.htmlAdded = "took " + durationToString(e.duration, true) + "s " +
+                        (addLink ? '<a ng-click="' + comparisonLink + '">' + diffLinkCaption + '</a>' : diffLinkCaption) +
                         '(' + e.phaseName + ')' +
                         '\n';
+
 
                     quicklyInsertText(e);
                 }
@@ -657,19 +661,26 @@ Terminal.prototype.isPending = function ()
 Terminal.prototype.cancel = function ()
 {
     this.state = 'cancelling';
+    this.currentTaskResult = 'CANCELLED';
     window.bear.call('conf', 'cancelThread', this.name);
 };
 
-Terminal.prototype.taskCompleted = function (event)
+Terminal.prototype.cellCompleted = function (event)
 {
+//    this.currentTaskResult = event.result;
+    this.lastTaskDuration = event.duration;
+};
+
+Terminal.prototype.partyCompleted = function (event)
+{
+    this.state = 'complete';
     this.currentTaskResult = event.result;
     this.lastTaskDuration = event.duration;
 };
 
 Terminal.prototype.phaseCompleted = function (event)
 {
-    this.state = 'complete';
-    this.lastTaskDuration = event.duration;
+//    this.lastTaskDuration = event.duration;
     this.currentTaskResult = event.result;
 };
 
@@ -804,6 +815,32 @@ Terminals.prototype.indexByName = function(name){
     return -1;
 };
 
+var ProjectInfos = function(){
+    this.infos = [];
+
+    this.selectedProject = 'not set';
+    this.selectedMethod = 'not set';
+};
+
+ProjectInfos.prototype.getSelectedProject = function(){
+    for (var i = 0; i < this.infos.length; i++) {
+        var project = this.infos[i];
+        if(project.name === this.selectedProject){
+            return project;
+        }
+    }
+
+    return null;
+};
+
+var ProjectInfo = function(){
+    this.name = '';
+    this.shortName = 'not set';
+    this.methods = [];
+    this.path = 'not set';
+    this.defaultMethod = 'not set';
+};
+
 app.controller('BearCtrl', ['fileManager', '$scope', function (fileManager, $scope){
     $scope.lastBuildTime = new Date();
 
@@ -817,23 +854,18 @@ app.controller('BearCtrl', ['fileManager', '$scope', function (fileManager, $sco
             address: 'status'
         }]);
 
-    $scope.initScripts = function(){
-        $scope.projectFile = JSON.parse(window.bear.jsonCall('conf', 'getPropertyAsFile', 'bear-fx.project'));
+    $scope.initProjects = function(){
+        $scope.projectInfos = $.extend(new ProjectInfos(), JSON.parse(window.bear.jsonCall('conf', 'getProjectInfos')));
 
-        Java.log('initScripts, files: ', $scope.projectFile);
-    };
+        Java.log('initProjects, projectInfos: ', $scope.projectInfos);
 
-    $scope.runProject = function(){
-        var runObject = {
-            projectName: $scope.projectFile.name,
-            projectMethodName: $scope.projectMethodName,
-            shell: 'shell'
-        };
+        $scope.project = $scope.projectInfos.getSelectedProject();
+        $scope.method = $scope.projectInfos.selectedMethod;
 
-        Java.log("about to send: ", runObject);
+        Java.log('initProjects, prj&method: ', $scope.project, $scope.method);
 
-        var response = JSON.parse(window.bear.jsonCall('conf', 'run',
-            JSON.stringify(runObject)));
+        $scope.projectInfos.selectedProject = null;
+        $scope.projectInfos.selectedMethod = null;
     };
 
     $scope.$watch('lastBuildTime', function(){
@@ -863,6 +895,24 @@ app.controller('BearCtrl', ['fileManager', '$scope', function (fileManager, $sco
 
     $scope.updateHosts = function(hosts){
         $scope.terminals.updateHosts(hosts);
+    };
+
+    function mapArray(arr){
+        for (var i = 0; i < arr.length; i++) {
+            arr[i] = {index:i, name: arr[i]};
+        }
+    }
+
+    $scope.$on('buildFinished', function(e, args){
+        Java.log("buildFinished - $on - updating files");
+    });
+
+    $scope.updateOnBuild = function(){
+        try {
+            Java.log("updateOnBuild - updating files");
+        }catch(e){
+            Java.log("exception: ", e);
+        }
     };
 
     $scope.dispatchMessage = function(e){
@@ -946,9 +996,10 @@ app.controller('BearCtrl', ['fileManager', '$scope', function (fileManager, $sco
 
         var n = noty({
             layout: e.position || 'topRight',
-            text: "<b>" + e.title+ "</b>: " + e.message,
+            text: "<b>" + (e.title == null ? '' : e.title + ": ") + "</b>" + e.message,
             timeout: e.timeout || 10000,
-            type: className
+            type: className,
+            maxVisible: 9
         });
     };
 
@@ -962,59 +1013,31 @@ app.controller('BearCtrl', ['fileManager', '$scope', function (fileManager, $sco
 }]);
 
 
-app.controller('FileTabsCtrl', ['$scope', '$q', function($scope, $q) {
+app.controller('FileTabsCtrl', ['$scope', '$q', '$timeout', function($scope, $q, $timeout) {
     Java.log("FileTabsCtrl init");
 
-    // a small cheat
-    $scope = $scope.$parent;
-
-    $scope.selectedTab = 'script';
-
-//    $scope.projectFile = {
-//        dir: '.',
-//        filename: 'loading'
-//    };
-
-    $scope.createPom = function(){
-        window.bear.call('conf', 'createPom');
-    };
-
-    function mapArray(arr){
-        for (var i = 0; i < arr.length; i++) {
-            arr[i] = {index:i, name: arr[i]};
-        }
-    }
-
-    $scope.updateOnBuild = function(){
-        try {
-            Java.log("updateOnBuild - updating files");
-
-            //simplifying things
-//            $scope.scripts.files = window.bear.call('conf', 'getScriptNames');
-//            $scope.settings.files = window.bear.call('conf', 'getSettingsNames');
-//
-//            if ($scope.selectedFile == null || $scope.selectedFile === 'Loading') {
-//                Java.log('initializing selectedFile');
-//
-//                $scope.scripts.selectedFile = window.bear.call('conf', 'getSelectedScript');
-//                $scope.settings.selectedFile = window.bear.call('conf', 'getSelectedSettings');
-//
-//                $scope.selectedFile = $scope.scripts.selectedFile;
-//            }
-//
-//            Java.log('files:', $scope.scripts.files, "selectedFile:", $scope.selectedFile);
-//
-//            $scope.selectTab($scope.selectedTab);
-        } catch (e) {
-            Java.log(e);
-        }
-    };
-
-    // this update is needed and is triggered for each build (2013.12.29: ??)
-    $scope.$on('buildFinished', function(e, args){
-        Java.log("buildFinished - $on - updating files");
-
+    $scope.$watch('project', function(newVal, oldVal){
+        Java.log("project changed to ", newVal);
+        Java.log("setting method to ", newVal.defaultMethod);
+        $scope.method = newVal.defaultMethod;
     });
+
+    $scope.$watch('method', function(newVal, oldVal){
+        Java.log("method changed to ", newVal);
+    });
+
+    $scope.runProject = function(){
+        var runObject = {
+            projectPath: $scope.project.path,
+            projectMethodName: $scope.method,
+            shell: 'shell'
+        };
+
+        Java.log("about to send: ", runObject);
+
+        var response = JSON.parse(window.bear.jsonCall('conf', 'run',
+            JSON.stringify(runObject)));
+    };
 }]);
 
 var ConsoleTabsCtrl = function ($scope) {

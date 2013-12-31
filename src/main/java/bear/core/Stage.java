@@ -16,14 +16,17 @@
 
 package bear.core;
 
+import bear.main.event.CellFinishedEventToUI;
 import bear.main.event.CommandConsoleEventToUI;
-import bear.main.event.RootTaskFinishedEventToUI;
 import bear.main.event.TaskConsoleEventToUI;
 import bear.main.event.TextConsoleEventToUI;
 import bear.session.Address;
 import bear.session.DynamicVariable;
 import bear.session.SshAddress;
-import bear.task.*;
+import bear.task.CommandContext;
+import bear.task.SessionRunner;
+import bear.task.Task;
+import bear.task.TaskExecutionContext;
 import chaschev.lang.Functions2;
 import chaschev.lang.MutableSupplier;
 import com.google.common.base.Function;
@@ -117,7 +120,10 @@ public class Stage {
 
                     String phaseId = $.getExecutionContext().phaseId.getDefaultValue();
 
-                    ui.info(new TaskConsoleEventToUI($.getName(), $.getExecutionContext().phaseName + " " + phaseId, phaseId)
+                    ui.info(new TaskConsoleEventToUI($.getName(),
+                        $.getExecutionContext().phaseName + " "
+                            + (newValue.getDefinition() == null ? "" : newValue.getDefinition().getName() + " ")
+                            + phaseId, phaseId)
                             .setId(newValue.getId())
                             .setParentId($.id)
                     );
@@ -128,9 +134,7 @@ public class Stage {
                 @Override
                 public void changedValue(DynamicVariable<TaskExecutionContext> var, TaskExecutionContext oldValue, TaskExecutionContext newValue) {
                     if (newValue.isFinished()) {
-                        RootTaskFinishedEventToUI eventToUI = new RootTaskFinishedEventToUI(newValue.taskResult, newValue.getDuration(), $.getName());
-
-                        ui.info(eventToUI);
+                        ui.info(new CellFinishedEventToUI(newValue.taskResult, newValue.getDuration(), $.getName()));
                     }
                 }
             });
