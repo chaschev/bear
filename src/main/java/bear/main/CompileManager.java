@@ -57,7 +57,6 @@ public class CompileManager {
 
         Stopwatch sw = Stopwatch.createStarted();
 
-        //this is a hack. todo: change to 300ms, add compiler's up-to-date check
         if(lastCompilationResult != null && System.currentTimeMillis() - lastCompilationResult.timestamp() < 300){
             logger.debug("cancelled compilation, up to date");
         }else{

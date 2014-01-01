@@ -95,7 +95,7 @@ public class Stage {
                 public void changedValue(DynamicVariable<String> var, String oldValue, String newValue) {
                     if (StringUtils.isNotEmpty(newValue)) {
                         ui.info(new TextConsoleEventToUI($.getName(), newValue)
-                                .setParentId(execContext.currentCommand.getDefaultValue().command.id)
+                            .setParentId(execContext.currentCommand.getDefaultValue().command.id)
                         );
                     }
                 }
@@ -121,11 +121,12 @@ public class Stage {
                     String phaseId = $.getExecutionContext().phaseId.getDefaultValue();
 
                     ui.info(new TaskConsoleEventToUI($.getName(),
-                        $.getExecutionContext().phaseName + " "
-                            + (newValue.getDefinition() == null ? "" : newValue.getDefinition().getName() + " ")
-                            + phaseId, phaseId)
-                            .setId(newValue.getId())
-                            .setParentId($.id)
+                        $.getExecutionContext().phaseName
+                            + (newValue.getDefinition() == null ? "" :  " " + newValue.getDefinition().getName())
+//                            + " " + phaseId
+                        , phaseId)
+                        .setId(newValue.getId())
+                        .setParentId($.id)
                     );
                 }
             });
@@ -143,6 +144,7 @@ public class Stage {
 
         return new PreparationResult($s, bearSettings);
     }
+
     void addToStages(Stages stages) {
         this.stages.setInstance(stages).makeFinal();
         this.global = stages.global;
@@ -229,14 +231,14 @@ public class Stage {
     }
 
     private void _validate(List<Address> providedAddresses) {
-        try{
-        if (!addresses.containsAll(providedAddresses)) {
-            Sets.SetView<Address> missingHosts = Sets.difference(Sets.newHashSet(providedAddresses), addresses);
+        try {
+            if (!addresses.containsAll(providedAddresses)) {
+                Sets.SetView<Address> missingHosts = Sets.difference(Sets.newHashSet(providedAddresses), addresses);
 
-            throw new StagesException("hosts doesn't exist on stage '" + name + "': " +
-                transform(missingHosts, Functions2.method("getName")));
-        }
-        }catch (IllegalArgumentException e){
+                throw new StagesException("hosts doesn't exist on stage '" + name + "': " +
+                    transform(missingHosts, Functions2.method("getName")));
+            }
+        } catch (IllegalArgumentException e) {
             throw new StagesException("host doesn't exist on any stage: " +
                 e.getMessage());
         }

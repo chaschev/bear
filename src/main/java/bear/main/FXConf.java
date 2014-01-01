@@ -72,7 +72,7 @@ public class FXConf extends BearMain {
     protected BearCommandInterpreter commandInterpreter;
 
     public FXConf(String... args) {
-        super(GlobalContextFactory.INSTANCE.getGlobal(), createCompilerManager(), args);
+        super(GlobalContextFactory.INSTANCE.getGlobal(), getCompilerManager(), args);
 
         fxApp = true;
     }
@@ -94,15 +94,23 @@ public class FXConf extends BearMain {
 
         BearScriptRunner.UIContext uiContext = commandInterpreter.mapper.fromJSON(uiContextS, BearScriptRunner.UIContext.class);
 
-        BearProject<?> project = ((BearProject<?>) OpenBean.newInstance((Class) findEntry(new File(uiContext.projectPath)).get().aClass))
-                .injectMain(this)
-                .setInteractiveMode();
+        BearProject<?> project = newProject(uiContext);
 
         project.invoke(uiContext.projectMethodName);
 
 //        run(newProject(new File(uiContext.projectPath)).setInteractiveMode(), null, false, true);
 
         return sendHostsEtc(lastRunner);
+    }
+
+    private BearProject newProject(BearScriptRunner.UIContext uiContext) {
+        return newProject(new File(uiContext.projectPath));
+    }
+
+    public BearProject newProject(File file) {
+        return ((BearProject<?>) OpenBean.newInstance((Class) findEntry(file).get().aClass))
+                .injectMain(this)
+                .setInteractiveMode();
     }
 
     private Response sendHostsEtc(GlobalTaskRunner runner) {
@@ -277,28 +285,19 @@ public class FXConf extends BearMain {
          * @param command
          */
         public Response interpret(final String command, String uiContextS) throws Exception {
-            ui.info("interpreting command: '{}', params: {}", StringUtils.substringBefore(command, "\n").trim(), uiContextS);
+            String firstLine = StringUtils.substringBefore(command, "\n");
+            ui.info("interpreting command: '{}', params: {}", firstLine.trim(), uiContextS);
 
             final BearScriptRunner.UIContext uiContext = mapper.fromJSON(uiContextS, BearScriptRunner.UIContext.class);
 
-            final BearProject<?> project = newProject(uiContext.projectPath)
-                .setInteractiveMode();
+            final BearProject<?> project = newProject(uiContext);
 
-            Plugin<TaskDef> shellPlugin = null;
-
-            for (Plugin<TaskDef> plugin : project.getAllShellPlugins()) {
-                if(uiContext.shell.equals(plugin.cmdAnnotation())){
-                    shellPlugin = plugin;
-                    break;
-                }
-            }
-
-            final Plugin<TaskDef> finalShellPlugin = shellPlugin;
-
-            GlobalTaskRunner runner = project.run(Collections.singletonList(new NamedCallable<Object, TaskResult>(new TaskCallable<Object, TaskResult>() {
+            GlobalTaskRunner runner = project.run(Collections.singletonList(new NamedCallable<Object, TaskResult>(firstLine, new TaskCallable<Object, TaskResult>() {
                 @Override
                 public TaskResult call(SessionContext $, Task<Object, TaskResult> task) throws Exception {
-                    Task<Object, TaskResult> interpretedTask = finalShellPlugin.getShell().interpret(command, $, task, task.getDefinition());
+                    Plugin<TaskDef> shellPlugin = project.findShell(uiContext.plugin).get();
+
+                    Task<Object, TaskResult> interpretedTask = shellPlugin.getShell().interpret(command, $, task, task.getDefinition());
                     return $.runner.runSession(interpretedTask);
                 }
             })));
@@ -344,8 +343,7 @@ public class FXConf extends BearMain {
         List<ProjectInfo> infos = new ArrayList<ProjectInfo>();
 
         for (CompiledEntry<? extends BearProject> compiledEntry : list) {
-            infos.add(new ProjectInfo(compiledEntry.aClass)
-                .setPath(compiledEntry.file.getAbsolutePath()));
+            infos.add(new ProjectInfo(compiledEntry.aClass, compiledEntry.file.getAbsolutePath(), global));
         }
 
         File currentProjectFile = new File(bearFX.bearProperties.getProperty("bear-fx.project"));
@@ -356,27 +354,34 @@ public class FXConf extends BearMain {
             .setSelectedProject(aClass.get().aClass.getSimpleName());
     }
 
-    public static class ProjectInfo{
+    public  class ProjectInfo{
         public String shortName;
         public String name;
         public List<String> methods;
         public String path;
         public String defaultMethod;
+        public List<String> shells;
 
         public ProjectInfo() {
         }
 
-        public ProjectInfo(Class<? extends BearProject> project) {
+        public ProjectInfo(Class<? extends BearProject> project, String path, GlobalContext global) {
             Project projectAnnotation = project.getAnnotation(Project.class);
 
             shortName = projectAnnotation.shortName();
             name = project.getSimpleName();
             defaultMethod = projectAnnotation.method();
             methods = new ArrayList<String>();
+            shells = new ArrayList<String>();
+            this.path = path;
 
             List<MethodDesc<? extends GlobalTaskRunner>> list = OpenBean.methodsReturning(project, GlobalTaskRunner.class);
 
             Set<String> temp = new LinkedHashSet<String>();
+
+//            BearProject<?> prj = newProject(new File(path));
+
+//            prj.configureWithAnnotations(true);
 
             for (MethodDesc<? extends GlobalTaskRunner> methodDesc : list) {
                 if(methodDesc.getMethod().getParameterTypes().length == 0){
@@ -384,7 +389,7 @@ public class FXConf extends BearMain {
                 }
             }
 
-            for (Method method : project.getClass().getDeclaredMethods()) {
+            for (Method method : project.getDeclaredMethods()) {
                 if(Modifier.isPublic(method.getModifiers())
                     && method.getReturnType().equals(void.class)
                     && method.getParameterTypes().length == 0
@@ -398,6 +403,12 @@ public class FXConf extends BearMain {
 
                 methods.add(s);
             }
+
+//            for (Plugin<TaskDef> plugin : prj.getAllShellPlugins(global, project)) {
+//                shells.add(plugin.cmdAnnotation());
+//            }
+
+//            System.out.println(this);
         }
 
         public ProjectInfo setPath(String path) {

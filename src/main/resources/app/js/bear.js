@@ -65,19 +65,19 @@ app.service('historyManager', ['fileManager', function(fileManager){
                 console.warn("ERROR: fileManager not wired!!");
             }
 
-            console.log("!this.historyFilePath: ", this.historyFilePath);
+            Java.log("!this.historyFilePath: ", this.historyFilePath);
 
             var json = fileManager.readFileByPath(this.historyFilePath);
 
             if (!json || json.length === 0) {
-                console.log("found no history entries (case #1)");
+                Java.log("found no history entries (case #1)");
                 return;
             }
 
             var jsonEntries = JSON.parse(json);
 
             if (jsonEntries.length == 0) {
-                console.log("found no history entries (case #2)");
+                Java.log("found no history entries (case #2)");
                 return;
             }
 
@@ -108,7 +108,7 @@ app.service('historyManager', ['fileManager', function(fileManager){
     };
 
     this.saveEntries = function(){
-        console.log("saving entries...");
+        Java.log("saving entries...");
 
         if(this.entries.length >= 100){
             this.entries.slice(this.entries.length - 100, this.entries.length);
@@ -125,7 +125,7 @@ app.service('historyManager', ['fileManager', function(fileManager){
     };
 
     this.clear = function () {
-        console.log("clearing entries");
+        Java.log("clearing entries");
         this.entries = [];
         this.saveEntries();
     };
@@ -136,7 +136,7 @@ app.service('historyManager', ['fileManager', function(fileManager){
 
             var index = -1;
 
-            console.log('this.addNewEntry', this.fileManager);
+            if(window.logMessages) Java.log('this.addNewEntry', this.fileManager);
 
             for (var i = 0; i < this.entries.length; i++) {
                 var e = this.entries[i];
@@ -152,12 +152,12 @@ app.service('historyManager', ['fileManager', function(fileManager){
                 this.entries.splice(index, 1);
             }
 
-            console.log('before unshift', this.entries);
+            if(window.logMessages) Java.log('before unshift', this.entries);
             this.entries.unshift(entry);
-            console.log('after unshift', this.entries);
+            if(window.logMessages) Java.log('after unshift', this.entries);
             this.saveEntries();
         } catch (e) {
-            console.log('[ERROR] addNewEntry, exception!!!', e);
+            Java.log('[ERROR] addNewEntry, exception!!!', e);
         }
     };
 
@@ -170,7 +170,7 @@ app.service('historyManager', ['fileManager', function(fileManager){
     };
 
     this.addFileRef = function(file){
-        console.log("adding file:" + file);
+        Java.log("adding file:" + file);
         var entry = new FileReferenceHistoryEntry(file);
 
         this.addNewEntry(entry);
@@ -186,7 +186,7 @@ app.controller('HistoryController', ['historyManager', '$scope', function(histor
 
     $scope.init = function(){
         try {
-            console.log('HistoryController - init()');
+            Java.log('HistoryController - init()');
             historyManager.loadEntries();
         } catch (e) {
             Java.log("exception while loading", e);
@@ -198,9 +198,9 @@ app.controller('HistoryController', ['historyManager', '$scope', function(histor
     };
 
     $scope.updateRunScript = function(entry){
-//        console.log('updateRunScript', entry);
+//        Java.log('updateRunScript', entry);
         var text = entry.getText(historyManager.fileManager);
-        console.log('updateRunScript', text, entry);
+        Java.log('updateRunScript', text, entry);
         $scope.$parent.$broadcast("setActiveEditorValue", text);
     };
 }]);
@@ -276,6 +276,12 @@ var Session = function(index){
 </div>
  */
 
+function sortByTS($el){
+    $el.sort(function(a, b){
+        return parseInt($(a).attr('timestamp')) < parseInt($(b).attr('timestamp'));
+    });
+}
+
 app.directive("consoleMessages", ['$timeout', '$compile', '$ekathuwa', 'ansi2html', function ($timeout, $compile, $ekathuwa, ansi2html) {
     return {
         template: '<div class="consoleMessages" ng-transclude></div>',
@@ -318,92 +324,75 @@ app.directive("consoleMessages", ['$timeout', '$compile', '$ekathuwa', 'ansi2htm
             };
 
             try {
-            Java.log("my el:" , $el, "my terminal is: ", $scope.terminal, " and scope is: ", $scope);
+                Java.log("my el:", $el, "my terminal is: ", $scope.terminal, " and scope is: ", $scope);
 
-            $scope = $scope.$parent;
+                $scope = $scope.$parent;
 //            $scope.terminal = $scope.$parent.terminal;
 
-            Java.log('terminal: ', $scope.terminal.host.name, 'messages element: ', $el);
-            var $messages = $el;
+                Java.log('terminal: ', $scope.terminal.host.name, 'messages element: ', $el);
+                var $messages = $el;
 
-            function sortByTS($el){
-                $el.sort(function(a, b){
-                    return parseInt($(a).attr('timestamp')) < parseInt($(b).attr('timestamp'));
-                });
-            }
-
-            function quicklyInsertText(e){
-                var $parent = $('#' + e.parentId);
-
-//                Java.log('parent: ', $parent);
-
-                if($parent.length === 0) {
-                    Java.log('no parent');
-                    if(e.level != null){
-                        Java.log('trying to find parent...');
-                        var lastParent = null;
-
-                        lastParent = updateLastParent(lastParent, getLast(unprocessedCommands));
-                        lastParent = updateLastParent(lastParent, getLast(unprocessedTasks));
-
-                        lastParent = updateLastParent$('.command:last', lastParent);
-                        lastParent = updateLastParent$('.task:last', lastParent);
-                        lastParent = updateLastParent$('.session:last', lastParent);
-
-                        if(!lastParent || lastParent.id == null){
-                            Java.log('[WARNING] unable to find parent for ', e);
-                        }else{
-                            e.parentId = lastParent.id;
-                            Java.log('parent: ' + lastParent.id, $('#' + lastParent.id));
-                        }
-
-                    }
-
-                    return false;
-                }
-
-                var text;
-
-                if(e.textAdded){
-                    text = e.textAdded;
-
-                    text = ansi2html.toHtml(angular.element('<div/>').text(text).html());
-                }else{
-                    text = e.htmlAdded;
-                }
-
-                var $span = angular.element('<span timestamp="' + e.timestamp + '"' +
-                    (e.level != null ? ' level=' + e.level + '"' : '') +
-                    '>' + text + '</span>');
-
-                $compile($span.contents())($scope);
-
-                console.log('$span: ', $span.html());
-
-                $parent.append($span);
-
-                sortByTS($parent);
-
-                return true;
-            }
-
-
-            $scope.$on("message", function(event, e){
-                if(e.console !== $scope.terminal.name){
-                    return;
-                }
-
-                Java.log('(' + $scope.terminal.name + ') received broadcasted message: ', e);
-
-                function quicklyInsertCommand(e){
+                function quicklyInsertText(e) {
                     var $parent = $('#' + e.parentId);
 
-                    if($parent.length === 0) return false;
+                    if ($parent.length === 0) {
+                        if(window.logMessages) Java.log('no parent');
+                        if (e.level != null) {
+                            if(window.logMessages) Java.log('trying to find the parent...');
+
+                            var lastParent = null;
+
+                            lastParent = updateLastParent(lastParent, getLast(unprocessedCommands));
+                            lastParent = updateLastParent(lastParent, getLast(unprocessedTasks));
+
+                            lastParent = updateLastParent$('.command:last', lastParent);
+                            lastParent = updateLastParent$('.task:last', lastParent);
+                            lastParent = updateLastParent$('.session:last', lastParent);
+
+                            if (!lastParent || lastParent.id == null) {
+                                Java.log('[WARNING] unable to find parent for ', e);
+                            } else {
+                                e.parentId = lastParent.id;
+                                if(window.logMessages) Java.log('parent: ' + lastParent.id, $('#' + lastParent.id));
+                            }
+
+                        }
+
+                        return false;
+                    }
+
+                    var text;
+
+                    if (e.textAdded) {
+                        text = e.textAdded;
+
+                        text = ansi2html.toHtml(angular.element('<div/>').text(text).html());
+                    } else {
+                        text = e.htmlAdded;
+                    }
+
+                    var $span = angular.element('<span timestamp="' + e.timestamp + '"' +
+                        (e.level != null ? ' level=' + e.level + '"' : '') +
+                        '>' + text + '</span>');
+
+                    $compile($span.contents())($scope);
+
+                    $parent.append($span);
+
+                    sortByTS($parent);
+
+                    return true;
+                }
+
+                function quicklyInsertCommand(e) {
+                    var $parent = $('#' + e.parentId);
+
+                    if ($parent.length === 0) return false;
 
                     $parent.append($(
-                        '<div class="command" timestamp="' + e.timestamp +'" id="' + e.id + '">' +
-                        '<div class="commandText"><b>$ ' + e.command + '</b></div>' +
-                        '</div>'
+                        '<div class="command" timestamp="' + e.timestamp + '" id="' + e.id + '">' +
+                            '<div class="commandText"><b>$ ' + e.command + '</b></div>' +
+                            '</div>'
                     ));
 
                     sortByTS($parent);
@@ -411,15 +400,15 @@ app.directive("consoleMessages", ['$timeout', '$compile', '$ekathuwa', 'ansi2htm
                     return true;
                 }
 
-                function quicklyInsertTask(e){
+                function quicklyInsertTask(e) {
                     var $parent = $('#' + e.parentId);
 
-                    if($parent.length === 0) return false;
+                    if ($parent.length === 0) return false;
                     var date = new Date();
-                    var $el = $('<div class="task" timestamp="' + e.timestamp + '" id="' + e.id + '" phaseId="' + e.phaseId +'">' +
-                            '<div class="taskName"><i>' + e.task + '</i><span class="pull-right">{{' + date.getTime() +
-                            '| date:"MMM dd, yyyy HH:mm:ss Z"}}</span></div>' +
-                            '</div>'
+                    var $el = $('<div class="task" timestamp="' + e.timestamp + '" id="' + e.id + '" phaseId="' + e.phaseId + '">' +
+                        '<div class="taskName"><i>' + e.task + '</i><span class="pull-right">{{' + date.getTime() +
+                        '| date:"MMM dd, yyyy HH:mm:ss Z"}}</span></div>' +
+                        '</div>'
                     );
 
                     $compile($el.contents())($scope);
@@ -431,190 +420,178 @@ app.directive("consoleMessages", ['$timeout', '$compile', '$ekathuwa', 'ansi2htm
                     return true;
                 }
 
-                function quicklyInsertSession(e){
+                function quicklyInsertSession(e) {
                     $messages.append($('<div class="session" timestamp="' + e.timestamp + '" id="' + e.id + '"></div>'));
 
                     return true;
                 }
 
-                if(!e.parentId && !e.level && e.subType!='session'){
-                    Java.log('[WARNING] parentId is null for ', e);
-                }
 
-                switch(e.subType){
-                    case 'textAdded':
+                $scope.$on("message", function (event, e) {
+                    if (e.console !== $scope.terminal.name) {
+                        return;
+                    }
+
+                    if(window.logMessages){
+                        Java.log($scope.terminal.name, 'received broadcasted message: ', e);
+                    }
+
+                    if (!e.parentId && !e.level && e.subType != 'session') {
+                        Java.log('[WARNING] parentId is null for ', e);
+                    }
+
+                    switch (e.subType) {
+                        case 'textAdded':
 //                        $scope.addMessage(e.textAdded);
-                        if(!quicklyInsertText(e)){
-                            unprocessedTexts.push(e);
-                        }
-                        break;
-                    case 'command':
-                        if(!quicklyInsertCommand(e)){
-                            unprocessedCommands.push(e);
-                        }
-                        $scope.addCommand(e.command);
-                        break;
-                    case 'task':
-                        if(!quicklyInsertTask(e)){
-                            unprocessedTasks.push(e);
-                        }
-                        $scope.addTask(e.task);
-                        break;
-                    case 'newPhase':
-                        quicklyInsertSession(e);
-                        break;
-                    case 'cellFinished':
-                        $scope.$apply(function(){
-                            $scope.terminal.cellCompleted(e);
-                        });
-                        break;
-                    case 'partyFinished':
-                        $scope.$apply(function(){
-                            $scope.terminal.partyCompleted(e);
-                        });
-                        break;
-                    default:
-                        throw "not yet supported subType:" + e.subType;
-                }
+                            if (!quicklyInsertText(e)) {
+                                unprocessedTexts.push(e);
+                            }
+                            break;
 
-                var obj, i;
+                        case 'command':
+                            if (!quicklyInsertCommand(e)) {
+                                unprocessedCommands.push(e);
+                            }
+                            $scope.addCommand(e.command);
+                            break;
 
-                // the idea of optimization: no need to insert into children
-                // if there is no update to parent
-//                for (i = 0; i < unprocessedTasks.length; i++) {
-//                    obj = unprocessedTasks[i];
-//                    if(quicklyInsertTask(obj)) {
-//
-//                    }
-//                }
+                        case 'task':
+                            if (!quicklyInsertTask(e)) {
+                                unprocessedTasks.push(e);
+                            }
+                            $scope.addTask(e.task);
+                            break;
 
-                unprocessedTasks = unprocessedTasks.filter(function(obj){
-                    return !quicklyInsertTask(obj);
+                        case 'newPhase':
+                            quicklyInsertSession(e);
+                            break;
+
+                        case 'cellFinished':
+                            $scope.$apply(function () {
+                                $scope.terminal.cellCompleted(e);
+                            });
+                            break;
+                        case 'partyFinished':
+                            $scope.$apply(function () {
+                                $scope.terminal.partyCompleted(e);
+                            });
+                            break;
+                        default:
+                            throw "not yet supported subType:" + e.subType;
+                    }
+
+                    unprocessedTasks = unprocessedTasks.filter(function (obj) {
+                        return !quicklyInsertTask(obj);
+                    });
+
+                    unprocessedCommands = unprocessedCommands.filter(function (obj) {
+                        return !quicklyInsertCommand(obj);
+                    });
+
+                    unprocessedTexts = unprocessedTexts.filter(function (obj) {
+                        return !quicklyInsertText(obj);
+                    });
                 });
 
-                unprocessedCommands = unprocessedCommands.filter(function(obj){
-                    return !quicklyInsertCommand(obj);
+                $scope.addTask = function (task) {
+                    $timeout(function () {
+                        $scope.terminal.currentTask = task;
+                    });
+
+                    this.messageCount++;
+                };
+
+                $scope.addCommand = function (command) {
+                    $timeout(function () {
+                        $scope.terminal.currentCommand = command;
+                        $scope.terminal.currentCommandStartedAt = new Date();
+                    });
+
+                    this.messageCount++;
+                };
+
+                var dmp = new diff_match_patch();
+
+                $scope.compareSessions = function (id1, id2) {
+                    //from http://stackoverflow.com/questions/11905943/jquery-text-interpretbr-as-new-line
+                    function convertToText(id) {
+                        var c = document.getElementById(id);
+                        return c.textContent || c.innerText;
+                    }
+
+                    var text1 = convertToText(id1);
+                    var text2 = convertToText(id2);
+
+                    Java.log('text1: ', text1.indexOf('\n') != -1, text1);
+
+                    dmp.Diff_Timeout = 100;
+                    dmp.Diff_EditCost = 4;
+
+                    var d = dmp.diff_main(text1, text2);
+
+                    dmp.diff_cleanupSemantic(d);
+
+                    var ds = dmp.diff_prettyHtml(d);
+
+                    $ekathuwa.modal({
+                        id: "compareSessionsDialogId",
+                        scope: $scope,
+                        contentPreSize: "lg",
+                        templateHTML: '' +
+                            '<div class="modal fade" id="compareSessionsDialogId" >' +
+                            '<div class="modal-dialog">' +
+                            '<div class="modal-content">' +
+                            '<div class="modal-header">' +
+                            ' <button aria-hidden="true" data-dismiss="modal" class="close" type="button">x</button>' +
+                            ' <h4 id="myModalLabel" class="modal-title">Compare</h4>' +
+                            '</div>' +
+                            '<div class="consoleMessages">' + ds + '</div>' +
+                            '<div class="modal-footer">' +
+                            ' <button data-dismiss="modal" class="btn btn-default" type="button" ng-click="">Close</button></div>' +
+                            '</div>' +
+                            '</div>' +
+                            '</div>'
+                    });
+                };
+
+                $scope.$on("phaseFinished", function (event, e) {
+                    var terminal = $scope.terminal;
+                    var groups = e.groups;
+
+                    Java.log('phaseFinished, groups', e, terminal.name);
+
+                    if (terminal.name !== 'shell') return;
+
+                    var addLink;
+                    var comparisonLink;
+                    var diffLinkCaption;
+
+                    if (groups.length === 1) {
+                        var hasEntries = groups[0].entriesIds.length > 0; //hosts > 0
+
+                        comparisonLink = hasEntries ? "compareSessions(" +
+                            "'" + groups[0].id + "', '" + groups[0].entriesIds[0] + "')" : "";
+                        diffLinkCaption = '[no diff]';
+
+                        addLink = hasEntries;
+
+                    } else if (groups.length > 1) {
+                        comparisonLink = "compareSessions(" +
+                            "'" + groups[0].id + "', '" + groups[1].id + "')";
+                        diffLinkCaption = '<span class = "diffError">[' + groups[1].distance + '% diff]</span>';
+                        addLink = true;
+                    }
+
+                    if (groups.length > 0) {
+                        e.htmlAdded = "took " + durationToString(e.duration, true) + "s " +
+                            (addLink ? '<a ng-click="' + comparisonLink + '">' + diffLinkCaption + '</a>' : diffLinkCaption) +
+                            '(' + e.phaseName + ')' +
+                            '\n';
+
+
+                        quicklyInsertText(e);
+                    }
                 });
-
-                unprocessedTexts = unprocessedTexts.filter(function(obj){
-                    return !quicklyInsertText(obj);
-                });
-
-//                for (i = 0; i < unprocessedCommands.length; i++) {
-//                    obj = unprocessedCommands[i];
-//                    if() {
-//
-//                    }
-//                }
-//
-//                for (i = 0; i < unprocessedTexts.length; i++) {
-//                    obj = unprocessedTexts[i];
-//                    quicklyInsertCommand(obj);
-//                }
-            });
-
-            $scope.addTask = function(task){
-                $timeout(function(){
-                    $scope.terminal.currentTask = task;
-                });
-
-//                $messages.append($('<div class="console-task btn btn-primary">' + task + '</div>'));
-                this.messageCount++;
-            };
-
-            $scope.addCommand = function(command){
-                $timeout(function () {
-                    $scope.terminal.currentCommand = command;
-                    $scope.terminal.currentCommandStartedAt = new Date();
-                });
-
-//                $messages.append($('<div class="console-command text-info">$ ' + command + '</div>'));
-                this.messageCount++;
-            };
-
-            var dmp = new diff_match_patch();
-
-            $scope.compareSessions = function(id1, id2){
-                //from http://stackoverflow.com/questions/11905943/jquery-text-interpretbr-as-new-line
-                function convertToText(id) {
-                    var c = document.getElementById(id);
-                    return c.textContent || c.innerText;
-                }
-
-                var text1 = convertToText(id1);
-                var text2 = convertToText(id2);
-
-                console.log('text1: ', text1.indexOf('\n') != -1, text1);
-
-                dmp.Diff_Timeout = 100;
-                dmp.Diff_EditCost = 4;
-
-                var d = dmp.diff_main(text1, text2);
-
-                dmp.diff_cleanupSemantic(d);
-
-                var ds = dmp.diff_prettyHtml(d);
-
-                $ekathuwa.modal({
-                    id: "compareSessionsDialogId",
-                    scope: $scope,
-                    contentPreSize: "lg",
-                    templateHTML: '' +
-                        '<div class="modal fade" id="compareSessionsDialogId" >' +
-                        '<div class="modal-dialog">' +
-                        '<div class="modal-content">' +
-                        '<div class="modal-header">' +
-                        ' <button aria-hidden="true" data-dismiss="modal" class="close" type="button">x</button>' +
-                        ' <h4 id="myModalLabel" class="modal-title">Compare</h4>' +
-                        '</div>' +
-                        '<div class="consoleMessages">' + ds + '</div>' +
-                        '<div class="modal-footer">' +
-                        ' <button data-dismiss="modal" class="btn btn-default" type="button" ng-click="">Close</button></div>' +
-                        '</div>' +
-                        '</div>' +
-                        '</div>'
-                });
-            };
-
-            $scope.$on("phaseFinished", function(event, e){
-                var terminal = $scope.terminal;
-                var groups = e.groups;
-
-                console.log('phaseFinished, groups', e, terminal.name);
-
-                if(terminal.name !== 'shell') return;
-
-                var addLink;
-                var comparisonLink;
-                var diffLinkCaption;
-
-                if(groups.length === 1){
-                    var hasEntries = groups[0].entriesIds.length > 0; //hosts > 0
-
-                    comparisonLink = hasEntries ? "compareSessions(" +
-                        "'" + groups[0].id + "', '" + groups[0].entriesIds[0] + "')" : "";
-                    diffLinkCaption = '[no diff]';
-
-                    addLink = hasEntries;
-
-                }else
-                if(groups.length > 1){
-                    comparisonLink = "compareSessions(" +
-                        "'" + groups[0].id + "', '" + groups[1].id + "')";
-                    diffLinkCaption = '<span class = "diffError">[' + groups[1].distance + '% diff]</span>';
-                    addLink = true;
-                }
-
-                if(groups.length > 0){
-                    e.htmlAdded = "took " + durationToString(e.duration, true) + "s " +
-                        (addLink ? '<a ng-click="' + comparisonLink + '">' + diffLinkCaption + '</a>' : diffLinkCaption) +
-                        '(' + e.phaseName + ')' +
-                        '\n';
-
-
-                    quicklyInsertText(e);
-                }
-            });
 
             } catch (e) {
                 Java.log(e);
@@ -673,6 +650,7 @@ Terminal.prototype.cellCompleted = function (event)
 
 Terminal.prototype.partyCompleted = function (event)
 {
+    Java.log('partyCompleted, event: ', event);
     this.state = 'complete';
     this.currentTaskResult = event.result;
     this.lastTaskDuration = event.duration;
@@ -1080,12 +1058,12 @@ app.controller('ConsoleTabsChildCtrl', ['$scope', '$q', '$timeout', 'historyMana
 
     //todo change this to the project file
     var refreshScriptText = function(runScript) {
-        console.log('refreshScriptText - click!');
+        Java.log('refreshScriptText - click!');
 
         var fn = function () {
-            console.log('refreshScriptText - before setValue');
+            Java.log('refreshScriptText - before setValue');
             $scope.editor.setValue(readRunScript(runScript), -1);
-            console.log('refreshScriptText - after setValue');
+            Java.log('refreshScriptText - after setValue');
             $scope.runScriptModified = null;
         };
 
@@ -1104,23 +1082,15 @@ app.controller('ConsoleTabsChildCtrl', ['$scope', '$q', '$timeout', 'historyMana
 
         Java.log('sendCommand \'' + commandText +"', terminal: ", $scope.terminal.name);
 
-//        var scriptName = $scope.scripts.selectedFile;
-        var projectName = $scope.projectFile.path;
-
-        if(!projectName || projectName === 'Loading'){
-            Java.log('cancelled sending a command, because project is: ', projectName);
-            return;
-        }
-
-        var response = JSON.parse(window.bear.jsonCall('conf', 'interpret',
-            commandText,
+        var response = JSON.parse(window.bear.jsonCall('conf', 'interpret', commandText,
             JSON.stringify({
-                projectName: projectName,
+                projectPath: $scope.project.path,
                 projectMethodName: $scope.projectMethodName,
-                shell: $scope.terminal.name
+                shell: $scope.terminal.name,
+                plugin: $scope.shellPlugin
             })));
 
-        Java.log('interpret response:', response);
+        Java.log('interpret response: ', response);
 
         historyManager.addScript(commandText);
 
@@ -1130,7 +1100,7 @@ app.controller('ConsoleTabsChildCtrl', ['$scope', '$q', '$timeout', 'historyMana
 
 
     $scope.$on('setActiveEditorValue', function(event, text){
-//        console.log('setActiveEditorValue', $scope.terminal);
+//        Java.log('setActiveEditorValue', $scope.terminal);
         if($scope.terminal.active){
             $scope.editor.setValue(text, -1);
         }

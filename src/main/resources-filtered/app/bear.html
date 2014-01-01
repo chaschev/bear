@@ -42,9 +42,8 @@
 -->
     <!-- 1.2 -->
 
-    <script src='js/firebug-lite-compressed.js'></script>
+    ${firebug.script}
     <!--<script type="text/javascript" src="https://getfirebug.com/firebug-lite.js"></script>-->
-    <!--<link rel="stylesheet" type="text/css" href="metis/lib/gritter/css/jquery.gritter.css" />-->
     <link rel="stylesheet" href="metis/lib/bootstrap/css/bootstrap.css">
     <link rel="stylesheet" href="metis/css/main.css">
     <!--<link rel="stylesheet" href="metis/lib/Font-Awesome/css/font-awesome.css">-->
@@ -215,6 +214,8 @@
         }
     </style>
     <script type="text/javascript">
+        window.logMessages = false;
+
         if (!Java.isFX) {
             window.bearFX = {};
             window.bearFX.call = function (){
@@ -347,12 +348,15 @@
         };
 
         Java.receiveEvent = function(e){
-            Java.log('received event: ', e);
+            if(window.logMessages){
+                Java.log('received event: ', e);
+            }
 
             try {
                 angular.element('#BearCtrl').scope().dispatchMessage(e);
             } catch (e) {
                 Java.log("Exception", e);
+            } finally {
             }
         };
 
@@ -530,8 +534,7 @@
                         <td>{{terminal.host.name}}</td>
                         <td><div class="current-console-command">{{terminal.currentCommand}}</div></td>
                         <td>{{terminal.currentTask}}</td>
-                        <td><div class="status-column alert-{{terminal.getCssStatus()}}">{{terminal.getStringStatus()}}
-                            </div></td>
+                        <td><div class="status-column alert-{{terminal.getCssStatus()}}">{{terminal.getStringStatus()}}</div></td>
                         <td><button ng-click="terminal.cancel()" ng-show="terminal.isPending()" class="btn btn-default btn-xs"><i class="fa fa-trash-o"></i></button></td>
                     </tr>
                     <tr></tr>
@@ -553,8 +556,8 @@
                                         <tr>
                                             <td style="width: 90%" colspan="3">
                                                 <div class="input-group input-group-sm">
-                                                    <select class="chzn-select" ng-init="shellPlugin='sh'"
-                                                            ng-model="shellPlugin" ng-options="s for s in ['sh', 'groovy']">
+                                                    <select class="chzn-select" ng-init="shellPlugin='ssh'"
+                                                            ng-model="shellPlugin" ng-options="s for s in ['ssh']">
                                                     </select>
                                                 </div>
                                             </td>

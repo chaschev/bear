@@ -151,7 +151,7 @@ public class GlobalTaskRunner {
             @Override
             public void changedValue(DynamicVariable<AtomicInteger> var, AtomicInteger oldValue, AtomicInteger newValue) {
                 if (newValue.get() == $s.size()) {
-                    logger.info("finally home. removing interactive run from global scope");
+                    logger.debug("finally home. removing interactive run from global scope");
 
                     global.currentGlobalRunner = null;
 

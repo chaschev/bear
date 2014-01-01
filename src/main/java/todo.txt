@@ -7,16 +7,18 @@ top priority:
 - (ok) Integration tests
 - (ok) put logs into separate files for sessions
 - (ok) create project a from template
-- ui: autosize for code area ?
 - (ok) quick setup task recipe (i.e. [new empty bear script], :run (rename :ref) {task: 'tasks.setup'}   at the moment its _.runner.run(_.getGlobal().tasks.setup, )
 - ui: quick start
 -- (ok) choose project
 -- (ok) choose methods on the project object
 -- run commands to interpret
 -- (ok) clean & clear phases and commands
--- project & run script button are dummy: everything happens on the "server"
+-- (ok) project & run script button are dummy: everything happens on the "server"
 - test that debug is understandable
 - ui: performance problem
+- (ok) ui: turn off firefox in the profile
+- (ok) add environment: production, dev, test
+- ui: problems getting list of loaded plugins
 
 
 - (ok) smoke tests:

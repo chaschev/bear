@@ -131,12 +131,19 @@ Java.mode = navigator.userAgent.match(/Chrome\/\d\d/) ?
     (navigator.userAgent.match(/Firefox\/\d\d/) ? 'FF' : 'FX');
 
 Java.isFX = Java.mode === 'FX';
+Java.logDisabled = '${project.env}' === 'production';
 
 Java.printStackTrace = function(e){
     Java.log("[EXCEPTION] " + e);
 };
 
+
+
 Java.log = function (){
+    if(Java.logDisabled){
+        return;
+    }
+
     var arr = Array.prototype.slice.call(arguments);
 
     var i;

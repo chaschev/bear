@@ -1,7 +1,6 @@
 package bear.task;
 
 import bear.core.SessionContext;
-import com.google.common.base.Throwables;
 
 /**
 * @author Andrey Chaschev chaschev@gmail.com
@@ -16,7 +15,7 @@ public class NamedCallable<I, O extends TaskResult> implements TaskCallable<I, O
     }
 
     public NamedCallable(TaskCallable<I, O> callable) {
-        this.name = Throwables.getStackTraceAsString(new Exception());
+        this.name = NamedCallable.class.getSimpleName() + " at " + new Exception().getStackTrace()[1].toString();
         this.callable = callable;
     }
 

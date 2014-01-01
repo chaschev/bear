@@ -189,7 +189,13 @@ public class BearMain extends AppCli<GlobalContext, Bear, BearMain.AppOptions2> 
         LoggingBooter.loggerDiagnostics();
     }
 
-    protected static CompileManager createCompilerManager() {
+    static final CompileManager compiler = newCompileManager();
+
+    public static synchronized CompileManager getCompilerManager(){
+        return compiler;
+    }
+
+    private static CompileManager newCompileManager() {
         List<File> folders = Lists.newArrayList(BEAR_DIR);
 
         Optional<ClassLoader> dependenciesCL = createDepsClassLoader(folders);
@@ -356,7 +362,7 @@ public class BearMain extends AppCli<GlobalContext, Bear, BearMain.AppOptions2> 
 
         GlobalContext global = GlobalContext.getInstance();
 
-        BearMain bearMain = new BearMain(global, createCompilerManager(), args);
+        BearMain bearMain = new BearMain(global, getCompilerManager(), args);
 
         if (bearMain.checkHelpAndVersion()) {
             return;

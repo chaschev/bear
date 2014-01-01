@@ -153,6 +153,10 @@ public class TaskExecutionContext extends ExecContext<TaskExecutionContext> {
     }
 
     public DateTime getStartedAt() {
+        if(startedAt != null){
+            return startedAt;
+        }
+
         Optional<ExecContext> e = getFirstEntry();
 
         if (e.isPresent()) {
@@ -163,19 +167,21 @@ public class TaskExecutionContext extends ExecContext<TaskExecutionContext> {
     }
 
     public long getDuration() {
-        Optional<ExecContext> firstEntry = getFirstEntry();
+//        Optional<ExecContext> firstEntry = getFirstEntry();
+//
+//        if (!firstEntry.isPresent() || !firstEntry.get().hasStarted()) {
+//            return 0;
+//        }
+//
+//        Optional<ExecContext> lastEntry = getLastEntry();
+//
+//        DateTime finishedAt = lastEntry.isPresent() ? null : lastEntry.get().getFinishedAt();
 
-        if (!firstEntry.isPresent() || !firstEntry.get().hasStarted()) {
-            return 0;
-        }
+        DateTime finishedAt = this.finishedAt == null ? new DateTime() : this.finishedAt;
 
-        Optional<ExecContext> lastEntry = getLastEntry();
 
-        DateTime finishedAt = lastEntry.isPresent() ? null : lastEntry.get().getFinishedAt();
 
-        finishedAt = finishedAt == null ? new DateTime() : finishedAt;
-
-        return finishedAt.getMillis() - firstEntry.get().getStartedAt().getMillis();
+        return finishedAt.getMillis() - getStartedAt().getMillis();
     }
 
     public boolean isRunning() {

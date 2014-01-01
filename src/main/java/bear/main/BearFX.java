@@ -237,7 +237,13 @@ public class BearFX {
             Platform.runLater(new Runnable() {
                 @Override
                 public void run() {
+                    long start = System.currentTimeMillis();
                     webEngine.executeScript("Java.receiveEvent(" + s + ")");
+                    long finish = System.currentTimeMillis();
+
+                    if(finish - start > 15){
+                        System.out.printf("WARN (ui): %dms for command %s%n", finish - start, s);
+                    }
                 }
             });
         }
@@ -255,7 +261,6 @@ public class BearFX {
             launch(args);
         }
     }
-
 
     public static void setFullscreen(Stage stage) {
         Screen screen = Screen.getPrimary();

@@ -2,6 +2,7 @@ package bear.maven;
 
 import bear.main.BearFX;
 import chaschev.util.Exceptions;
+import chaschev.util.RevisionInfo;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.core.Appender;
@@ -54,14 +55,16 @@ public class LoggingBooter {
     }
 
     public static void loggerDiagnostics() {
-        LoggerFactory.getLogger(BearFX.class).debug("MUST NOT BE SEEN started the Bear - -1!");
-        LoggerFactory.getLogger("fx").info("started the Bear - 0!");
-        LoggerFactory.getLogger("fx").warn("started the Bear - 1!");
-        LogManager.getRootLogger().warn("started the Bear - 2!");
-        LoggerFactory.getLogger(BearFX.class).warn("started the Bear - 3!");
-        LogManager.getLogger(BearFX.class).warn("started the Bear - 4!");
-        LoggerFactory.getLogger("fx").debug("started the Bear - 5!");
-        LoggerFactory.getLogger("fx").info("started the Bear - 6!");
+        if (RevisionInfo.get(LoggingBooter.class).isDevelopment()) {
+            LoggerFactory.getLogger(BearFX.class).debug("MUST NOT BE SEEN started the Bear - -1!");
+            LoggerFactory.getLogger("fx").info("started the Bear - 0!");
+            LoggerFactory.getLogger("fx").warn("started the Bear - 1!");
+            LogManager.getRootLogger().warn("started the Bear - 2!");
+            LoggerFactory.getLogger(BearFX.class).warn("started the Bear - 3!");
+            LogManager.getLogger(BearFX.class).warn("started the Bear - 4!");
+            LoggerFactory.getLogger("fx").debug("started the Bear - 5!");
+            LoggerFactory.getLogger("fx").info("started the Bear - 6!");
+        }
     }
 
     public static void changeLogLevel(String loggerName, Level level){

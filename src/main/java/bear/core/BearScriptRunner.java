@@ -175,6 +175,7 @@ public class BearScriptRunner {
         public String projectPath;
         public String shell;
         public String projectMethodName;
+        public String plugin;
     }
 
     public static class SwitchResponse extends MessageResponse {

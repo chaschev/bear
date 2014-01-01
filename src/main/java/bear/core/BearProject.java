@@ -24,6 +24,7 @@ import bear.plugins.Plugin;
 import bear.plugins.PluginShellMode;
 import bear.plugins.ServerToolPlugin;
 import bear.plugins.misc.ReleasesPlugin;
+import bear.plugins.sh.GenericUnixRemoteEnvironmentPlugin;
 import bear.session.Address;
 import bear.session.DynamicVariable;
 import bear.session.Result;
@@ -53,6 +54,7 @@ import java.net.URI;
 import java.util.*;
 
 import static com.google.common.base.Objects.firstNonNull;
+import static com.google.common.base.Optional.fromNullable;
 import static java.util.Collections.singletonList;
 
 /**
@@ -217,7 +219,7 @@ public abstract class BearProject<SELF extends BearProject> {
 
     public synchronized BearMain main() {
         if (bearMain == null) {
-            bearMain = new BearMain(global, BearMain.createCompilerManager());
+            bearMain = new BearMain(global, BearMain.getCompilerManager());
         }
 
         return bearMain;
@@ -324,7 +326,7 @@ public abstract class BearProject<SELF extends BearProject> {
         Configuration projectAnnotation = projectConf();
         Configuration methodAnnotation = methodDesc.getMethod().getAnnotation(Configuration.class);
 
-        load(methodAnnotation, projectAnnotation);
+        configureWithAnnotations(methodAnnotation, projectAnnotation);
 
         global.put(bear.useUI, useUI(firstNonNull(methodAnnotation, projectAnnotation)));
 
@@ -358,17 +360,7 @@ public abstract class BearProject<SELF extends BearProject> {
     }
 
     public GlobalTaskRunner runTasksWithAnnotations(Supplier<? extends List<? extends TaskDef>> taskList, boolean useAnnotations) {
-        setProjectVars();
-
-        Configuration projectConf = projectConf();
-
-        if (useAnnotations) {
-            load(projectConf, null);
-        }
-
-        if (!configured) {
-            configure();
-        }
+        Configuration projectConf = configureWithAnnotations(useAnnotations);
 
         GridBuilder grid = newGrid()
             .setShutdownAfterRun(shutdownAfterRun);
@@ -393,6 +385,22 @@ public abstract class BearProject<SELF extends BearProject> {
         }
     }
 
+    public Configuration configureWithAnnotations(boolean useAnnotations) {
+        setProjectVars();
+
+        Configuration projectConf = projectConf();
+
+        if (useAnnotations) {
+            configureWithAnnotations(projectConf, null);
+        }
+
+        if (!configured) {
+            configure();
+        }
+
+        return projectConf;
+    }
+
 
     private Configuration projectConf() {
         return getClass().getAnnotation(Configuration.class);
@@ -404,7 +412,7 @@ public abstract class BearProject<SELF extends BearProject> {
         return annotation == null || Annotations.defaultBoolean(annotation, "useUI");
     }
 
-    private Configuration load(
+    private Configuration configureWithAnnotations(
         @Nullable Configuration annotation,
         @Nullable Configuration fallbackTo) {
 
@@ -515,24 +523,35 @@ public abstract class BearProject<SELF extends BearProject> {
         }
     }
 
-    public List<Plugin<TaskDef>> getAllShellPlugins() {
-        try {
-            Set<Plugin<TaskDef>> plugins = new HashSet<Plugin<TaskDef>>();
+    public Optional<? extends Plugin<TaskDef>> findShell(String shell){
+        Plugin<TaskDef> shellPlugin = null;
 
-            for (Field field : OpenBean.fieldsOfType(this, Plugin.class)) {
-                Plugin plugin = (Plugin) field.get(this);
-
-                addIfHasShell(plugins, plugin);
-
-                for (Plugin<TaskDef> pl : (Set<Plugin<TaskDef>>) plugin.getAllPluginDependencies()) {
-                    addIfHasShell(plugins, pl);
-                }
+        for (Plugin<TaskDef> plugin : getAllShellPlugins(global, this.getClass())) {
+            if(shell.equals(plugin.cmdAnnotation())){
+                shellPlugin = plugin;
+                break;
             }
-
-            return global.plugins.orderPlugins(plugins);
-        } catch (IllegalAccessException e) {
-            throw Exceptions.runtime(e);
         }
+
+        return fromNullable(shellPlugin);
+    }
+
+    public List<Plugin<TaskDef>> getAllShellPlugins(GlobalContext global, Class<? extends BearProject> aClass) {
+        Set<Plugin<TaskDef>> plugins = new LinkedHashSet<Plugin<TaskDef>>();
+
+        plugins.add((Plugin) global.plugin(GenericUnixRemoteEnvironmentPlugin.class));
+
+        for (Field field : OpenBean.fieldsOfType(aClass, Plugin.class)) {
+            Plugin plugin = global.getPlugin((Class<? extends Plugin>)field.getType()).get();
+
+            addIfHasShell(plugins, plugin);
+
+            for (Plugin<TaskDef> pl : (Set<Plugin<TaskDef>>) plugin.getAllPluginDependencies()) {
+                addIfHasShell(plugins, pl);
+            }
+        }
+
+        return global.plugins.orderPlugins(plugins);
     }
 
     private static void addIfHasShell(Set<Plugin<TaskDef>> plugins, Plugin plugin) {
