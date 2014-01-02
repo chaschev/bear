@@ -75,7 +75,7 @@ public class Script <T extends CommandLineResult, CHILD extends Script>{
 
 
     public T run() {
-        return (T) sys.run(this);
+        return sys.run(this);
     }
 
     public CHILD setParser(ResultParser<T> parser) {

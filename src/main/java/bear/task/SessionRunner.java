@@ -168,8 +168,8 @@ public class SessionRunner extends HavingContext<SessionRunner, SessionContext>{
 
         TaskResult result = TaskResult.OK;
 
-        // todo this line was added for dep checks and might be needed to be removed
-        // if dep checks below use their session
+        // todo this line was added for dep checks and might be needed
+        // to be moved lower if dep checks use their own session
         $.setCurrentTask(taskSession);
 
         if($(bear.checkDependencies)){
@@ -184,7 +184,7 @@ public class SessionRunner extends HavingContext<SessionRunner, SessionContext>{
             }
         }
 
-        $.setCurrentTask(taskSession);
+//        $.setCurrentTask(taskSession);
 
         O myResult = null;
 

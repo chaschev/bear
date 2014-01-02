@@ -379,7 +379,7 @@ public abstract class BearProject<SELF extends BearProject> {
         grid.setAsync(async);
 
         if (useUI(useAnnotations ? projectConf : null)) {
-            return grid.run();
+            return grid.runUi();
         } else {
             return grid.runCli();
         }

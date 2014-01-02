@@ -120,9 +120,10 @@ public class Stage {
 
                     String phaseId = $.getExecutionContext().phaseId.getDefaultValue();
 
+                    String taskName = newValue.getName();
+
                     ui.info(new TaskConsoleEventToUI($.getName(),
-                        $.getExecutionContext().phaseName
-                            + (newValue.getDefinition() == null ? "" :  " " + newValue.getDefinition().getName())
+                        taskName
 //                            + " " + phaseId
                         , phaseId)
                         .setId(newValue.getId())

@@ -323,6 +323,14 @@ app.directive("consoleMessages", ['$timeout', '$compile', '$ekathuwa', 'ansi2htm
                 return x;
             };
 
+            function scrollToBottom() {
+                if(!$scope.autoScrollEnabled) return;
+
+                var scroller = $el.parent();
+
+                scroller.animate({ scrollTop: (scroller.prop("scrollHeight")) }, 30);
+            }
+
             try {
                 Java.log("my el:", $el, "my terminal is: ", $scope.terminal, " and scope is: ", $scope);
 
@@ -381,6 +389,8 @@ app.directive("consoleMessages", ['$timeout', '$compile', '$ekathuwa', 'ansi2htm
 
                     sortByTS($parent);
 
+                    scrollToBottom();
+
                     return true;
                 }
 
@@ -396,6 +406,8 @@ app.directive("consoleMessages", ['$timeout', '$compile', '$ekathuwa', 'ansi2htm
                     ));
 
                     sortByTS($parent);
+
+                    scrollToBottom();
 
                     return true;
                 }
@@ -417,11 +429,15 @@ app.directive("consoleMessages", ['$timeout', '$compile', '$ekathuwa', 'ansi2htm
 
                     sortByTS($parent);
 
+                    scrollToBottom();
+
                     return true;
                 }
 
                 function quicklyInsertSession(e) {
                     $messages.append($('<div class="session" timestamp="' + e.timestamp + '" id="' + e.id + '"></div>'));
+
+                    scrollToBottom();
 
                     return true;
                 }

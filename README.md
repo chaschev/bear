@@ -30,9 +30,10 @@ Bear is in it's early development stages now. Questions, concerns? Just drop me 
 | Installer, launcher                          | Finished.      |
 | Support Ubuntu                               | Finished.      |
 | Integration & unit tests                     | Finished.      |
+| UI bugfixing                                 | Finished.      |
+| Refactoring, simplifying API                 | Finished.      |
 | Finishing TODOs                              | In progress... |
-| UI bugfixing                                 | In progress... |
-| Refactoring, simplifying API                 | In progress... |
+| Quick Start Tutorial                         |                |
 
 
 ### Project Samples

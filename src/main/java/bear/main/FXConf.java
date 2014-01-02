@@ -21,6 +21,7 @@ import bear.core.*;
 import bear.main.event.LogEventToUI;
 import bear.main.event.NoticeEventToUI;
 import bear.main.event.RMIEventToUI;
+import bear.main.phaser.ComputingGrid;
 import bear.main.phaser.SettableFuture;
 import bear.plugins.CommandInterpreter;
 import bear.plugins.Plugin;
@@ -61,6 +62,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 
 import static com.google.common.collect.Lists.transform;
+import static java.util.Collections.singletonList;
 
 /**
  * @author Andrey Chaschev chaschev@gmail.com
@@ -286,13 +288,22 @@ public class FXConf extends BearMain {
          */
         public Response interpret(final String command, String uiContextS) throws Exception {
             String firstLine = StringUtils.substringBefore(command, "\n");
+
             ui.info("interpreting command: '{}', params: {}", firstLine.trim(), uiContextS);
 
             final BearScriptRunner.UIContext uiContext = mapper.fromJSON(uiContextS, BearScriptRunner.UIContext.class);
 
             final BearProject<?> project = newProject(uiContext);
 
-            GlobalTaskRunner runner = project.run(Collections.singletonList(new NamedCallable<Object, TaskResult>(firstLine, new TaskCallable<Object, TaskResult>() {
+            boolean runInSingleShell = !"shell".equals(uiContext.shell) && !"status".equals(uiContext.shell);
+
+            if(runInSingleShell){
+                //better to call saveMap
+                global.putConst(bear.activeHosts, singletonList(uiContext.shell));
+                global.putConst(bear.activeRoles, Collections.<String>emptyList());
+            }
+
+            GlobalTaskRunner runner = project.run(singletonList(new NamedCallable<Object, TaskResult>(firstLine, new TaskCallable<Object, TaskResult>() {
                 @Override
                 public TaskResult call(SessionContext $, Task<Object, TaskResult> task) throws Exception {
                     Plugin<TaskDef> shellPlugin = project.findShell(uiContext.plugin).get();
@@ -301,6 +312,17 @@ public class FXConf extends BearMain {
                     return $.runner.runSession(interpretedTask);
                 }
             })));
+
+            if(runInSingleShell){
+                //not safe when quickly fails, better to restore the map
+                runner.whenAllFinished(new ComputingGrid.WhenAllFinished() {
+                    @Override
+                    public void run(int failedParties, int okParties) {
+                        global.removeConst(bear.activeHosts);
+                        global.removeConst(bear.activeRoles);
+                    }
+                });
+            }
 
             return sendHostsEtc(runner);
         }

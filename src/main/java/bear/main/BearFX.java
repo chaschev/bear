@@ -19,12 +19,14 @@ package bear.main;
 import bear.main.event.EventToUI;
 import bear.main.event.EventWithId;
 import bear.main.event.NewPhaseConsoleEventToUI;
+import bear.main.phaser.SettableFuture;
 import bear.maven.LoggingBooter;
 import chaschev.js.Bindings;
 import chaschev.js.ExceptionWrapper;
 import chaschev.json.JacksonMapper;
 import chaschev.json.Mapper;
 import chaschev.lang.OpenBean;
+import chaschev.util.Exceptions;
 import com.google.common.base.Preconditions;
 import javafx.application.Application;
 import javafx.application.Platform;
@@ -34,6 +36,7 @@ import javafx.concurrent.Worker;
 import javafx.event.EventHandler;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.Scene;
+import javafx.scene.layout.Pane;
 import javafx.scene.web.WebEngine;
 import javafx.scene.web.WebEvent;
 import javafx.scene.web.WebView;
@@ -56,6 +59,32 @@ import static bear.core.SessionContext.randomId;
  * @author Andrey Chaschev chaschev@gmail.com
  */
 public class BearFX {
+    private static final SettableFuture<BearFX> instance = new SettableFuture<BearFX>();
+
+    public static BearFX getInstance(){
+        try {
+            if(instance.isDone()) return instance.get();
+
+            synchronized (instance){
+                if(instance.isDone()) return instance.get();
+
+                new Thread(new Runnable(){
+                    @Override
+                    public void run() {
+                        BearFXApp.main(new String[0]);
+                    }
+                }).start();
+
+//                BearFXApp.main(new String[0]);
+
+                return instance.get();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw Exceptions.runtime(e);
+        }
+    }
+
     public final FXConf conf;
     final Properties bearProperties;
     public final Facade facade = new Facade();
@@ -150,6 +179,7 @@ public class BearFX {
                 );
 
                 fxConf.bearFX = bearFX = new BearFX(this, fxConf, properties);
+
                 this.stage = stage;
 
                 stage.initStyle(StageStyle.UNDECORATED);
@@ -159,7 +189,14 @@ public class BearFX {
                 final WebView webView = new WebView();
                 webEngine = webView.getEngine();
 
-                Scene scene = new Scene(webView);
+                Pane pane = new Pane();
+
+                webView.prefWidthProperty().bind(pane.widthProperty());
+                webView.prefHeightProperty().bind(pane.heightProperty());
+
+                pane.getChildren().addAll(webView);
+
+                Scene scene = new Scene(pane);
 
                 stage.setScene(scene);
 //                stage.setFullScreen(true);
@@ -203,6 +240,9 @@ public class BearFX {
 
                             logger.error("[Loggers Diagnostics]");
                             LoggingBooter.loggerDiagnostics();
+
+                            //set the singleton value only when fully started
+                            instance.set(bearFX);
                         }
                     }
                 });
@@ -257,7 +297,7 @@ public class BearFX {
             bearFX.conf.getGlobal().shutdown();
         }
 
-        public static void main(String[] args) throws Exception {
+        public static void main(final String[] args) {
             launch(args);
         }
     }

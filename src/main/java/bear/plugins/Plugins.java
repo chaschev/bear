@@ -55,18 +55,18 @@ public class Plugins {
         List<Plugin> plugins = pluginBuilder.build();
 
         for (Plugin plugin : plugins) {
-            for (Plugin p : pluginMap.values()) {
-                if(p.getClass().getSimpleName().equals(plugin.getClass().getSimpleName())){
-                    logger.error("duplicate plugin: {}!!!!", plugin);
-                }
-            }
+//            for (Plugin p : pluginMap.values()) {
+//                if(p.getClass().getName().equals(plugin.getClass().getName())){
+//                    logger.error("duplicate plugin: {}!!!!", plugin);
+//                }
+//            }
 
-            Plugin<TaskDef> origPlugin = pluginMap.get(plugin.getName());
+            Plugin<TaskDef> origPlugin = pluginMap.get(plugin.getClass().getName());
 
             if (origPlugin == null) {
                 pluginMap.put(plugin.getClass().getName(), plugin);
             } else {
-                logger.warn("skipped {}@{} (there is already {}@{})", plugin, System.identityHashCode(plugin),
+                logger.info("skipped loading {}@{} (there is already {}@{} loaded)", plugin, System.identityHashCode(plugin),
                     origPlugin, System.identityHashCode(origPlugin));
             }
 

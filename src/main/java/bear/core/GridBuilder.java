@@ -8,6 +8,7 @@ import bear.plugins.Plugin;
 import bear.session.Result;
 import bear.task.*;
 import chaschev.lang.MutableSupplier;
+import chaschev.lang.OpenBean;
 import chaschev.util.Exceptions;
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
@@ -18,6 +19,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
+import static bear.context.AbstractContext.logger;
 import static bear.core.SessionContext.ui;
 
 /**
@@ -218,10 +220,24 @@ public class GridBuilder {
     }
 
     public GlobalTaskRunner runCli() {
-        return run();
+        return bearMain().run(project, this, variables, shutdownAfterRun, async);
     }
 
-    public GlobalTaskRunner run() {
+    public GlobalTaskRunner runUi() {
+        try {
+            async = true;
+            shutdownAfterRun = false;
+
+            logger.info("launching ui...");
+            OpenBean.invokeStatic(Class.forName("bear.main.BearFX"), "getInstance");
+
+            return runCli();
+        } catch (ClassNotFoundException e) {
+            throw Exceptions.runtime(e);
+        }
+    }
+
+    private BearMain bearMain() {
         if(bearMain == null){
             try {
                 bearMain = new BearMain(GlobalContext.getInstance(), null)
@@ -231,7 +247,7 @@ public class GridBuilder {
             }
         }
 
-        return bearMain.run(project, this, variables, shutdownAfterRun, async);
+        return bearMain;
     }
 
     public void init(BearProject<?> project) {

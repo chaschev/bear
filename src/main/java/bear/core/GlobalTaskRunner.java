@@ -22,6 +22,7 @@ import com.google.common.util.concurrent.ListeningExecutorService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
@@ -49,7 +50,7 @@ public class GlobalTaskRunner {
 
     private final CountDownLatch finishedLatch = new CountDownLatch(1);
 
-    ComputingGrid.WhenAllFinished whenAllFinished;
+    List<ComputingGrid.WhenAllFinished> whenAllFinishedList = new ArrayList<ComputingGrid.WhenAllFinished>();
 
     public final DynamicVariable<Stats> stats;
     public final DynamicVariable<AtomicInteger> arrivedCount = Variables.newVar(new AtomicInteger(0));
@@ -83,7 +84,8 @@ public class GlobalTaskRunner {
             @Override
             public void handle(Phase<?, BearScriptPhase<Object, TaskResult>> phase, PhaseParty<SessionContext, BearScriptPhase<Object, TaskResult>> party) {
                 ui.info(new NewPhaseConsoleEventToUI("shell", shellContext.sessionId, phase.getPhase().id));
-                ui.info(new TaskConsoleEventToUI("shell", "step " + phase.getName() + "(" + phase.getPhase().id + ")", phase.getPhase().id)
+                ui.info(new TaskConsoleEventToUI("shell", "step: " + phase.getName(),
+                    phase.getPhase().id)
                      .setId(phase.getPhase().id)
                     .setParentId(shellContext.sessionId)
                 );
@@ -119,10 +121,9 @@ public class GlobalTaskRunner {
                         SessionContext.ui.fatal(new NoticeEventToUI(null, "All parties arrived"));
                     }
 
-                    if (whenAllFinished != null) {
-                        whenAllFinished.run(failedParties, okParties);
+                    for (ComputingGrid.WhenAllFinished callback : whenAllFinishedList) {
+                        callback.run(failedParties, okParties);
                     }
-
                 } finally {
                     finishedLatch.countDown();
                 }
@@ -238,7 +239,7 @@ public class GlobalTaskRunner {
     }
 
     public GlobalTaskRunner whenAllFinished(ComputingGrid.WhenAllFinished whenAllFinished) {
-        this.whenAllFinished = whenAllFinished;
+        this.whenAllFinishedList.add(whenAllFinished);
         return this;
     }
 

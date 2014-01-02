@@ -26,7 +26,7 @@ import static bear.task.TaskResult.OK
     stage = "u-3",
     vcs = "https://github.com/chaschev/node-express-mongoose-demo.git",
     branch = "master",
-    useUI = false,
+    useUI = true,
     user = "andrey",
     password = "1"
 )
@@ -106,7 +106,7 @@ public class NodeExpressMongooseDemoProject extends BearProject<NodeExpressMongo
 //        new NodeExpressMongooseDemoProject().deploy()
 
         //stop all 6 instances (3 VMs, 2 instances each)
-        new NodeExpressMongooseDemoProject().stop()
+        new NodeExpressMongooseDemoProject().deploy()
 
         //start all 6 instances
 //        new NodeExpressMongooseDemoProject().start()

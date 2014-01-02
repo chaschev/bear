@@ -68,12 +68,12 @@
             border: 1px solid #474747;
         }
 
-        .wrapper > div{
+        .wrapper > div {
             padding-right: 0px;
             padding-left: 0px;
         }
 
-        header > button{
+        header > button {
             margin-top: 8px;
             margin-right: 12px;
         }
@@ -94,10 +94,6 @@
         .console-task{
             display: block;
             padding: 3px 5px;
-        }
-
-        #conTabsRootPanel {
-            height: 200px;
         }
 
         .history .list-group-item{
@@ -129,11 +125,6 @@
             font-size: 12px;
         }
 
-        .consoleNoPre{
-            font-family: 'source-code-pro', 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', monospace;
-            font-size: 12px;
-        }
-
         .command {
             margin-top: 2px;
         }
@@ -143,14 +134,6 @@
             padding-bottom: 3px;
             font-size: 14px;
             border-bottom: 1px dashed black;
-        }
-
-        div.session .task:first-of-type {
-            /*border-top: 1px dashed black;*/
-        }
-
-        div.session .task{
-            /*border-bottom: 1px dashed black;*/
         }
 
         .console-message{
@@ -173,8 +156,8 @@
         }
 
         .history-scroller {
-            height: 300px;
-            max-height: 300px;
+            height: 240px;
+            max-height: 240px;
             overflow-y: auto;
             position: relative;
             display: block;
@@ -208,10 +191,6 @@
         }
 
         .modal {display: block;height: 0;overflow: visible;}
-
-        .diffError {
-
-        }
     </style>
     <script type="text/javascript">
         window.logMessages = false;
@@ -397,17 +376,20 @@
         };
 
         function updateHeights() {
-            var fireBugHeight = $("body > head > script[src^='firebug']").length === 0 ? 300 :0 ;
+            var fireBugHeight = $("body > head > script[src^='firebug']").length === 0 ? 300 : 0;
             var bodyHeight = $(window).height();
             var $scrollers = $('.scroller');
             var $consolesPanel = $('#consolesPanel');
-            var newHeight = (bodyHeight - $scrollers.offset().top - 270 - fireBugHeight);     //270 is an approximate height of the ace fixed editing part and captions
+            //270 is an approximate height of the ace fixed editing part and captions
+            var newHeight = (screen.height - $scrollers.offset().top - 270 - fireBugHeight + 215);
             console.log('resizing, newHeight:', newHeight, bodyHeight, $scrollers.offset(),
                     $consolesPanel.innerHeight(),
                     $consolesPanel.outerHeight()
             );
             $scrollers.css('height', newHeight + "px");
             $scrollers.css('min-height', newHeight + "px");
+
+            alert('screen height: ' + screen.height + ', body height: ' + bodyHeight);
         }
 
         $(document).ready(function(){
@@ -554,12 +536,15 @@
                                     </div>
                                     <div><table style="width: 100%">
                                         <tr>
-                                            <td style="width: 90%" colspan="3">
+                                            <td style="width: 90%" colspan="1">
                                                 <div class="input-group input-group-sm">
                                                     <select class="chzn-select" ng-init="shellPlugin='ssh'"
                                                             ng-model="shellPlugin" ng-options="s for s in ['ssh']">
                                                     </select>
                                                 </div>
+                                            </td>
+                                            <td colspan="2">
+                                                <div><input type="checkbox" ng-init="$parent.$parent.autoScrollEnabled=true" ng-model="$parent.$parent.autoScrollEnabled"/> Autoscroll</div>
                                             </td>
                                         </tr>
                                         <tr><td colspan="3"><!--{{runScriptModified}}--><div ui-ace="{onLoad: aceLoaded}" modified="runScriptModified"></div>

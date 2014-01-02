@@ -1,8 +1,8 @@
 package bear.plugins;
 
+import bear.context.Fun;
 import bear.core.GlobalContext;
 import bear.core.SessionContext;
-import bear.plugins.misc.PendingRelease;
 import bear.plugins.misc.Release;
 import bear.plugins.misc.Releases;
 import bear.plugins.misc.ReleasesPlugin;
@@ -233,11 +233,10 @@ public class DeploymentPlugin extends Plugin {
                     @Override
                     public TaskResult call(SessionContext $, Task<Object, TaskResult> task) throws Exception {
                         ReleasesPlugin releases = $.getGlobal().plugin(ReleasesPlugin.class);
-                        PendingRelease pendingRelease = $.var(releases.pendingRelease);
 
-                        if (pendingRelease != null) {
-                            pendingRelease.activate();
-                        } else {
+                        try {
+                            $.var(releases.pendingRelease).activate();
+                        } catch (Fun.UndefinedException e) {
                             // a case of standalone start
                             Optional<Release> releaseOptional = $.var(releases.session).getCurrentRelease();
 
@@ -245,7 +244,6 @@ public class DeploymentPlugin extends Plugin {
                                 throw new IllegalStateException("there is no release set!");
                             }
                         }
-
 //                        $.putConst(releases.activatedRelease, Optional.of(activatedRelease));
                         return TaskResult.OK;
                     }

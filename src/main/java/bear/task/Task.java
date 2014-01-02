@@ -149,8 +149,7 @@ public class Task<I, O extends TaskResult> extends HavingContext<Task<I, O>, Ses
 
     @Override
     public String toString() {
-        String defName = getDefinition() == null ? getClass().getSimpleName() : getDefinition().getDisplayName();
-        return defName + ($ == null ? "" : " (" + $.getName() + ")");
+        return getName();
     }
 
     public Task<I, O> addDependency(Dependency... dependencies) {
@@ -329,5 +328,20 @@ public class Task<I, O extends TaskResult> extends HavingContext<Task<I, O>, Ses
 
     public I getInput() {
         return taskContext.input;
+    }
+
+    public String getName(){
+        String name;
+
+        if(taskCallable instanceof NamedCallable){
+            name = ((NamedCallable) taskCallable).getName();
+        }else
+        if(getDefinition() != null){
+            name = getDefinition().getName();
+        }else{
+            name = "task";
+        }
+
+        return name + " (" + $.sys.getName() + ")";
     }
 }

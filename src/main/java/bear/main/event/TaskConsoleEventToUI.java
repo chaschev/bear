@@ -24,9 +24,10 @@ public class TaskConsoleEventToUI extends ConsoleEventToUI implements EventWithI
     public String phaseId;
     public String task;
 
-    public TaskConsoleEventToUI(String console, String phaseName, String phaseId) {
+    public TaskConsoleEventToUI(String console, String taskName, String phaseId) {
         super(console, "task");
-        this.task = phaseName;
+
+        this.task = taskName;
         this.phaseId = phaseId;
     }
 

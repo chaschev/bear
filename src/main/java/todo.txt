@@ -9,16 +9,25 @@ top priority:
 - (ok) create project a from template
 - (ok) quick setup task recipe (i.e. [new empty bear script], :run (rename :ref) {task: 'tasks.setup'}   at the moment its _.runner.run(_.getGlobal().tasks.setup, )
 - ui: quick start
+- (ok) start nodeJs independently of the deploy
 -- (ok) choose project
 -- (ok) choose methods on the project object
--- run commands to interpret
+-- (ok) run commands to interpret
 -- (ok) clean & clear phases and commands
 -- (ok) project & run script button are dummy: everything happens on the "server"
-- test that debug is understandable
-- ui: performance problem
+-- logo
+-- (ok) auto-scroll to the bottom, make scrollbars visible
+-- (ok) project.runUI
+-- (ok) weird white space at the bottom
+-- (ok) remove/check group divider
+-- (ok) send to a single shell
+-- (ok) ls -ltra produces 4 captions
+- (ok) ui: performance problem
 - (ok) ui: turn off firefox in the profile
 - (ok) add environment: production, dev, test
-- ui: problems getting list of loaded plugins
+- (schedule to v1.1) ui: problems getting list of loaded plugins
+- (schedule to v1.1) test that debug is understandable
+-- (schedule to v1.2) sometimes there is duplicate output (when doing `ls -w 1 -a `)
 
 
 - (ok) smoke tests:
@@ -31,15 +40,15 @@ top priority:
 - read repos from pom.xml
 
 - (ok) Ubuntu!
-- run all demos with Bear
+- (ok) run all demos with Bear
 - refactor: remove addRaw
 - release bear with bear (this should be an exciting feature!)
 - oss sonatype plugin
 - release to git
 - (ok) add default methods for projects: start, stop, rollbackTo
 - add uninstall for project and for server
-- find the top Capistrano/Puppet questions on SO, create a demo with answers
-- releases simple demo, create dumps demo (http://habrahabr.ru/post/206898/#comment_7127738)
+- (schedule to v1.1) find the top Capistrano/Puppet questions on SO, create a demo with answers
+- (ok) releases simple demo, create dumps demo (http://habrahabr.ru/post/206898/#comment_7127738)
 - (later) bear --install maven -Vmaven.version=3.1.1,bear.host=vm04
 - (later) --create del-me --from-template mini
 

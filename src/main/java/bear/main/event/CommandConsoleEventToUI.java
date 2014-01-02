@@ -25,6 +25,7 @@ public class CommandConsoleEventToUI extends ConsoleEventToUI implements EventWi
 
     public CommandConsoleEventToUI(String console, String command) {
         super(console, "command");
+
         this.command = command;
     }
 
