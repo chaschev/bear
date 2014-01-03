@@ -421,7 +421,7 @@ public class FXConf extends BearMain {
             }
 
             for (String s : temp) {
-                if(s.contains("$2")) continue;
+                if(s.contains("$1") || s.contains("$2") || s.contains("__$")) continue;
 
                 methods.add(s);
             }

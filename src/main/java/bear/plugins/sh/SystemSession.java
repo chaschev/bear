@@ -190,8 +190,8 @@ public abstract class SystemSession extends Task<Object, TaskResult> implements 
         return DirsBuilder.mk($, dirs);
     }
 
-    public PermissionsCommandBuilder<PermissionsCommandBuilder> permissions(String... paths) {
-        return new PermissionsCommandBuilder<PermissionsCommandBuilder>($, paths);
+    public PermissionsCommandBuilder<?> permissions(String... paths) {
+        return new PermissionsCommandBuilder<PermissionsCommandBuilder<PermissionsCommandBuilder>>($, paths);
     }
 
     public abstract WriteStringBuilder writeString(String str);

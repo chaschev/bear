@@ -22,6 +22,7 @@ class DeploymentProjectsTests {
         final BearProject project = aClass.newInstance()
 
         project.global.put(project.global.bear.stage, "u-3")
+        project.global.put(project.global.bear.useUI, Boolean.FALSE)
 
         project.shutdownAfterRun = false
 

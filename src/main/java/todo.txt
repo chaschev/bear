@@ -36,14 +36,13 @@ top priority:
 -- (ok) test phases syncing
 -- (ok) test roles and hosts
 
-- service interface: check live status on hosts
+- (ok) service interface: check live status on hosts
 - read repos from pom.xml
 
 - (ok) Ubuntu!
 - (ok) run all demos with Bear
-- refactor: remove addRaw
-- release bear with bear (this should be an exciting feature!)
-- oss sonatype plugin
+- (ok) refactor: remove addRaw
+- (schedule to v1.1) release bear with bear (this should be an exciting feature!)
 - release to git
 - (ok) add default methods for projects: start, stop, rollbackTo
 - add uninstall for project and for server

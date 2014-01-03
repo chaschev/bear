@@ -189,10 +189,10 @@ public class ZippedToolPlugin extends Plugin<TaskDef<Object, TaskResult>> {
         }
 
 
-        protected Script extractToHomeDir() {
+        protected void extractToHomeDir() {
             final String distrName = $(distrFilename);
 
-            Script script = $.sys.script()
+            Script<CommandLineResult, Script> script = $.sys.script()
                 .cd($(buildPath))
                 .timeoutSec(60);
 
@@ -204,14 +204,14 @@ public class ZippedToolPlugin extends Plugin<TaskDef<Object, TaskResult>> {
                 script.line().addRaw("unzip ../%s", distrName).build();
             } else if (distrName.endsWith("bin")) {
                 script
-                    .line().addRaw("chmod u+x %s", distrName).build()
+                    .add($.sys.permissions(distrName).withPermissions("u+x").asLine())
                     .line().addRaw("./%s", distrName).build();
             } else {
                 throw new IllegalArgumentException("unsupported archive type: " + distrName);
             }
 
             script
-                .timeoutSec(60)
+                .timeoutForInstallation()
                 .run();
 
             String toolDirName = $.sys.capture(String.format("cd %s && ls -w 1", $(buildPath))).trim();
@@ -223,32 +223,29 @@ public class ZippedToolPlugin extends Plugin<TaskDef<Object, TaskResult>> {
 
             Preconditions.checkArgument(!"/var/lib/".equals($(homePath)));
 
-            script = $.sys.script();
+//            script = $.sys.script();
 
-            $.sys.rm($(homePath), $(currentVersionPath)).sudo().run();
+            $.sys.rm($(homePath), $(currentVersionPath)).run();
 
-            //todo change to static api
-            script
-                .line().sudo().addRaw("mkdir -p %s", $(homePath)).build()
-                .line().sudo().addRaw("mv %s %s", $(buildPath) + "/" + $(versionName) + "/*", $(homePath)).build()
-                .line().sudo().addRaw("ln -s %s %s", $(homePath), $(currentVersionPath)).build()
-                .line().sudo().addRaw("chmod -R g+r,o+r %s", $(homeParentPath)).build()
-                .line().sudo().addRaw("chmod u+x,g+x,o+x %s/bin/*", $(homePath)).build()
-                .callback($.sshCallback());
+            $.sys.mkdirs($(homePath)).run();
 
-            script.run();
+            $.sys.move($(buildPath) + "/" + $(versionName) + "/*").to($(homePath)).run();
 
-            return script;
+            $.sys.link($(currentVersionPath)).toSource($(homePath)).run();
+
+            $.sys.permissions($(homeParentPath)).withPermissions("g+r,o+r").run();
+
+            $.sys.permissions($(homePath) + "/bin/*").withPermissions("u+x,g+x,o+x").run();
         }
 
         protected void shortCut(String newCommandName, String sourceExecutableName) {
-            Script script = $.sys.script();
+            $.sys.link("/usr/bin/" + newCommandName).toSource($(currentVersionPath) + "/" + sourceExecutableName).sudo().run();
+// Script script = $.sys.script();
 
-            $.sys.rm("/usr/bin/" + newCommandName).sudo().run();
-
-            script
-                .line().sudo().addRaw("ln -s %s/%s /usr/bin/%s", $(currentVersionPath), sourceExecutableName, newCommandName).build()
-                .run();
+//            $.sys.rm("/usr/bin/" + newCommandName).sudo().run();
+//            script
+//                .line().sudo().addRaw("ln -s %s/%s /usr/bin/%s", $(currentVersionPath), sourceExecutableName, newCommandName).build()
+//                .run();
         }
 
 

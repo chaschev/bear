@@ -169,6 +169,14 @@ public class Dependency extends Task<Object, TaskResult> {
             return "'" + path + "' is not a " + (checkWritable ? "" : "writable ") +
                 "dir or does not exist";
         }
+
+        @Override
+        public String toString() {
+            final StringBuilder sb = new StringBuilder("File{");
+            sb.append("path='").append(path).append('\'');
+            sb.append('}');
+            return sb.toString();
+        }
     }
 
     public class Command extends Check {
@@ -246,5 +254,9 @@ public class Dependency extends Task<Object, TaskResult> {
     public Dependency setActual(String actual) {
         this.actual = actual;
         return this;
+    }
+
+    public String getName() {
+        return name + ", checks: " + checks;
     }
 }

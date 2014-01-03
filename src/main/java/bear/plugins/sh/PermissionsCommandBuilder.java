@@ -68,7 +68,7 @@ public class PermissionsCommandBuilder<SELF extends PermissionsCommandBuilder> e
     }
 
     @Override
-    public CommandLine asLine() {
+    public CommandLine<?, ?> asLine() {
         super.asLine();
 
         CommandLine line = newLine($);

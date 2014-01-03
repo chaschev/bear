@@ -178,7 +178,7 @@ public abstract class CommandBuilder<SELF extends CommandBuilder> extends Having
         return self();
     }
 
-    public CommandLine asLine(){
+    public CommandLine<?, ?> asLine(){
         builderMethodCalled = true;
         return null;
     }

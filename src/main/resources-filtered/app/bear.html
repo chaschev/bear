@@ -414,11 +414,8 @@
 <!--</div>-->
 <div class="row wrapper">
     <div class="col-md-2">
-        <div class="media user-media">
-            <a class="user-link" href="">
-                <img class="media-object img-thumbnail user-img" alt="User Picture" src="img/crazy_bear_64.png">
-                <!--<span class="label label-danger user-label">16</span>-->
-            </a>
+        <div class="media user-media media-object img-thumbnail user-img" style="background: white">
+            <img alt="Bear Logo" src="img/comrade-8.png" style="height: 84px; margin:auto; display: block">
         </div>
 
         <div class="box inverse">
@@ -450,9 +447,9 @@
                 <form class="form-horizontal">
                     <div class="well well-small dark">
                         <div id="FileTabsCtrl" ng-controller="FileTabsCtrl" ng-init="initProjects()">
-                            <select class="chzn-select" ng-model="project" ng-options="p.name for p in projectInfos.infos">
+                            <select chosen="method" ng-model="project" ng-options="p.name for p in projectInfos.infos">
                             </select>
-                            <select class="chzn-select" ng-model="method" ng-options="m for m in project.methods">
+                            <select chosen="method" ng-model="method" ng-options="m for m in project.methods">
                             </select>
                             <div style="text-align: right">
                                 <button class="btn btn-sm btn-success" ng-click="runProject()">Run</button>

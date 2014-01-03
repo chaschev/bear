@@ -1,6 +1,7 @@
 package bear.plugins.sh;
 
 import bear.core.SessionContext;
+import bear.vcs.CommandLineResult;
 
 /**
 * @author Andrey Chaschev chaschev@gmail.com
@@ -23,7 +24,7 @@ public class DirsBuilder extends PermissionsCommandBuilder<DirsBuilder> {
     }
 
     @Override
-    public CommandLine asLine() {
+    public CommandLine<CommandLineResult, Script> asLine() {
         CommandLine line = newLine($).addRaw("mkdir")
             .a("-p");
 

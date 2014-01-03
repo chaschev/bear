@@ -9,7 +9,7 @@ Bear is in it's early development stages now. Questions, concerns? Just drop me 
 * Syntax completion in IDEs, static type safety and OOP approach (see demos below)
 * Dynamic scripting with Groovy (@CompileStatic for strict Java-like mode)
 * Debugging in IDEs and script unit-testing
-* Fast execution, parallel execution framework
+* Fast, parallel execution framework
 * Desktop UI app to monitor running tasks (Twitter Bootstrap 3)
 * A single project definition file driven by annotations and convention over configuration
 * Scripts can be edited in UI and in IDEs (by importing through Maven)
@@ -26,14 +26,13 @@ Bear is in it's early development stages now. Questions, concerns? Just drop me 
 | Node.js deployment demo - Drywall, ExpressMongoose  | Finished.      |
 | Grails/Tomcat deployment demo                | Finished.      |
 | Node.js/Java three-hosts deployment          | Finished.      |
-| Refactoring, simplifying API                 | Finished.      |
 | Installer, launcher                          | Finished.      |
 | Support Ubuntu                               | Finished.      |
 | Integration & unit tests                     | Finished.      |
 | UI bugfixing                                 | Finished.      |
 | Refactoring, simplifying API                 | Finished.      |
-| Finishing TODOs                              | In progress... |
-| Quick Start Tutorial                         |                |
+| Finishing TODOs                              | Finished.      |
+| Quick Start Tutorial                         | In progress... |
 
 
 ### Project Samples
