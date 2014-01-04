@@ -31,7 +31,7 @@ class MongoDbShellMode extends PluginShellMode<MongoDbPlugin> {
     }
 
     @Override
-    public Task<Object, TaskResult> interpret(String command, SessionContext $, Task parent, TaskDef taskDef) {
+    public Task<Object, TaskResult<?>> interpret(String command, SessionContext $, Task parent, TaskDef taskDef) {
         return plugin.scriptTask(command, parent, taskDef, $);
     }
 }

@@ -24,7 +24,7 @@ public class DirsBuilder extends PermissionsCommandBuilder<DirsBuilder> {
     }
 
     @Override
-    public CommandLine<CommandLineResult, Script> asLine() {
+    public CommandLine<CommandLineResult<?>, Script> asLine() {
         CommandLine line = newLine($).addRaw("mkdir")
             .a("-p");
 

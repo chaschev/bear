@@ -48,11 +48,11 @@ public class TaskExecutionContext extends ExecContext<TaskExecutionContext> {
 
 //    TaskExecutionEntry selfEntry;
     List<ExecContext> execEntries = new ArrayList<ExecContext>();
-    public TaskResult taskResult;
-    protected Task<Object, TaskResult> task;
+    public TaskResult<?> taskResult;
+    protected Task<Object, TaskResult<?>> task;
 
 
-    public TaskExecutionContext(SessionContext $, Task<Object, TaskResult> task) {
+    public TaskExecutionContext(SessionContext $, Task<Object, TaskResult<?>> task) {
         super($, getParentContext(task));
         this.task = task;
 
@@ -61,8 +61,8 @@ public class TaskExecutionContext extends ExecContext<TaskExecutionContext> {
 //        selfEntry = new TaskExecutionEntry(task.getParentEntry(), task);
     }
 
-    private static TaskExecutionContext getParentContext(@Nonnull Task<Object, TaskResult> task) {
-        Task<Object, TaskResult> parent = task.getParent();
+    private static TaskExecutionContext getParentContext(@Nonnull Task<Object, TaskResult<?>> task) {
+        Task<Object, TaskResult<?>> parent = task.getParent();
 
         if (parent == null) return null;
 
@@ -70,7 +70,7 @@ public class TaskExecutionContext extends ExecContext<TaskExecutionContext> {
     }
 
     //null when there is an exception
-    protected ExecContext findEntryByTask(Task<Object, TaskResult> task) {
+    protected ExecContext findEntryByTask(Task<Object, TaskResult<?>> task) {
         for (ExecContext e : execEntries) {
             if (e instanceof TaskExecutionContext) {
                 TaskExecutionContext context = (TaskExecutionContext) e;
@@ -98,19 +98,19 @@ public class TaskExecutionContext extends ExecContext<TaskExecutionContext> {
         return null;
     }
 
-    public void addNewSubTask(Task<Object, TaskResult> subTask) {
+    public void addNewSubTask(Task<Object, TaskResult<?>> subTask) {
 //        executionEntries.add(new TaskExecutionEntry(subTask.getParentEntry(), subTask));
         execEntries.add(new TaskExecutionContext($, subTask));
     }
 
-    public void onEndSubTask(Task<Object, TaskResult> task, TaskResult result) {
+    public void onEndSubTask(Task<Object, TaskResult<?>> task, TaskResult<?> result) {
         ExecContext entry = findEntryByTask(task);
         if(entry != null){
             entry.onEnd(result);
         }
     }
 
-    public <T extends CommandLineResult> void addNewCommand(AbstractConsoleCommand<T> command) {
+    public <T extends CommandLineResult<?>> void addNewCommand(AbstractConsoleCommand<T> command) {
         CommandContext co = new CommandContext($, this, command);
 
         execEntries.add(co);
@@ -118,7 +118,7 @@ public class TaskExecutionContext extends ExecContext<TaskExecutionContext> {
         $.getExecutionContext().currentCommand.defaultTo(co);
     }
 
-    public <T extends CommandLineResult> void onEndCommand(AbstractConsoleCommand<T> command, T result) {
+    public <T extends CommandLineResult<?>> void onEndCommand(AbstractConsoleCommand<T> command, T result) {
         ExecContext execContext = findEntryByCommand(command);
         if(execContext == null){
             logger.warn("");
@@ -196,7 +196,7 @@ public class TaskExecutionContext extends ExecContext<TaskExecutionContext> {
         boolean visit(ExecContext<?> execContext);
     }
 
-    public Optional<TaskResult> lastResult(){
+    public Optional<? extends TaskResult> lastResult(){
         if(taskResult != null){
             return of(taskResult);
         }
@@ -216,8 +216,8 @@ public class TaskExecutionContext extends ExecContext<TaskExecutionContext> {
         return absent();
     }
 
-    public Optional<TaskResult> findResult(final TaskDef<Object, TaskResult> def){
-        final TaskResult[] r = new TaskResult[1];
+    public Optional<? extends TaskResult> findResult(final TaskDef<Object, TaskResult<?>> def){
+        final TaskResult<?>[] r = new TaskResult<?>[1];
 
         visit(new ExecutionVisitor() {
             @Override

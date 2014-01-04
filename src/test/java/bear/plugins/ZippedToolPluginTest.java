@@ -1,5 +1,6 @@
 package bear.plugins;
 
+import bear.context.DependencyInjection;
 import bear.core.GlobalContext;
 import bear.core.GlobalContextTest;
 import bear.session.DynamicVariable;
@@ -18,6 +19,7 @@ public class ZippedToolPluginTest {
     public void testVars() throws Exception {
 
         ZippedToolPlugin zip = new ZippedToolPlugin(g);
+        DependencyInjection.nameVars(zip, g);
 
         zip.version.set("2.0");
         zip.toolname.set("my-tool");

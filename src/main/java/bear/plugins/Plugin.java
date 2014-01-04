@@ -71,7 +71,7 @@ public abstract class Plugin<TASK_DEF extends TaskDef> {
         return WordUtils.uncapitalize(className.substring(lastDotIndex + 1, end));
     }
 
-    public Task<Object, TaskResult> newSession(SessionContext $, Task<Object, TaskResult> parent) {
+    public Task<Object, TaskResult<?>> newSession(SessionContext $, Task<Object, TaskResult<?>> parent) {
         throw new UnsupportedOperationException("todo");
     }
 

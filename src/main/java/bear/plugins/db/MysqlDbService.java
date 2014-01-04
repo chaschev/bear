@@ -47,7 +47,7 @@ public class MysqlDbService extends DbDumpManager.AbstractDbService<DbDumpManage
 
         DateTime startedAt = new DateTime();
 
-        CommandLineResult result =
+        CommandLineResult<?> result =
             $.sys.script().line().timeoutMin(24 * 60) //24h
                 .addRaw("mysqldump --user=%s -p %s | gzip -c >%s",
                     $(mysql.user), entry.database, $(plugin.dumpArchivePath)).build()
@@ -89,7 +89,7 @@ public class MysqlDbService extends DbDumpManager.AbstractDbService<DbDumpManage
                     ui.info(new NoticeEventToUI("Mysql Restore", "Started mysql restore at " + $($.bear.sessionHostname)
                         + " for dump " + dbDumpInfo.name));
 
-                    CommandLineResult result =
+                    CommandLineResult<?> result =
                         $.sys.script().line().timeoutMin(24 * 60)
                             .addRaw("gunzip -c %s | mysql -u %s -p %s",
                                 $(plugin.dumpArchivePath), $(mysql.user), dbDumpInfo.database).build()

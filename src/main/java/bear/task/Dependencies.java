@@ -45,8 +45,8 @@ public class Dependencies {
         return dependencies;
     }
 
-    public TaskResult tryInstall() {
-        TaskResult result = TaskResult.OK;
+    public TaskResult<?> tryInstall() {
+        TaskResult<?> result = TaskResult.OK;
 
         for (Dependency dependency : dependencies) {
             if(dependency.isInstallSupported()){

@@ -30,7 +30,7 @@ import java.util.*;
  */
 
 
-public class TaskDef<I, O extends TaskResult>{
+public class TaskDef<I, O extends TaskResult<?>>{
     String name;
     public String description;
 
@@ -38,13 +38,13 @@ public class TaskDef<I, O extends TaskResult>{
 
     Set<Role> roles = new HashSet<Role>();
 
-    List<TaskDef<Object, TaskResult>> beforeTasks = new ArrayList<TaskDef<Object, TaskResult>>();
-    List<TaskDef<Object, TaskResult>> afterTasks = new ArrayList<TaskDef<Object, TaskResult>>();
-    List<TaskDef<Object, TaskResult>> dependsOnTasks = new ArrayList<TaskDef<Object, TaskResult>>();
+    List<TaskDef<Object, TaskResult<?>>> beforeTasks = new ArrayList<TaskDef<Object, TaskResult<?>>>();
+    List<TaskDef<Object, TaskResult<?>>> afterTasks = new ArrayList<TaskDef<Object, TaskResult<?>>>();
+    List<TaskDef<Object, TaskResult<?>>> dependsOnTasks = new ArrayList<TaskDef<Object, TaskResult<?>>>();
 
     private final MultitaskSupplier multitaskSupplier;
 
-    TaskDef<Object, TaskResult> rollback;
+    TaskDef<Object, TaskResult<?>> rollback;
 
     private final SingleTaskSupplier<I, O> singleTaskSupplier;
 
@@ -113,7 +113,7 @@ public class TaskDef<I, O extends TaskResult>{
         return task;
     }
 
-    public TaskResult runRollback(SessionRunner sessionRunner) {
+    public TaskResult<?> runRollback(SessionRunner sessionRunner) {
         if(rollback != null){
             return sessionRunner.run(rollback);
         }
@@ -123,10 +123,10 @@ public class TaskDef<I, O extends TaskResult>{
     private List<Task> createNewSessions(SessionContext $, final Task parent){
         Preconditions.checkArgument(isMultitask(), "task is multi");
 
-        List<TaskDef<Object, TaskResult>> defs = multitaskSupplier.getTaskDefs();
+        List<TaskDef<Object, TaskResult<?>>> defs = multitaskSupplier.getTaskDefs();
         List<Task> tasks = new ArrayList<Task>();
 
-        for (TaskDef<Object, TaskResult> def : defs) {
+        for (TaskDef<Object, TaskResult<?>> def : defs) {
             Task task = (Task) def.createNewSession($, parent).wire($);
 
             tasks.add(task);
@@ -144,7 +144,7 @@ public class TaskDef<I, O extends TaskResult>{
 
     }
 
-    public List<Task<Object, TaskResult>> createNewSessionsAsList(SessionContext $, final Task parent){
+    public List<Task<Object, TaskResult<?>>> createNewSessionsAsList(SessionContext $, final Task parent){
         if(isMultitask()){
             return (List)createNewSessions($, parent);
         }else{
@@ -157,7 +157,7 @@ public class TaskDef<I, O extends TaskResult>{
 
         return new SingleTaskSupplier<I, O>() {
             @Override
-            public Task<I, O> createNewSession(SessionContext $, Task<Object, TaskResult> parent, TaskDef<I, O> def) {
+            public Task<I, O> createNewSession(SessionContext $, Task<Object, TaskResult<?>> parent, TaskDef<I, O> def) {
                 return TaskDef.this.createNewSession($, parent);
             }
         };
@@ -173,23 +173,23 @@ public class TaskDef<I, O extends TaskResult>{
         return !Sets.intersection(this.roles, roles).isEmpty();
     }
 
-    public TaskDef depends(Task<Object, TaskResult>... tasks) {
+    public TaskDef depends(Task<Object, TaskResult<?>>... tasks) {
         Collections.addAll((List) dependsOnTasks, tasks);
 
         return this;
     }
 
-    public TaskDef<I, O> before(String name, TaskCallable<Object, TaskResult> callable) {
-        beforeTasks.add(new TaskDef<Object, TaskResult>(name, callable));
+    public TaskDef<I, O> before(String name, TaskCallable<Object, TaskResult<?>> callable) {
+        beforeTasks.add(new TaskDef<Object, TaskResult<?>>(name, callable));
         return this;
     }
 
-    public TaskDef<I, O> before(TaskCallable<Object, TaskResult> callable) {
-        beforeTasks.add(new TaskDef<Object, TaskResult>(callable));
+    public TaskDef<I, O> before(TaskCallable<Object, TaskResult<?>> callable) {
+        beforeTasks.add(new TaskDef<Object, TaskResult<?>>(callable));
         return this;
     }
 
-    public TaskDef<I, O> addBeforeTask(TaskDef<Object, TaskResult> task) {
+    public TaskDef<I, O> addBeforeTask(TaskDef<Object, TaskResult<?>> task) {
         beforeTasks.add(task);
         return this;
     }
@@ -230,9 +230,9 @@ public class TaskDef<I, O extends TaskResult>{
         return this;
     }
 
-    public static final TaskDef EMPTY = new TaskDef<Object, TaskResult>("EMPTY", SingleTaskSupplier.NOP);
+    public static final TaskDef EMPTY = new TaskDef<Object, TaskResult<?>>("EMPTY", SingleTaskSupplier.NOP);
 
-    public static final TaskDef ROOT = new TaskDef<Object, TaskResult>("ROOT", SingleTaskSupplier.NOP);
+    public static final TaskDef ROOT = new TaskDef<Object, TaskResult<?>>("ROOT", SingleTaskSupplier.NOP);
 
     public Set<Role> getRoles() {
         return roles;
@@ -256,13 +256,13 @@ public class TaskDef<I, O extends TaskResult>{
 
     //the purpose is to lazy-initialize this factory
     //memoize is required because task is single, sub-taskdefs are created in a single thread...
-    protected final Supplier<List<TaskDef<Object, TaskResult>>> multiDefsSupplier = Suppliers.memoize(new Supplier<List<TaskDef<Object, TaskResult>>>() {
+    protected final Supplier<List<TaskDef<Object, TaskResult<?>>>> multiDefsSupplier = Suppliers.memoize(new Supplier<List<TaskDef<Object, TaskResult<?>>>>() {
         @Override
-        public List<TaskDef<Object, TaskResult>> get() {
+        public List<TaskDef<Object, TaskResult<?>>> get() {
             final TaskDef<I, O> enclosingTaskDef = TaskDef.this;
 
             MultitaskSupplier multitaskSupplier = multitaskSupplier();
-            List<TaskDef<Object, TaskResult>> taskDefs = new ArrayList<TaskDef<Object, TaskResult>>(multitaskSupplier.size());
+            List<TaskDef<Object, TaskResult<?>>> taskDefs = new ArrayList<TaskDef<Object, TaskResult<?>>>(multitaskSupplier.size());
 
             //attached to a task def, value memoized in a session
 //            final DynamicVariable<List<Task<Object, TaskResult>>> taskListInASession = Variables.dynamic(new Fun<SessionContext, List<Task<Object, TaskResult>>>() {
@@ -302,13 +302,13 @@ public class TaskDef<I, O extends TaskResult>{
         }
     });
 
-    public List<TaskDef<Object, TaskResult>> asList(){
+    public List<TaskDef<Object, TaskResult<?>>> asList(){
         Preconditions.checkArgument(isMultitask(), "task is not multi");
 
         return (List) Collections.unmodifiableList(multitaskSupplier.getTaskDefs());
     }
 
-    public TaskDef<I, O> onRollback(TaskDef<Object, TaskResult> rollback) {
+    public TaskDef<I, O> onRollback(TaskDef<Object, TaskResult<?>> rollback) {
         this.rollback = rollback;
         return this;
     }
@@ -317,7 +317,7 @@ public class TaskDef<I, O extends TaskResult>{
         return classNameToTaskName(getClass().getSimpleName()).toString();
     }
 
-    public TaskDef<Object, TaskResult> getRollback() {
+    public TaskDef<Object, TaskResult<?>> getRollback() {
         return rollback;
     }
 }

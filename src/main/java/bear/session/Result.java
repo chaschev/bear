@@ -42,7 +42,7 @@ public enum Result {
         return this != OK;
     }
 
-    public TaskResult toTaskResult(){
+    public TaskResult<?> toTaskResult(){
         if(this == OK) return TaskResult.OK;
 
         return new TaskResult(this);

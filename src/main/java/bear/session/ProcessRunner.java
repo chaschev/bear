@@ -31,7 +31,7 @@ import java.util.concurrent.ExecutorService;
 /**
 * @author Andrey Chaschev chaschev@gmail.com
 */
-public class ProcessRunner<T extends CommandLineResult> {
+public class ProcessRunner<T extends CommandLineResult<?>> {
     private static final Logger logger = LoggerFactory.getLogger(ProcessRunner.class);
 
     ExecutorService executor;

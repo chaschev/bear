@@ -7,7 +7,7 @@ import bear.vcs.CommandLineResult;
 public class CommandContext extends ExecContext<CommandContext>{
     public AbstractConsoleCommand<?> command;
 
-    protected CommandLineResult result;
+    protected CommandLineResult<?> result;
 
     CommandContext(SessionContext $, ExecContext parent, AbstractConsoleCommand<?> command) {
         super($, parent);

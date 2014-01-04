@@ -17,6 +17,7 @@
 package bear.core;
 
 import bear.annotations.Configuration;
+import bear.annotations.Method;
 import bear.annotations.Project;
 import bear.annotations.Variable;
 import bear.plugins.DeploymentPlugin;
@@ -234,50 +235,54 @@ public abstract class BearProject<SELF extends BearProject> {
         return gb;
     }
 
-    public TaskDef<Object, TaskResult> newDeployTask() {
+    public TaskDef<Object, TaskResult<?>> newDeployTask() {
         checkDeployment();
         return defaultDeployment.build();
     }
 
-    protected List<TaskDef<Object, TaskResult>> startServiceTaskDefs() {
+    protected List<TaskDef<Object, TaskResult<?>>> startServiceTaskDefs() {
         checkDeployment();
 
-        return defaultDeployment.getStartService().createTasksToList(new ArrayList<TaskDef<Object, TaskResult>>());
+        return defaultDeployment.getStartService().createTasksToList(new ArrayList<TaskDef<Object, TaskResult<?>>>());
     }
 
-    protected List<TaskDef<Object, TaskResult>> stopServiceTaskDefs() {
+    protected List<TaskDef<Object, TaskResult<?>>> stopServiceTaskDefs() {
         checkDeployment();
 
-        return defaultDeployment.getStopService().createTasksToList(new ArrayList<TaskDef<Object, TaskResult>>());
+        return defaultDeployment.getStopService().createTasksToList(new ArrayList<TaskDef<Object, TaskResult<?>>>());
     }
 
+    @Method
     public GlobalTaskRunner start() {
-        return runTasksWithAnnotations(new Supplier<List<TaskDef<Object, TaskResult>>>() {
+        return runTasksWithAnnotations(new Supplier<List<TaskDef<Object, TaskResult<?>>>>() {
             @Override
-            public List<TaskDef<Object, TaskResult>> get() {
+            public List<TaskDef<Object, TaskResult<?>>> get() {
                 return startServiceTaskDefs();
             }
         }, useAnnotations);
     }
 
+    @Method
     public GlobalTaskRunner stop() {
-        return runTasksWithAnnotations(new Supplier<List<TaskDef<Object, TaskResult>>>() {
+        return runTasksWithAnnotations(new Supplier<List<TaskDef<Object, TaskResult<?>>>>() {
             @Override
-            public List<TaskDef<Object, TaskResult>> get() {
+            public List<TaskDef<Object, TaskResult<?>>> get() {
                 return stopServiceTaskDefs();
             }
         }, useAnnotations);
     }
 
+    @Method
     public GlobalTaskRunner deploy() {
-        return runTasksWithAnnotations(new Supplier<List<TaskDef<Object, TaskResult>>>() {
+        return runTasksWithAnnotations(new Supplier<List<TaskDef<Object, TaskResult<?>>>>() {
             @Override
-            public List<TaskDef<Object, TaskResult>> get() {
+            public List<TaskDef<Object, TaskResult<?>>> get() {
                 return singletonList(defaultDeployment.build());
             }
         }, useAnnotations);
     }
 
+    @Method
     public GlobalTaskRunner setup() {
         return setup(true);
     }
@@ -300,9 +305,9 @@ public abstract class BearProject<SELF extends BearProject> {
     }
 
     public void rollbackTo(final String ref) {
-        runTasksWithAnnotations(new Supplier<List<TaskDef<Object, TaskResult>>>() {
+        runTasksWithAnnotations(new Supplier<List<TaskDef<Object, TaskResult<?>>>>() {
             @Override
-            public List<TaskDef<Object, TaskResult>> get() {
+            public List<TaskDef<Object, TaskResult<?>>> get() {
                 return singletonList(rollbackToTask(ref));
             }
         });
@@ -409,7 +414,11 @@ public abstract class BearProject<SELF extends BearProject> {
     private boolean useUI(Configuration annotation) {
         if (global.isSet(bear.useUI)) return global.var(bear.useUI);
 
-        return annotation == null || Annotations.defaultBoolean(annotation, "useUI");
+        if(annotation == null){
+            return Annotations.defaultBoolean(annotation, "useUI");
+        }
+
+        return annotation.useUI();
     }
 
     private Configuration configureWithAnnotations(
@@ -476,7 +485,7 @@ public abstract class BearProject<SELF extends BearProject> {
         }
     }
 
-    protected TaskDef<Object, TaskResult> rollbackToTask(final String labelOrPath) {
+    protected TaskDef<Object, TaskResult<?>> rollbackToTask(final String labelOrPath) {
         Preconditions.checkArgument(Strings.isNotEmpty(labelOrPath), "release reference string is empty");
 
         return defaultDeployment.build()
@@ -576,7 +585,7 @@ public abstract class BearProject<SELF extends BearProject> {
         return async;
     }
 
-    public static class PulseResult extends TaskResult {
+    public static class PulseResult extends TaskResult<PulseResult> {
         public PulseResult(Result result) {
             super(result);
         }

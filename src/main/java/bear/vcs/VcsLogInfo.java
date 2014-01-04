@@ -9,7 +9,7 @@ import java.util.List;
 /**
 * @author Andrey Chaschev chaschev@gmail.com
 */
-public final class VcsLogInfo extends CommandLineResult {
+public final class VcsLogInfo extends CommandLineResult<VcsLogInfo> {
     public List<LogEntry> entries;
 
     VcsLogInfo() {

@@ -66,7 +66,7 @@ public class GroovyShellMode extends PluginShellMode<GroovyShellPlugin> implemen
         shell = new GroovyShell(binding);
     }
 
-    public static class GroovyResult extends TaskResult{
+    public static class GroovyResult extends TaskResult<GroovyResult> {
         private final Exception e;
         private final Object object;
 
@@ -101,14 +101,14 @@ public class GroovyShellMode extends PluginShellMode<GroovyShellPlugin> implemen
     }
 
     public Task interpret(final String command, SessionContext $, final Task _parent, final TaskDef taskDef) {
-        Task<Object, TaskResult> task = new Task<Object, TaskResult>(_parent, taskDef, $) {
+        Task<Object, TaskResult<?>> task = new Task<Object, TaskResult<?>>(_parent, taskDef, $) {
             @Override
-            protected TaskResult exec(final SessionRunner runner) {
-                CatchyCallable<TaskResult> callable = null;
-                final Task<Object, TaskResult> $this = this;
+            protected TaskResult<?> exec(final SessionRunner runner) {
+                CatchyCallable<TaskResult<?>> callable = null;
+                final Task<Object, TaskResult<?>> $this = this;
                 try {
-                    callable = new CatchyCallable<TaskResult>(new Callable<TaskResult>() {
-                        public TaskResult call() {
+                    callable = new CatchyCallable<TaskResult<?>>(new Callable<TaskResult<?>>() {
+                        public TaskResult<?> call() {
                             try {
                                 if (SCRIPT_PATTERN.matcher(command).matches()) {
                                     GroovyClassLoader gcl = new GroovyClassLoader();
@@ -126,7 +126,7 @@ public class GroovyShellMode extends PluginShellMode<GroovyShellPlugin> implemen
                                     shell.evaluate(command);
                                 }
                             } catch (Throwable e) {
-                                return new TaskResult(e);
+                                return TaskResult.of(e);
                             }
 
                             return TaskResult.OK;
@@ -148,11 +148,11 @@ public class GroovyShellMode extends PluginShellMode<GroovyShellPlugin> implemen
                 }
             }
 
-            private TaskResult fxWorkaround(CatchyCallable<TaskResult> callable) {
-                TaskResult result;
+            private TaskResult<?> fxWorkaround(CatchyCallable<TaskResult<?>> callable) {
+                TaskResult<?> result;
 
                 try {
-                    Future<TaskResult> fut = (Future<TaskResult>) OpenBean.invoke(binding.getVariable("_"), "evaluateInFX", callable);
+                    Future<TaskResult<?>> fut = (Future<TaskResult<?>>) OpenBean.invoke(binding.getVariable("_"), "evaluateInFX", callable);
                     result = fut.get();
                 } catch (Exception e1) {
                     logger.warn("", e1);

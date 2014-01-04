@@ -224,7 +224,6 @@ public class BearFX {
                             JSObject window = (JSObject) webEngine.executeScript("window");
 
                             window.setMember("bearFX", bearFX);
-                            window.setMember("OpenBean", OpenBean.INSTANCE);
                             window.setMember("Bindings", bindings);
 
                             logger.info("creating fx appender...");

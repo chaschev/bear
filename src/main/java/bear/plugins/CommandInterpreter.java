@@ -28,7 +28,7 @@ import bear.task.TaskResult;
 */
 public interface CommandInterpreter {
     Stage getStage();
-    Task<Object, TaskResult> interpret(String command, SessionContext $, Task parent, TaskDef taskDef);
+    Task<Object, TaskResult<?>> interpret(String command, SessionContext $, Task parent, TaskDef taskDef);
 
     Replacements completeCode(String script, int position);
 }

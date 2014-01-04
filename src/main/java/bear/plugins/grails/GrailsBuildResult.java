@@ -22,7 +22,7 @@ import bear.task.TaskResult;
 /**
  * @author Andrey Chaschev chaschev@gmail.com
  */
-public class GrailsBuildResult extends TaskResult{
+public class GrailsBuildResult extends TaskResult<GrailsBuildResult> {
     public String path;
 
     public GrailsBuildResult(Result result, String path) {

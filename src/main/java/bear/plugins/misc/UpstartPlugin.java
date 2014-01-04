@@ -38,12 +38,12 @@ public class UpstartPlugin extends Plugin {
 
     }
 
-    public final TaskDef<UpstartServices, TaskResult> create = new TaskDef<UpstartServices, TaskResult>(new SingleTaskSupplier<UpstartServices, TaskResult>() {
+    public final TaskDef<UpstartServices, TaskResult<?>> create = new TaskDef<UpstartServices, TaskResult<?>>(new SingleTaskSupplier<UpstartServices, TaskResult<?>>() {
         @Override
-        public Task<UpstartServices, TaskResult> createNewSession(SessionContext $, Task<Object, TaskResult> parent, TaskDef<UpstartServices, TaskResult> def) {
-            return new Task<UpstartServices, TaskResult>(parent, new TaskCallable<UpstartServices, TaskResult>() {
+        public Task<UpstartServices, TaskResult<?>> createNewSession(SessionContext $, Task<Object, TaskResult<?>> parent, TaskDef<UpstartServices, TaskResult<?>> def) {
+            return new Task<UpstartServices, TaskResult<?>>(parent, new TaskCallable<UpstartServices, TaskResult<?>>() {
                 @Override
-                public TaskResult call(SessionContext $, Task<UpstartServices, TaskResult> task) throws Exception {
+                public TaskResult<?> call(SessionContext $, Task<UpstartServices, TaskResult<?>> task) throws Exception {
                     UpstartServices services = task.getInput();
                     Preconditions.checkNotNull(services, "You need to specify upstart services.");
 

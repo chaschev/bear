@@ -29,6 +29,15 @@ public class FileSizeBuilder extends CommandBuilder<FileSizeBuilder> {
 
                     return new FileSizeResult(script, commandOutput, s, v);
                 }
+
+                @Override
+                public FileSizeResult error(Exception e) {
+                    FileSizeResult r = new FileSizeResult();
+
+                    r.setException(e);
+
+                    return r;
+                }
             });
     }
 
@@ -42,9 +51,15 @@ public class FileSizeBuilder extends CommandBuilder<FileSizeBuilder> {
         return self();
     }
 
-    public static class FileSizeResult extends CommandLineResult{
+    public static class FileSizeResult extends CommandLineResult<FileSizeResult> {
         final String stringValue;
         final long longValue;
+
+        public FileSizeResult() {
+            super();
+            longValue = -1;
+            stringValue = "n/a";
+        }
 
         public FileSizeResult(String script, String commandOutput, String stringValue, long longValue) {
             super(script, commandOutput);

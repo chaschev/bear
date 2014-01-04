@@ -29,7 +29,7 @@ import static bear.task.TaskResult.OK
 
 @Project(shortName = "petclinic", name = "Grails Petclinic Demo Deployment")
 @Configuration(
-    properties = ".bear/petclinic",
+    properties = ".bear/demos",
     stage = "u-3",
     useUI = false,
     vcs = "https://github.com/grails-samples/grails-petclinic.git",

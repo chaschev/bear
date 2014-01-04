@@ -37,16 +37,16 @@ class BearScriptItemConverter {
         this.global = global;
     }
 
-    public static Task<Object, TaskResult> wrapIntoGlobalTask(final SessionContext $, final Task parent, final Task<Object, TaskResult> task) {
+    public static Task<Object, TaskResult<?>> wrapIntoGlobalTask(final SessionContext $, final Task parent, final Task<Object, TaskResult<?>> task) {
 
-        return new Task<Object, TaskResult>(new TaskContext<Object, TaskResult>(null, parent, $), new TaskCallable() {
-            final OnceEnteredCallable<TaskResult> onceEnteredCallable = new OnceEnteredCallable<TaskResult>();
+        return new Task<Object, TaskResult<?>>(new TaskContext<Object, TaskResult<?>>(null, parent, $), new TaskCallable() {
+            final OnceEnteredCallable<TaskResult<?>> onceEnteredCallable = new OnceEnteredCallable<TaskResult<?>>();
 
             @Override
-            public TaskResult call(final SessionContext $, Task taskContext) throws Exception{
-                return onceEnteredCallable.runOnce(new Callable<TaskResult>() {
+            public TaskResult<?> call(final SessionContext $, Task taskContext) throws Exception{
+                return onceEnteredCallable.runOnce(new Callable<TaskResult<?>>() {
                     @Override
-                    public TaskResult call() throws Exception {
+                    public TaskResult<?> call() throws Exception {
                         return $.runner.runSession(task);
                     }
                 }).get();
@@ -61,7 +61,7 @@ class BearScriptItemConverter {
      * @param scriptItem
      * @return
      */
-    public TaskDef<Object, TaskResult> convertItemToTask(final ScriptItem scriptItem) {
+    public TaskDef<Object, TaskResult<?>> convertItemToTask(final ScriptItem scriptItem) {
 
         final List<String> executableLines = new ArrayList<String>(scriptItem.lines.size());
         final List<String> directivesLines = new ArrayList<String>();
@@ -79,9 +79,9 @@ class BearScriptItemConverter {
         scriptItem.assignVariables(global);
 
         if (!executableLines.isEmpty()) {
-            return new TaskDef<Object, TaskResult>(scriptItem.getScriptName(), new NamedSupplier<Object, TaskResult>(scriptItem.asOneLineDesc(),new SingleTaskSupplier<Object, TaskResult>() {
+            return new TaskDef<Object, TaskResult<?>>(scriptItem.getScriptName(), new NamedSupplier<Object, TaskResult<?>>(scriptItem.asOneLineDesc(),new SingleTaskSupplier<Object, TaskResult<?>>() {
                 @Override
-                public Task<Object, TaskResult> createNewSession(SessionContext $, Task<Object, TaskResult> parent, TaskDef<Object, TaskResult> def) {
+                public Task<Object, TaskResult<?>> createNewSession(SessionContext $, Task<Object, TaskResult<?>> parent, TaskDef<Object, TaskResult<?>> def) {
                     scriptItem.assignVariables($);
 
                     final Plugin currentPlugin = getPlugin(scriptItem.pluginName);
@@ -95,7 +95,7 @@ class BearScriptItemConverter {
                             scriptItem.startsAtIndex + i, "unknown command: " + firstWord));
                     }
 
-                    final Task<Object, TaskResult> task;
+                    final Task<Object, TaskResult<?>> task;
                     if (currentPlugin.getShell().multiLine()) {
 //                            shellContext.name = executableLines.get(0);
                         String script = Joiner.on("\n").join(executableLines);

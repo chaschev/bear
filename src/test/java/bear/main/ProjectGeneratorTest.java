@@ -35,9 +35,9 @@ public class ProjectGeneratorTest {
 
     @Test
     public void testGenerate() throws Exception {
-        System.out.println(new ProjectGenerator().generateGroovyProject("drywall-demo"));
+        System.out.println(new ProjectGenerator("drywall-demo", "andrey", "pass", "host").processTemplate("TemplateProject.template"));
         System.out.println("--------------");
 
-        System.out.println(new ProjectGenerator().generatePom("drywall-demo"));
+        System.out.println(new ProjectGenerator("drywall-demo", "andrey",  "pass", "host").generatePom("drywall-demo"));
     }
 }

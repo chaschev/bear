@@ -18,7 +18,7 @@ import java.util.concurrent.atomic.AtomicLong;
 /**
 * @author Andrey Chaschev chaschev@gmail.com
 */
-public class BearScriptPhase<I, O extends TaskResult> {
+public class BearScriptPhase<I, O extends TaskResult<?>> {
     public final String id = SessionContext.randomId();
 
     TaskDef<I, O> taskDef;
@@ -60,7 +60,7 @@ public class BearScriptPhase<I, O extends TaskResult> {
         return taskDef.getDisplayName();
     }
 
-    public void addArrival(final SessionContext $, final long duration, TaskResult result) {
+    public void addArrival(final SessionContext $, final long duration, TaskResult<?> result) {
         Preconditions.checkArgument(partiesCount != -1, "BearScriptPhase is not initialized");
 
         groupDivider.addArrival($);

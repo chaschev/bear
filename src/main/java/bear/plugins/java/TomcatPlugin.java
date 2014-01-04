@@ -158,9 +158,9 @@ public class TomcatPlugin extends ServerToolPlugin {
         watchDogGroup.scheduleForcedShutdown($.getGlobal().getScheduler(), $.var(bear.appStartTimeoutSec), TimeUnit.SECONDS);
     }
 
-    public final TaskDef<Object, TaskResult> deployWar = new TaskDef<Object, TaskResult>(new TaskCallable<Object, TaskResult>() {
+    public final TaskDef<Object, TaskResult<?>> deployWar = new TaskDef<Object, TaskResult<?>>(new TaskCallable<Object, TaskResult<?>>() {
         @Override
-        public TaskResult call(SessionContext $, Task<Object, TaskResult> task) throws Exception {
+        public TaskResult<?> call(SessionContext $, Task<Object, TaskResult<?>> task) throws Exception {
             String warSourcePath = $.var(releases.activatedRelease).get().path + "/" + $.var(warName);
 
             for (String port : $.var(portsSplit)) {
@@ -178,12 +178,12 @@ public class TomcatPlugin extends ServerToolPlugin {
 
     // todo add                         $.sys.rm(RmInput.newRm($(warCacheDirs)).sudo());
 
-    public final InstallationTaskDef<ZippedTool> install = new ZippedToolTaskDef<ZippedTool>(new SingleTaskSupplier<Object, TaskResult>() {
+    public final InstallationTaskDef<ZippedTool> install = new ZippedToolTaskDef<ZippedTool>(new SingleTaskSupplier<Object, TaskResult<?>>() {
         @Override
-        public Task<Object, TaskResult> createNewSession(SessionContext $, final Task<Object, TaskResult> parent, final TaskDef<Object, TaskResult> def) {
+        public Task<Object, TaskResult<?>> createNewSession(SessionContext $, final Task<Object, TaskResult<?>> parent, final TaskDef<Object, TaskResult<?>> def) {
             return new ZippedTool(parent, (InstallationTaskDef) def, $) {
                 @Override
-                protected TaskResult exec(SessionRunner runner) {
+                protected TaskResult<?> exec(SessionRunner runner) {
                     clean();
 
                     download();
@@ -240,7 +240,7 @@ public class TomcatPlugin extends ServerToolPlugin {
                         $.put(createScriptText, newBasicUpstartScriptText($));
                     }
 
-                    TaskResult upstartResult = $.runSession(
+                    TaskResult<?> upstartResult = $.runSession(
                         upstart.create.singleTaskSupplier().createNewSession($, parent, upstart.create),
                         $.var(customUpstart)
                     );

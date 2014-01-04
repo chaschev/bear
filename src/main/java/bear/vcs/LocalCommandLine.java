@@ -23,7 +23,7 @@ import bear.plugins.sh.SystemSession;
 /**
  * @author Andrey Chaschev chaschev@gmail.com
  */
-public class LocalCommandLine<T extends CommandLineResult> extends CommandLine<T, Script> {
+public class LocalCommandLine<T extends CommandLineResult<?>> extends CommandLine<T, Script> {
     public LocalCommandLine(SystemSession sys) {
         super(sys);
     }

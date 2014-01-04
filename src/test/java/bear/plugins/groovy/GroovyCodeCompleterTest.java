@@ -4,6 +4,7 @@ import chaschev.util.Exceptions;
 import com.google.common.util.concurrent.AbstractFuture;
 import groovy.lang.Binding;
 import groovy.lang.GroovyShell;
+import org.apache.commons.lang3.StringUtils;
 import org.fest.assertions.api.Assertions;
 import org.junit.Test;
 
@@ -16,7 +17,6 @@ import java.util.concurrent.TimeoutException;
 
 import static bear.plugins.groovy.GroovyCodeCompleter.Token.f;
 import static bear.plugins.groovy.GroovyCodeCompleter.Token.m;
-import static chaschev.lang.Lists2.projectField;
 import static chaschev.lang.OpenBean.fieldNames;
 import static chaschev.lang.OpenBean.methodNames;
 import static com.google.common.collect.Lists.newArrayList;
@@ -135,7 +135,15 @@ public class GroovyCodeCompleterTest {
     private List<String> getNames(String script) {
         Replacements replacements = getReplacements(script);
 
-        return projectField(replacements.replacements, Replacement.class, String.class, "name");
+        List<String> names = new ArrayList<String>();
+
+        for (Replacement replacement : replacements.replacements) {
+            String name = replacement.name;
+            name = StringUtils.substringBefore(name, "(");
+            names.add(name);
+        }
+
+        return names;
     }
 
     private static Replacements getReplacements(String script) {

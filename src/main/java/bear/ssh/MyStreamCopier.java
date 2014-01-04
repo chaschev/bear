@@ -108,11 +108,11 @@ public class MyStreamCopier {
         return this;
     }
 
-    public Future<TaskResult> spawn(ExecutorService service, final long finishAtMs) {
+    public Future<TaskResult<?>> spawn(ExecutorService service, final long finishAtMs) {
         this.finishAtMs = finishAtMs;
-        return service.submit(new CatchyCallable<TaskResult>(new Callable<TaskResult>() {
+        return service.submit(new CatchyCallable<TaskResult<?>>(new Callable<TaskResult<?>>() {
             @Override
-            public TaskResult call() {
+            public TaskResult<?> call() {
                 boolean interrupted = false;
 
                 while (!stopFlag) {
@@ -146,7 +146,7 @@ public class MyStreamCopier {
                         }else{
                             log.error("", e);
                         }
-                        return new TaskResult(e);
+                        return TaskResult.of(e);
                     }
                 }
 
@@ -171,7 +171,7 @@ public class MyStreamCopier {
                 } catch (Exception e) {
                     log.error("", e);
 
-                    return new TaskResult(e);
+                    return TaskResult.of(e);
                 } finally {
                     if(stopFlag || interrupted){
                         IOUtils.closeQuietly(in);

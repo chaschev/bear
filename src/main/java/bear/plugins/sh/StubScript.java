@@ -8,7 +8,7 @@ import bear.vcs.VCSSession;
 /**
 * @author Andrey Chaschev chaschev@gmail.com
 */
-public class StubScript<T extends CommandLineResult> extends VCSScript<T> {
+public class StubScript<T extends CommandLineResult<?>> extends VCSScript<T> {
     private final T result;
 
     public StubScript(SystemSession sys, VCSSession vcsSession, T result) {

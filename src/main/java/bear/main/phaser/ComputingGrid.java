@@ -248,7 +248,7 @@ public class ComputingGrid<C, PHASE> {
                                 );
                                 partiesFailed.incrementAndGet();
 
-                                LoggerFactory.getLogger("log").warn(e.toString(), e);
+                                LoggerFactory.getLogger("log").error(e.toString(), e);
 
                                 break;
                             } finally {

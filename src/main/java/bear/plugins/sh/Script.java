@@ -29,7 +29,7 @@ import java.util.List;
  *
  * @author Andrey Chaschev chaschev@gmail.com
  */
-public class Script <T extends CommandLineResult, CHILD extends Script>{
+public class Script <T extends CommandLineResult<?>, CHILD extends Script>{
     public String cd = ".";
 
     protected SystemSession sys;

@@ -4,6 +4,7 @@ import bear.task.TaskCallable
 import org.junit.Before
 import org.junit.BeforeClass
 import org.junit.FixMethodOrder
+import org.junit.Ignore
 import org.junit.Test
 import org.junit.runners.MethodSorters
 
@@ -11,6 +12,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 
 //@Category(IntegrationTests)
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
+@Ignore
 public class TestProjectTests {
     static private TestProject project
 

@@ -14,26 +14,14 @@
  * limitations under the License.
  */
 
-package bear.console;
+package bear.annotations;
 
-import bear.vcs.CommandLineResult;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
-/**
-* @author Andrey Chaschev chaschev@gmail.com
-*/
-public interface AbstractConsole {
-    public static abstract class Terminal{
-        public abstract void print(String s);
-        public void println(String s){
-            print(s + "\n");
-        }
-
-        public abstract void finishWithResult(ConsoleCallbackResult callbackResult);
-
-        public abstract boolean isDone();
-    }
-
-    /**
-     */
-    <T extends CommandLineResult<?>> T sendCommand(AbstractConsoleCommand<T> command);
+@Retention(RetentionPolicy.RUNTIME)
+@Target({ElementType.METHOD})
+public @interface Method {
 }

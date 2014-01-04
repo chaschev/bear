@@ -188,7 +188,7 @@ public class Releases extends HavingContext<Releases, SessionContext>{
 
         String pendingPath = $(releases.pendingReleasePath);
 
-        CommandLineResult result = $.sys.mkdirs(pendingPath).run();
+        CommandLineResult<?> result = $.sys.mkdirs(pendingPath).run();
 
         if(result.isErrorOf(PermissionsException.class)){
             throw new BearException("releases plugin: unable to create a pending directory, did you run project.setup()?");

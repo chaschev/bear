@@ -15,6 +15,7 @@ import bear.task.NamedCallable;
 import bear.task.Task;
 import bear.task.TaskDef;
 import bear.task.TaskResult;
+import chaschev.lang.LangUtils;
 import chaschev.util.Exceptions;
 import com.google.common.base.Function;
 import com.google.common.base.Throwables;
@@ -39,10 +40,10 @@ public class GlobalTaskRunner {
     private final Bear bear;
     private final BearProject bearSettings;
 
-    List<TaskDef<Object, TaskResult>> taskDefs;
+    List<TaskDef<Object, TaskResult<?>>> taskDefs;
     private final List<SessionContext> $s;
 
-    ComputingGrid<SessionContext, BearScriptPhase<Object, TaskResult>> grid;
+    ComputingGrid<SessionContext, BearScriptPhase<Object, TaskResult<?>>> grid;
 
     private final long startedAtMs = System.currentTimeMillis();
     private final GlobalContext global;
@@ -55,7 +56,7 @@ public class GlobalTaskRunner {
     public final DynamicVariable<Stats> stats;
     public final DynamicVariable<AtomicInteger> arrivedCount = Variables.newVar(new AtomicInteger(0));
 
-    public GlobalTaskRunner(final GlobalContext global, List<Phase<TaskResult, BearScriptPhase<Object, TaskResult>>> phaseList, final PreparationResult preparationResult) {
+    public GlobalTaskRunner(final GlobalContext global, List<Phase<TaskResult<?>, BearScriptPhase<Object, TaskResult<?>>>> phaseList, final PreparationResult preparationResult) {
         this.global = global;
         this.shellContext = new BearScriptRunner.ShellSessionContext();
         this.bear = global.bear;
@@ -78,11 +79,11 @@ public class GlobalTaskRunner {
             }
         });
 
-        grid = new ComputingGrid<SessionContext, BearScriptPhase<Object, TaskResult>>(phaseList, $s);
+        grid = new ComputingGrid<SessionContext, BearScriptPhase<Object, TaskResult<?>>>(phaseList, $s);
 
-        grid.setPhaseEnterListener(new ComputingGrid.PartyListener<BearScriptPhase<Object, TaskResult>, SessionContext>() {
+        grid.setPhaseEnterListener(new ComputingGrid.PartyListener<BearScriptPhase<Object, TaskResult<?>>, SessionContext>() {
             @Override
-            public void handle(Phase<?, BearScriptPhase<Object, TaskResult>> phase, PhaseParty<SessionContext, BearScriptPhase<Object, TaskResult>> party) {
+            public void handle(Phase<?, BearScriptPhase<Object, TaskResult<?>>> phase, PhaseParty<SessionContext, BearScriptPhase<Object, TaskResult<?>>> party) {
                 ui.info(new NewPhaseConsoleEventToUI("shell", shellContext.sessionId, phase.getPhase().id));
                 ui.info(new TaskConsoleEventToUI("shell", "step: " + phase.getName(),
                     phase.getPhase().id)
@@ -92,9 +93,9 @@ public class GlobalTaskRunner {
             }
         });
 
-        grid.setPartyFinishListener(new ComputingGrid.PartyListener<BearScriptPhase<Object, TaskResult>, SessionContext>() {
+        grid.setPartyFinishListener(new ComputingGrid.PartyListener<BearScriptPhase<Object, TaskResult<?>>, SessionContext>() {
             @Override
-            public void handle(Phase<?, BearScriptPhase<Object, TaskResult>> phase, PhaseParty<SessionContext, BearScriptPhase<Object, TaskResult>> party) {
+            public void handle(Phase<?, BearScriptPhase<Object, TaskResult<?>>> phase, PhaseParty<SessionContext, BearScriptPhase<Object, TaskResult<?>>> party) {
                 String name = phase.getPhase().getName();
 
                 party.getColumn().whenSessionComplete(GlobalTaskRunner.this);
@@ -162,7 +163,7 @@ public class GlobalTaskRunner {
         });
     }
 
-    public ComputingGrid<SessionContext, BearScriptPhase<Object, TaskResult>> getGrid() {
+    public ComputingGrid<SessionContext, BearScriptPhase<Object, TaskResult<?>>> getGrid() {
         return grid;
     }
 
@@ -183,6 +184,7 @@ public class GlobalTaskRunner {
         public int partiesFailed = 0;
         public final AtomicInteger partiesCount;
         protected TaskDef rootTask;
+        protected final long startedAt = System.currentTimeMillis();
 
         public Stats(int count, TaskDef rootTask) {
             partiesPending = count;
@@ -208,11 +210,11 @@ public class GlobalTaskRunner {
         @Override
         public String toString() {
             final StringBuilder sb = new StringBuilder("Stats{");
-            sb.append("partiesArrived=").append(partiesArrived);
-            sb.append(", partiesOk=").append(partiesOk);
-            sb.append(", partiesPending=").append(partiesPending);
-            sb.append(", partiesFailed=").append(partiesFailed);
-            sb.append(", partiesCount=").append(partiesCount);
+            sb.append("time: \"").append(LangUtils.millisToSec(System.currentTimeMillis() - startedAt)).append("s\"");
+            sb.append(", partiesArrived: ").append(partiesArrived);
+            sb.append(", partiesOk: ").append(partiesOk);
+            sb.append(", partiesPending: ").append(partiesPending);
+            sb.append(", partiesFailed: ").append(partiesFailed);
             sb.append('}');
             return sb.toString();
         }
@@ -243,19 +245,19 @@ public class GlobalTaskRunner {
         return this;
     }
 
-    public SettableFuture<TaskResult> future(String taskDefName, String sessionName){
-        return grid.future(taskDefName, sessionName, TaskResult.class);
+    public SettableFuture<TaskResult<?>> future(String taskDefName, String sessionName){
+        return (SettableFuture)grid.future(taskDefName, sessionName, TaskResult.class);
     }
 
-    public <I, O extends TaskResult> SettableFuture<O> future(NamedCallable<I, O> namedCallable, String sessionName) {
+    public <I, O extends TaskResult<?>> SettableFuture<O> future(NamedCallable<I, O> namedCallable, String sessionName) {
         return (SettableFuture<O>) future(namedCallable.getName(), sessionName);
     }
 
-    public <I, O extends TaskResult> SettableFuture<O> future(TaskDef<I, O> taskDef, String sessionName) {
+    public <I, O extends TaskResult<?>> SettableFuture<O> future(TaskDef<I, O> taskDef, String sessionName) {
         return (SettableFuture<O>) future(taskDef.getName(), sessionName);
     }
 
-    public TaskResult result(String taskDefName, String sessionName){
+    public TaskResult<?> result(String taskDefName, String sessionName){
         try {
             return future(taskDefName, sessionName).get();
         } catch (InterruptedException e) {
@@ -265,11 +267,11 @@ public class GlobalTaskRunner {
         }
     }
 
-    public <I, O extends TaskResult> O result(NamedCallable<I, O> namedCallable, String sessionName) {
+    public <I, O extends TaskResult<?>> O result(NamedCallable<I, O> namedCallable, String sessionName) {
         return (O) result(namedCallable.getName(), sessionName);
     }
 
-    public <I, O extends TaskResult> O result(TaskDef<I, O> taskDef, String sessionName) {
+    public <I, O extends TaskResult<?>> O result(TaskDef<I, O> taskDef, String sessionName) {
         return (O) result(taskDef.getName(), sessionName);
     }
 }

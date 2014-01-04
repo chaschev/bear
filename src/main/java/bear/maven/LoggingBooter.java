@@ -1,16 +1,22 @@
 package bear.maven;
 
 import bear.main.BearFX;
+import chaschev.lang.OpenBean;
 import chaschev.util.Exceptions;
 import chaschev.util.RevisionInfo;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.core.Appender;
 import org.apache.logging.log4j.core.Filter;
+import org.apache.logging.log4j.core.Logger;
 import org.apache.logging.log4j.core.LoggerContext;
 import org.apache.logging.log4j.core.config.BaseConfiguration;
+import org.apache.logging.log4j.core.config.ConfigurationListener;
 import org.apache.logging.log4j.core.config.LoggerConfig;
 import org.slf4j.LoggerFactory;
+
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author Andrey Chaschev chaschev@gmail.com
@@ -75,9 +81,17 @@ public class LoggingBooter {
 
         LoggerContext context = coreLogger.getContext();
 
-        BaseConfiguration configuration = (BaseConfiguration) context.getConfiguration();
+        BaseConfiguration configuration = updateLevel(context, loggerName, level);
 
-//        configuration.getLoggerConfig(loggerName).setLevel(level);
+        List<ConfigurationListener> listeners = (List<ConfigurationListener>) OpenBean.getFieldValue(configuration, "listeners");
+
+        for (ConfigurationListener listener : listeners) {
+            updateLevel((LoggerContext) listener, loggerName, level);
+        }
+    }
+
+    private static BaseConfiguration updateLevel(LoggerContext context, String loggerName, Level level) {
+        BaseConfiguration configuration = (BaseConfiguration) context.getConfiguration();
 
         for (LoggerConfig loggerConfig : configuration.getLoggers().values()) {
             if(loggerConfig.getName().startsWith(loggerName)){
@@ -85,8 +99,12 @@ public class LoggingBooter {
             }
         }
 
-//        context.updateLoggers(configuration);
+        Map<String, Logger> loggerMap = (Map<String, Logger>) OpenBean.getFieldValue(context, "loggers");
 
-        LogManager.getLogger("fx").info("should not be seen");
+        for (Logger logger : loggerMap.values()) {
+            logger.setLevel(level);
+        }
+
+        return configuration;
     }
 }

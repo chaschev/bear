@@ -22,7 +22,7 @@ import bear.vcs.CommandLineResult;
 /**
 * @author Andrey Chaschev chaschev@gmail.com
 */
-public abstract class AbstractConsoleCommand<T extends CommandLineResult>{
+public abstract class AbstractConsoleCommand<T extends CommandLineResult<?>>{
     protected long timeoutMs;
     protected StringBuilder output = new StringBuilder(8192);
 

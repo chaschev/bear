@@ -1,5 +1,6 @@
 package bear.core;
 
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.List;
@@ -9,6 +10,9 @@ import static org.fest.assertions.api.Assertions.assertThat;
 /**
  * @author Andrey Chaschev chaschev@gmail.com
  */
+
+// bear script is not used in the project anymore
+@Ignore
 public class BearScriptTest {
     @Test
     public void testParse1(){

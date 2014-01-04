@@ -14,15 +14,15 @@ import javax.annotation.Nullable;
 /**
  * @author Andrey Chaschev chaschev@gmail.com
  */
-public class TaskContext<I, O extends TaskResult> extends HavingContext<TaskContext<Object, TaskResult>, SessionContext> {
+public class TaskContext<I, O extends TaskResult<?>> extends HavingContext<TaskContext<Object, TaskResult<?>>, SessionContext> {
     Task me;
 
     @Nullable
-    Task<Object, TaskResult> parent;
+    Task<Object, TaskResult<?>> parent;
 
     TaskDef<I, O> definition;
     SessionRunner runner;
-    ComputingGrid<SessionContext, BearScriptPhase<Object, TaskResult>> grid;
+    ComputingGrid<SessionContext, BearScriptPhase<Object, TaskResult<?>>> grid;
     Phase<O, BearScriptPhase<I, O>> phase;
     Bear bear;
     PhaseParty<SessionContext, BearScriptPhase<I, O>> phaseParty;
@@ -48,7 +48,7 @@ public class TaskContext<I, O extends TaskResult> extends HavingContext<TaskCont
     public TaskContext(
         Task parent, SessionContext $, SessionRunner runner,
         Task me, TaskDef definition,
-        ComputingGrid<SessionContext, BearScriptPhase<Object, TaskResult>> grid,
+        ComputingGrid<SessionContext, BearScriptPhase<Object, TaskResult<?>>> grid,
         Phase<O, BearScriptPhase<I, O>> phase, Bear bear, PhaseParty<SessionContext, BearScriptPhase<I, O>> phaseParty, TaskExecutionContext executionContext) {
 
         super($);

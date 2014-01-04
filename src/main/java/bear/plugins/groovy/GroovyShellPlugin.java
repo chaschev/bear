@@ -36,7 +36,7 @@ public class GroovyShellPlugin extends Plugin {
         this.shell = global.wire(new GroovyShellMode(this, cmdAnnotation()));
     }
 
-    public GroovyShellPlugin(GlobalContext global, TaskDef<Object, TaskResult> taskDef) {
+    public GroovyShellPlugin(GlobalContext global, TaskDef<Object, TaskResult<?>> taskDef) {
         super(global, taskDef);
     }
 

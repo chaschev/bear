@@ -53,7 +53,6 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.util.*;
 
-import static bear.main.ProjectGenerator.readResource;
 import static bear.session.Variables.*;
 import static chaschev.lang.OpenBean.getFieldValue;
 import static java.util.Collections.singletonList;
@@ -76,10 +75,16 @@ public class BearMain extends AppCli<GlobalContext, Bear, BearMain.AppOptions2> 
 
     public static class AppOptions2 extends AppOptions {
         public final static OptionSpec<String>
-            CREATE_NEW = parser.accepts("create", "with dashes, i.e. 'drywall-demo' creates a new Project").withRequiredArg().describedAs("name-with-dashes").ofType(String.class);
+            CREATE_NEW = parser.accepts("create", "creates a new project, i.e. 'my-project'").withRequiredArg().describedAs("name-with-dashes").ofType(String.class),
+            USER = parser.accepts("user", "remote user for the deployment").requiredIf(CREATE_NEW).withRequiredArg().describedAs("username").ofType(String.class),
+            PASSWORD = parser.accepts("password", "user password").requiredIf(CREATE_NEW).withRequiredArg().describedAs("password").ofType(String.class),
+            HOST = parser.accepts("host", "any of the remote hosts").requiredIf(CREATE_NEW).withRequiredArg().describedAs("host").ofType(String.class)
+        ;
 
         public final static OptionSpec<Void>
-            USE_UI = parser.accepts("ui", "start Bear UI"),
+            USE_UI = parser.accepts("ui", "start UI (override project default)"),
+            NO_UI = parser.accepts("no-ui", "don't run UI (override project default)"),
+            QUIET = parser.accepts("q", "be quiet"),
             UNPACK_DEMOS = parser.accepts("unpack-demos", "unpack the demos");
 
         public AppOptions2(String[] args) {
@@ -138,7 +143,7 @@ public class BearMain extends AppCli<GlobalContext, Bear, BearMain.AppOptions2> 
 
 //        global.loadProperties(new File(global.var(appConfigDir), "bootstrap.properties"));
 
-        $.localCtx().log("configuring Bear with default settings...");
+        logger.info("configuring Bear with default settings...");
 
         global.plugin(GroovyShellPlugin.class).getShell().set$(this);
 
@@ -273,8 +278,7 @@ public class BearMain extends AppCli<GlobalContext, Bear, BearMain.AppOptions2> 
                 File file = new File(s);
 
                 if (!file.exists()) {
-                    throw new NoSuchFileException("dir does not exist (:" + customFolders.name() +
-                        "): " + s);
+                    throw new NoSuchFileException("dir does not exist (:" + customFolders.name() + "): " + s);
                 }
 
                 folders.add(file);
@@ -355,41 +359,93 @@ public class BearMain extends AppCli<GlobalContext, Bear, BearMain.AppOptions2> 
      */
     public static void main(String[] args) throws Exception {
         int i = ArrayUtils.indexOf(args, "--log-level");
+
         if (i != -1) {
             LoggingBooter.changeLogLevel(LogManager.ROOT_LOGGER_NAME, Level.toLevel(args[i + 1]));
         }
 
+        i = ArrayUtils.indexOf(args, "-q");
+
+        if (i != -1) {
+            LoggingBooter.changeLogLevel(LogManager.ROOT_LOGGER_NAME, Level.WARN);
+        }
 
         GlobalContext global = GlobalContext.getInstance();
 
-        BearMain bearMain = new BearMain(global, getCompilerManager(), args);
+        BearMain bearMain = null;
+
+        try {
+            bearMain = new BearMain(global, getCompilerManager(), args);
+        } catch (Exception e) {
+            if(e.getClass().getSimpleName().equals("MissingRequiredOptionException")){
+                System.out.println(e.getMessage());
+            }else{
+                Throwables.getRootCause(e).printStackTrace();
+            }
+
+            System.exit(-1);
+        }
 
         if (bearMain.checkHelpAndVersion()) {
             return;
         }
 
+        if(bearMain.options.has(AppOptions2.UNPACK_DEMOS)){
+            String filesAsText = ProjectGenerator.readResource("/demoFiles.txt");
+
+            int count = 0;
+
+            for (String resource : filesAsText.split("::")) {
+                File dest = new File(BEAR_DIR + resource);
+                System.out.printf("copying %s to %s...%n", resource, dest);
+                FileUtils.writeStringToFile(dest, ProjectGenerator.readResource(resource));
+
+                count++;
+            }
+
+            System.out.printf("extracted %d files%n", count);
+
+            return;
+        }
+
         if (bearMain.options.has(AppOptions2.CREATE_NEW)) {
             String dashedTitle = bearMain.options.get(AppOptions2.CREATE_NEW);
+            String user = bearMain.options.get(AppOptions2.USER);
+            String pass = bearMain.options.get(AppOptions2.PASSWORD);
+            String host = bearMain.options.get(AppOptions2.HOST);
 
-            ProjectGenerator generator = new ProjectGenerator();
+            ProjectGenerator g = new ProjectGenerator(dashedTitle, user, pass, host);
 
-            String groovy = generator.generateGroovyProject(dashedTitle);
-
-            File projectFile = new File(BEAR_DIR, generator.getProjectTitle() + ".groovy");
+            File projectFile = new File(BEAR_DIR, g.getProjectTitle() + ".groovy");
             File pomFile = new File(BEAR_DIR, "pom.xml");
-            File propertiesFile = new File(BEAR_DIR, dashedTitle + ".properties");
 
-            FileUtils.writeStringToFile(projectFile, groovy);
-            FileUtils.writeStringToFile(propertiesFile, readResource("/templates/project-properties.template"));
-            FileUtils.writeStringToFile(pomFile, generator.generatePom(dashedTitle));
+            FileUtils.writeStringToFile(projectFile, g.processTemplate("TemplateProject.template"));
+            FileUtils.writeStringToFile(new File(BEAR_DIR, dashedTitle + ".properties"), g.processTemplate("project-properties.template"));
+            FileUtils.writeStringToFile(new File(BEAR_DIR, "demos.properties"), g.processTemplate("project-properties.template"));
+            FileUtils.writeStringToFile(new File(BEAR_DIR, "bear-fx.properties"), g.processTemplate("bear-fx.properties.template"));
+            FileUtils.writeStringToFile(pomFile, g.generatePom(dashedTitle));
 
             System.out.printf("Created project file: %s%n", projectFile.getPath());
             System.out.printf("Created maven pom: %s%n", pomFile.getPath());
 
-            System.out.println("\n");
-            System.out.println("Project files have been created. You may open a Bear project in your favourite IDE by importing a Maven module (bear.xml).");
+            System.out.println("\nProject files have been created. You may open a Bear project in your favourite IDE by importing a Maven module (.bear/pom.xml).");
 
             return;
+        }
+
+        Bear bear = global.bear;
+
+        if(bearMain.options.has(AppOptions2.QUIET)){
+            global.put(bear.quiet, true);
+            LoggingBooter.changeLogLevel(LogManager.ROOT_LOGGER_NAME, Level.WARN);
+        }
+
+        if(bearMain.options.has(AppOptions2.USE_UI)){
+            global.put(bear.useUI, true);
+        }
+
+        if(bearMain.options.has(AppOptions2.NO_UI)){
+            global.put(bear.useUI, false);
         }
 
         List<?> list = bearMain.options.getOptionSet().nonOptionArguments();

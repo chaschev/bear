@@ -5,4 +5,5 @@ package bear.plugins.sh;
 */
 public interface ResultParser<T>{
     T parse(String script, String commandOutput);
+    T error(Exception e);
 }

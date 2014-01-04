@@ -212,15 +212,15 @@ public class GlobalContext extends AppGlobalContext<GlobalContext, Bear> {
         sessionsExecutor.shutdown();
         localExecutor.shutdown();
 
-        if(!localExecutor.awaitTermination(3, TimeUnit.SECONDS)){
+        if(!localExecutor.awaitTermination(500, TimeUnit.MILLISECONDS)){
             localExecutor.shutdownNow();
         }
 
-        if(!sessionsExecutor.awaitTermination(5, TimeUnit.SECONDS)){
+        if(!sessionsExecutor.awaitTermination(500, TimeUnit.MILLISECONDS)){
             sessionsExecutor.shutdownNow();
         }
 
-        if(!scheduler.awaitTermination(3, TimeUnit.SECONDS)){
+        if(!scheduler.awaitTermination(500, TimeUnit.MILLISECONDS)){
             scheduler.shutdownNow();
         }
     }
@@ -234,7 +234,7 @@ public class GlobalContext extends AppGlobalContext<GlobalContext, Bear> {
         return plugins.get(pluginClass);
     }
 
-    public <T extends Plugin> Task<Object, TaskResult> newPluginSession(Class<T> pluginClass, SessionContext $, Task<Object, TaskResult> parentTask) {
+    public <T extends Plugin> Task<Object, TaskResult<?>> newPluginSession(Class<T> pluginClass, SessionContext $, Task<Object, TaskResult<?>> parentTask) {
         return plugins.getSessionContext(pluginClass, $, parentTask);
     }
 

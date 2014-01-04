@@ -45,7 +45,7 @@ import static com.google.common.collect.Iterables.find;
 /**
  * A class that simplifies operations (i.e. installation) of tools like Maven, Grails, Play, Tomcat, etc
  */
-public class ZippedToolPlugin extends Plugin<TaskDef<Object, TaskResult>> {
+public class ZippedToolPlugin extends Plugin<TaskDef<Object, TaskResult<?>>> {
 
 
     public final DynamicVariable<String>
@@ -79,19 +79,19 @@ public class ZippedToolPlugin extends Plugin<TaskDef<Object, TaskResult>> {
     }
 
 
-    public static class SystemDependencyPlugin extends Plugin<TaskDef<Object, TaskResult>> {
+    public static class SystemDependencyPlugin extends Plugin<TaskDef<Object, TaskResult<?>>> {
         public SystemDependencyPlugin(GlobalContext global) {
             super(global);
         }
 
         @Override
         public InstallationTaskDef<? extends InstallationTask> getInstall() {
-            return new InstallationTaskDef<InstallationTask>(new NamedSupplier<Object, TaskResult>("zippedTool.nopInstall", new SingleTaskSupplier<Object, TaskResult>() {
+            return new InstallationTaskDef<InstallationTask>(new NamedSupplier<Object, TaskResult<?>>("zippedTool.nopInstall", new SingleTaskSupplier<Object, TaskResult<?>>() {
                 @Override
-                public Task<Object, TaskResult> createNewSession(SessionContext $, Task<Object, TaskResult> parent, TaskDef<Object, TaskResult> def) {
-                    return new Task<Object, TaskResult>(parent, new TaskCallable<Object, TaskResult>() {
+                public Task<Object, TaskResult<?>> createNewSession(SessionContext $, Task<Object, TaskResult<?>> parent, TaskDef<Object, TaskResult<?>> def) {
+                    return new Task<Object, TaskResult<?>>(parent, new TaskCallable<Object, TaskResult<?>>() {
                         @Override
-                        public TaskResult call(SessionContext $, Task<Object, TaskResult> task) throws Exception {
+                        public TaskResult<?> call(SessionContext $, Task<Object, TaskResult<?>> task) throws Exception {
 //                            $.sys.getPackageManager()
                             return TaskResult.OK;
                         }
@@ -102,7 +102,7 @@ public class ZippedToolPlugin extends Plugin<TaskDef<Object, TaskResult>> {
     }
 
     protected abstract class ZippedTool extends InstallationTask<InstallationTaskDef> {
-        protected ZippedTool(Task<Object, TaskResult> parent, InstallationTaskDef def, SessionContext $) {
+        protected ZippedTool(Task<Object, TaskResult<?>> parent, InstallationTaskDef def, SessionContext $) {
             super(parent, def, $);
 
             addDependency(new Dependency(toString(), $)
@@ -110,9 +110,9 @@ public class ZippedToolPlugin extends Plugin<TaskDef<Object, TaskResult>> {
                     "unzip -v | head -n 1",
                     "wget --version | head -n 1"
                 )
-                .setInstaller(new NamedCallable<Object, TaskResult>("zippedTool.basicDeps", new TaskCallable<Object, TaskResult>() {
+                .setInstaller(new NamedCallable<Object, TaskResult<?>>("zippedTool.basicDeps", new TaskCallable<Object, TaskResult<?>>() {
                     @Override
-                    public TaskResult call(SessionContext $, Task<Object, TaskResult> task) throws Exception {
+                    public TaskResult<?> call(SessionContext $, Task<Object, TaskResult<?>> task) throws Exception {
                         SystemEnvironmentPlugin.PackageManager manager = $.sys.getPackageManager();
 
                         manager.installPackage("unzip").throwIfError();
@@ -125,7 +125,7 @@ public class ZippedToolPlugin extends Plugin<TaskDef<Object, TaskResult>> {
         }
 
         @Override
-        protected TaskResult exec(SessionRunner runner) {
+        protected TaskResult<?> exec(SessionRunner runner) {
             throw new UnsupportedOperationException("todo implement!");
         }
 
@@ -174,7 +174,7 @@ public class ZippedToolPlugin extends Plugin<TaskDef<Object, TaskResult>> {
         protected void download() {
             if (!$.sys.exists($.sys.joinPath($(myDirPath), $(distrFilename)))) {
                 String url = $(distrWwwAddress);
-                CommandLineResult run = $.sys.script()
+                CommandLineResult<?> run = $.sys.script()
                     .cd($(myDirPath))
                     .line().timeoutMin(60).addRaw("wget %s", url).build()
                     .run();
@@ -192,7 +192,7 @@ public class ZippedToolPlugin extends Plugin<TaskDef<Object, TaskResult>> {
         protected void extractToHomeDir() {
             final String distrName = $(distrFilename);
 
-            Script<CommandLineResult, Script> script = $.sys.script()
+            Script<CommandLineResult<?>, Script> script = $.sys.script()
                 .cd($(buildPath))
                 .timeoutSec(60);
 

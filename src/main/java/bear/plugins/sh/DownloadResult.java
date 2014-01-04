@@ -9,7 +9,7 @@ import java.util.List;
 /**
 * @author Andrey Chaschev chaschev@gmail.com
 */
-public class DownloadResult extends TaskResult {
+public class DownloadResult extends TaskResult<DownloadResult> {
     List<File> files;
 
     public DownloadResult(List<File> files) {

@@ -32,10 +32,12 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
+import static bear.vcs.CommandLineResult.error;
+
 /**
  * @author Andrey Chaschev chaschev@gmail.com
  */
-public abstract class CommandLine<T extends CommandLineResult, SCRIPT extends Script> extends AbstractConsoleCommand<T> {
+public abstract class CommandLine<T extends CommandLineResult<?>, SCRIPT extends Script> extends AbstractConsoleCommand<T> {
     public String cd = ".";
 
     public List strings = new ArrayList(4);
@@ -66,9 +68,16 @@ public abstract class CommandLine<T extends CommandLineResult, SCRIPT extends Sc
         this.sys = script.sys;
     }
 
-    static CommandLineResult parseWithParser(ResultParser<? extends CommandLineResult> parser, ResultValidator validator, String commandOutput, SessionContext $, String script) {
-        final CommandLineResult obj;
+    static CommandLineResult<?> parseWithParser(ResultParser<? extends CommandLineResult<?>> parser, ResultValidator validator, String commandOutput, SessionContext $, String script) {
+        CommandLineResult<?> obj = null;
 
+        if(validator != null){
+            try {
+                validator.validate(script, commandOutput);
+            } catch (Exception e) {
+                return parser == null ? error(e) : parser.error(e);
+            }
+        }
         if (parser != null) {
             obj = parser.parse(script,commandOutput);
             obj.output = commandOutput;
@@ -76,13 +85,7 @@ public abstract class CommandLine<T extends CommandLineResult, SCRIPT extends Sc
             obj = new CommandLineResult(script, commandOutput, Result.OK);
         }
 
-        if(validator != null){
-            try {
-                validator.validate(script, commandOutput);
-            } catch (Exception e) {
-                obj.setException(e);
-            }
-        }
+
 
         return obj;
     }

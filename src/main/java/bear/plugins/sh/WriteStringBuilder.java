@@ -78,7 +78,7 @@ public class WriteStringBuilder extends PermissionsCommandBuilder<WriteStringBui
 
             tempFile.delete();
 
-            CommandLineResult move = $.sys.move(remoteTempPath).to(this.path)
+            CommandLineResult<?> move = $.sys.move(remoteTempPath).to(this.path)
                 .withPermissions(this.permissions)
                 .withUser(this.user)
                 .sudo(this.sudo)

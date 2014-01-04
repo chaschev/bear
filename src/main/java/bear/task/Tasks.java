@@ -41,9 +41,9 @@ public class Tasks {
         Preconditions.checkNotNull(bear);
     }
 
-    public final TaskDef restartApp = new TaskDef<Object, TaskResult>("Restart App", new SingleTaskSupplier<Object, TaskResult>() {
+    public final TaskDef restartApp = new TaskDef<Object, TaskResult<?>>("Restart App", new SingleTaskSupplier<Object, TaskResult<?>>() {
         @Override
-        public Task<Object, TaskResult> createNewSession(SessionContext $, Task<Object, TaskResult> parent, TaskDef<Object, TaskResult> def) {
+        public Task<Object, TaskResult<?>> createNewSession(SessionContext $, Task<Object, TaskResult<?>> parent, TaskDef<Object, TaskResult<?>> def) {
             return Task.nop();
         }
     });
@@ -52,12 +52,12 @@ public class Tasks {
         .setSetupTask(true);
 
 
-    public final TaskDef vcsUpdate = new TaskDef<Object, TaskResult>(new SingleTaskSupplier<Object, TaskResult>() {
+    public final TaskDef vcsUpdate = new TaskDef<Object, TaskResult<?>>(new SingleTaskSupplier<Object, TaskResult<?>>() {
         @Override
-        public Task<Object, TaskResult> createNewSession(SessionContext $, Task<Object, TaskResult> parent, TaskDef<Object, TaskResult> def) {
-            return new Task<Object, TaskResult>(parent, vcsUpdate, $) {
+        public Task<Object, TaskResult<?>> createNewSession(SessionContext $, Task<Object, TaskResult<?>> parent, TaskDef<Object, TaskResult<?>> def) {
+            return new Task<Object, TaskResult<?>>(parent, vcsUpdate, $) {
                 @Override
-                protected TaskResult exec(SessionRunner runner) {
+                protected TaskResult<?> exec(SessionRunner runner) {
                     $.log("updating the project, please wait...");
 
                     if (!$.sys.exists($(bear.vcsBranchLocalPath))) {
@@ -70,11 +70,11 @@ public class Tasks {
         }
     });
 
-    public static TaskCallable<Object, TaskResult> andThen(final TaskCallable<Object, TaskResult>... callables) {
+    public static TaskCallable<Object, TaskResult<?>> andThen(final TaskCallable<Object, TaskResult<?>>... callables) {
         int nullCount = 0;
         int lastNullIndex = -1;
         for (int i = 0; i < callables.length; i++) {
-            TaskCallable<Object, TaskResult> callable = callables[i];
+            TaskCallable<Object, TaskResult<?>> callable = callables[i];
             if (callable == null) {
                 nullCount++;
                 lastNullIndex = i;
@@ -85,12 +85,12 @@ public class Tasks {
             return callables[lastNullIndex];
         }
 
-        return new TaskCallable<Object, TaskResult>() {
+        return new TaskCallable<Object, TaskResult<?>>() {
             @Override
-            public TaskResult call(SessionContext $, Task<Object, TaskResult> task) throws Exception {
-                TaskResult lastResult = null;
+            public TaskResult<?> call(SessionContext $, Task<Object, TaskResult<?>> task) throws Exception {
+                TaskResult<?> lastResult = null;
 
-                for (TaskCallable<Object, TaskResult> callable : callables) {
+                for (TaskCallable<Object, TaskResult<?>> callable : callables) {
                     if (callable == null) continue;
                     lastResult = callable.call($, task);
                 }
@@ -100,12 +100,12 @@ public class Tasks {
         };
     }
 
-    public static TaskResult and(TaskResult... results) {
+    public static <T extends TaskResult> TaskResult<?> and(T... results) {
         return and(Arrays.asList(results));
     }
 
-    public static TaskResult and(Iterable<? extends TaskResult> results) {
-        TaskResult last = TaskResult.OK;
+    public static <T extends TaskResult> TaskResult<?> and(Iterable<T> results) {
+        TaskResult<?> last = TaskResult.OK;
 
         OpenStringBuilder sb = new OpenStringBuilder();
 
@@ -113,7 +113,7 @@ public class Tasks {
 
         boolean ok = true;
 
-        for (TaskResult result : results) {
+        for (TaskResult<?> result : results) {
             last = result;
             if (!result.ok()) {
                 ok = false;
@@ -133,28 +133,28 @@ public class Tasks {
             ex.setStackTrace(lastException.getStackTrace());
         }
 
-        return new TaskResult(ex);
+        return TaskResult.of(ex);
     }
 
-    public static <I, O extends TaskResult> SingleTaskSupplier<I, O> newSingleSupplier(final TaskCallable<I, O> taskCallable) {
+    public static <I, O extends TaskResult<?>> SingleTaskSupplier<I, O> newSingleSupplier(final TaskCallable<I, O> taskCallable) {
         return new SingleTaskSupplier<I, O>() {
             @Override
-            public Task<I, O> createNewSession(SessionContext $, Task<Object, TaskResult> parent, TaskDef<I, O> def) {
+            public Task<I, O> createNewSession(SessionContext $, Task<Object, TaskResult<?>> parent, TaskDef<I, O> def) {
                 return new Task<I, O>(parent, taskCallable);
             }
         };
     }
 
-    public static <I, O extends TaskResult> TaskCallable<I, O> nopCallable(){
+    public static <I, O extends TaskResult<?>> TaskCallable<I, O> nopCallable(){
         return (TaskCallable) TaskCallable.NOP;
     }
 
-    private class SetupTaskSupplier implements SingleTaskSupplier<BearProject, TaskResult> {
+    private class SetupTaskSupplier implements SingleTaskSupplier<BearProject, TaskResult<?>> {
         @Override
-        public Task<BearProject, TaskResult> createNewSession(SessionContext $, Task<Object, TaskResult> parent, TaskDef<BearProject, TaskResult> def) {
-            return new Task<BearProject, TaskResult>(parent, setup, $) {
+        public Task<BearProject, TaskResult<?>> createNewSession(SessionContext $, Task<Object, TaskResult<?>> parent, TaskDef<BearProject, TaskResult<?>> def) {
+            return new Task<BearProject, TaskResult<?>>(parent, setup, $) {
                 @Override
-                protected TaskResult exec(SessionRunner runner) {
+                protected TaskResult<?> exec(SessionRunner runner) {
                     $.putConst(bear.installationInProgress, true);
 
                     final String[] dirs = {
@@ -189,7 +189,7 @@ public class Tasks {
                             if (session.asInstalledDependency().checkDeps().nok()) {
                                 if ($(bear.autoInstallPlugins)) {
                                     $.log("plugin %s was not installed. installing it...", plugin);
-                                    TaskResult run = runner.run(installTaskDef);
+                                    TaskResult<?> run = runner.run(installTaskDef);
                                     if (!run.ok()) {
                                         $.error("could not install %s:%n%s", plugin, run);
                                         break;

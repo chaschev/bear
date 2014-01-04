@@ -5,8 +5,11 @@ import java.util.List;
 /**
 * @author Andrey Chaschev chaschev@gmail.com
 */
-public final class LsResult extends CommandLineResult {
+public final class LsResult extends CommandLineResult<LsResult> {
     List<String> files;
+
+    public LsResult() {
+    }
 
     public LsResult(String text, List<String> files) {
         super("ls", text);

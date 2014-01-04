@@ -34,9 +34,9 @@ public class ShShellMode extends PluginShellMode implements CommandInterpreter {
     }
 
     public Task interpret(final String command, SessionContext $, Task parent, TaskDef taskDef){
-        return new Task<Object, TaskResult>(parent, taskDef, $) {
+        return new Task<Object, TaskResult<?>>(parent, taskDef, $) {
             @Override
-            protected TaskResult exec(SessionRunner runner) {
+            protected TaskResult<?> exec(SessionRunner runner) {
                 return $.sys.script()
                     .timeoutSec(60)
                     .line().addRaw(command).build()

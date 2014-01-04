@@ -16,13 +16,13 @@ import java.util.Map;
 /**
 * @author Andrey Chaschev chaschev@gmail.com
 */
-public abstract class VCSSession extends Task<Object, TaskResult> {
-    VCSSession(Task<Object, TaskResult> parent, TaskDef def, SessionContext $) {
+public abstract class VCSSession extends Task<Object, TaskResult<?>> {
+    VCSSession(Task<Object, TaskResult<?>> parent, TaskDef def, SessionContext $) {
         super(parent, def, $);
     }
 
     @Override
-    protected TaskResult exec(SessionRunner runner) {
+    protected TaskResult<?> exec(SessionRunner runner) {
         throw new UnsupportedOperationException("VCS task cannot be run");
     }
 
@@ -98,21 +98,21 @@ public abstract class VCSSession extends Task<Object, TaskResult> {
         return $.var(varName);
     }
 
-    public  <R extends CommandLineResult> VCSScript<R> newVCSScript() {
+    public  <R extends CommandLineResult<?>> VCSScript<R> newVCSScript() {
         return new VCSScript<R>($.sys, this).cd($.var(getBear().vcsBranchLocalPath));
     }
 
-    public  <R extends CommandLineResult> VCSScript<R> newVCSScript(CommandLine<R, VCSScript<R>> line) {
+    public  <R extends CommandLineResult<?>> VCSScript<R> newVCSScript(CommandLine<R, VCSScript<R>> line) {
         return this.<R>newVCSScript().add(line);
     }
 
-    public  <R extends CommandLineResult> VCSScript<R> newPlainScript(String command) {
+    public  <R extends CommandLineResult<?>> VCSScript<R> newPlainScript(String command) {
         return this.<R>newVCSScript().line().stty().addRaw(command).build();
     }
 
 
 
-    public  <R extends CommandLineResult> VCSScript<R> newPlainScript(String command, ResultParser<R> parser) {
+    public  <R extends CommandLineResult<?>> VCSScript<R> newPlainScript(String command, ResultParser<R> parser) {
         return this.<R>newPlainScript(command).setParser(parser);
     }
 

@@ -46,7 +46,7 @@ import static bear.plugins.sh.SystemEnvironmentPlugin.sshPassword;
 /**
  * @author Andrey Chaschev chaschev@gmail.com
  */
-public abstract class SystemSession extends Task<Object, TaskResult> implements AbstractConsole {
+public abstract class SystemSession extends Task<Object, TaskResult<?>> implements AbstractConsole {
     public static final String THROW_ON_ERROR = "THROW_ON_ERROR";
     private static final Logger logger = LoggerFactory.getLogger(SystemSession.class);
     public static final Splitter LINE_SPLITTER = Splitter.on("\n").trimResults();
@@ -59,11 +59,11 @@ public abstract class SystemSession extends Task<Object, TaskResult> implements 
         super(parent, definition, $);
     }
 
-    protected abstract <T extends CommandLineResult> T sendCommandImpl(AbstractConsoleCommand<T> command);
+    protected abstract <T extends CommandLineResult<?>> T sendCommandImpl(AbstractConsoleCommand<T> command);
 
     @Override
-    public <T extends CommandLineResult> T sendCommand(AbstractConsoleCommand<T> command) {
-        Task<Object, TaskResult> task = $.getCurrentTask();
+    public <T extends CommandLineResult<?>> T sendCommand(AbstractConsoleCommand<T> command) {
+        Task<Object, TaskResult<?>> task = $.getCurrentTask();
 
         task.onCommandExecutionStart(command);
 
@@ -74,7 +74,7 @@ public abstract class SystemSession extends Task<Object, TaskResult> implements 
         return result;
     }
 
-    public <T extends CommandLineResult> T run(Script<T, ?> script) {
+    public <T extends CommandLineResult<?>> T run(Script<T, ?> script) {
         StringBuilder sb = new StringBuilder(1024);
 
         for (CommandLine line : script.lines) {
@@ -82,7 +82,7 @@ public abstract class SystemSession extends Task<Object, TaskResult> implements 
                 line.cd = script.cd;
             }
 
-            final CommandLineResult result = sendCommand(line);
+            final CommandLineResult<?> result = sendCommand(line);
 
             sb.append(result.output);
 
@@ -96,7 +96,7 @@ public abstract class SystemSession extends Task<Object, TaskResult> implements 
         return script.parseResult(sb.toString(), $, script.firstLineAsText());
     }
 
-    public <T extends CommandLineResult> T sendCommand(CommandLine<T, ?> commandLine) {
+    public <T extends CommandLineResult<?>> T sendCommand(CommandLine<T, ?> commandLine) {
         return sendCommand((AbstractConsoleCommand<T>) commandLine);
     }
 
@@ -141,14 +141,14 @@ public abstract class SystemSession extends Task<Object, TaskResult> implements 
         return line;
     }
 
-    public abstract <T extends CommandLineResult> CommandLine<T, ?> newCommandLine(Class<T> aClass);
+    public abstract <T extends CommandLineResult<?>> CommandLine<T, ?> newCommandLine(Class<T> aClass);
 
     public String capture(String s) {
         return capture(s, false);
     }
 
     protected String capture(String s, boolean sudo) {
-        CommandLineResult result = captureResult(s, sudo).throwIfException();
+        CommandLineResult<?> result = captureResult(s, sudo).throwIfException();
 
         if (result.nok()) return null;
 
@@ -163,7 +163,7 @@ public abstract class SystemSession extends Task<Object, TaskResult> implements 
         return new CaptureBuilder($, s);
     }
 
-    public CommandLineResult captureResult(String s, boolean sudo) {
+    public CommandLineResult<?> captureResult(String s, boolean sudo) {
         ConsoleCallback callback = sudo ? sshPassword($) : null;
 
         return captureBuilder(s).sudo(sudo).callback(callback).run();
@@ -296,7 +296,7 @@ public abstract class SystemSession extends Task<Object, TaskResult> implements 
     }
 
 
-    public CommandLineResult resetFile(String logPath, boolean sudo) {
+    public CommandLineResult<?> resetFile(String logPath, boolean sudo) {
         return script().line().sudo(sudo).sshCallback($).addRaw("cat /dev/null >| ").a(logPath).build().run();
     }
 
@@ -305,7 +305,7 @@ public abstract class SystemSession extends Task<Object, TaskResult> implements 
     }
 
     public long fileSizeAsLong(String path) {
-        return fileSize(path).asLong().run().longValue;
+        return fileSize(path).asLong().run().throwIfException().longValue;
     }
 
     public String fileSizeAsString(String path) {
@@ -423,7 +423,7 @@ public abstract class SystemSession extends Task<Object, TaskResult> implements 
         }
     }
 
-    protected TaskResult exec(SessionRunner runner) {
+    protected TaskResult<?> exec(SessionRunner runner) {
         throw new UnsupportedOperationException("todo .exec");
     }
 
@@ -436,7 +436,7 @@ public abstract class SystemSession extends Task<Object, TaskResult> implements 
         }
 
         @Override
-        public CommandLineResult installPackage(PackageInfo pi) {
+        public CommandLineResult<?> installPackage(PackageInfo pi) {
             String desc = pi.toString();
 
             String packageName = pi.getCompleteName();
@@ -444,12 +444,12 @@ public abstract class SystemSession extends Task<Object, TaskResult> implements 
             return installPackage(packageName, desc);
         }
 
-        public CommandLineResult installPackage(String packageName) {
+        public CommandLineResult<?> installPackage(String packageName) {
             return installPackage(packageName, packageName);
         }
 
-        public CommandLineResult installPackage(String packageName, String desc) {
-            final CommandLineResult result = sys.sendCommand(
+        public CommandLineResult<?> installPackage(String packageName, String desc) {
+            final CommandLineResult<?> result = sys.sendCommand(
                 sys.line().timeoutForInstallation().sudo().a(command(), "install", packageName, "-y"));
 
             final String text = result.output;
@@ -477,7 +477,7 @@ public abstract class SystemSession extends Task<Object, TaskResult> implements 
         }
 
         @Override
-        public CommandLineResult installPackage(PackageInfo pi) {
+        public CommandLineResult<?> installPackage(PackageInfo pi) {
             String desc = pi.toString();
 
             String packageName = pi.getCompleteName();
@@ -485,12 +485,12 @@ public abstract class SystemSession extends Task<Object, TaskResult> implements 
             return installPackage(packageName, desc);
         }
 
-        public CommandLineResult installPackage(String packageName) {
+        public CommandLineResult<?> installPackage(String packageName) {
             return installPackage(packageName, packageName);
         }
 
-        public CommandLineResult installPackage(String packageName, String desc) {
-            final CommandLineResult result = sys.sendCommand(
+        public CommandLineResult<?> installPackage(String packageName, String desc) {
+            final CommandLineResult<?> result = sys.sendCommand(
                 sys.line().timeoutForInstallation().sudo().a(command(), "install", packageName, "-y"));
 
             final String text = result.output;

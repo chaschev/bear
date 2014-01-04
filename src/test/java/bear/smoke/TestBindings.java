@@ -17,7 +17,6 @@
 package bear.smoke;
 
 import chaschev.js.Bindings;
-import chaschev.lang.OpenBean;
 import javafx.application.Application;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
@@ -70,7 +69,7 @@ public class TestBindings {
                             System.out.println("ok");
                             JSObject window = (JSObject) webEngine.executeScript("window");
                             window.setMember("app", new JavaApp().enableFirebug());
-                            window.setMember("OpenBean", OpenBean.INSTANCE);
+//                            window.setMember("OpenBean", OpenBean.INSTANCE);
                             window.setMember("Bindings", new Bindings());
 
                             System.out.println("[JAVA INIT] calling JS initializer...");

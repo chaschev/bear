@@ -60,13 +60,13 @@ public class GrailsPlugin2 extends ServerToolPlugin {
 //        releaseWarPath = condition(bear.isRemoteEnv, joinPath(releases.releasePath, warName), projectWarPath);
     }
 
-    public final TaskDef<Object, TaskResult> build = new TaskDef<Object, TaskResult>(new NamedSupplier<Object, TaskResult>("grails.build", new SingleTaskSupplier<Object, TaskResult>() {
+    public final TaskDef<Object, TaskResult<?>> build = new TaskDef<Object, TaskResult<?>>(new NamedSupplier<Object, TaskResult<?>>("grails.build", new SingleTaskSupplier<Object, TaskResult<?>>() {
         @Override
-        public Task<Object, TaskResult> createNewSession(SessionContext $, Task<Object, TaskResult> parent, TaskDef<Object, TaskResult> def) {
-            return new Task<Object, TaskResult>(parent, def, $) {
+        public Task<Object, TaskResult<?>> createNewSession(SessionContext $, Task<Object, TaskResult<?>> parent, TaskDef<Object, TaskResult<?>> def) {
+            return new Task<Object, TaskResult<?>>(parent, def, $) {
 
                 @Override
-                protected TaskResult exec(SessionRunner runner) {
+                protected TaskResult<?> exec(SessionRunner runner) {
                     $.log("building the Grails project ...");
 
                     PendingRelease pendingRelease = $.var(releases.pendingRelease);
@@ -79,7 +79,7 @@ public class GrailsPlugin2 extends ServerToolPlugin {
 
                     String warPath = pendingRelease.path + "/" + $(warName);
 
-                    CommandLineResult buildResult = script
+                    CommandLineResult<?> buildResult = script
                         .add(grails($).addRaw("war").a(warPath))
                         .run();
 
@@ -110,13 +110,13 @@ public class GrailsPlugin2 extends ServerToolPlugin {
         throw new UnsupportedOperationException("todo GrailsPlugin2.spawnStartWatchDogs");
     }
 
-    public final InstallationTaskDef<ZippedTool> install = new ZippedToolTaskDef<ZippedTool>(new SingleTaskSupplier<Object, TaskResult>(){
+    public final InstallationTaskDef<ZippedTool> install = new ZippedToolTaskDef<ZippedTool>(new SingleTaskSupplier<Object, TaskResult<?>>(){
 
         @Override
-        public Task<Object, TaskResult> createNewSession(SessionContext $, Task<Object, TaskResult> parent, TaskDef<Object, TaskResult> def) {
+        public Task<Object, TaskResult<?>> createNewSession(SessionContext $, Task<Object, TaskResult<?>> parent, TaskDef<Object, TaskResult<?>> def) {
             return new ZippedTool(parent, (InstallationTaskDef) def, $) {
                 @Override
-                protected TaskResult exec(SessionRunner runner) {
+                protected TaskResult<?> exec(SessionRunner runner) {
                     clean();
 
                     download();

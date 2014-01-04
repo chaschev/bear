@@ -54,7 +54,7 @@ public class GenericUnixLocalEnvironmentPlugin extends SystemEnvironmentPlugin {
     }
 
     @Override
-    public SystemSession newSession(SessionContext $, Task<Object, TaskResult> parent) {
+    public SystemSession newSession(SessionContext $, Task<Object, TaskResult<?>> parent) {
         return new SystemSession(parent, taskDefMixin, $) {
             {
                 this.address = $.address;
@@ -140,7 +140,7 @@ public class GenericUnixLocalEnvironmentPlugin extends SystemEnvironmentPlugin {
             }
 
             @Override
-            public <T extends CommandLineResult> CommandLine<T, ?> newCommandLine(Class<T> aClass) {
+            public <T extends CommandLineResult<?>> CommandLine<T, ?> newCommandLine(Class<T> aClass) {
                 return new LocalCommandLine<T>(this);
             }
 
@@ -150,7 +150,7 @@ public class GenericUnixLocalEnvironmentPlugin extends SystemEnvironmentPlugin {
             }
 
             @Override
-            public <T extends CommandLineResult> T sendCommandImpl(final AbstractConsoleCommand<T> command) {
+            public <T extends CommandLineResult<?>> T sendCommandImpl(final AbstractConsoleCommand<T> command) {
 
                 logger.debug("command: {}", command);
 

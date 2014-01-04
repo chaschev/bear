@@ -21,10 +21,10 @@ import bear.core.SessionContext;
 /**
 * @author Andrey Chaschev chaschev@gmail.com
 */
-public class InstallationTaskDef<TASK extends InstallationTask> extends TaskDef<Object, TaskResult>{
-    public static final InstallationTaskDef<InstallationTask> EMPTY = new InstallationTaskDef<InstallationTask>(new SingleTaskSupplier<Object, TaskResult>() {
+public class InstallationTaskDef<TASK extends InstallationTask> extends TaskDef<Object, TaskResult<?>>{
+    public static final InstallationTaskDef<InstallationTask> EMPTY = new InstallationTaskDef<InstallationTask>(new SingleTaskSupplier<Object, TaskResult<?>>() {
         @Override
-        public Task createNewSession(SessionContext $, Task<Object, TaskResult> parent, TaskDef<Object, TaskResult> def) {
+        public Task createNewSession(SessionContext $, Task<Object, TaskResult<?>> parent, TaskDef<Object, TaskResult<?>> def) {
             return InstallationTask.nop();
         }
     });

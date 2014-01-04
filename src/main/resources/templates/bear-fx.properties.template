@@ -1,0 +1,3 @@
+bear-fx.project=.bear/${projectTitle}.groovy
+bear-fx.properties=.bear/${dashedTitle}.properties
+bear-fx.history=.bear/logs/history.json

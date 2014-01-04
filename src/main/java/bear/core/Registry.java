@@ -27,7 +27,7 @@ import org.apache.commons.lang3.StringUtils;
 public enum Registry {
     INSTANCE;
 
-    public Task<Object, TaskResult> getByName(String name) {
+    public Task<Object, TaskResult<?>> getByName(String name) {
         String className;
         String taskName;
 
@@ -42,11 +42,11 @@ public enum Registry {
         return getTask(className, taskName);
     }
 
-    private Task<Object, TaskResult> getTask(String className, String taskName) {
+    private Task<Object, TaskResult<?>> getTask(String className, String taskName) {
         if (!className.equals("Bear")) {
             throw new UnsupportedOperationException("todo");
         }
 
-        return (Task<Object, TaskResult>) OpenBean.getFieldValue(Bear.class, taskName);
+        return (Task<Object, TaskResult<?>>) OpenBean.getFieldValue(Bear.class, taskName);
     }
 }

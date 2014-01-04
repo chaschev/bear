@@ -22,10 +22,10 @@ import bear.task.TaskResult;
  * @author Andrey Chaschev chaschev@gmail.com
  */
 public class CellFinishedEventToUI extends ConsoleEventToUI {
-    public TaskResult result;
+    public TaskResult<?> result;
     public long duration;
 
-    public CellFinishedEventToUI(TaskResult result, long duration, String console) {
+    public CellFinishedEventToUI(TaskResult<?> result, long duration, String console) {
         super(console, "cellFinished");
         this.result = result;
         this.duration = duration;

@@ -5,7 +5,7 @@ import bear.core.SessionContext;
 /**
 * @author Andrey Chaschev chaschev@gmail.com
 */
-public class NamedCallable<I, O extends TaskResult> implements TaskCallable<I, O>{
+public class NamedCallable<I, O extends TaskResult<?>> implements TaskCallable<I, O>{
     String name;
     TaskCallable<I, O> callable;
 
@@ -28,7 +28,7 @@ public class NamedCallable<I, O extends TaskResult> implements TaskCallable<I, O
         return name;
     }
 
-    public static <I, O extends TaskResult> NamedCallable<I, O> named(String name, TaskCallable<I, O> callable){
+    public static <I, O extends TaskResult<?>> NamedCallable<I, O> named(String name, TaskCallable<I, O> callable){
         return new NamedCallable<I, O>(name, callable);
     }
 

@@ -64,7 +64,7 @@ public class Script {
         configure();
     }
 
-    public TaskResult run(){
+    public TaskResult<?> run(){
         return TaskResult.OK;
     }
 

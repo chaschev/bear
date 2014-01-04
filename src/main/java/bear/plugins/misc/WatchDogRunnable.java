@@ -16,7 +16,7 @@ public class WatchDogRunnable implements Runnable {
     volatile boolean finished;
     CountDownLatch arrivalLatch;
     WatchDogGroup group;
-    private volatile CommandLineResult result;
+    private volatile CommandLineResult<?> result;
 
     public WatchDogRunnable(SessionContext $, FileWatchDogPlugin watchDog, WatchDogInput input) {
         this.$ = $;
@@ -41,7 +41,7 @@ public class WatchDogRunnable implements Runnable {
         }
     }
 
-    public CommandLineResult getResult() {
+    public CommandLineResult<?> getResult() {
         return result;
     }
 }

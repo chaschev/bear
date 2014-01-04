@@ -83,8 +83,12 @@
                 <repository>
                     <id>snapshots-repo</id>
                     <url>https://oss.sonatype.org/content/repositories/snapshots</url>
-                    <releases><enabled>false</enabled></releases>
-                    <snapshots><enabled>true</enabled></snapshots>
+                    <releases>
+                        <enabled>false</enabled>
+                    </releases>
+                    <snapshots>
+                        <enabled>true</enabled>
+                    </snapshots>
                 </repository>
             </repositories>
         </profile>
@@ -147,15 +151,15 @@
             <artifactId>chutils</artifactId>
             <version>1.2-SNAPSHOT</version>
         </dependency>
-<!--
-        <dependency>
-            <groupId>com.oracle</groupId>
-            <artifactId>javafx</artifactId>
-            <version>2.2.3</version>
-            <scope>provided</scope>
-            &lt;!&ndash;<systemPath>${fx.jar.path}</systemPath>&ndash;&gt;
-        </dependency>
--->
+        <!--
+                <dependency>
+                    <groupId>com.oracle</groupId>
+                    <artifactId>javafx</artifactId>
+                    <version>2.2.3</version>
+                    <scope>provided</scope>
+                    &lt;!&ndash;<systemPath>${fx.jar.path}</systemPath>&ndash;&gt;
+                </dependency>
+        -->
 
         <dependency>
             <groupId>net.sf.jopt-simple</groupId>
@@ -233,7 +237,7 @@
             <groupId>org.easytesting</groupId>
             <artifactId>fest-assert-core</artifactId>
             <version>2.0M10</version>
-            <scope>test</scope>
+            <!--<optional>true</optional>-->
         </dependency>
         <dependency>
             <groupId>junit</groupId>
@@ -251,32 +255,32 @@
 
     <build>
         <plugins>
-<!--
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-install-plugin</artifactId>
-                <version>2.2</version>
-                <executions>
-                    <execution>
-                        <id>javafx</id>
-                        <inherited>false</inherited>
-                        <phase>validate</phase>
-                        <configuration>
-                            <file>${fx.jar.path}</file>
-                            <repositoryLayout>default</repositoryLayout>
-                            <groupId>com.oracle</groupId>
-                            <artifactId>javafx</artifactId>
-                            <version>2.2.3</version>
-                            <packaging>jar</packaging>
-                            <generatePom>true</generatePom>
-                        </configuration>
-                        <goals>
-                            <goal>install-file</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
--->
+            <!--
+                        <plugin>
+                            <groupId>org.apache.maven.plugins</groupId>
+                            <artifactId>maven-install-plugin</artifactId>
+                            <version>2.2</version>
+                            <executions>
+                                <execution>
+                                    <id>javafx</id>
+                                    <inherited>false</inherited>
+                                    <phase>validate</phase>
+                                    <configuration>
+                                        <file>${fx.jar.path}</file>
+                                        <repositoryLayout>default</repositoryLayout>
+                                        <groupId>com.oracle</groupId>
+                                        <artifactId>javafx</artifactId>
+                                        <version>2.2.3</version>
+                                        <packaging>jar</packaging>
+                                        <generatePom>true</generatePom>
+                                    </configuration>
+                                    <goals>
+                                        <goal>install-file</goal>
+                                    </goals>
+                                </execution>
+                            </executions>
+                        </plugin>
+            -->
 
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -338,6 +342,31 @@
                 </configuration>
 
             </plugin>
+
+            <plugin>
+                <artifactId>maven-antrun-plugin</artifactId>
+                <version>1.7</version>
+                <executions>
+                    <execution>
+                        <phase>generate-sources</phase>
+                        <configuration>
+                            <target>
+                                <fileset id="examples-fileset" dir="src/test/groovy">
+                                    <include name="examples/**/*.*"/>
+                                </fileset>
+                                <pathconvert targetos="unix" pathsep="::"
+                                             property="my-file-list" refid="examples-fileset">
+                                    <map from="${basedir}/src/test/groovy" to=""/>
+                                </pathconvert>
+                                <echo file="${basedir}/src/main/resources/demoFiles.txt">${my-file-list}</echo>
+                            </target>
+                        </configuration>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
         </plugins>
         <resources>
             <resource>
@@ -352,11 +381,28 @@
             </resource>
             <resource>
                 <directory>.bear</directory>
+                <includes>
+                    <include>*.properties</include>
+                    <include>*.rename</include>
+                </includes>
+                <!--<excludes>-->
+                <!--<exclude>classes/**/*.*</exclude>-->
+                <!--<exclude>idea/**/*.*</exclude>-->
+                <!--<exclude>logs/**/*.*</exclude>-->
+                <!--<exclude>*.iml</exclude>-->
+                <!--</excludes>-->
                 <filtering>false</filtering>
             </resource>
             <resource>
                 <directory>src/main/resources-filtered</directory>
                 <filtering>true</filtering>
+            </resource>
+            <resource>
+                <directory>src/test/groovy</directory>
+                <includes>
+                    <include>examples/**/*.*</include>
+                </includes>
+                <filtering>false</filtering>
             </resource>
         </resources>
     </build>

@@ -39,8 +39,8 @@ public class SessionRunner extends HavingContext<SessionRunner, SessionContext>{
 
     public final GlobalContext global;
     public final Bear bear;
-    public Function<Task<Object, TaskResult>, Task<Object, TaskResult>> taskPreRun; //a hack
-    private TaskResult myLastResult;
+    public Function<Task<Object, TaskResult<?>>, Task<Object, TaskResult<?>>> taskPreRun; //a hack
+    private TaskResult<?> myLastResult;
 
     public SessionRunner(SessionContext $, GlobalContext global) {
         super($);
@@ -48,19 +48,19 @@ public class SessionRunner extends HavingContext<SessionRunner, SessionContext>{
         this.bear = global.bear;
     }
 
-    public TaskResult run(TaskDef task) {
+    public TaskResult<?> run(TaskDef task) {
         return runWithDependencies(task);
     }
 
-    public TaskResult run(TaskDef... tasks) {
+    public TaskResult<?> run(TaskDef... tasks) {
         return run(null, tasks);
     }
 
-    public TaskResult run(Object input, TaskDef... tasks) {
+    public TaskResult<?> run(Object input, TaskDef... tasks) {
 //        this.input = input;
 
         for (TaskDef task : (Iterable<TaskDef>) (List) Arrays.asList(tasks)) {
-            final TaskResult result = runWithDependencies(task);
+            final TaskResult<?> result = runWithDependencies(task);
 
             if (!result.ok()) {
                 return result;
@@ -73,14 +73,14 @@ public class SessionRunner extends HavingContext<SessionRunner, SessionContext>{
 
     //////
 
-    protected TaskResult runWithDependencies(TaskDef taskDef) {
+    protected TaskResult<?> runWithDependencies(TaskDef taskDef) {
         logger.info("starting task '{}'", taskDef.name);
 
         if (tasksExecuted.contains(taskDef)) {
             return TaskResult.OK;
         }
 
-        TaskResult last =
+        TaskResult<?> last =
             runCollectionOfTasks(taskDef.dependsOnTasks, taskDef.name + ": depending tasks", false);
 
         last = last.nok() ? last : runCollectionOfTasks(taskDef.beforeTasks, taskDef.name + ": before tasks", false);
@@ -90,16 +90,16 @@ public class SessionRunner extends HavingContext<SessionRunner, SessionContext>{
         return last;
     }
 
-    private TaskResult runMe(TaskDef task) {
+    private TaskResult<?> runMe(TaskDef task) {
         return runCollectionOfTasks(Collections.singletonList(task), task.name + ": running myself", true);
     }
 
-    private TaskResult runCollectionOfTasks(List<TaskDef> tasks, String desc, boolean thisIsMe) {
+    private TaskResult<?> runCollectionOfTasks(List<TaskDef> tasks, String desc, boolean thisIsMe) {
         if (!tasks.isEmpty() && !desc.isEmpty()) {
             logger.debug(desc);
         }
 
-        TaskResult runResult = TaskResult.OK;
+        TaskResult<?> runResult = TaskResult.OK;
 
         for (TaskDef task : tasks) {
             if (!task.roles.isEmpty() && !task.hasRole($.sys.getRoles())) {
@@ -115,13 +115,13 @@ public class SessionRunner extends HavingContext<SessionRunner, SessionContext>{
         return runResult;
     }
 
-    private TaskResult _runSingleTask(TaskDef<Object, TaskResult> taskDef, boolean thisIsMe) {
-        TaskResult result = TaskResult.OK;
+    private TaskResult<?> _runSingleTask(TaskDef<Object, TaskResult<?>> taskDef, boolean thisIsMe) {
+        TaskResult<?> result = TaskResult.OK;
         try {
             if (!thisIsMe) {
                 result = runWithDependencies(taskDef);
             } else {
-                List<Task<Object, TaskResult>> tasks = taskDef.createNewSessionsAsList($, $.getCurrentTask());
+                List<Task<Object, TaskResult<?>>> tasks = taskDef.createNewSessionsAsList($, $.getCurrentTask());
 
                 for (Task taskSession : tasks) {
                     if(taskSession == Task.nop()) continue;
@@ -148,17 +148,17 @@ public class SessionRunner extends HavingContext<SessionRunner, SessionContext>{
             throw e;
         } catch (Exception e) {
             logger.error("", e);
-            result = new TaskResult(e);
+            result = TaskResult.of(e);
         }
 
         return result;
     }
 
-    public <I, O extends TaskResult> O runSession(Task<I, O> taskSession) {
+    public <I, O extends TaskResult<?>> O runSession(Task<I, O> taskSession) {
         return runSession(taskSession, null);
     }
 
-    public <I, O extends TaskResult> O runSession(Task<I, O> taskSession, I input) {
+    public <I, O extends TaskResult<?>> O runSession(Task<I, O> taskSession, I input) {
         {
             SessionContext taskCtx = taskSession.$();
             boolean sameContexts = taskCtx == null || taskCtx == $;
@@ -166,7 +166,7 @@ public class SessionRunner extends HavingContext<SessionRunner, SessionContext>{
                 "contexts are different for task sessions: %s vs %s", taskCtx == null ? null : taskCtx.getName(), ($ == null ? null : $.getName()));
         }
 
-        TaskResult result = TaskResult.OK;
+        TaskResult<?> result = TaskResult.OK;
 
         // todo this line was added for dep checks and might be needed
         // to be moved lower if dep checks use their own session
@@ -207,7 +207,7 @@ public class SessionRunner extends HavingContext<SessionRunner, SessionContext>{
         return sb.toString();
     }
 
-    public TaskResult getMyLastResult() {
+    public TaskResult<?> getMyLastResult() {
         return myLastResult;
     }
 }

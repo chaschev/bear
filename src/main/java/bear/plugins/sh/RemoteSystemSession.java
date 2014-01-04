@@ -7,6 +7,7 @@ import bear.core.AbstractConsole;
 import bear.core.GlobalContext;
 import bear.core.MarkedBuffer;
 import bear.core.SessionContext;
+import bear.core.except.NoSuchFileException;
 import bear.session.Result;
 import bear.session.SshAddress;
 import bear.task.BearException;
@@ -71,7 +72,7 @@ public class RemoteSystemSession extends SystemSession {
     }
 
     @Override
-    protected  <T extends CommandLineResult> T sendCommandImpl(
+    protected  <T extends CommandLineResult<?>> T sendCommandImpl(
         final AbstractConsoleCommand<T> command) {
 
         final ConsoleCallback userCallback = command.getCallback();
@@ -82,7 +83,7 @@ public class RemoteSystemSession extends SystemSession {
 
         final int[] exitStatus = {0};
 
-        final TaskResult[] result = {new TaskResult(Result.ERROR)};
+        final TaskResult<?>[] result = {new TaskResult(Result.ERROR)};
 
         //1. it's also blocking
         //2. add callback
@@ -257,11 +258,11 @@ public class RemoteSystemSession extends SystemSession {
     }
 
     @Override
-    public <T extends CommandLineResult> CommandLine<T, ?> newCommandLine(Class<T> aClass) {
+    public <T extends CommandLineResult<?>> CommandLine<T, ?> newCommandLine(Class<T> aClass) {
         return new RemoteCommandLine<T>(this);
     }
 
-    private <T extends CommandLineResult> long getTimeout(AbstractConsoleCommand<T> line) {
+    private <T extends CommandLineResult<?>> long getTimeout(AbstractConsoleCommand<T> line) {
         return line.getTimeoutMs() == 0 ? $(global.bear.defaultTimeout) : line.getTimeoutMs();
     }
 
@@ -325,7 +326,7 @@ public class RemoteSystemSession extends SystemSession {
             line.setCallback(SystemEnvironmentPlugin.sshPassword($));
         }
 
-        CommandLineResult run = line.build().run();
+        CommandLineResult<?> run = line.build().run();
 
         return run.getResult();
     }
@@ -358,16 +359,18 @@ public class RemoteSystemSession extends SystemSession {
 
     @Override
     public boolean exists(String path) {
-        final CommandLineResult run = sendCommand(newCommandLine()
+        final CommandLineResult<?> run = sendCommand(newCommandLine()
             .a("ls", "-w", "1", path)
         );
 
-        return !(run.output.contains("cannot access") || run.output.contains("o such file"));
+        run.throwIfNot(NoSuchFileException.class);
+
+        return run.ok();
     }
 
     @Override
     public String readLink(String path) {
-        CommandLineResult r = script().line().a("readlink", path).build().run();
+        CommandLineResult<?> r = script().line().a("readlink", path).build().run();
 
         if(!r.ok()) return null;
 

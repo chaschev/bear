@@ -195,13 +195,13 @@ public class NodeJsPlugin extends ServerToolPlugin {
         watchDogGroup.scheduleForcedShutdown($.getGlobal().getScheduler(), $.var(bear.appStartTimeoutSec), TimeUnit.SECONDS);
     }
 
-    public final TaskDef<Object, TaskResult> build = new TaskDef<Object, TaskResult>(new SingleTaskSupplier<Object, TaskResult>() {
+    public final TaskDef<Object, TaskResult<?>> build = new TaskDef<Object, TaskResult<?>>(new SingleTaskSupplier<Object, TaskResult<?>>() {
         @Override
-        public Task<Object, TaskResult> createNewSession(SessionContext $, Task<Object, TaskResult> parent, TaskDef<Object, TaskResult> def) {
-            return new Task<Object, TaskResult>(parent, def, $) {
+        public Task<Object, TaskResult<?>> createNewSession(SessionContext $, Task<Object, TaskResult<?>> parent, TaskDef<Object, TaskResult<?>> def) {
+            return new Task<Object, TaskResult<?>>(parent, def, $) {
 
                 @Override
-                protected TaskResult exec(SessionRunner runner) {
+                protected TaskResult<?> exec(SessionRunner runner) {
                     $.log("building the Node.js project ...");
 
                     PendingRelease pendingRelease = $.var(releases.pendingRelease);
@@ -220,12 +220,12 @@ public class NodeJsPlugin extends ServerToolPlugin {
         }
     });
 
-    public final InstallationTaskDef<ZippedTool> install = new ZippedToolTaskDef<ZippedTool>(new SingleTaskSupplier<Object, TaskResult>() {
+    public final InstallationTaskDef<ZippedTool> install = new ZippedToolTaskDef<ZippedTool>(new SingleTaskSupplier<Object, TaskResult<?>>() {
         @Override
-        public Task<Object, TaskResult> createNewSession(SessionContext $, Task<Object, TaskResult> parent, TaskDef<Object, TaskResult> def) {
+        public Task<Object, TaskResult<?>> createNewSession(SessionContext $, Task<Object, TaskResult<?>> parent, TaskDef<Object, TaskResult<?>> def) {
             return new ZippedTool(parent, (InstallationTaskDef) def, $) {
                 @Override
-                protected TaskResult exec(SessionRunner runner) {
+                protected TaskResult<?> exec(SessionRunner runner) {
                     clean();
 
                     download();

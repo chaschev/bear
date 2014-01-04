@@ -32,7 +32,7 @@ import static bear.task.TaskResult.OK
 
 @Project(shortName = "ss-demo", name = "Secure Social Demo")
 @Configuration(
-    properties = ".bear/ss-demo",
+    properties = ".bear/demos",
     stage = "u-3",
     vcs = "https://github.com/chaschev/securesocial",
     branch = "master",

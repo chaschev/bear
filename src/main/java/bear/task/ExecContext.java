@@ -16,7 +16,7 @@ public abstract class ExecContext<SELF> extends HavingContext<SELF, SessionConte
         this.parent = parent;
     }
 
-    public void onEnd(TaskResult result) {
+    public void onEnd(TaskResult<?> result) {
         finishedAt = new DateTime();
     }
 

@@ -45,7 +45,7 @@ public class DependencyInjection {
         try {
             for (Field field : fields) {
                 if (isPlugin && TaskDef.class.isAssignableFrom(field.getType())) {
-                    TaskDef<Object, TaskResult> taskDef = (TaskDef<Object, TaskResult>) field.get(obj);
+                    TaskDef<Object, TaskResult<?>> taskDef = (TaskDef<Object, TaskResult<?>>) field.get(obj);
 
                     if (taskDef != null) {
                         taskDef.setName(shortName(aClass, className, field) + "." + field.getName());

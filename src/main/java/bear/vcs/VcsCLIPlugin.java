@@ -29,7 +29,7 @@ import java.util.Map;
 /**
  * @author Andrey Chaschev chaschev@gmail.com
  */
-public abstract class VcsCLIPlugin<TASK extends Task, VCS_TASK_DEF extends TaskDef<Object, TaskResult>> extends Plugin<VCS_TASK_DEF> {
+public abstract class VcsCLIPlugin<TASK extends Task, VCS_TASK_DEF extends TaskDef<Object, TaskResult<?>>> extends Plugin<VCS_TASK_DEF> {
 
     protected VcsCLIPlugin(GlobalContext global, VCS_TASK_DEF taskDef) {
         super(global, taskDef);
@@ -44,5 +44,5 @@ public abstract class VcsCLIPlugin<TASK extends Task, VCS_TASK_DEF extends TaskD
         return Collections.emptyMap();
     }
 
-    public abstract VCSSession newSession(SessionContext $, Task<Object, TaskResult> parent);
+    public abstract VCSSession newSession(SessionContext $, Task<Object, TaskResult<?>> parent);
 }

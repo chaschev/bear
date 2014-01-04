@@ -32,7 +32,21 @@ import static java.lang.Character.toUpperCase;
  */
 public class ProjectGenerator {
 
+    private final String dashedTitle;
+    private final String user;
+    private final String password;
+    private final String host;
+
     private String projectTitle;
+
+    public ProjectGenerator(String dashedTitle, String user, String password, String host) {
+        this.dashedTitle = dashedTitle;
+        this.user = user;
+        this.password = password;
+        this.host = host;
+        projectTitle = toCamelHumpCase(dashedTitle) + "Project";
+
+    }
 
     public String generatePom(String dashedTitle){
 
@@ -54,15 +68,17 @@ public class ProjectGenerator {
         );
     }
 
-    public String generateGroovyProject(String dashedTitle){
+    public String processTemplate(final String templateName){
 
         try {
-            projectTitle = toCamelHumpCase(dashedTitle) + "Project";
 
-            return StrSubstitutor.replace(readResource("/templates/TemplateProject.template"), ImmutableMap.<String, String>builder()
-                .put("dashedTitle", dashedTitle)
+            return StrSubstitutor.replace(readResource("/templates/" + templateName), ImmutableMap.<String, String>builder()
+                .put("dashedTitle", this.dashedTitle)
                 .put("projectTitle", projectTitle)
-                .put("spacedTitle", toSpacedTitle(toCamelHumpCase(dashedTitle)))
+                .put("user", this.user)
+                .put("password", this.password)
+                .put("host", this.host)
+                .put("spacedTitle", toSpacedTitle(toCamelHumpCase(this.dashedTitle)))
                 .build());
         } catch (IOException e) {
             throw Exceptions.runtime(e);

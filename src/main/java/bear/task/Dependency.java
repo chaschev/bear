@@ -30,14 +30,14 @@ import java.util.List;
 /**
  * @author Andrey Chaschev chaschev@gmail.com
  */
-public class Dependency extends Task<Object, TaskResult> {
+public class Dependency extends Task<Object, TaskResult<?>> {
 
     String name;
     String actual;
 
     List<Check> checks = new ArrayList<Check>();
 
-    TaskCallable<Object, TaskResult> installer;
+    TaskCallable<Object, TaskResult<?>> installer;
 
     public static DependencyResult checkDeps(Iterable<Dependency> transform) {
         DependencyResult r = new DependencyResult(Result.OK);
@@ -83,11 +83,11 @@ public class Dependency extends Task<Object, TaskResult> {
         return this;
     }
 
-    public TaskResult install() {
+    public TaskResult<?> install() {
         try {
             return installer.call($, this);
         } catch (Exception e) {
-            return new TaskResult(e);
+            return TaskResult.of(e);
         }
     }
 
@@ -123,7 +123,7 @@ public class Dependency extends Task<Object, TaskResult> {
         }
     }
 
-    public Dependency setInstaller(TaskCallable<Object, TaskResult> installer) {
+    public Dependency setInstaller(TaskCallable<Object, TaskResult<?>> installer) {
         this.installer = installer;
         return this;
     }
@@ -143,7 +143,7 @@ public class Dependency extends Task<Object, TaskResult> {
         this.name = name;
     }
 
-    public Dependency(TaskDef def, String name, SessionContext $, Task<Object, TaskResult> parent) {
+    public Dependency(TaskDef def, String name, SessionContext $, Task<Object, TaskResult<?>> parent) {
         super(parent,def, $);
 
         this.name = name;
@@ -202,7 +202,7 @@ public class Dependency extends Task<Object, TaskResult> {
 
         @Override
         public boolean check() {
-            CommandLineResult run = script.timeoutSec(30).run();
+            CommandLineResult<?> run = script.timeoutSec(30).run();
 
             return run.ok() && matcher.apply(run.output);
 
@@ -229,7 +229,7 @@ public class Dependency extends Task<Object, TaskResult> {
     }
 
     @Override
-    protected TaskResult exec(SessionRunner runner) {
+    protected TaskResult<?> exec(SessionRunner runner) {
         return checkDeps();
     }
 

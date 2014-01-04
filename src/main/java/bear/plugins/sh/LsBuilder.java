@@ -53,8 +53,11 @@ public class LsBuilder extends CommandBuilder<LsBuilder> {
         return this;
     }
 
-    public static class LsResult extends CommandLineResult {
+    public static class LsResult extends CommandLineResult<LsResult> {
         List<String> lines;
+
+        public LsResult() {
+        }
 
         public LsResult(String script, String commandOutput, List<String> lines) {
             super(script, commandOutput);
@@ -112,6 +115,15 @@ public class LsBuilder extends CommandBuilder<LsBuilder> {
                 }
 
                 return new LsResult(script, commandOutput, lines);
+            }
+
+            @Override
+            public LsResult error(Exception e) {
+                LsResult r = new LsResult();
+
+                r.setException(e);
+
+                return r;
             }
         });
 

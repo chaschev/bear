@@ -91,7 +91,7 @@ public abstract class SystemEnvironmentPlugin extends Plugin<SystemEnvironmentPl
     }
 
     @Override
-    public abstract SystemSession newSession(SessionContext $, Task<Object, TaskResult> parent);
+    public abstract SystemSession newSession(SessionContext $, Task<Object, TaskResult<?>> parent);
 
     public static abstract class PackageManager {
         protected SystemSession sys;
@@ -100,24 +100,24 @@ public abstract class SystemEnvironmentPlugin extends Plugin<SystemEnvironmentPl
             this.sys = sys;
         }
 
-        public abstract CommandLineResult installPackage(PackageInfo pi);
+        public abstract CommandLineResult<?> installPackage(PackageInfo pi);
 
-        public abstract CommandLineResult installPackage(String s);
+        public abstract CommandLineResult<?> installPackage(String s);
 
-        public CommandLineResult serviceCommand(String service, String command){
+        public CommandLineResult<?> serviceCommand(String service, String command){
             return sys.captureResult("service " + service + " " + command, true);
         }
 
         public abstract String command();
     }
 
-    public static class SystemSessionDef extends TaskDef<Object, TaskResult> {
+    public static class SystemSessionDef extends TaskDef<Object, TaskResult<?>> {
         private SystemEnvironmentPlugin plugin;
 
         public SystemSessionDef() {
-            super(new NamedSupplier<Object, TaskResult>("sys.session", new SingleTaskSupplier<Object, TaskResult>() {
+            super(new NamedSupplier<Object, TaskResult<?>>("sys.session", new SingleTaskSupplier<Object, TaskResult<?>>() {
                 @Override
-                public Task<Object, TaskResult> createNewSession(SessionContext $, Task<Object, TaskResult> parent, TaskDef<Object, TaskResult> def) {
+                public Task<Object, TaskResult<?>> createNewSession(SessionContext $, Task<Object, TaskResult<?>> parent, TaskDef<Object, TaskResult<?>> def) {
                     return ((SystemSessionDef)def).plugin.newSession($, parent);
                 }
             }));

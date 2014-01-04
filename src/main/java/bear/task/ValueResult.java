@@ -3,7 +3,7 @@ package bear.task;
 /**
  * @author Andrey Chaschev chaschev@gmail.com
  */
-public class ValueResult<V> extends TaskResult {
+public class ValueResult<V> extends TaskResult<ValueResult> {
     V value;
 
     public ValueResult(V value) {

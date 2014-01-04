@@ -85,9 +85,9 @@ public class PlayPlugin extends ServerToolPlugin {
             }
         });
 
-        start.addBeforeTask(new TaskDef<Object, TaskResult>(new NamedCallable<Object, TaskResult>("play - find exec path", new TaskCallable<Object, TaskResult>() {
+        start.addBeforeTask(new TaskDef<Object, TaskResult<?>>(new NamedCallable<Object, TaskResult<?>>("play - find exec path", new TaskCallable<Object, TaskResult<?>>() {
             @Override
-            public TaskResult call(SessionContext $, Task<Object, TaskResult> task) throws Exception {
+            public TaskResult<?> call(SessionContext $, Task<Object, TaskResult<?>> task) throws Exception {
                 Optional<Release> active = $.var(releases.activatedRelease);
 
                 if(active.isPresent()){
@@ -120,15 +120,15 @@ public class PlayPlugin extends ServerToolPlugin {
         return execPath;
     }
 
-    public final TaskDef<Object, TaskResult> build = new TaskDef<Object, TaskResult>(new SingleTaskSupplier<Object, TaskResult>() {
+    public final TaskDef<Object, TaskResult<?>> build = new TaskDef<Object, TaskResult<?>>(new SingleTaskSupplier<Object, TaskResult<?>>() {
         @Override
-        public Task<Object, TaskResult> createNewSession(SessionContext $, Task<Object, TaskResult> parent, TaskDef<Object, TaskResult> def) {
-            return new Task<Object, TaskResult>(parent, def, $) {
+        public Task<Object, TaskResult<?>> createNewSession(SessionContext $, Task<Object, TaskResult<?>> parent, TaskDef<Object, TaskResult<?>> def) {
+            return new Task<Object, TaskResult<?>>(parent, def, $) {
                 @Override
-                protected TaskResult exec(SessionRunner runner) {
+                protected TaskResult<?> exec(SessionRunner runner) {
                     $.log("building the project (stage)...");
 
-                    CommandLineResult result;
+                    CommandLineResult<?> result;
 
                     Script script = new Script($.sys)
                         .cd($(projectPath));
@@ -168,12 +168,12 @@ public class PlayPlugin extends ServerToolPlugin {
         logger.info("current releases:\n{}", $.var(releases.session).show());
     }
 
-    public final InstallationTaskDef<ZippedTool> install = new ZippedToolTaskDef<ZippedTool>(new SingleTaskSupplier<Object, TaskResult>() {
+    public final InstallationTaskDef<ZippedTool> install = new ZippedToolTaskDef<ZippedTool>(new SingleTaskSupplier<Object, TaskResult<?>>() {
         @Override
-        public Task<Object, TaskResult> createNewSession(SessionContext $, Task<Object, TaskResult> parent, TaskDef<Object, TaskResult> def) {
+        public Task<Object, TaskResult<?>> createNewSession(SessionContext $, Task<Object, TaskResult<?>> parent, TaskDef<Object, TaskResult<?>> def) {
             return new ZippedTool(parent, (InstallationTaskDef) def, $) {
                 @Override
-                protected TaskResult exec(SessionRunner runner) {
+                protected TaskResult<?> exec(SessionRunner runner) {
                     clean();
 
                     download();

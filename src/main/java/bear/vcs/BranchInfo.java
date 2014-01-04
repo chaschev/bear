@@ -19,7 +19,7 @@ package bear.vcs;
 /**
  * @author Andrey Chaschev chaschev@gmail.com
  */
-public class BranchInfo extends CommandLineResult {
+public class BranchInfo extends CommandLineResult<BranchInfo> {
     public String author;
     public String revision;
     public String date;

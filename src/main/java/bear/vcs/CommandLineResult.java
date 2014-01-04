@@ -25,17 +25,17 @@ import org.apache.commons.lang3.StringUtils;
 /**
  * @author Andrey Chaschev chaschev@gmail.com
  */
-public class CommandLineResult extends TaskResult{
+public class CommandLineResult<SELF extends CommandLineResult> extends TaskResult<SELF> {
     public transient String script;
     public transient String output;
     public int exitCode;
     public Object value;
 
-    CommandLineResult() {
+    protected CommandLineResult() {
         super(Result.OK);
     }
 
-    public CommandLineResult(CommandLineResult other) {
+    public CommandLineResult(CommandLineResult<?> other) {
         super(other.result);
         this.script = other.script;
         this.output = other.output;
@@ -79,40 +79,16 @@ public class CommandLineResult extends TaskResult{
         return sb.toString();
     }
 
-    @Override
-    public CommandLineResult throwIfError() {
-        super.throwIfError();
-        return this;
-    }
-
-    @Override
-    public CommandLineResult throwIfException() {
-        super.throwIfException();
-        return this;
-    }
-
-    @Override
-    public CommandLineResult throwIfNot(Class... exceptions) {
-        super.throwIfNot(exceptions);
-        return this;
-    }
-
-    @Override
-    public CommandLineResult throwIfExceptionIs(Class<? extends Exception>... exceptions) {
-        super.throwIfExceptionIs(exceptions);
-        return this;
-    }
-
-    public CommandLineResult setException(Throwable e) {
+    public CommandLineResult<?> setException(Throwable e) {
         result = Result.ERROR;
         exception = Optional.of(e);
 
         return this;
     }
 
-    public static final CommandLineResult OK = new CommandLineResult("default", "OK");
+    public static final CommandLineResult<?> OK = new CommandLineResult<CommandLineResult>("default", "OK");
 
-    public CommandLineResult copyFrom(CommandLineResult result) {
+    public CommandLineResult<?> copyFrom(CommandLineResult<?> result) {
         if(result.exception.isPresent()){
             exception = result.exception;
         }
@@ -124,5 +100,13 @@ public class CommandLineResult extends TaskResult{
         this.value = result.value;
 
         return this;
+    }
+
+    public static CommandLineResult<?> error(Exception e){
+        CommandLineResult<?> r = new CommandLineResult();
+
+        r.setException(e);
+
+        return r;
     }
 }

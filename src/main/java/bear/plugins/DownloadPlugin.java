@@ -82,12 +82,12 @@ public class DownloadPlugin extends Plugin{
 
         @Override
         public Result download(SessionContext $){
-            CommandLineResult result = $.sys.script()
+            CommandLineResult<?> result = $.sys.script()
                 .cd(absCachePath($))
                 .line().timeoutMin(60).addRaw("wget %s", url).build()
                 .run();
 
-            CommandLineResult run = result;
+            CommandLineResult<?> run = result;
 
             Predicate<String> errorPredicate = or(contains("404 Not Found"), contains("ERROR"));
 
@@ -99,7 +99,7 @@ public class DownloadPlugin extends Plugin{
         }
     }
 
-    private static final class CachedResult extends TaskResult{
+    private static final class CachedResult extends TaskResult<CachedResult> {
         boolean cached;
 
         public CachedResult(boolean cached) {
@@ -109,7 +109,7 @@ public class DownloadPlugin extends Plugin{
         }
     }
 
-    private static final class PartyWithFileResult extends TaskResult{
+    private static final class PartyWithFileResult extends TaskResult<PartyWithFileResult> {
         int partyIndex;
 
         private PartyWithFileResult(int partyIndex) {
@@ -118,12 +118,12 @@ public class DownloadPlugin extends Plugin{
         }
     }
 
-    public final TaskDef<DownloadSupplier, TaskResult> downloadTask = new TaskDef<DownloadSupplier, TaskResult>(new NamedSupplier<DownloadSupplier, TaskResult>("download", new SingleTaskSupplier<DownloadSupplier, TaskResult>() {
+    public final TaskDef<DownloadSupplier, TaskResult<?>> downloadTask = new TaskDef<DownloadSupplier, TaskResult<?>>(new NamedSupplier<DownloadSupplier, TaskResult<?>>("download", new SingleTaskSupplier<DownloadSupplier, TaskResult<?>>() {
         @Override
-        public Task<DownloadSupplier, TaskResult> createNewSession(SessionContext $, Task<Object, TaskResult> parent, TaskDef<DownloadSupplier, TaskResult> def) {
-            TaskCallable<DownloadSupplier, TaskResult> taskCallable = new TaskCallable<DownloadSupplier, TaskResult>() {
+        public Task<DownloadSupplier, TaskResult<?>> createNewSession(SessionContext $, Task<Object, TaskResult<?>> parent, TaskDef<DownloadSupplier, TaskResult<?>> def) {
+            TaskCallable<DownloadSupplier, TaskResult<?>> taskCallable = new TaskCallable<DownloadSupplier, TaskResult<?>>() {
                 @Override
-                public TaskResult call(final SessionContext $, final Task<DownloadSupplier, TaskResult> task) throws Exception {
+                public TaskResult<?> call(final SessionContext $, final Task<DownloadSupplier, TaskResult<?>> task) throws Exception {
                     final ImmutableList<SessionContext> parties = task.getGrid().parties();
 
                     final DownloadSupplier downloadSupplier = task.getInput();
@@ -172,7 +172,7 @@ public class DownloadPlugin extends Plugin{
                     return new TaskResult(r);
                 }
             };
-            return new Task<DownloadSupplier, TaskResult>(parent, taskCallable);
+            return new Task<DownloadSupplier, TaskResult<?>>(parent, taskCallable);
         }
     }));
 }

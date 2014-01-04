@@ -55,11 +55,20 @@ import static org.apache.commons.lang3.StringUtils.substringBefore;
 /**
  * @author Andrey Chaschev chaschev@gmail.com
  */
-public class GitCLIPlugin extends VcsCLIPlugin<Task, TaskDef<Object, TaskResult>> {
+public class GitCLIPlugin extends VcsCLIPlugin<Task, TaskDef<Object, TaskResult<?>>> {
     public static final ResultParser<LsResult>  LS_PARSER = new ResultParser<LsResult>() {
         @Override
         public LsResult parse(String script, String commandOutput) {
             return new LsResult(commandOutput, convertLsOutput(commandOutput));
+        }
+
+        @Override
+        public LsResult error(Exception e) {
+            LsResult r = new LsResult();
+
+            r.setException(e);
+
+            return r;
         }
     };
 
@@ -85,7 +94,7 @@ public class GitCLIPlugin extends VcsCLIPlugin<Task, TaskDef<Object, TaskResult>
     }
 
     @Override
-    public GitCLIVCSSession newSession(SessionContext $, Task<Object, TaskResult> parent) {
+    public GitCLIVCSSession newSession(SessionContext $, Task<Object, TaskResult<?>> parent) {
         return new GitCLIVCSSession(parent, taskDefMixin, $);
     }
 
@@ -128,7 +137,7 @@ public class GitCLIPlugin extends VcsCLIPlugin<Task, TaskDef<Object, TaskResult>
      */
 
     public class GitCLIVCSSession extends VCSSession {
-        public GitCLIVCSSession(Task<Object, TaskResult> parent, TaskDef def, SessionContext $) {
+        public GitCLIVCSSession(Task<Object, TaskResult<?>> parent, TaskDef def, SessionContext $) {
             super(parent, def, $);
 
             addDependency(new Dependency(taskDefMixin, "GIT", $, parent).addCommands("git --version"));
@@ -366,11 +375,11 @@ public class GitCLIPlugin extends VcsCLIPlugin<Task, TaskDef<Object, TaskResult>
                 .a($(getBear().repositoryURI), revision)).setParser(LS_PARSER);
         }
 
-        private CommandLine<CommandLineResult, VCSScript<CommandLineResult>> commandPrefix(String cmd, Map<String, String> params) {
-            return commandPrefix(cmd, params, CommandLineResult.class);
+        private CommandLine<CommandLineResult<?>, VCSScript<CommandLineResult<?>>> commandPrefix(String cmd, Map<String, String> params) {
+            return (CommandLine)commandPrefix(cmd, params, CommandLineResult.class);
         }
 
-        private <T extends CommandLineResult> CommandLine<T, VCSScript<T>> commandPrefix(String cmd, Map<String, String> params, Class<T> tClass) {
+        private <T extends CommandLineResult<?>> CommandLine<T, VCSScript<T>> commandPrefix(String cmd, Map<String, String> params, Class<T> tClass) {
             return $.newCommandLine()
                 .stty()
                 .a(command(), cmd).p(params);
@@ -379,12 +388,12 @@ public class GitCLIPlugin extends VcsCLIPlugin<Task, TaskDef<Object, TaskResult>
 
     @Override
     public InstallationTaskDef<InstallationTask> getInstall() {
-        return new InstallationTaskDef<InstallationTask>(new SingleTaskSupplier<Object, TaskResult>() {
+        return new InstallationTaskDef<InstallationTask>(new SingleTaskSupplier<Object, TaskResult<?>>() {
             @Override
-            public InstallationTask<InstallationTaskDef> createNewSession(SessionContext $, Task<Object, TaskResult> parent, TaskDef<Object, TaskResult> def) {
+            public InstallationTask<InstallationTaskDef> createNewSession(SessionContext $, Task<Object, TaskResult<?>> parent, TaskDef<Object, TaskResult<?>> def) {
                 return new InstallationTask<InstallationTaskDef>(parent, (InstallationTaskDef) def, $) {
                     @Override
-                    protected TaskResult exec(SessionRunner runner) {
+                    protected TaskResult<?> exec(SessionRunner runner) {
                         return $.sys.getPackageManager().installPackage("git");
                     }
 
@@ -406,13 +415,13 @@ public class GitCLIPlugin extends VcsCLIPlugin<Task, TaskDef<Object, TaskResult>
         return !remote.equals("origin");
     }
 
-    static class GitTaskDef extends TaskDef<Object, TaskResult> {
+    static class GitTaskDef extends TaskDef<Object, TaskResult<?>> {
         private GitCLIPlugin git;
 
         GitTaskDef() {
-            super(new NamedSupplier<Object, TaskResult>("git.session", new SingleTaskSupplier<Object, TaskResult>() {
+            super(new NamedSupplier<Object, TaskResult<?>>("git.session", new SingleTaskSupplier<Object, TaskResult<?>>() {
                 @Override
-                public Task<Object, TaskResult> createNewSession(SessionContext $, Task<Object, TaskResult> parent, TaskDef<Object, TaskResult> def) {
+                public Task<Object, TaskResult<?>> createNewSession(SessionContext $, Task<Object, TaskResult<?>> parent, TaskDef<Object, TaskResult<?>> def) {
                     return def.singleTaskSupplier().createNewSession($, parent, def);
                 }
             }));
@@ -476,6 +485,15 @@ public class GitCLIPlugin extends VcsCLIPlugin<Task, TaskDef<Object, TaskResult>
 
             return new VcsLogInfo(s, entries);
 
+        }
+
+        @Override
+        public VcsLogInfo error(Exception e) {
+            VcsLogInfo r = new VcsLogInfo();
+
+            r.setException(e);
+
+            return r;
         }
     }
 

@@ -58,7 +58,7 @@ public class MongoDbService extends DbDumpManager.AbstractDbService<DbDumpManage
                         .build()
                         .run();
 
-                    CommandLineResult result = $.sys.script().line()
+                    CommandLineResult<?> result = $.sys.script().line()
                         .timeoutMin(24 * 60) //24h
                         .addRaw("mongorestore %s", $(plugin.dumpFolderPath))
                         .build()
@@ -85,7 +85,7 @@ public class MongoDbService extends DbDumpManager.AbstractDbService<DbDumpManage
 
         DateTime startedAt = new DateTime();
 
-        CommandLineResult result = $.sys.script().line().timeoutMin(24 * 60) //24h
+        CommandLineResult<?> result = $.sys.script().line().timeoutMin(24 * 60) //24h
             .addRaw("mongodump -d %s -o %s", entry.database, $(plugin.dumpFolderPath)).build().line().timeoutMin(24 * 60)
             .addRaw("tar cvfz %s %s", $(plugin.dumpArchivePath), $(plugin.dumpFolderPath)).build()
             .run();

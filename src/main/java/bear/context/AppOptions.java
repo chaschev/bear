@@ -30,7 +30,7 @@ import static com.google.common.collect.Lists.newArrayList;
 @SuppressWarnings("unchecked")
 public abstract class AppOptions extends JOptOptions {
     public final static OptionSpec<KeyValuePair> VARIABLES =
-        parser.acceptsAll(Arrays.asList("V", "vars"), "set global vars").withRequiredArg()
+        parser.acceptsAll(Arrays.asList("V", "vars"), "set global variables").withRequiredArg()
             .withValuesSeparatedBy(",")
             .withValuesConvertedBy(new AppCli.KeyValueConverter())
             .ofType(KeyValuePair.class).describedAs("var list");

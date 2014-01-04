@@ -23,9 +23,9 @@ import bear.task.TaskResult;
  */
 public class PartyFinishedEventToUI extends ConsoleEventToUI {
     public long duration;
-    public final TaskResult result;
+    public final TaskResult<?> result;
 
-    public PartyFinishedEventToUI(String console, long duration, TaskResult result) {
+    public PartyFinishedEventToUI(String console, long duration, TaskResult<?> result) {
         super(console, "partyFinished");
 
         this.duration = duration;

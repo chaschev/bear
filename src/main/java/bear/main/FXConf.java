@@ -303,12 +303,12 @@ public class FXConf extends BearMain {
                 global.putConst(bear.activeRoles, Collections.<String>emptyList());
             }
 
-            GlobalTaskRunner runner = project.run(singletonList(new NamedCallable<Object, TaskResult>(firstLine, new TaskCallable<Object, TaskResult>() {
+            GlobalTaskRunner runner = project.run(singletonList(new NamedCallable<Object, TaskResult<?>>(firstLine, new TaskCallable<Object, TaskResult<?>>() {
                 @Override
-                public TaskResult call(SessionContext $, Task<Object, TaskResult> task) throws Exception {
+                public TaskResult<?> call(SessionContext $, Task<Object, TaskResult<?>> task) throws Exception {
                     Plugin<TaskDef> shellPlugin = project.findShell(uiContext.plugin).get();
 
-                    Task<Object, TaskResult> interpretedTask = shellPlugin.getShell().interpret(command, $, task, task.getDefinition());
+                    Task<Object, TaskResult<?>> interpretedTask = shellPlugin.getShell().interpret(command, $, task, task.getDefinition());
                     return $.runner.runSession(interpretedTask);
                 }
             })));
@@ -397,19 +397,23 @@ public class FXConf extends BearMain {
             shells = new ArrayList<String>();
             this.path = path;
 
-            List<MethodDesc<? extends GlobalTaskRunner>> list = OpenBean.methodsReturning(project, GlobalTaskRunner.class);
-
             Set<String> temp = new LinkedHashSet<String>();
 
 //            BearProject<?> prj = newProject(new File(path));
 
 //            prj.configureWithAnnotations(true);
 
-            for (MethodDesc<? extends GlobalTaskRunner> methodDesc : list) {
+            for (MethodDesc desc : OpenBean.methods(project)) {
+                if(desc.getMethod().isAnnotationPresent(bear.annotations.Method.class)){
+                    temp.add(desc.getName());
+                }
+            }
+            for (MethodDesc<? extends GlobalTaskRunner> methodDesc : OpenBean.methodsReturning(project, GlobalTaskRunner.class)) {
                 if(methodDesc.getMethod().getParameterTypes().length == 0){
                     temp.add(methodDesc.getName());
                 }
             }
+
 
             for (Method method : project.getDeclaredMethods()) {
                 if(Modifier.isPublic(method.getModifiers())

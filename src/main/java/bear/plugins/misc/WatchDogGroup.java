@@ -84,8 +84,8 @@ public class WatchDogGroup {
         }
     }
 
-    public TaskResult getResult(){
-        List<TaskResult> temp = new ArrayList<TaskResult>(runnables.size());
+    public TaskResult<?> getResult(){
+        List<TaskResult<?>> temp = new ArrayList<TaskResult<?>>(runnables.size());
 
         for (WatchDogRunnable runnable : runnables) {
             temp.add(runnable.getResult() == null ? TaskResult.error("null result for watch dog") : runnable.getResult());

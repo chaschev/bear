@@ -147,7 +147,7 @@ public abstract class ServerToolPlugin extends ZippedToolPlugin {
         $.sys.resetFile(logPath, true);
     }
 
-    protected CommandLineResult serviceCommand(SessionContext $, String command) {
+    protected CommandLineResult<?> serviceCommand(SessionContext $, String command) {
         List<String> ports = $.var(portsSplit);
         boolean isSingle = ports.size() == 1;
         SystemSession.OSHelper helper = $.sys.getOsInfo().getHelper();
@@ -160,12 +160,12 @@ public abstract class ServerToolPlugin extends ZippedToolPlugin {
         return CommandLineResult.OK;
     }
 
-    public final TaskDef<Object, TaskResult> start = new TaskDef<Object, TaskResult>(new NamedSupplier<Object, TaskResult>("server.start", new SingleTaskSupplier<Object, TaskResult>() {
+    public final TaskDef<Object, TaskResult<?>> start = new TaskDef<Object, TaskResult<?>>(new NamedSupplier<Object, TaskResult<?>>("server.start", new SingleTaskSupplier<Object, TaskResult<?>>() {
         @Override
-        public Task<Object, TaskResult> createNewSession(SessionContext $, final Task<Object, TaskResult> parent, final TaskDef<Object, TaskResult> def) {
-            return new Task<Object, TaskResult>(parent, def, $) {
+        public Task<Object, TaskResult<?>> createNewSession(SessionContext $, final Task<Object, TaskResult<?>> parent, final TaskDef<Object, TaskResult<?>> def) {
+            return new Task<Object, TaskResult<?>>(parent, def, $) {
                 @Override
-                protected TaskResult exec(SessionRunner runner) {
+                protected TaskResult<?> exec(SessionRunner runner) {
                     $.log("starting the {} app...", $(toolname));
 
                     Optional<Release> optionalRelease = $.var(releases.activatedRelease);
@@ -174,7 +174,7 @@ public abstract class ServerToolPlugin extends ZippedToolPlugin {
                         return TaskResult.error("there is no release to start!");
                     }
 
-                    TaskResult r;
+                    TaskResult<?> r;
 
                     //bear.installationInProgress is for tomcat
                     //useUpstart is for other plugins
@@ -215,16 +215,16 @@ public abstract class ServerToolPlugin extends ZippedToolPlugin {
 
     protected abstract void spawnStartWatchDogs(final SessionContext $, List<String> ports);
 
-    public final TaskDef<Object, TaskResult> stop = new TaskDef<Object, TaskResult>(new NamedSupplier<Object, TaskResult>("server.stop", new SingleTaskSupplier<Object, TaskResult>() {
+    public final TaskDef<Object, TaskResult<?>> stop = new TaskDef<Object, TaskResult<?>>(new NamedSupplier<Object, TaskResult<?>>("server.stop", new SingleTaskSupplier<Object, TaskResult<?>>() {
         @Override
-        public Task<Object, TaskResult> createNewSession(SessionContext $, Task<Object, TaskResult> parent, TaskDef<Object, TaskResult> def) {
-            return new Task<Object, TaskResult>(parent, def, $) {
+        public Task<Object, TaskResult<?>> createNewSession(SessionContext $, Task<Object, TaskResult<?>> parent, TaskDef<Object, TaskResult<?>> def) {
+            return new Task<Object, TaskResult<?>>(parent, def, $) {
 
                 @Override
-                protected TaskResult exec(SessionRunner runner) {
+                protected TaskResult<?> exec(SessionRunner runner) {
                     $.log("stopping the app (stage)...");
 
-                    CommandLineResult r;
+                    CommandLineResult<?> r;
 
                     try {
                         r = serviceCommand($, "stop");
@@ -243,13 +243,13 @@ public abstract class ServerToolPlugin extends ZippedToolPlugin {
         }
     }));
 
-    public final TaskDef<Object, TaskResult> watchStart = new TaskDef<Object, TaskResult>(new NamedSupplier<Object, TaskResult>("server.watchStart", new SingleTaskSupplier<Object, TaskResult>() {
+    public final TaskDef<Object, TaskResult<?>> watchStart = new TaskDef<Object, TaskResult<?>>(new NamedSupplier<Object, TaskResult<?>>("server.watchStart", new SingleTaskSupplier<Object, TaskResult<?>>() {
         @Override
-        public Task<Object, TaskResult> createNewSession(SessionContext $, Task<Object, TaskResult> parent, TaskDef<Object, TaskResult> def) {
-            return new Task<Object, TaskResult>(parent, new TaskCallable<Object, TaskResult>() {
+        public Task<Object, TaskResult<?>> createNewSession(SessionContext $, Task<Object, TaskResult<?>> parent, TaskDef<Object, TaskResult<?>> def) {
+            return new Task<Object, TaskResult<?>>(parent, new TaskCallable<Object, TaskResult<?>>() {
                 @Override
-                public TaskResult call(SessionContext $, Task<Object, TaskResult> task) throws Exception {
-                    TaskResult r;
+                public TaskResult<?> call(SessionContext $, Task<Object, TaskResult<?>> task) throws Exception {
+                    TaskResult<?> r;
                     if (!$.var(useWatchDog)) {
                         r = TaskResult.OK;
                     } else {

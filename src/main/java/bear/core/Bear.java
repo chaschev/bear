@@ -179,8 +179,9 @@ public class Bear extends BearApp<GlobalContext> {
         verifyPlugins = equalTo(checkDependencies),
         autoInstallPlugins = newVar(false),
         installationInProgress = newVar(false),
+        quiet = newVar(false),
         verbose = newVar(false),
-        printHostsToConsole = newVar(true),
+        printHostsToConsole = not(quiet),
         printHostsToBearLog = newVar(true)
     ;
 

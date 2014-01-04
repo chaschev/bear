@@ -66,8 +66,7 @@ public class Plugins {
             if (origPlugin == null) {
                 pluginMap.put(plugin.getClass().getName(), plugin);
             } else {
-                logger.info("skipped loading {}@{} (there is already {}@{} loaded)", plugin, System.identityHashCode(plugin),
-                    origPlugin, System.identityHashCode(origPlugin));
+                logger.info("skipped loading {}@{} (already loaded)", plugin, System.identityHashCode(plugin));
             }
 
             if(plugin.getShell()!=null){
@@ -254,7 +253,7 @@ public class Plugins {
         return Optional.fromNullable((T)pluginMap.get(pluginClass.getName()));
     }
 
-    public <T extends Plugin> Task<Object, TaskResult> getSessionContext(Class<T> aClass, SessionContext $, Task<Object, TaskResult> parent){
+    public <T extends Plugin> Task<Object, TaskResult<?>> getSessionContext(Class<T> aClass, SessionContext $, Task<Object, TaskResult<?>> parent){
         try {
             final T plugin = globalContext.plugin(aClass);
 
@@ -264,7 +263,7 @@ public class Plugins {
         }
     }
 
-    public <T extends Plugin> Task<Object, TaskResult> newSession(T plugin, SessionContext $, Task<Object, TaskResult> parent) {
+    public <T extends Plugin> Task<Object, TaskResult<?>> newSession(T plugin, SessionContext $, Task<Object, TaskResult<?>> parent) {
         Task task = plugin.newSession($, parent);
 
         task.wire($);

@@ -66,7 +66,7 @@ public class SessionContext extends AbstractContext {
     //    protected CompositeTaskRunContext taskRunContext;
     public static final org.apache.logging.log4j.Logger ui = LogManager.getLogger("fx");
 
-    protected Task<Object, TaskResult> currentTask;
+    protected Task<Object, TaskResult<?>> currentTask;
 
     protected ExecutionContext executionContext = new ExecutionContext();
 
@@ -106,7 +106,7 @@ public class SessionContext extends AbstractContext {
 
         runner.set$(this);
 
-        currentTask = new Task<Object, TaskResult>(null, TaskDef.ROOT, this);
+        currentTask = new Task<Object, TaskResult<?>>(null, TaskDef.ROOT, this);
     }
 
     public synchronized void foo() {
@@ -181,7 +181,7 @@ public class SessionContext extends AbstractContext {
         foo();
     }
 
-    public void whenPhaseStarts(BearScriptPhase<Object, TaskResult> phase, BearScriptRunner.ShellSessionContext shellSessionContext) {
+    public void whenPhaseStarts(BearScriptPhase<Object, TaskResult<?>> phase, BearScriptRunner.ShellSessionContext shellSessionContext) {
         StringBuilder phaseSB = executionContext.phaseText.getDefaultValue();
         phaseSB.setLength(0);
         executionContext.phaseText.fireExternalModification();
@@ -234,27 +234,27 @@ public class SessionContext extends AbstractContext {
         return SystemEnvironmentPlugin.println(var(bear.sshPassword));
     }
 
-    public SettableFuture<TaskResult> future(String taskDefName, String sessionName) {
+    public SettableFuture<TaskResult<?>> future(String taskDefName, String sessionName) {
         return globalRunner.future(taskDefName, sessionName);
     }
 
-    public <I, O extends TaskResult> SettableFuture<O> future(TaskDef<I, O> taskDef, String sessionName) {
+    public <I, O extends TaskResult<?>> SettableFuture<O> future(TaskDef<I, O> taskDef, String sessionName) {
         return (SettableFuture<O>) globalRunner.future(taskDef.getName(), sessionName);
     }
 
-    public <I, O extends TaskResult> SettableFuture<O> future(NamedCallable<I, O> namedCallable, String sessionName) {
+    public <I, O extends TaskResult<?>> SettableFuture<O> future(NamedCallable<I, O> namedCallable, String sessionName) {
         return (SettableFuture<O>) globalRunner.future(namedCallable.getName(), sessionName);
     }
 
-    public <I, O extends TaskResult> O getPreviousResult(TaskDef<I, O> taskDef) {
+    public <I, O extends TaskResult<?>> O getPreviousResult(TaskDef<I, O> taskDef) {
         return (O) getPreviousResult(taskDef.getName());
     }
 
-    public <I, O extends TaskResult> O getPreviousResult(NamedCallable<I, O> callable) {
+    public <I, O extends TaskResult<?>> O getPreviousResult(NamedCallable<I, O> callable) {
         return (O) getPreviousResult(callable.getName());
     }
 
-    public TaskResult getPreviousResult(String taskDefName) {
+    public TaskResult<?> getPreviousResult(String taskDefName) {
         try {
             return globalRunner.future(taskDefName, getName()).get();
         } catch (InterruptedException e) {
@@ -269,7 +269,7 @@ public class SessionContext extends AbstractContext {
     }
 
     public static class ExecutionHistory {
-        protected Map<TaskDef<Object, TaskResult>, TaskResult> resultMap = new HashMap<TaskDef<Object, TaskResult>, TaskResult>();
+        protected Map<TaskDef<Object, TaskResult<?>>, TaskResult<?>> resultMap = new HashMap<TaskDef<Object, TaskResult<?>>, TaskResult<?>>();
 
 
     }
@@ -346,11 +346,11 @@ public class SessionContext extends AbstractContext {
         System.out.printf(new DateTime().toString(TIME_FORMATTER) + " " + level + " " + s, params);
     }
 
-    public TaskResult run(TaskDef... tasks) {
+    public TaskResult<?> run(TaskDef... tasks) {
         return runner.run(tasks);
     }
 
-    public Task<Object, TaskResult> getCurrentTask() {
+    public Task<Object, TaskResult<?>> getCurrentTask() {
         return (Task) currentTask;
     }
 
@@ -405,20 +405,20 @@ public class SessionContext extends AbstractContext {
         return getGlobal().plugin(pluginClass);
     }
 
-    public <I, O extends TaskResult> O runSession(Task<I, O> taskSession) {
+    public <I, O extends TaskResult<?>> O runSession(Task<I, O> taskSession) {
         return runner.runSession(taskSession);
     }
 
-    public <I, O extends TaskResult> O runSession(Task<I, O> taskSession, I input) {
+    public <I, O extends TaskResult<?>> O runSession(Task<I, O> taskSession, I input) {
         return runner.runSession(taskSession.setInput(input), input);
     }
 
-    public Optional<TaskResult> findResult(TaskDef<Object, TaskResult> def) {
+    public Optional<? extends TaskResult> findResult(TaskDef<Object, TaskResult<?>> def) {
         return executionContext.rootExecutionContext.getDefaultValue().findResult(def);
     }
 
     // returns last available result, null if none of the tasks finished
-    public Optional<TaskResult> lastResult() {
+    public Optional<? extends TaskResult> lastResult() {
         return executionContext.rootExecutionContext.getDefaultValue().lastResult();
     }
 

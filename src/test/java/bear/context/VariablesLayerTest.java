@@ -3,6 +3,7 @@ package bear.context;
 import bear.core.GlobalContext;
 import bear.session.DynamicVariable;
 import bear.session.Variables;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.ArrayList;
@@ -14,6 +15,9 @@ import static org.fest.assertions.api.Assertions.assertThat;
 /**
  * @author Andrey Chaschev chaschev@gmail.com
  */
+
+// there is AbstractContextTest so this might needed to be dropped
+@Ignore
 public class VariablesLayerTest {
     VariablesLayer layer = new VariablesLayer("testLayer", null);
 

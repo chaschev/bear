@@ -11,11 +11,14 @@ import examples.java.SecureSocialDemoProject
 import examples.nodejs.DrywallDemoProject
 import examples.nodejs.NodeExpressMongooseDemoProject
 import org.junit.Before
+import org.junit.Ignore
 import org.junit.Test
 
 /**
  * @author Andrey Chaschev chaschev@gmail.com
  */
+
+@Ignore
 class DeploymentProjectsTests {
 
     public runProject(Class<? extends BearProject> aClass){

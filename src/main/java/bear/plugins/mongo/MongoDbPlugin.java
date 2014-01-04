@@ -69,9 +69,9 @@ public class MongoDbPlugin extends Plugin {
         }
     });
 
-    public final DynamicVariable<CommandLineResult> installer = dynamic(new Fun<SessionContext, CommandLineResult>() {
+    public final DynamicVariable<CommandLineResult<?>> installer = dynamic(new Fun<SessionContext, CommandLineResult<?>>() {
         @Override
-        public CommandLineResult apply(SessionContext $) {
+        public CommandLineResult<?> apply(SessionContext $) {
             switch ($.sys.getOsInfo().unixFlavour) {
                 case CENTOS:
                     String script = "" +
@@ -107,19 +107,19 @@ public class MongoDbPlugin extends Plugin {
         shell = new MongoDbShellMode(MongoDbPlugin.this);
     }
 
-    public final InstallationTaskDef<InstallationTask> setup = new InstallationTaskDef<InstallationTask>(new SingleTaskSupplier<Object, TaskResult>() {
+    public final InstallationTaskDef<InstallationTask> setup = new InstallationTaskDef<InstallationTask>(new SingleTaskSupplier<Object, TaskResult<?>>() {
         @Override
-        public Task<Object, TaskResult> createNewSession(SessionContext $, Task<Object, TaskResult> parent, TaskDef<Object, TaskResult> def) {
+        public Task<Object, TaskResult<?>> createNewSession(SessionContext $, Task<Object, TaskResult<?>> parent, TaskDef<Object, TaskResult<?>> def) {
             return new InstallationTask<InstallationTaskDef>(parent, setup, $) {
                 @Override
-                protected TaskResult exec(SessionRunner runner) {
+                protected TaskResult<?> exec(SessionRunner runner) {
                     final Version clientVersion = computeInstalledClientVersion($.sys);
                     final Version serverVersion = computeInstalledServerVersion(runner);
 
                     final boolean clientVersionOk = clientVersion != NOT_INSTALLED && $(versionConstraint).containsVersion(clientVersion);
                     final boolean serverVersionOk = serverVersion != NOT_INSTALLED && $(versionConstraint).containsVersion(clientVersion);
 
-                    TaskResult r = TaskResult.OK;
+                    TaskResult<?> r = TaskResult.OK;
 
                     if (!clientVersionOk || !serverVersionOk) {
                        r = $(installer);
@@ -152,16 +152,16 @@ public class MongoDbPlugin extends Plugin {
         }
     });
 
-    public Task<Object, TaskResult> scriptTask(final String script,  Task parent, final TaskDef def, final SessionContext $){
-        return new Task<Object, TaskResult>(parent, def, $) {
+    public Task<Object, TaskResult<?>> scriptTask(final String script,  Task parent, final TaskDef def, final SessionContext $){
+        return new Task<Object, TaskResult<?>>(parent, def, $) {
             @Override
-            protected TaskResult exec(SessionRunner runner) {
+            protected TaskResult<?> exec(SessionRunner runner) {
                 return runScript($, script);
             }
         };
     }
 
-    public TaskResult runScript(SessionContext $, String script) {
+    public TaskResult<?> runScript(SessionContext $, String script) {
         final String tempPath = $.var($.bear.randomFilePath).getTempPath("mongo_", ".js");
 
         WriteStringResult result = $.sys.writeString(script).toPath(tempPath).run();
@@ -170,7 +170,7 @@ public class MongoDbPlugin extends Plugin {
             return TaskResult.value(result);
         }
 
-        CommandLineResult lineResult = $.sys.captureBuilder("mongo " + $.var(connectionString) + " " + tempPath).run();
+        CommandLineResult<?> lineResult = $.sys.captureBuilder("mongo " + $.var(connectionString) + " " + tempPath).run();
 
         $.sys.rm(tempPath).run();
 
@@ -209,7 +209,7 @@ public class MongoDbPlugin extends Plugin {
 
     private Version computeInstalledServerVersion(SessionRunner runner) {
         try {
-            final CommandLineResult r = new CommandLineResult("mongo version", "", Result.ERROR);
+            final CommandLineResult<? extends CommandLineResult> r = new CommandLineResult("mongo version", "", Result.ERROR);
 
             if (r.getResult().nok() || StringUtils.isBlank(r.output)) {
                 return NOT_INSTALLED;

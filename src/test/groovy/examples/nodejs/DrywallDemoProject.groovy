@@ -22,7 +22,7 @@ import static bear.task.TaskResult.OK
 
 @Project(shortName =  "drywall-demo", name = "Drywall Demo Deployment")
 @Configuration(
-    properties = ".bear/drywall",
+    properties = ".bear/demos",
     stage = "u-3",
     vcs = "https://github.com/jedireza/drywall.git",
     branch = "master",

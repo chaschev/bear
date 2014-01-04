@@ -36,7 +36,7 @@ import java.util.concurrent.TimeUnit;
 * @author Andrey Chaschev chaschev@gmail.com
 */
 public class CompileManager {
-    private static final Logger logger = LoggerFactory.getLogger(CompileManager.class);
+    public static final Logger logger = LoggerFactory.getLogger(CompileManager.class);
 
     protected final File buildDir;
     protected final Compiler groovyCompiler;

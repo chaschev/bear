@@ -35,7 +35,7 @@ public class FileWatchDogPlugin extends Plugin {
 
     }
 
-    public CommandLineResult watch(final SessionContext $, final WatchDogInput input) {
+    public CommandLineResult<?> watch(final SessionContext $, final WatchDogInput input) {
         int timeoutMs = input.timeoutMs == -1 ? $.var(this.timeoutMs) : input.timeoutMs;
 
         final boolean reportExceptions = $.var(reportJavaExceptions);
@@ -64,7 +64,7 @@ public class FileWatchDogPlugin extends Plugin {
 
 
 //        logger.debug("OOOOOOOOOOOOPS - entering watch!!");
-        CommandLineResult result = $.sys.sendCommand(line);
+        CommandLineResult<?> result = $.sys.sendCommand(line);
 
 //        logger.debug("OOOOOOOOOOOOPS - leaving watch: {}!!", result);
 

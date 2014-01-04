@@ -1,5 +1,0 @@
-//!:use shell groovy {"name": "run task via Groovy example", "global":true}
-//!:set bear.verifyPlugins {"remove":true}
-//!:set bear.autoInstallPlugins {"value":true}
-
-_.runner.run(_.getGlobal().tasks.setup)

@@ -50,7 +50,7 @@ public abstract class CommandBuilder<SELF extends CommandBuilder> extends Having
         return self();
     }
 
-    public CommandLineResult run(){
+    public CommandLineResult<?> run(){
         builderMethodCalled = true;
 
         CommandLine line = asLine();
@@ -69,15 +69,15 @@ public abstract class CommandBuilder<SELF extends CommandBuilder> extends Having
         return (SELF) this;
     }
 
-    protected CommandLine<? extends CommandLineResult, ?> newLine(SessionContext $) {
+    protected CommandLine<? extends CommandLineResult<?>, ?> newLine(SessionContext $) {
         return newLine($, true);
     }
 
-    protected <T extends CommandLineResult> CommandLine<T, Script> newLine(Class<T> tClass) {
+    protected <T extends CommandLineResult<?>> CommandLine<T, Script> newLine(Class<T> tClass) {
         return (CommandLine<T, Script>) newLine($, true);
     }
 
-    protected CommandLine<? extends CommandLineResult, ?> newLine(SessionContext $, boolean useSshCallback){
+    protected CommandLine<? extends CommandLineResult<?>, ?> newLine(SessionContext $, boolean useSshCallback){
         CommandLine line = $.sys.script().line();
 
         if(isTimeoutSet()){
@@ -87,11 +87,11 @@ public abstract class CommandBuilder<SELF extends CommandBuilder> extends Having
         return forLine(line, $, useSshCallback);
     }
 
-    protected CommandLine<? extends CommandLineResult, ?> forLine(CommandLine line, SessionContext $) {
+    protected CommandLine<? extends CommandLineResult<?>, ?> forLine(CommandLine line, SessionContext $) {
         return forLine(line, $, true);
     }
 
-    protected CommandLine<? extends CommandLineResult, ?> forLine(CommandLine line, SessionContext $, boolean useSshCallback) {
+    protected CommandLine<? extends CommandLineResult<?>, ?> forLine(CommandLine line, SessionContext $, boolean useSshCallback) {
         if(cd.isPresent()){
             line.cd(cd.get());
         }

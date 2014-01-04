@@ -2,14 +2,18 @@ import bear.annotations.Configuration
 import bear.annotations.Project
 import bear.core.*
 import bear.task.TaskCallable
+import bear.annotations.Method
 
 import static bear.task.TaskResult.OK
+import static bear.task.NamedCallable.named
 
 @Project(shortName = "${dashedTitle}", name = "${spacedTitle}")
 @Configuration(
     properties = ".bear/${dashedTitle}",
     stage = "one",
-    useUI = false
+    useUI = true,
+    user = "${user}",
+    password = "${password}"
 )
 public class ${projectTitle} extends BearProject<${projectTitle}> {
     Bear bear;
@@ -18,17 +22,17 @@ public class ${projectTitle} extends BearProject<${projectTitle}> {
     protected GlobalContext configureMe(GlobalContextFactory factory) throws Exception
     {
         bear.stages.set(new Stages(global)
-            .addQuick("one", "vm01")
-            .addQuick("two", "vm01, vm02")
-            .addQuick("three", "vm01, vm02, vm03"));
+            .addQuick("one", "${host}")
+            .addQuick("two", "${host}, vm02")
+            .addQuick("three", "${host}, vm02, vm03"));
 
         return global;
     }
 
+    @Method
     def ls(){
-        run([({ _,  t, i ->
+        run([named("ls task", { _,  task ->
             println _.sys.lsQuick(".")
-            OK
         } as TaskCallable)])
     }
 

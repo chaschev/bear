@@ -25,7 +25,7 @@ import java.util.ArrayList;
 /**
 * @author Andrey Chaschev chaschev@gmail.com
 */
-public class DependencyResult extends TaskResult {
+public class DependencyResult extends TaskResult<DependencyResult> {
     public String name;
 
     @Nonnull

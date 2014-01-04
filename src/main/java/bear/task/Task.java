@@ -46,7 +46,7 @@ import static bear.session.Variables.newVar;
 /**
  * @author Andrey Chaschev chaschev@gmail.com
  */
-public class Task<I, O extends TaskResult> extends HavingContext<Task<I, O>, SessionContext> {
+public class Task<I, O extends TaskResult<?>> extends HavingContext<Task<I, O>, SessionContext> {
     private static final Logger logger = LoggerFactory.getLogger(Task.class);
 
     private Dependencies dependencies = new Dependencies();
@@ -65,7 +65,7 @@ public class Task<I, O extends TaskResult> extends HavingContext<Task<I, O>, Ses
         setExecutionContext(new TaskExecutionContext($, (Task)this));
     }
 
-    public Task(Task<Object, TaskResult> parent, TaskCallable<I, O> taskCallable) {
+    public Task(Task<Object, TaskResult<?>> parent, TaskCallable<I, O> taskCallable) {
         super(parent.$);
 
         this.taskContext = (TaskContext) parent.taskContext.dup(this, null, parent);
@@ -74,7 +74,7 @@ public class Task<I, O extends TaskResult> extends HavingContext<Task<I, O>, Ses
         setExecutionContext(new TaskExecutionContext($, (Task)this));
     }
 
-    public Task(Task<Object, TaskResult> parent, TaskDef definition, SessionContext $) {
+    public Task(Task<Object, TaskResult<?>> parent, TaskDef definition, SessionContext $) {
         super($);
 
         this.taskContext = new TaskContext<I, O>(this, parent, $, definition);
@@ -103,7 +103,7 @@ public class Task<I, O extends TaskResult> extends HavingContext<Task<I, O>, Ses
                 }
             }
         } catch (Exception e) {
-            result = (O) new TaskResult(e);
+            result = (O) TaskResult.of(e);
         } finally {
             getExecutionContext().taskResult = result;
 
@@ -128,14 +128,14 @@ public class Task<I, O extends TaskResult> extends HavingContext<Task<I, O>, Ses
         throw new UnsupportedOperationException("todo: implement or use nop() task or set callable!");
     }
 
-    private static final Task<Object, TaskResult> NOP_TASK = new Task<Object, TaskResult>(null, null, null) {
+    private static final Task<Object, TaskResult<?>> NOP_TASK = new Task<Object, TaskResult<?>>(null, null, null) {
         @Override
-        protected TaskResult exec(SessionRunner runner) {
+        protected TaskResult<?> exec(SessionRunner runner) {
             return TaskResult.OK;
         }
     };
 
-    public static Task<Object, TaskResult> nop() {
+    public static Task<Object, TaskResult<?>> nop() {
         return NOP_TASK;
     }
 
@@ -157,16 +157,16 @@ public class Task<I, O extends TaskResult> extends HavingContext<Task<I, O>, Ses
         return this;
     }
 
-    public <T extends CommandLineResult> void onCommandExecutionStart(AbstractConsoleCommand<T> command) {
+    public <T extends CommandLineResult<?>> void onCommandExecutionStart(AbstractConsoleCommand<T> command) {
         getExecutionContext().addNewCommand(command);
     }
 
-    public <T extends CommandLineResult> void onCommandExecutionEnd(AbstractConsoleCommand<T> command, T result) {
+    public <T extends CommandLineResult<?>> void onCommandExecutionEnd(AbstractConsoleCommand<T> command, T result) {
         getExecutionContext().onEndCommand(command, result);
     }
 
     @Nullable
-    public Task<Object, TaskResult> getParent() {
+    public Task<Object, TaskResult<?>> getParent() {
         return taskContext.parent;
     }
 
@@ -176,7 +176,7 @@ public class Task<I, O extends TaskResult> extends HavingContext<Task<I, O>, Ses
     }
 
     public boolean isRootTask() {
-        Task<Object, TaskResult> parent = getParent();
+        Task<Object, TaskResult<?>> parent = getParent();
         return parent == null || parent.getDefinition() == TaskDef.ROOT;
     }
 
@@ -237,11 +237,11 @@ public class Task<I, O extends TaskResult> extends HavingContext<Task<I, O>, Ses
         taskContext.runner = runner;
     }
 
-    public ComputingGrid<SessionContext, BearScriptPhase<Object, TaskResult>> getGrid() {
+    public ComputingGrid<SessionContext, BearScriptPhase<Object, TaskResult<?>>> getGrid() {
         return taskContext.grid;
     }
 
-    public void setGrid(ComputingGrid<SessionContext, BearScriptPhase<Object, TaskResult>> grid) {
+    public void setGrid(ComputingGrid<SessionContext, BearScriptPhase<Object, TaskResult<?>>> grid) {
         taskContext.grid = grid;
     }
 
@@ -298,19 +298,19 @@ public class Task<I, O extends TaskResult> extends HavingContext<Task<I, O>, Ses
         aggregateRelatively(-1, Object.class).get(timeout, unit);
     }
 
-    public static TaskCallable<Object, TaskResult> awaitOthersCallable(final int timeout, final TimeUnit unit) {
+    public static TaskCallable<Object, TaskResult<?>> awaitOthersCallable(final int timeout, final TimeUnit unit) {
         return awaitOthersCallable(newVar(timeout), unit);
     }
 
-    public static TaskCallable<Object, TaskResult> awaitOthersCallable(final DynamicVariable<Integer> timeout, final TimeUnit unit) {
-        return new TaskCallable<Object, TaskResult>() {
+    public static TaskCallable<Object, TaskResult<?>> awaitOthersCallable(final DynamicVariable<Integer> timeout, final TimeUnit unit) {
+        return new TaskCallable<Object, TaskResult<?>>() {
             @Override
-            public TaskResult call(SessionContext $, Task<Object, TaskResult> task) throws Exception {
+            public TaskResult<?> call(SessionContext $, Task<Object, TaskResult<?>> task) throws Exception {
                 try {
                     task.awaitOthers($.var(timeout), unit);
                     return TaskResult.OK;
                 } catch (TimeoutException e) {
-                    return new TaskResult(new Exception("timeout while waiting for parties"));
+                    return TaskResult.error("timeout while waiting for parties");
                 }
             }
         };

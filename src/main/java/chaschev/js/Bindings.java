@@ -241,7 +241,11 @@ public class Bindings {
 
     public Object newInstance(String className, boolean strictly, Object... params) {
         try {
-            return OpenBean.newByClass(className, strictly, params);
+            if(strictly){
+                return OpenBean.newByClassStrict(className, params);
+            }else{
+                return OpenBean.newByClass(className, params);
+            }
         } catch (Exception e) {
             return new ExceptionWrapper(e, "className: " + className + ", params: " + Arrays.asList(params));
         }

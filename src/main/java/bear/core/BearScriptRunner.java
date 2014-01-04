@@ -62,10 +62,10 @@ public class BearScriptRunner {
 
         final BearScriptItemConverter scriptExecContext = new BearScriptItemConverter(global);
 
-        List<TaskDef<Object, TaskResult>> taskList = newArrayList(transform(scriptItems, new Function<ScriptItem, TaskDef<Object, TaskResult>>() {
+        List<TaskDef<Object, TaskResult<?>>> taskList = newArrayList(transform(scriptItems, new Function<ScriptItem, TaskDef<Object, TaskResult<?>>>() {
             @Nullable
             @Override
-            public TaskDef<Object, TaskResult> apply(ScriptItem scriptItem) {
+            public TaskDef<Object, TaskResult<?>> apply(ScriptItem scriptItem) {
                 return scriptExecContext.convertItemToTask(scriptItem);
             }
         }));
@@ -73,14 +73,14 @@ public class BearScriptRunner {
         return exec(taskList, interactive);
     }
 
-    public RunResponse exec(List<TaskDef<Object, TaskResult>> taskList, boolean interactive) {
+    public RunResponse exec(List<TaskDef<Object, TaskResult<?>>> taskList, boolean interactive) {
         GridBuilder gridBuilder = new GridBuilder().addAll(taskList);
 
         return exec(gridBuilder, interactive);
     }
 
     public RunResponse exec(GridBuilder gridBuilder, boolean interactive) {
-        List<Phase<TaskResult,BearScriptPhase<Object, TaskResult>>> phases = gridBuilder.build();
+        List<Phase<TaskResult<?>,BearScriptPhase<Object, TaskResult<?>>>> phases = gridBuilder.build();
 
 
         if (interactive) {

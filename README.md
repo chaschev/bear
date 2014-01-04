@@ -1,38 +1,124 @@
 # Welcome the Bear!
 
-Bear is a lightweight framework and a deployment tool for Java. It's main goal is to make your deployment a programming task by using OOP, static types and fluent programming techniques which one find in many modern languages and libraries. Bear first started as a Capistrano clone, but then grew into a different project.
+Bear is a lightweight framework and a deployment tool for Java. Bear differs from other existing tools by trying remind regular programming experience and uses OOP, static types and fluent programming techniques. Bear first started as a Capistrano clone, but then grew into a different project.
 
-Bear is in it's early development stages now. Questions, concerns? Just drop me a line at chaschev@gmail.com.
+Bear has been released on January 4th, 2014 and is considered being alpha quality. It contains several integration tests which deploy popular projects hosted on Github written with using different programming languages and technologies - i.e Node.js, Grails, Play! Framework. You will find instructions on how to start them below.
+
+Questions, concerns, feature requests? Just drop me a line at chaschev@gmail.com.
 
 ### Bear Highlights
 
 * Syntax completion in IDEs, static type safety and OOP approach (see demos below)
 * Dynamic scripting with Groovy (@CompileStatic for strict Java-like mode)
-* Debugging in IDEs and script unit-testing
+* Debugging in IDEs and (planned) script unit-testing
 * Fast, parallel execution framework
 * Desktop UI app to monitor running tasks (Twitter Bootstrap 3)
 * A single project definition file driven by annotations and convention over configuration
 * Scripts can be edited in UI and in IDEs (by importing through Maven)
-* Lambda-based configuration, session/global evaluation context for variables
+* Configuration is driven by variables any of which can be redefined globally or for a single host.
+* Techonolies supported: Node.js, Grails, Play! Framework, Tomcat, upstart scripts.
 * (planned) JavaScript, Ruby and Python support
 * Takes some of the ideas from Capistrano
 
-### Road Map for Release 1.0a1 (for CentOS 6.4)
+### Quick Start 
 
-| Step                                         | State          |
-| -------------------------------------------- |:--------------:|
-| Git, Upstart, MongoDB and MySQL plugins      | Finished.      |
-| Test deployment rollbacks and db dumps       | Finished.      |
-| Node.js deployment demo - Drywall, ExpressMongoose  | Finished.      |
-| Grails/Tomcat deployment demo                | Finished.      |
-| Node.js/Java three-hosts deployment          | Finished.      |
-| Installer, launcher                          | Finished.      |
-| Support Ubuntu                               | Finished.      |
-| Integration & unit tests                     | Finished.      |
-| UI bugfixing                                 | Finished.      |
-| Refactoring, simplifying API                 | Finished.      |
-| Finishing TODOs                              | Finished.      |
-| Quick Start Tutorial                         | In progress... |
+In this tutorial you'll learn how to prepare your environment for running Bear projects.
+
+#### Prerequisites
+
+* A remote Unix machine with standard password authentication. Ubuntu and CentOS are supported. A clean installation of these should be just fine.
+* JDK 6 installed. JDK 7+ is required to run the UI, JDK 8+ is recommended to run the UI as it contains bugfixes and runs Nashorn which won't be there in JDK 7. [[Get Java 7]](http://www.oracle.com/technetwork/java/javase/downloads/jdk7-downloads-1880260.html) [[Get Java 8]](https://jdk8.java.net/download.html)
+* Maven 3+. `mvn` must be available in the command line. [How to install Maven on Windows](http://www.mkyong.com/maven/how-to-install-maven-in-windows/).
+ 
+#### Running the demo: list a remote directory
+
+First, install Bear by running (admin rights might be necessary) in your command line:
+
+```sh
+$ mvn com.chaschev:installation-maven-plugin:1.4:install -Dartifact=com.chaschev:bear
+```
+   
+Then, in your existing project which you want to deploy or just in an empty folder:
+
+```sh
+$ cd my-project
+$ bear --create my --user my-actual-ssh-user --password my-actual-password --host my-remote-host
+```
+    
+This will create a folder `.bear` with an auto-generated project. Note: password storage is unsafe in the current version. If you want to store your password locally in a file, you might want to edit `.bear/my.properties` file.
+
+```sh
+Created project file: .bear\MyProject.groovy
+Created Maven pom: .bear\pom.xml
+```
+    
+To quickly check the setup, run:
+
+```sh
+$ bear my.ls
+```
+    
+The UI should launch and on the `my-remote-host` you should find the list of your remote directories.
+
+![Configuration Sample][uiLs]
+
+[uiLs]: https://raw.github.com/chaschev/bear/master/doc/img/bear-ui-ls.png
+
+Command line `bear my.ls` simply runs the predefined method `ls()` in the generated project:
+
+```groovy
+@Method
+def ls(){
+    run([named("ls task", { _,  task ->
+        println _.sys.lsQuick(".")
+    } as TaskCallable)])
+}
+```
+    
+This looks a bit cryptic at first site, but the IDE should guide you through all the syntax troubles. Everything in the example is static ("normal Java"), so jumping to a method declaraion/definition should work fine. In Intellij you do this by pressing `F4`  Idea you will jump to a method definition, `Ctrl+Shift+Space` and `.` will give you completion suggestions. `_` is a session context variable, Bear's entry point, similar to `$` in jQuery.
+
+From now the preferred way is to import this `pom.xml` as a Java project in your favourite Java IDE.
+
+#### Run smoke tests
+
+To check that your setup is ok, run in your command line:
+
+```sh
+$ bear --unpack-demos
+```
+
+Next, open a file `.bear/examples/demo/SmokeProject.groovy` and edit it to reflect your environment. Then type
+
+To run in console:
+
+```sh
+$ bear smoke.runTests -q
+```
+
+To run with UI:
+
+```sh
+$ bear smoke.runTests --ui
+```
+
+#### Running demo projects
+
+Demo projects stored in `.bear/examples` can be used as a bootstrap for your own projects. Each of these demos can be run the same way as the smoke tests were run. They all use open source projects stored at Github and should require only changes made to the stages.
+
+Example:
+
+```sh
+$ bear drywall.setup  --ui
+$ bear drywall.deploy --ui
+```
+
+TODO: add reference on deployment management quick start.
+
+#### Notes
+
+Tip for advanced users: you can also add Bear as a regular Maven dependency and use it as a jar. Your deployments can be run by `new MyProject().myDeployMethod()` - all needed configuration will be read from class annotations or from the environment variables and property files.
+
+In case you want to install the latest development version, add `-Dshapshots=true -U` flags to the Maven command line above.
 
 
 ### Project Samples
@@ -179,12 +265,28 @@ Third command will fix JavaFX installation to be available on classpath. You mig
 
 Bear has a UI written in AngularJS inside a JavaFX's WebView. It's probably the first AngularJS desktop app. :-) It has  a code editor with code completion for script editing and many panes and triggers to monitor deployment execution over your hosts.
 
+### Road Map for Release 1.0a1 (for CentOS 6.4)
+
+| Step                                         | State          |
+| -------------------------------------------- |:--------------:|
+| Git, Upstart, MongoDB and MySQL plugins      | Finished.      |
+| Test deployment rollbacks and db dumps       | Finished.      |
+| Node.js deployment demo - Drywall, ExpressMongoose  | Finished.      |
+| Grails/Tomcat deployment demo                | Finished.      |
+| Node.js/Java three-hosts deployment          | Finished.      |
+| Installer, launcher                          | Finished.      |
+| Support Ubuntu                               | Finished.      |
+| Integration & unit tests                     | Finished.      |
+| UI bugfixing                                 | Finished.      |
+| Refactoring, simplifying API                 | Finished.      |
+| Finishing TODOs                              | Finished.      |
+| Quick Start Tutorial                         | Finished.      |
+
+
 ### Road Map for Release 1.0a2 (+ Ubuntu Server, localhost, Cloud)
 
 | Step                                              | State          |
 | ------------------------------------------------- |:--------------:|
-| Quick Start tutorial                              |                |
-| Support Debian/Ubuntu Server                      |                |
 | Support localhost                                 |                |
 | JavaScript, sample project                        |                |
 | Ruby, RoR demo, sample project                    |                |

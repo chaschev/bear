@@ -1,5 +1,9 @@
 top priority:
 
+- use-ui don't work
+- password works only from the annotations
+
+- (ok) fix fx-properties template
 - (ok) recheck demos with CentOS
 - (ok) Ubuntu
 - (ok) Refactor
