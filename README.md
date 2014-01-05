@@ -75,11 +75,11 @@ def ls(){
 }
 ```
     
-This looks a bit cryptic at first site, but the IDE should guide you through all the syntax troubles. Everything in the example is static ("normal Java"), so jumping to a method declaraion/definition should work fine. In Intellij you do this by pressing `F4`  Idea you will jump to a method definition, `Ctrl+Shift+Space` and `.` will give you completion suggestions. `_` is a session context variable, Bear's entry point, similar to `$` in jQuery.
+This looks a bit cryptic at first site, but the IDE should guide you through all the syntax troubles. Everything in the example is static ("this is normal Java"), so jumping to a method declaraion/definition should work fine. For example, in Intellij Idea pressing `F4` jumps to a method definition, `Ctrl+Shift+Space` and `.` will give you completion suggestions and `Alt+Enter` will help you to convert anonymous class to a closure. `_` is a session context variable, Bear's entry point, similar to `$` in jQuery.
 
 From now the preferred way is to import this `pom.xml` as a Java project in your favourite Java IDE.
 
-#### Run smoke tests
+#### Running smoke tests to check configuration
 
 To check that your setup is ok, run in your command line:
 
@@ -87,19 +87,28 @@ To check that your setup is ok, run in your command line:
 $ bear --unpack-demos
 ```
 
-Next, open a file `.bear/examples/demo/SmokeProject.groovy` and edit it to reflect your environment. Then type
+Next, open a file `.bear/examples/demo/SmokeProject.groovy` and edit it's stages to reflect your environment. Then type
 
-To run in console:
+to run in console:
 
 ```sh
 $ bear smoke.runTests -q
 ```
 
-To run with UI:
+to run with UI:
 
 ```sh
 $ bear smoke.runTests --ui
 ```
+
+If in your output you see lines like:
+
+```
+command execution time: 44.2ms/command
+finished: Stats{time: "8.8s", partiesArrived: 2, partiesOk: 2, partiesPending: 0, partiesFailed: 0}
+```
+
+then your setup is complete.
 
 #### Running demo projects
 

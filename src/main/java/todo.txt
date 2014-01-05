@@ -1,6 +1,14 @@
 top priority:
 
-- use-ui don't work
+- Idea Guide
+- Bear configuration and workspace
+-- How to setup variables
+-- How to work with contexts
+-- Where the logs are stored
+- Deployment Management Guide
+- Parallel execution examples tutorial
+
+- (ok) use-ui don't work
 - password works only from the annotations
 
 - (ok) fix fx-properties template
@@ -34,6 +42,8 @@ top priority:
 -- (schedule to v1.2) sometimes there is duplicate output (when doing `ls -w 1 -a `)
 
 
+- Bear distributed workers - Akka? ((schedule to v2.0))
+-
 - (ok) smoke tests:
 -- (ok) releases plugin test (dump files)
 -- (ok) test params passing
