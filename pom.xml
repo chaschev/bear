@@ -1,7 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
@@ -12,7 +10,7 @@
 
     <groupId>com.chaschev</groupId>
     <artifactId>bear</artifactId>
-    <version>1.0.0-SNAPSHOT</version>
+    <version>1.0.0</version>
     <packaging>jar</packaging>
 
     <scm>
@@ -47,7 +45,7 @@
         <aetherVersion>0.9.0.M3</aetherVersion>
         <mavenVersion>3.1.1</mavenVersion>
         <timestamp>${maven.build.timestamp}</timestamp>
-        <firebug.script></firebug.script>
+        <firebug.script />
         <project.env>production</project.env>
     </properties>
 
@@ -352,11 +350,10 @@
                         <configuration>
                             <target>
                                 <fileset id="examples-fileset" dir="src/test/groovy">
-                                    <include name="examples/**/*.*"/>
+                                    <include name="examples/**/*.*" />
                                 </fileset>
-                                <pathconvert targetos="unix" pathsep="::"
-                                             property="my-file-list" refid="examples-fileset">
-                                    <map from="${basedir}/src/test/groovy" to=""/>
+                                <pathconvert targetos="unix" pathsep="::" property="my-file-list" refid="examples-fileset">
+                                    <map from="${basedir}/src/test/groovy" to="" />
                                 </pathconvert>
                                 <echo file="${basedir}/src/main/resources/demoFiles.txt">${my-file-list}</echo>
                             </target>
