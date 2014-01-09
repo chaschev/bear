@@ -218,6 +218,7 @@ public class DeploymentPlugin extends Plugin {
             }
         }
 
+        //todo remove
         public class UpdateLinks extends DeploymentStep<UpdateLinks> {
             protected Symlinks symlinks = new Symlinks();
 

@@ -242,6 +242,10 @@ public class TaskDef<I, O extends TaskResult<?>>{
         return name == null ? getClass().getSimpleName() + "@" + hashCode() : name;
     }
 
+    public boolean isNamed(){
+        return name != null;
+    }
+
     public String getDisplayName() {
         String name = this.name == null ? defaultName() : this.name;
         return name + (roles.isEmpty() ? "" : " with roles: " + roles);

@@ -16,6 +16,7 @@
 
 package bear.task;
 
+import bear.context.DependencyInjection;
 import bear.core.Bear;
 import bear.core.BearProject;
 import bear.core.GlobalContext;
@@ -39,16 +40,19 @@ public class Tasks {
         this.global = global;
         this.bear = global.bear;
         Preconditions.checkNotNull(bear);
+
+        DependencyInjection.nameVars(this, global);
     }
 
-    public final TaskDef restartApp = new TaskDef<Object, TaskResult<?>>("Restart App", new SingleTaskSupplier<Object, TaskResult<?>>() {
+    public final TaskDef restartApp = new TaskDef<Object, TaskResult<?>>(new SingleTaskSupplier<Object, TaskResult<?>>() {
         @Override
         public Task<Object, TaskResult<?>> createNewSession(SessionContext $, Task<Object, TaskResult<?>> parent, TaskDef<Object, TaskResult<?>> def) {
             return Task.nop();
         }
     });
 
-    public final InstallationTaskDef<InstallationTask> setup = new InstallationTaskDef<InstallationTask>(new SetupTaskSupplier())  .setName("Generic Setup")
+    public final InstallationTaskDef<InstallationTask> setup = new InstallationTaskDef<InstallationTask>(new SetupTaskSupplier())
+        .setName("tasks.setup(main setup)")
         .setSetupTask(true);
 
 

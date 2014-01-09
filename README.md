@@ -1,8 +1,8 @@
 # Welcome the Bear!
 
-Bear is a lightweight framework and a deployment tool for Java. Bear differs from other existing tools by trying remind regular programming experience and uses OOP, static types and fluent programming techniques. Bear first started as a Capistrano clone, but then grew into a different project.
+Bear is a lightweight remote automation tool for Java. Bear differs from other existing deployment tools by using OOP, static types and fluent programming techniques. It first started as a Capistrano clone, but then grew into a different project.
 
-Bear has been released on January 4th, 2014 and is considered being alpha quality. It contains several integration tests which deploy popular projects hosted on Github written with using different programming languages and technologies - i.e Node.js, Grails, Play! Framework. You will find instructions on how to start them below.
+Bear has been released on January 4th, 2014 and is considered being alpha quality. It contains several integration tests which deploy popular projects hosted on Github written with using different programming languages and technologies - i.e Node.js, Grails, Play! Framework. You will find instructions in the [Quick Start Guide](https://github.com/chaschev/bear/wiki/2.1.1.-Creating-and-running-a-new-project).
 
 Questions, concerns, feature requests? Just drop me a line at chaschev@gmail.com.
 
@@ -16,15 +16,15 @@ Questions, concerns, feature requests? Just drop me a line at chaschev@gmail.com
 * A single project definition file driven by annotations and convention over configuration
 * Scripts can be edited in UI and in IDEs (by importing through Maven)
 * Configuration is driven by variables any of which can be redefined globally or for a single host.
-* Techonolies supported: Node.js, Grails, Play! Framework, Tomcat, upstart scripts.
+* Technologies supported: Node.js, Grails, Play! Framework 2, Tomcat, upstart scripts.
 * (planned) JavaScript, Ruby and Python support
 * Takes some of the ideas from Capistrano
 
 ### Quick Start 
 
-In this tutorial you'll learn how to prepare your environment for running Bear projects.
-
 #### Prerequisites
+
+In this tutorial you'll learn how to prepare your environment for running Bear projects.
 
 * A remote Unix machine with standard password authentication. Ubuntu and CentOS are supported. A clean installation of these should be just fine.
 * JDK 6 installed. JDK 7+ is required to run the UI, JDK 8+ is recommended to run the UI as it contains bugfixes and runs Nashorn which won't be there in JDK 7. [[Get Java 7]](http://www.oracle.com/technetwork/java/javase/downloads/jdk7-downloads-1880260.html) [[Get Java 8]](https://jdk8.java.net/download.html)

@@ -13,6 +13,7 @@ import com.google.common.base.Supplier
 
 import java.util.concurrent.Callable
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
 
 import static bear.core.Role.db
@@ -88,29 +89,29 @@ public class TestProject extends BearProject<TestProject> {
         final TestProject project = new TestProject()
             .setShutdownAfterRun(false)
 
-//        def setupNeeded = new AtomicBoolean(false)
-//
-//        project.run([{_, task ->
-//            if (!_.sys.exists(_.var(_.bear.applicationPath))) {
-//                setupNeeded.set(true)
-//            }
-//
-//            _.sys.rm(_.var(project.releases.path)).run()
-//        } as TaskCallable])
-//
-//
-//        if (setupNeeded.get()) {
-//            project.setup()
-//        }
+        def setupNeeded = new AtomicBoolean(false)
+
+        project.run([{_, task ->
+            if (!_.sys.exists(_.var(_.bear.applicationPath))) {
+                setupNeeded.set(true)
+            }
+
+            _.sys.rm(_.var(project.releases.path)).run()
+        } as TaskCallable])
+
+
+        if (setupNeeded.get()) {
+            project.setup()
+        }
 
         //these are copy-pasted with slight changes
-//        project.invoke('referencingPhasesAndAccessingFutures_Test')
+        project.invoke('syncingPhases_Test')
 //        project.invoke('rolesAndHosts_Test')
 //        project.invoke('syncingPhases_Test')
 //        project.invoke('errorInOne_Checkout');
 //        project.invoke('errorInOne_Start');
 //        project.invoke('errorInAll_Checkout');
-        project.invoke('deploy');
+//        project.invoke('deploy');
 
         project.global.shutdown()
     }
@@ -206,37 +207,34 @@ public class TestProject extends BearProject<TestProject> {
 
 
     @Configuration(stage = "u-2")
-    public void  syncingPhases_Test()
+    public void syncingPhases_Test()
     {
         useAnnotations = false
 
-        def (String host1, String host2) = global.var(bear.getStage).addresses.collect { it.name }
+//        def (String host1, String host2) = global.var(bear.getStage).addresses.collect { it.name }
 
         def ph1 = named("ph1", { _, task ->
-            [
-                (host1) : {Thread.sleep(500); result("h1, ph1")},
-                (host2) : {                   result("h2, ph1")}
-            ].get(_.name)();
+            switch(_.name){
+                case 'vm01': Thread.sleep(500); return result("h1, ph1")
+                case 'vm02':                    return result("h2, ph1")
+            }
         } as TaskCallable<Void, ValueResult<String>>)
 
         def ph2 = named("ph2", { _, task ->
-            [
-                (host1) : {_.getPreviousResult(ph1)},
-                (host2) : {
-                    assertThat(_.future(ph1, host1).isDone()).isFalse()
-                    def r = _.future(ph1, host1).get().value + ", h2, ph2"
-                    assertThat(_.future(ph1, host1).isDone()).isTrue()
+            switch (_.name){
+                case 'vm01': return _.getPreviousResult(ph1);
+                case 'vm02':
+                    // this will wait for vm01 to complete the operation
+                    def r = _.future(ph1, 'vm01').get().value + ", h2, ph2"
 
-                    result(r)
-                }
-            ].get(_.name)();
-
+                    return result(r)
+            }
         } as TaskCallable<Void, ValueResult<String>>)
 
-        GlobalTaskRunner runner = run([ph1, ph2])
+        def runner = run([ph1, ph2])
 
-        assertThat(runner.result(ph2, host1).value).isEqualTo("h1, ph1")
-        assertThat(runner.result(ph2, host2).value).isEqualTo("h1, ph1, h2, ph2")
+        assertThat(runner.result(ph2, 'vm01').value).isEqualTo("h1, ph1")
+        assertThat(runner.result(ph2, 'vm02').value).isEqualTo("h1, ph1, h2, ph2")
     }
 
     @Configuration(stage = "u-2")

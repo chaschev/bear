@@ -40,7 +40,19 @@ public class SessionRunner extends HavingContext<SessionRunner, SessionContext>{
     public final GlobalContext global;
     public final Bear bear;
     public Function<Task<Object, TaskResult<?>>, Task<Object, TaskResult<?>>> taskPreRun; //a hack
+
     private TaskResult<?> myLastResult;
+    private TaskResult<?> myLastRollbackResult;
+
+    private State state = State.NOT_RUNNING;
+
+    //
+    private static enum State{
+        NOT_RUNNING, // -> RUNNING
+        RUNNING,     // -> ROLLBACK, FINISHED
+        ROLLBACK,    // -> FINISHED
+        FINISHED
+    }
 
     public SessionRunner(SessionContext $, GlobalContext global) {
         super($);
@@ -71,9 +83,11 @@ public class SessionRunner extends HavingContext<SessionRunner, SessionContext>{
     }
 
 
-    //////
+    // a protected entry point
 
     protected TaskResult<?> runWithDependencies(TaskDef taskDef) {
+        if(state == State.NOT_RUNNING) state = State.RUNNING;
+
         logger.info("starting task '{}'", taskDef.name);
 
         if (tasksExecuted.contains(taskDef)) {
@@ -83,9 +97,25 @@ public class SessionRunner extends HavingContext<SessionRunner, SessionContext>{
         TaskResult<?> last =
             runCollectionOfTasks(taskDef.dependsOnTasks, taskDef.name + ": depending tasks", false);
 
+        TaskResult<?> myResult = TaskResult.OK;
+
         last = last.nok() ? last : runCollectionOfTasks(taskDef.beforeTasks, taskDef.name + ": before tasks", false);
-        last = last.nok() ? last : (myLastResult = runMe(taskDef));
+        last = last.nok() ? last : (myResult = runMe(taskDef));
         last = last.nok() ? last : runCollectionOfTasks(taskDef.afterTasks, taskDef.name + ": after tasks", false);
+
+        if(state != State.ROLLBACK){
+            myLastResult = myResult;
+        } else{
+            myLastRollbackResult = myResult;
+        }
+
+        if(!myResult.ok()){
+            logger.warn("running rollback for task: {}", taskDef);
+
+            state = State.ROLLBACK;
+
+            taskDef.runRollback(this);
+        }
 
         return last;
     }
@@ -137,9 +167,6 @@ public class SessionRunner extends HavingContext<SessionRunner, SessionContext>{
                     result = runSession(taskSession);
 
                     if(!result.ok()){
-                        logger.warn("running rollback for task: {}", taskDef);
-                        taskDef.runRollback(this);
-
                         return result;
                     }
                 }
@@ -209,5 +236,9 @@ public class SessionRunner extends HavingContext<SessionRunner, SessionContext>{
 
     public TaskResult<?> getMyLastResult() {
         return myLastResult;
+    }
+
+    public TaskResult<?> getMyLastRollbackResult() {
+        return myLastRollbackResult;
     }
 }

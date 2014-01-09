@@ -991,7 +991,7 @@ app.controller('BearCtrl', ['fileManager', '$scope', function (fileManager, $sco
         var n = noty({
             layout: e.position || 'topRight',
             text: "<b>" + (e.title == null ? '' : e.title + ": ") + "</b>" + e.message,
-            timeout: e.timeout || 10000,
+            timeout: e.timeout || 15000,
             type: className,
             maxVisible: 9
         });

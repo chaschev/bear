@@ -197,7 +197,9 @@ public class SessionContext extends AbstractContext {
 
         TaskExecutionContext execCtx2 = execCtx.getDefaultValue();
 
-        boolean isOk = execCtx2.taskResult.ok();
+        TaskResult<?> myLastResult = runner.getMyLastResult();
+
+        boolean isOk = myLastResult.ok();
 
         globalTaskRunner.stats.getDefaultValue().addArrival(isOk);
         globalTaskRunner.stats.fireExternalModification();
@@ -205,7 +207,7 @@ public class SessionContext extends AbstractContext {
         globalTaskRunner.arrivedCount.getDefaultValue().incrementAndGet();
         globalTaskRunner.arrivedCount.fireExternalModification();
 
-        BearMain.ui.info(new PartyFinishedEventToUI(getName(), execCtx2.getDuration(), execCtx2.taskResult));
+        BearMain.ui.info(new PartyFinishedEventToUI(getName(), execCtx2.getDuration(), myLastResult, runner.getMyLastRollbackResult()));
     }
 
     public void cancel() {

@@ -92,7 +92,7 @@ public class DrywallDemoProject extends BearProject<DrywallDemoProject> {
 
     static main(args)
     {
-        new DrywallDemoProject().setup()
+        new DrywallDemoProject().stop()
     }
 
     public GlobalTaskRunner setup()

@@ -1,12 +1,13 @@
 top priority:
 
-- Idea Guide
+- (ok) Idea Guide
+- ok/nok reporting is broken, rollback must mean that task failed
 - Bear configuration and workspace
 -- How to setup variables
 -- How to work with contexts
 -- Where the logs are stored
 - Deployment Management Guide
-- Parallel execution examples tutorial
+- (ok) Parallel execution examples tutorial
 
 - (ok) use-ui don't work
 - password works only from the annotations
@@ -43,7 +44,6 @@ top priority:
 
 
 - Bear distributed workers - Akka? ((schedule to v2.0))
--
 - (ok) smoke tests:
 -- (ok) releases plugin test (dump files)
 -- (ok) test params passing

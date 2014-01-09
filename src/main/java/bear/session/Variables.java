@@ -251,8 +251,8 @@ public class Variables {
         return new DynamicVariable<T>(name, desc).setDynamic(function);
     }
 
-    public static DynamicVariable<String> enumConstant(String name, final String desc, final String... options) {
-        return new DynamicVariable<String>(name, desc) {
+    public static DynamicVariable<String> enumConstant(final String desc, final String... options) {
+        return new DynamicVariable<String>(desc) {
             @Override
             public void validate(String value) {
                 if (!ArrayUtils.contains(options, value)) {

@@ -65,7 +65,7 @@ public abstract class ServerToolPlugin extends ZippedToolPlugin {
         user = equalTo(bear.sshUsername),
         group = equalTo(bear.sshUsername),
         userWithGroup = concat(user, ".", group),
-        multiServiceName = concat(bear.name, "_%s"),
+        multiServiceName = concat(bear.name, "-%s"),
         singleServiceName = equalTo(bear.name),
         groupName = equalTo(bear.name),
         envString = newVar("production"),

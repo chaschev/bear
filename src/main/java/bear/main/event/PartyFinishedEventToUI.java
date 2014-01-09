@@ -24,12 +24,14 @@ import bear.task.TaskResult;
 public class PartyFinishedEventToUI extends ConsoleEventToUI {
     public long duration;
     public final TaskResult<?> result;
+    public final TaskResult<?> rollbackResult;
 
-    public PartyFinishedEventToUI(String console, long duration, TaskResult<?> result) {
+    public PartyFinishedEventToUI(String console, long duration, TaskResult<?> result, TaskResult<?> rollbackResult) {
         super(console, "partyFinished");
 
         this.duration = duration;
         this.result = result;
+        this.rollbackResult = rollbackResult;
     }
 
     @Override

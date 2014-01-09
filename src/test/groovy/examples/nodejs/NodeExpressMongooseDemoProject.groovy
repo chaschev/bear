@@ -23,7 +23,7 @@ import static bear.task.TaskResult.OK
 @Project(shortName = "express-demo", name = "Node Express Mongoose Demo Deployment")
 @Configuration(
     properties = ".bear/demos",
-    stage = "u-3",
+    stage = "u-1",
     vcs = "https://github.com/chaschev/node-express-mongoose-demo.git",
     branch = "master",
     useUI = true,

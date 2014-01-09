@@ -86,34 +86,34 @@ public class Bear extends BearApp<GlobalContext> {
         }
     });
 
-    public final DynamicVariable<String>
+public final DynamicVariable<String>
 
-        sshUsername = dynamic(new VarFun<String, SessionContext>() {
-            @Override
-            public String apply(SessionContext $) {
-                String username  = $.getProperty($.concat(sessionHostname, ".username"));
+    sshUsername = dynamic(new VarFun<String, SessionContext>() {
+        @Override
+        public String apply(SessionContext $) {
+            String username  = $.getProperty($.concat(sessionHostname, ".username"));
 
-                if(username == null){
-                    username = $.getProperty(var.name());
-                }
-
-                return username;
+            if(username == null){
+                username = $.getProperty(var.name());
             }
-        }),
-        sshPassword = dynamic(new VarFun<String, SessionContext>() {
-            @Override
-            public String apply(SessionContext $) {
-                String username = $.getGlobal().getProperty($.concat(sessionHostname, ".password"));
 
-                if (username == null) {
-                    username = $.getGlobal().getProperty(var.name());
-                }
+            return username;
+        }
+    }),
+    sshPassword = dynamic(new VarFun<String, SessionContext>() {
+        @Override
+        public String apply(SessionContext $) {
+            String username = $.getGlobal().getProperty($.concat(sessionHostname, ".password"));
 
-                return username;
+            if (username == null) {
+                username = $.getGlobal().getProperty(var.name());
             }
-        }),
+
+            return username;
+        }
+    }),
         appUsername = equalTo(sshUsername),
-        stage = strVar("Stage to deploy to"),
+        stage = dynamic("Stage to deploy to"),
         repositoryURI = strVar("Project VCS URI"),
 //        vcsType = enumConstant("vcsType", "Your VCS type", "svn", "git"),
         vcsUsername = equalTo(sshUsername),
@@ -128,7 +128,7 @@ public class Bear extends BearApp<GlobalContext> {
 
     sharedDirName = strVar("").defaultTo("shared"),
 
-    devEnvironment = enumConstant("devEnvironment", "Development environment", "dev", "test", "prod").defaultTo("prod"),
+    devEnvironment = enumConstant("Development environment", "dev", "test", "prod").defaultTo("prod"),
 
     revision = strVar("Get head revision").setDynamic(new Fun<SessionContext, String>() {
         public String apply(SessionContext $) {
