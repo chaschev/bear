@@ -1,5 +1,10 @@
 top priority:
 
+- Update README.md
+- Play issue
+- Redo quick start guide
+- Install to maven central
+- Create articles
 - (ok) Idea Guide
 - (ok) ok/nok reporting is broken, rollback must mean that task failed
 - Bear configuration and workspace
@@ -12,7 +17,7 @@ top priority:
 - (ok) use-ui don't work
 - password works only from the annotations
 
--
+
 - (ok) fix fx-properties template
 - (ok) recheck demos with CentOS
 - (ok) Ubuntu
@@ -42,6 +47,7 @@ top priority:
 - (schedule to v1.1) ui: problems getting list of loaded plugins
 - (schedule to v1.1) test that debug is understandable
 -- (schedule to v1.2) sometimes there is duplicate output (when doing `ls -w 1 -a `)
+- (Bear 2) - integration: run as shell scripts: #!bear --project-dir=<path> my.deploy
 
 
 - Bear distributed workers - Akka? ((schedule to v2.0))

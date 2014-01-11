@@ -2,9 +2,15 @@
 
 Bear is a lightweight remote automation tool for Java. Bear differs from other existing deployment tools by using OOP, static types and fluent programming techniques. It first started as a Capistrano clone, but then grew into a different project.
 
-Bear has been released on January 4th, 2014 and is considered being alpha quality. It contains several integration tests which deploy popular projects hosted on Github written with using different programming languages and technologies - i.e Node.js, Grails, Play! Framework. You will find instructions in the [Quick Start Guide](https://github.com/chaschev/bear/wiki/2.1.1.-Creating-and-running-a-new-project).
+First version of Bear has been released on January 12th, 2014 and is a work in progress.
 
-Questions, concerns, feature requests? Just drop me a line at chaschev@gmail.com.
+To quickly start using the Bear, check out the [Quick Start Guide](https://github.com/chaschev/bear/wiki/1.1.1.-Demo.-List-a-remote-dir).
+
+You may find an interesting topic to read in our [Wiki](https://github.com/chaschev/bear/wiki).
+
+Bear has demos and examples to use as prototypes for your own projects. These demos are also integration tests which are used to test it. At the moment Bear supports Node.js, Grails, Play! Framework.
+
+The main priorities for project are now usability and bugfixing, so your feedback, bugreports and feature requests are very welcome. [Create a ticket or ask a question](https://github.com/chaschev/bear/issues) or just drop me a line at chaschev@gmail.com.
 
 ### Bear Highlights
 
@@ -20,122 +26,20 @@ Questions, concerns, feature requests? Just drop me a line at chaschev@gmail.com
 * (planned) JavaScript, Ruby and Python support
 * Takes some of the ideas from Capistrano
 
-### Quick Start 
+### Bear UI
 
-#### Prerequisites
-
-In this tutorial you'll learn how to prepare your environment for running Bear projects.
-
-* A remote Unix machine with standard password authentication. Ubuntu and CentOS are supported. A clean installation of these should be just fine.
-* JDK 6 installed. JDK 7+ is required to run the UI, JDK 8+ is recommended to run the UI as it contains bugfixes and runs Nashorn which won't be there in JDK 7. [[Get Java 7]](http://www.oracle.com/technetwork/java/javase/downloads/jdk7-downloads-1880260.html) [[Get Java 8]](https://jdk8.java.net/download.html)
-* Maven 3+. `mvn` must be available in the command line. [How to install Maven on Windows](http://www.mkyong.com/maven/how-to-install-maven-in-windows/).
- 
-#### Running the demo: list a remote directory
-
-First, install Bear by running (admin rights might be necessary) in your command line:
-
-```sh
-$ mvn com.chaschev:installation-maven-plugin:1.4:install -Dartifact=com.chaschev:bear
-```
-   
-Then, in your existing project which you want to deploy or just in an empty folder:
-
-```sh
-$ cd my-project
-$ bear --create my --user my-actual-ssh-user --password my-actual-password --host my-remote-host
-```
-    
-This will create a folder `.bear` with an auto-generated project. Note: password storage is unsafe in the current version. If you want to store your password locally in a file, you might want to edit `.bear/my.properties` file.
-
-```sh
-Created project file: .bear\MyProject.groovy
-Created Maven pom: .bear\pom.xml
-```
-    
-To quickly check the setup, run:
-
-```sh
-$ bear my.ls
-```
-    
-The UI should launch and on the `my-remote-host` you should find the list of your remote directories.
+Bear has a UI written in AngularJS inside a JavaFX's WebView. It's probably the first AngularJS desktop app. :-)
 
 ![Configuration Sample][uiLs]
 
 [uiLs]: https://raw.github.com/chaschev/bear/master/doc/img/bear-ui-ls.png
-
-Command line `bear my.ls` simply runs the predefined method `ls()` in the generated project:
-
-```groovy
-@Method
-def ls(){
-    run([named("ls task", { _,  task ->
-        println _.sys.lsQuick(".")
-    } as TaskCallable)])
-}
-```
-    
-This looks a bit cryptic at first site, but the IDE should guide you through all the syntax troubles. Everything in the example is static ("this is normal Java"), so jumping to a method declaraion/definition should work fine. For example, in Intellij Idea pressing `F4` jumps to a method definition, `Ctrl+Shift+Space` and `.` will give you completion suggestions and `Alt+Enter` will help you to convert anonymous class to a closure. `_` is a session context variable, Bear's entry point, similar to `$` in jQuery.
-
-From now the preferred way is to import this `pom.xml` as a Java project in your favourite Java IDE.
-
-#### Running smoke tests to check configuration
-
-To check that your setup is ok, run in your command line:
-
-```sh
-$ bear --unpack-demos
-```
-
-Next, open a file `.bear/examples/demo/SmokeProject.groovy` and edit it's stages to reflect your environment. Then type
-
-to run in console:
-
-```sh
-$ bear smoke.runTests -q
-```
-
-to run with UI:
-
-```sh
-$ bear smoke.runTests --ui
-```
-
-If in your output you see lines like:
-
-```
-command execution time: 44.2ms/command
-finished: Stats{time: "8.8s", partiesArrived: 2, partiesOk: 2, partiesPending: 0, partiesFailed: 0}
-```
-
-then your setup is complete.
-
-#### Running demo projects
-
-Demo projects stored in `.bear/examples` can be used as a bootstrap for your own projects. Each of these demos can be run the same way as the smoke tests were run. They all use open source projects stored at Github and should require only changes made to the stages.
-
-Example:
-
-```sh
-$ bear drywall.setup  --ui
-$ bear drywall.deploy --ui
-```
-
-TODO: add reference on deployment management quick start.
-
-#### Notes
-
-Tip for advanced users: you can also add Bear as a regular Maven dependency and use it as a jar. Your deployments can be run by `new MyProject().myDeployMethod()` - all needed configuration will be read from class annotations or from the environment variables and property files.
-
-In case you want to install the latest development version, add `-Dshapshots=true -U` flags to the Maven command line above.
-
 
 ### Project Samples
 
 Each deployment project consists of basically these parts:
 
 * Plugins configuration. `BearProject::configureMe` - i.e. add NodeJs or Play! framework plugin, bind project source root to VCS folder, etc.
-* Adding tasks. Tasks are pieces of deployments which can be reused, i.e. 'run Ant task (Java)' or 'run Grunt task (JS)' or 'run rake (Ruby)'.
+* Adding tasks. Tasks are pieces of deployments which can be reused, i.e. 'copying a file with Ant in Java' or 'running Grunt task in JS' or 'running rake in Ruby'.
 * Defining scripts. Scripts are collections of tasks which are most commonly used, i.e. setup script, deploy script db dump or restore script. The goal is to run each scenario with minimal action.
 
 Deployment project examples are available under the [examples folder][examplesFolder].
@@ -237,27 +141,15 @@ public class NodeExpressMongooseDemoProject extends BearProject<NodeExpressMongo
 }
 ```
 
-Bear uses a computing grid framework under the hood which is invisible to the user by default. If you at some moment would require to utilize any of it's features to coordinate hosts session, i.e. to speed up a big file download by downloading it on a single host and sharing it among others, you could manually access the Grid API.
-
-Computing Grid is an execution table for the tasks. It is a parallel framework which allows syncing tasks execution, communicating, sharing their results. Any task is run inside a grid and can be synchronized by getting a Future for some other cell in a grid.
+Bear uses a computing grid framework under the hood, [Read More...](https://github.com/chaschev/bear/wiki/3.5.-Parallel-execution-framework)
 
 ### Installing and using Bear (latest developer release)
 
-Bear is designed to be used as a normal Java library. A possible way to run it's projects is to have it on classpath and do `new YourBearProject().deploy()`.
-
 To install the latest stage version of Bear, type in your console:
 
-    mvn com.chaschev:installation-maven-plugin:1.4:install -Dartifact=com.chaschev:bear -Dshapshots=true -U
+    mvn com.chaschev:installation-maven-plugin:1.4:install -Dartifact=com.chaschev:bear
 
-This command requires Maven 3.1.1+ installed and also might require administrator rights to create shortcuts in JAVA_HOME.
-
-Note: installation-maven-plugin might not yet be in Maven Central at the time of writing.
-
-To create a new Bear project after installation type
-
-    bear --create project-name
-
-This will create a .bear folder in which there will be a `pom.xml` and a simple project definition. In `.bear/project-name.properties` configuration can be defined, i.e. SSH authentication data. `.bear/pom.xml` project can be imported as a Maven module to an IDE of your choice and after it `.bear/ProjectNameProject.groovy` is ready to be run.
+There is [more on this in Wiki](https://github.com/chaschev/bear/wiki).
 
 ### Building Bear
 
@@ -270,9 +162,7 @@ Bear requires Maven 3.x to build:
 
 Third command will fix JavaFX installation to be available on classpath. You might need to run this with admin user. [More...](http://zenjava.com/javafx/maven/fix-classpath.html)
 
-### Bear UI
 
-Bear has a UI written in AngularJS inside a JavaFX's WebView. It's probably the first AngularJS desktop app. :-) It has  a code editor with code completion for script editing and many panes and triggers to monitor deployment execution over your hosts.
 
 ### Road Map for Release 1.0a1 (for CentOS 6.4)
 
