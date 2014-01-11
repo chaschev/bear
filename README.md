@@ -8,7 +8,7 @@ To quickly start using the Bear, check out the [Quick Start Guide](https://githu
 
 You may find an interesting topic to read in our [Wiki](https://github.com/chaschev/bear/wiki).
 
-Bear has demos and examples to use as prototypes for your own projects. These demos are also integration tests which are used to test it. At the moment Bear supports Node.js, Grails, Play! Framework.
+Bear has [demos and examples](https://github.com/chaschev/bear/wiki/1.1.3.-Node.js%2C-Grails%2C-Tomcat%2C-Play-and-other-demos) to use as prototypes for your own projects. These demos are also integration tests which are used to test it. At the moment Bear supports Node.js, Grails, Play! Framework.
 
 The main priorities for project are now usability and bugfixing, so your feedback, bugreports and feature requests are very welcome. You can [create a ticket or ask a question](https://github.com/chaschev/bear/issues) or just drop me a line at chaschev@gmail.com.
 
@@ -34,116 +34,7 @@ Bear has a UI written in AngularJS inside a JavaFX's WebView. It's probably the 
 
 [uiLs]: https://raw.github.com/chaschev/bear/master/doc/img/bear-ui-ls.png
 
-### Project Samples
-
-Each deployment project consists of basically these parts:
-
-* Plugins configuration. `BearProject::configureMe` - i.e. add NodeJs or Play! framework plugin, bind project source root to VCS folder, etc.
-* (optional) Adding tasks. Tasks are building blocks of deployments which can be reused, i.e. 'copying a file with Ant in Java' or 'running Grunt task in JS' or 'running rake in Ruby'.
-* Defining methods which run tasks or closures.
-
-Deployment project examples are available under the [examples folder][examplesFolder].
-
-* [node-express-mongoose-demo deployment][NodeExpressMongooseDemoProject] Stack: Node.js, Express, MongoDB.
-* [Secure Social deployment][SecureSocialDemoProject] Stack: Java, Play! Framework 2, MySQL/MongoDB, Secure Social.
-* [Shell API basic usage][BasicExamplesDemoProject]
-
-[NodeExpressMongooseDemoProject]: https://github.com/chaschev/bear/blob/master/src/test/groovy/examples/nodejs/NodeExpressMongooseDemoProject.groovy
-[SecureSocialDemoProject]: https://github.com/chaschev/bear/blob/master/src/test/groovy/examples/java/SecureSocialDemoProject.groovy
-[BasicExamplesDemoProject]: https://github.com/chaschev/bear/blob/master/src/test/groovy/examples/demo/ExamplesProject.groovy
-[examplesFolder]: https://github.com/chaschev/bear/blob/master/src/test/groovy/examples/demo/
-
-```groovy
-// NodeExpressMongooseDemoProject.groovy
-
-@Project(shortName =  "express-demo", name = "Node Express Mongoose Demo Deployment")
-@Configuration(
-    propertiesFile = ".bear/express-demo",
-    stage = "three",
-    vcs = "git@github.com:madhums/node-express-mongoose-demo.git",
-    branch = "master",
-    useUI = false
-)
-public class NodeExpressMongooseDemoProject extends BearProject<NodeExpressMongooseDemoProject> {
-    // these are the plugins which are injected
-    Bear bear;
-    GitCLIPlugin git;
-    NodeJsPlugin nodeJs;
-    MongoDbPlugin mongoPlugin;
-    DeploymentPlugin deployment;
-    ReleasesPlugin releases;
-    DumpManagerPlugin dumpManager;
-
-    @Override
-    protected GlobalContext configureMe(GlobalContextFactory factory) throws Exception
-    {
-        nodeJs.version.set("0.10.22");
-        nodeJs.appCommand.set("server.js")
-        nodeJs.projectPath.setEqualTo(bear.vcsBranchLocalPath);
-
-        nodeJs.instancePorts.set("5000, 5001")
-
-        dumpManager.dbType.set(mongo.toString());
-
-        nodeJs.configureService.setDynamic({ SessionContext _ ->
-            return { ConfigureServiceInput input ->
-                input.service
-                    .cd(_.var(releases.activatedRelease).get().path)
-                    .exportVar("PORT", input.port + "");
-
-                return null;
-            } as Function;
-        } as Fun);
-
-        bear.stages.set(new Stages(global)
-            .addSimple("one", "vm01")
-            .addSimple("two", "vm01, vm02")
-            .addSimple("three", "vm01, vm02, vm03"));
-
-        // this defines the deployment task
-        defaultDeployment = deployment.newBuilder()
-            .CheckoutFiles_2({ _, task, input -> _.run(global.tasks.vcsUpdate); } as TaskCallable)
-            .BuildAndCopy_3({ _, task, input -> _.run(nodeJs.build, copyConfiguration); } as TaskCallable)
-            .StopService_5({ _, task, input -> _.run(nodeJs.stop); OK; } as TaskCallable)
-            .StartService_8({ _, task, input -> _.run(nodeJs.start, nodeJs.watchStart); } as TaskCallable)
-            .endDeploy()
-            .ifRollback()
-            .beforeLinkSwitch({ _, task, input -> _.run(nodeJs.stop); } as TaskCallable)
-            .afterLinkSwitch({ _, task, input -> _.run(nodeJs.start, nodeJs.watchStart); } as TaskCallable)
-            .endRollback();
-
-        return global;
-    }
-
-    def copyConfiguration = new TaskDef<Task>({ SessionContext _, task, input ->
-        final String dir = _.var(releases.pendingRelease).path + "/config"
-
-        _.sys.copy(cp("config.example.js", "config.js").cd(dir).force()).throwIfError();
-        _.sys.copy(cp("imager.example.js", "imager.js").cd(dir).force()).throwIfError();
-
-        OK
-    } as TaskCallable);
-
-    // main, can be run directly from an IDE
-    static main(def args)
-    {
-        // complete deployment:
-        // checkout, build, stop, copy code to release, start
-        // inspect startup logs, update upstart scripts
-        new NodeExpressMongooseDemoProject().deploy()
-
-        //stop all 6 instances (3 VMs, 2 instances each)
-        new NodeExpressMongooseDemoProject().stop()
-
-        //start all 6 instances
-        new NodeExpressMongooseDemoProject().start()
-    }
-}
-```
-
-Bear uses a computing grid framework under the hood, [Read More...](https://github.com/chaschev/bear/wiki/3.5.-Parallel-execution-framework)
-
-### Installing and using Bear (latest developer release)
+### Installing and using Bear
 
 To install the latest stage version of Bear, type in your console:
 
