@@ -10,7 +10,7 @@ You may find an interesting topic to read in our [Wiki](https://github.com/chasc
 
 Bear has demos and examples to use as prototypes for your own projects. These demos are also integration tests which are used to test it. At the moment Bear supports Node.js, Grails, Play! Framework.
 
-The main priorities for project are now usability and bugfixing, so your feedback, bugreports and feature requests are very welcome. [Create a ticket or ask a question](https://github.com/chaschev/bear/issues) or just drop me a line at chaschev@gmail.com.
+The main priorities for project are now usability and bugfixing, so your feedback, bugreports and feature requests are very welcome. You can [create a ticket or ask a question](https://github.com/chaschev/bear/issues) or just drop me a line at chaschev@gmail.com.
 
 ### Bear Highlights
 
@@ -162,34 +162,14 @@ Bear requires Maven 3.x to build:
 
 Third command will fix JavaFX installation to be available on classpath. You might need to run this with admin user. [More...](http://zenjava.com/javafx/maven/fix-classpath.html)
 
-
-
-### Road Map for Release 1.0a1 (for CentOS 6.4)
-
-| Step                                         | State          |
-| -------------------------------------------- |:--------------:|
-| Git, Upstart, MongoDB and MySQL plugins      | Finished.      |
-| Test deployment rollbacks and db dumps       | Finished.      |
-| Node.js deployment demo - Drywall, ExpressMongoose  | Finished.      |
-| Grails/Tomcat deployment demo                | Finished.      |
-| Node.js/Java three-hosts deployment          | Finished.      |
-| Installer, launcher                          | Finished.      |
-| Support Ubuntu                               | Finished.      |
-| Integration & unit tests                     | Finished.      |
-| UI bugfixing                                 | Finished.      |
-| Refactoring, simplifying API                 | Finished.      |
-| Finishing TODOs                              | Finished.      |
-| Quick Start Tutorial                         | Finished.      |
-
-
 ### Road Map for Release 1.0a2 (+ Ubuntu Server, localhost, Cloud)
 
 | Step                                              | State          |
 | ------------------------------------------------- |:--------------:|
 | Support localhost                                 |                |
-| JavaScript, sample project                        |                |
-| Ruby, RoR demo, sample project                    |                |
-| Python & sample project & demo                    |                |
+| Support JavaScript, sample project                        |                |
+| Support Ruby, RoR demo, sample project                    |                |
+| Support Python & sample project & demo                    |                |
 | Deployments to Heroku, AWS, GCE, Azure, Rackspace |                |
 | Run via a Maven Plugin                            |                |
 | Support JDK 6 for CLI, JDK 7 for GUI              |                |
