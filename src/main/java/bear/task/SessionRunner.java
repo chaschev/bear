@@ -41,8 +41,8 @@ public class SessionRunner extends HavingContext<SessionRunner, SessionContext>{
     public final Bear bear;
     public Function<Task<Object, TaskResult<?>>, Task<Object, TaskResult<?>>> taskPreRun; //a hack
 
-    private TaskResult<?> myLastResult;
-    private TaskResult<?> myLastRollbackResult;
+    private TaskResult<?> myLastResult = TaskResult.OK;
+    private TaskResult<?> myLastRollbackResult = TaskResult.OK;
 
     private State state = State.NOT_RUNNING;
 

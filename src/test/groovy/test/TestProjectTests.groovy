@@ -1,15 +1,12 @@
 package test
 
 import bear.task.TaskCallable
-import org.junit.Before
-import org.junit.BeforeClass
-import org.junit.FixMethodOrder
-import org.junit.Ignore
-import org.junit.Test
+import org.junit.*
 import org.junit.runners.MethodSorters
 
 import java.util.concurrent.atomic.AtomicBoolean
 
+import static bear.task.NamedCallable.named
 //@Category(IntegrationTests)
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 @Ignore
@@ -25,17 +22,21 @@ public class TestProjectTests {
 
         def setupNeeded = new AtomicBoolean(false)
 
-        project.run([{_, task ->
+        project.run([named("testProject.beforeClass", {_, task ->
             if (!_.sys.exists(_.var(_.bear.applicationPath))) {
                 setupNeeded.set(true)
             }
 
             _.sys.rm(_.var(project.releases.path)).run()
-        } as TaskCallable])
+        } as TaskCallable)])
 
-        if (setupNeeded.get()) {
+        if (true) {
             project.setup()
         }
+
+        project.run([named("testProject.beforeClass", {_, task ->
+            println(_.sys.exists(_.var(project.releases.path)))
+        } as TaskCallable)])
     }
 
     @Before
@@ -45,6 +46,7 @@ public class TestProjectTests {
         // stage is set to 'u-2' in the clean up above
         // so it can't be redefined in the following annotations
         project.global.removeConst(project.bear.stage)
+        project.global.put(project.bear.useUI, false)
     }
 
     @Test

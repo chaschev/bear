@@ -29,7 +29,7 @@ import static org.fest.assertions.api.Assertions.assertThat
 @Project(shortName = "bear-tests", name = "Shell Examples Demo 1")
 @Configuration(
     properties = ".bear/ss-demo",
-    stage = "u-2",
+    stage = "u-3",
     useUI = false,
     user = "andrey"
 )
@@ -199,7 +199,7 @@ public class TestProject extends BearProject<TestProject> {
         global.withMap(
             (global.bear.activeRoles): roles.collect { it.role },
             (global.bear.activeHosts): csvHosts,
-            { run([({ SessionContext _, task -> map[_.name] = true; OK } as TaskCallable)]) } as Callable
+            { run([named("runRolesTest", { SessionContext _, task -> map[_.name] = true; OK } as TaskCallable)]) } as Callable
         )
 
         return map
@@ -211,21 +211,21 @@ public class TestProject extends BearProject<TestProject> {
     {
         useAnnotations = false
 
-//        def (String host1, String host2) = global.var(bear.getStage).addresses.collect { it.name }
+        def (String host1, String host2) = global.var(bear.getStage).addresses.collect { it.name }
 
         def ph1 = named("ph1", { _, task ->
             switch(_.name){
-                case 'vm01': Thread.sleep(500); return result("h1, ph1")
-                case 'vm02':                    return result("h2, ph1")
+                case host1: Thread.sleep(500); return result("h1, ph1")
+                case host2:                    return result("h2, ph1")
             }
         } as TaskCallable<Void, ValueResult<String>>)
 
         def ph2 = named("ph2", { _, task ->
             switch (_.name){
-                case 'vm01': return _.getPreviousResult(ph1);
-                case 'vm02':
+                case host1: return _.getPreviousResult(ph1);
+                case host2:
                     // this will wait for vm01 to complete the operation
-                    def r = _.future(ph1, 'vm01').get().value + ", h2, ph2"
+                    def r = _.future(ph1, host1).get().value + ", h2, ph2"
 
                     return result(r)
             }
@@ -233,8 +233,8 @@ public class TestProject extends BearProject<TestProject> {
 
         def runner = run([ph1, ph2])
 
-        assertThat(runner.result(ph2, 'vm01').value).isEqualTo("h1, ph1")
-        assertThat(runner.result(ph2, 'vm02').value).isEqualTo("h1, ph1, h2, ph2")
+        assertThat(runner.result(ph2, host1).value).isEqualTo("h1, ph1")
+        assertThat(runner.result(ph2, host2).value).isEqualTo("h1, ph1, h2, ph2")
     }
 
     @Configuration(stage = "u-2")
@@ -350,10 +350,10 @@ public class TestProject extends BearProject<TestProject> {
             (h2): [pendingCount: 0, releasesCount: 1]
         ]);
 
-        run([{_, task ->
+        run([named("check current release", {_, task ->
             assertThat(_.var(releases.session).currentRelease.get().path).isEqualTo(currentRelease.get().path)
             OK
-        } as TaskCallable]).throwIfAnyFailed()
+        } as TaskCallable)]).throwIfAnyFailed()
     }
 
     private static assertReleasesCount(TestProject test, Map<String, Map> map)
@@ -373,9 +373,10 @@ public class TestProject extends BearProject<TestProject> {
     {
         defaultDeployment = newDefaultDeployment()
 
-        run([{_, task ->
+        run([named("empty releases", {_, task ->
             _.sys.rm(_.var(releases.path)).run()
-        } as TaskCallable])
+            _.sys.mkdirs(_.var(releases.path)).run()
+        } as TaskCallable)])
 
         // do a successful deployment
         deploy().throwIfAnyFailed()

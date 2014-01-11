@@ -33,6 +33,14 @@ public class InstallationTaskDef<TASK extends InstallationTask> extends TaskDef<
         super(singleTaskSupplier);
     }
 
+    public InstallationTaskDef(TaskCallable<Object, TaskResult<?>> callable) {
+        super(callable);
+    }
+
+    public InstallationTaskDef(String name, TaskCallable<Object, TaskResult<?>> callable) {
+        super(name, callable);
+    }
+
     @Override
     public InstallationTaskDef<TASK> setName(String name) {
         super.setName(name);

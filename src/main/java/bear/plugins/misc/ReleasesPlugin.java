@@ -74,7 +74,27 @@ public class ReleasesPlugin extends Plugin {
 
     @Override
     public InstallationTaskDef<? extends InstallationTask> getInstall() {
-        return InstallationTaskDef.EMPTY;
+
+        return new InstallationTaskDef<InstallationTask>(new NamedSupplier<Object, TaskResult<?>>("releases.install", new SingleTaskSupplier<Object, TaskResult<?>>() {
+            @Override
+            public Task createNewSession(SessionContext $, Task parent, TaskDef def) {
+                return new InstallationTask<InstallationTaskDef>(parent, (InstallationTaskDef) def, $) {
+                    @Override
+                    protected TaskResult<?> exec(SessionRunner runner) {
+                        $.sys.mkdirs($.var(path)).run();
+
+                        return TaskResult.OK;
+                    }
+
+                    @Override
+                    public Dependency asInstalledDependency() {
+                        Dependency dep = new Dependency("releases.dep", $);
+
+                        return dep.add(dep.new Directory($.var(path)));
+                    }
+                };
+            }
+        }));
     }
 
     public TaskDef<Object, TaskResult<?>> findReleaseToRollbackTo(final String labelOrPath) {
@@ -84,7 +104,7 @@ public class ReleasesPlugin extends Plugin {
                 Releases session = $.var(ReleasesPlugin.this.session);
                 Optional<Release> release = session.findAny(labelOrPath);
 
-                if(!release.isPresent()){
+                if (!release.isPresent()) {
                     return TaskResult.error("release not found: " + labelOrPath + " available releases:\n " + session.show());
                 }
 

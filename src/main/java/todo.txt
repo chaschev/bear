@@ -1,17 +1,18 @@
 top priority:
 
 - (ok) Idea Guide
-- ok/nok reporting is broken, rollback must mean that task failed
+- (ok) ok/nok reporting is broken, rollback must mean that task failed
 - Bear configuration and workspace
--- How to setup variables
--- How to work with contexts
+-- (ok) How to setup variables
+-- (ok) How to work with contexts
 -- Where the logs are stored
-- Deployment Management Guide
+- (ok) Deployment Management Guide
 - (ok) Parallel execution examples tutorial
 
 - (ok) use-ui don't work
 - password works only from the annotations
 
+-
 - (ok) fix fx-properties template
 - (ok) recheck demos with CentOS
 - (ok) Ubuntu

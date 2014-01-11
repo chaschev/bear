@@ -340,11 +340,11 @@ public abstract class BearProject<SELF extends BearProject> {
         System.out.println("returned result: " + result);
     }
 
-    public GlobalTaskRunner run(final List<? extends TaskCallable> callables) {
+    public GlobalTaskRunner run(final List<? extends NamedCallable> callables) {
         return run(callables, useAnnotations);
     }
 
-    public GlobalTaskRunner run(final List<? extends TaskCallable> callables, boolean useAnnotations) {
+    public GlobalTaskRunner run(final List<? extends NamedCallable> callables, boolean useAnnotations) {
         return runTasksWithAnnotations(new Supplier<List<? extends TaskDef>>() {
             @Override
             public List<? extends TaskDef> get() {
