@@ -39,8 +39,8 @@ Bear has a UI written in AngularJS inside a JavaFX's WebView. It's probably the 
 Each deployment project consists of basically these parts:
 
 * Plugins configuration. `BearProject::configureMe` - i.e. add NodeJs or Play! framework plugin, bind project source root to VCS folder, etc.
-* Adding tasks. Tasks are pieces of deployments which can be reused, i.e. 'copying a file with Ant in Java' or 'running Grunt task in JS' or 'running rake in Ruby'.
-* Defining scripts. Scripts are collections of tasks which are most commonly used, i.e. setup script, deploy script db dump or restore script. The goal is to run each scenario with minimal action.
+* (optional) Adding tasks. Tasks are building blocks of deployments which can be reused, i.e. 'copying a file with Ant in Java' or 'running Grunt task in JS' or 'running rake in Ruby'.
+* Defining methods which run tasks or closures.
 
 Deployment project examples are available under the [examples folder][examplesFolder].
 
