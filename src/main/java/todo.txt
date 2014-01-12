@@ -9,18 +9,18 @@ top priority:
 - (ok) Idea Guide
 - (ok) ok/nok reporting is broken, rollback must mean that task failed
 - (ok) bug: when launching Drywall UI, project is not set
-- retest running Drywall in UI
-- Bear configuration and workspace
+- (ok) retest running Drywall in UI
+- (ok) Doc: bear configuration and workspace
 -- (ok) How to setup variables
 -- (ok) How to work with contexts
--- Where the logs are stored
+-- (ok) Where the logs are stored
 - (ok) Deployment Management Guide
 - (ok) Parallel execution examples tutorial
 
 - (ok) use-ui don't work
 - password works only from the annotations
 
-- set interactiveRun for interpreted commands only
+- (ok) set interactiveRun for interpreted commands only
 - (ok) fix fx-properties template
 - (ok) recheck demos with CentOS
 - (ok) Ubuntu
@@ -30,14 +30,14 @@ top priority:
 - (ok) put logs into separate files for sessions
 - (ok) create project a from template
 - (ok) quick setup task recipe (i.e. [new empty bear script], :run (rename :ref) {task: 'tasks.setup'}   at the moment its _.runner.run(_.getGlobal().tasks.setup, )
-- ui: quick start
+- (ok) ui: quick start
 - (ok) start nodeJs independently of the deploy
 -- (ok) choose project
 -- (ok) choose methods on the project object
 -- (ok) run commands to interpret
 -- (ok) clean & clear phases and commands
 -- (ok) project & run script button are dummy: everything happens on the "server"
--- logo
+-- (ok) logo
 -- (ok) auto-scroll to the bottom, make scrollbars visible
 -- (ok) project.runUI
 -- (ok) weird white space at the bottom

@@ -201,6 +201,7 @@ public final DynamicVariable<String>
     });
 
     public final DynamicVariable<? extends BearProject> activeProject = undefined();
+    public final DynamicVariable<String> activeMethod = undefined();
 
     public final DynamicVariable<List<String>> activeHosts = undefined();
     public final DynamicVariable<List<String>> activeRoles = undefined();

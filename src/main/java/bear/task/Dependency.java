@@ -121,6 +121,11 @@ public class Dependency extends Task<Object, TaskResult<?>> {
             return "'" + path + "' is not a " + (checkWritable ? "" : "writable ") +
                 "dir or does not exist";
         }
+
+        @Override
+        public String toString() {
+            return "Directory{'" + path + "\'}";
+        }
     }
 
     public Dependency setInstaller(TaskCallable<Object, TaskResult<?>> installer) {
@@ -205,7 +210,6 @@ public class Dependency extends Task<Object, TaskResult<?>> {
             CommandLineResult<?> run = script.timeoutSec(30).run();
 
             return run.ok() && matcher.apply(run.output);
-
         }
 
         @Override
@@ -215,10 +219,7 @@ public class Dependency extends Task<Object, TaskResult<?>> {
 
         @Override
         public String toString() {
-            final StringBuilder sb = new StringBuilder("Command{");
-            sb.append("script=").append(script.asTextScript());
-            sb.append('}');
-            return sb.toString();
+            return "Command{" + script.asTextScript() + '}';
         }
     }
 
