@@ -149,7 +149,7 @@
         <dependency>
             <groupId>com.chaschev</groupId>
             <artifactId>chutils</artifactId>
-            <version>1.2-SNAPSHOT</version>
+            <version>1.3</version>
         </dependency>
         <!--
                 <dependency>

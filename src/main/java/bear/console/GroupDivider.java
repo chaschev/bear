@@ -207,7 +207,7 @@ public class GroupDivider<ENTRY> {
         }
 
         private double distancePct(String otherText) {
-            return getLevenshteinDistance(text, otherText, 5000) * 100.0 /
+            return getLevenshteinDistance(text, otherText, 300) * 100.0 /
                 (text.length() + otherText.length());
         }
 

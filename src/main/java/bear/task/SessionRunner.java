@@ -18,8 +18,11 @@ package bear.task;
 
 import bear.context.HavingContext;
 import bear.core.Bear;
+import bear.core.BearProject;
 import bear.core.GlobalContext;
 import bear.core.SessionContext;
+import bear.plugins.Plugin;
+import bear.session.Result;
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import org.slf4j.Logger;
@@ -240,5 +243,30 @@ public class SessionRunner extends HavingContext<SessionRunner, SessionContext>{
 
     public TaskResult<?> getMyLastRollbackResult() {
         return myLastRollbackResult;
+    }
+
+    public TaskResult<?> verifyPlugins(BearProject<?> project, TaskDef<Object, TaskResult<?>> taskDef) {
+        DependencyResult r = new DependencyResult(Result.OK);
+
+        for (Plugin<TaskDef> plugin : project.getAllOrderedPlugins()) {
+            r.join(plugin.checkPluginDependencies());
+
+            //todo replace with insideInstallation? - no!
+            if (!taskDef.isSetupTask()) {
+                InstallationTaskDef<? extends InstallationTask> installTaskDef = plugin.getInstall();
+                InstallationTask session = (InstallationTask) installTaskDef
+                    .singleTaskSupplier()
+                    .createNewSession($, $.getCurrentTask(), installTaskDef);
+
+                Dependency dependency = session
+                    .asInstalledDependency();
+
+                DependencyResult result = (DependencyResult) $.runner.runSession(dependency);
+
+                r.join(result);
+            }
+        }
+
+        return myLastResult = r;
     }
 }

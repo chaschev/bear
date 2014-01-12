@@ -50,8 +50,6 @@ import static java.util.concurrent.TimeUnit.SECONDS;
  * @author Andrey Chaschev chaschev@gmail.com
  */
 public class Bear extends BearApp<GlobalContext> {
-
-
     public Bear() {
 
     }
@@ -173,10 +171,10 @@ public final DynamicVariable<String>
                 return $.sys.isRemote();
             }
         }),
-        internalInteractiveRun = newVar(false),
+        internalInteractiveRun = newVar(false).desc("disables dependencies checks, verifications and installations"),
         interactiveRun = equalTo(internalInteractiveRun).desc("use it to override interactiveRun"),
-        checkDependencies = not(interactiveRun),
-        verifyPlugins = equalTo(checkDependencies),
+        checkDependencies = not(interactiveRun).desc("checks dependencies for tasks"),
+        verifyPlugins = equalTo(checkDependencies).desc("checks plugins deps before running tasks"),
         autoInstallPlugins = newVar(false),
         installationInProgress = newVar(false),
         quiet = newVar(false),
@@ -201,6 +199,8 @@ public final DynamicVariable<String>
             return findStage($);
         }
     });
+
+    public final DynamicVariable<? extends BearProject> activeProject = undefined();
 
     public final DynamicVariable<List<String>> activeHosts = undefined();
     public final DynamicVariable<List<String>> activeRoles = undefined();

@@ -17,7 +17,7 @@ import static org.fest.assertions.api.Assertions.assertThat
 @Project(shortName = "smoke", name = "Smoke Tests 1")
 @Configuration(
     properties = ".bear/demos",
-    stage = "two",
+    stage = "u-2",
     useUI = false
 )
 public class SmokeProject extends BearProject<SmokeProject> {
@@ -28,8 +28,12 @@ public class SmokeProject extends BearProject<SmokeProject> {
     {
         bear.stages.set(new Stages(global)
             .addQuick("one", "vm01")
-            .addQuick("two", "vm04, vm05")
-            .addQuick("three", "vm01, vm02, vm03"));
+            .addQuick("two", "vm01, vm02")
+            .addQuick("three", "vm01, vm02, vm03")
+            .addQuick("u-1", "vm04")
+            .addQuick("u-2", "vm04, vm05")
+            .addQuick("u-3", "vm04, vm05, vm06")
+        );
 
         return global;
     }

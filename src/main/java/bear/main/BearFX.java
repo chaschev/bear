@@ -59,8 +59,11 @@ import static bear.core.SessionContext.randomId;
  * @author Andrey Chaschev chaschev@gmail.com
  */
 public class BearFX {
+    public static final String BEAR_FX_PROPERTIES = ".bear/bear-fx.properties";
+
     private static final SettableFuture<BearFX> instance = new SettableFuture<BearFX>();
 
+    //waits for FX app to fully initialize
     public static BearFX getInstance(){
         try {
             if(instance.isDone()) return instance.get();
@@ -171,7 +174,7 @@ public class BearFX {
         public void start(Stage stage) throws Exception {
             try {
                 Properties properties = new Properties();
-                properties.load(new FileInputStream(".bear/bear-fx.properties"));
+                properties.load(new FileInputStream(BEAR_FX_PROPERTIES));
 
                 FXConf fxConf = new FXConf(
                     "-VfXConf.settingsFile=" + properties.get("bear-fx.settings"),

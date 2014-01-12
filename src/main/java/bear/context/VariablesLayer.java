@@ -30,9 +30,7 @@ import javax.annotation.Nullable;
 import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
+import java.util.concurrent.*;
 
 import static bear.context.Fun.UNDEFINED;
 
@@ -126,11 +124,11 @@ public class VariablesLayer extends HavingContext<Variables, AbstractContext> {
         return putConst(key.name(), value);
     }
 
-    public <T> VariablesLayer putConst(DynamicVariable<T> key, T value) {
+    public <T> VariablesLayer putConst(DynamicVariable<? extends T> key, T value) {
         return putConst(key.name(), value);
     }
 
-    public VariablesLayer putConst(Nameable key, Object value) {
+    public <T> VariablesLayer putConst(Nameable<? extends T> key, Object value) {
         return putConst(key.name(), value);
     }
 

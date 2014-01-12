@@ -189,7 +189,7 @@ public class PlayPlugin extends ServerToolPlugin {
                 protected String extractVersion(String output) {
                     return StringUtils.substringBetween(
                         output,
-                        "play ", " built").trim();
+                        "Welcome to Play ", "!").trim();
                 }
 
                 @Override

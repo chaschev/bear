@@ -70,23 +70,17 @@ public class BearScriptRunner {
             }
         }));
 
-        return exec(taskList, interactive);
+        return exec(taskList);
     }
 
-    public RunResponse exec(List<TaskDef<Object, TaskResult<?>>> taskList, boolean interactive) {
+    public RunResponse exec(List<TaskDef<Object, TaskResult<?>>> taskList) {
         GridBuilder gridBuilder = new GridBuilder().addAll(taskList);
 
-        return exec(gridBuilder, interactive);
+        return exec(gridBuilder);
     }
 
-    public RunResponse exec(GridBuilder gridBuilder, boolean interactive) {
+    public RunResponse exec(GridBuilder gridBuilder) {
         List<Phase<TaskResult<?>,BearScriptPhase<Object, TaskResult<?>>>> phases = gridBuilder.build();
-
-
-        if (interactive) {
-            //this disable dependencies checks, verifications and installations
-            global.putConst(bear.internalInteractiveRun, true);
-        }
 
         Map<Object, Object> savedVariables = null;
         if(variables != null){

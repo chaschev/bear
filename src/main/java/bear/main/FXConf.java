@@ -53,6 +53,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.lang.reflect.Method;
@@ -297,6 +298,8 @@ public class FXConf extends BearMain {
 
             boolean runInSingleShell = !"shell".equals(uiContext.shell) && !"status".equals(uiContext.shell);
 
+            global.putConst(bear.internalInteractiveRun, true);
+
             if(runInSingleShell){
                 //better to call saveMap
                 global.putConst(bear.activeHosts, singletonList(uiContext.shell));
@@ -368,15 +371,42 @@ public class FXConf extends BearMain {
             infos.add(new ProjectInfo(compiledEntry.aClass, compiledEntry.file.getAbsolutePath(), global));
         }
 
-        File currentProjectFile = new File(bearFX.bearProperties.getProperty("bear-fx.project"));
+        Class<? extends BearProject> prjClass;
 
-        Optional<CompiledEntry<?>> aClass = compileManager.findClass(currentProjectFile);
+        if(global.isSet(bear.activeProject)){
+            prjClass = global.var(bear.activeProject).getClass();
+
+            selectProject(prjClass.getAnnotation(Project.class).shortName());
+        } else {
+            File currentProjectFile = new File(bearFX.bearProperties.getProperty("bear-fx.project"));
+
+            Optional<CompiledEntry<?>> aClass = compileManager.findClass(currentProjectFile);
+
+            prjClass = (Class<? extends BearProject>) aClass.get().aClass;
+        }
 
         return new ProjectInfosResponse(infos)
-            .setSelectedProject(aClass.get().aClass.getSimpleName());
+            .setSelectedProject(prjClass.getSimpleName());
     }
 
-    public  class ProjectInfo{
+    //todo refactor to properties management?
+    void selectProject(String shortName){
+        for (CompiledEntry<? extends BearProject> entry : compileManager.findProjects()) {
+            if(entry.aClass.getAnnotation(Project.class).shortName().equals(shortName)){
+                try {
+                    bearFX.bearProperties.setProperty("bear-fx.project", entry.file.getAbsolutePath());
+                    bearFX.bearProperties.store(new FileWriter(BearFX.BEAR_FX_PROPERTIES), "");
+                    return;
+                } catch (IOException e) {
+                    throw Exceptions.runtime(e);
+                }
+            }
+        }
+
+        throw new IllegalArgumentException("didn't find project: " + shortName);
+    }
+
+    public class ProjectInfo{
         public String shortName;
         public String name;
         public List<String> methods;

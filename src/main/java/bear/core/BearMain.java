@@ -28,13 +28,13 @@ import bear.plugins.groovy.GroovyShellPlugin;
 import bear.session.DynamicVariable;
 import chaschev.lang.OpenBean;
 import chaschev.util.Exceptions;
+import com.google.common.base.Joiner;
 import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
 import groovy.lang.GroovyShell;
 import joptsimple.OptionSpec;
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -56,6 +56,7 @@ import java.util.*;
 import static bear.session.Variables.*;
 import static chaschev.lang.OpenBean.getFieldValue;
 import static java.util.Collections.singletonList;
+import static org.apache.commons.io.FileUtils.writeStringToFile;
 
 /**
  * @author Andrey Chaschev chaschev@gmail.com
@@ -398,7 +399,7 @@ public class BearMain extends AppCli<GlobalContext, Bear, BearMain.AppOptions2> 
             for (String resource : filesAsText.split("::")) {
                 File dest = new File(BEAR_DIR + resource);
                 System.out.printf("copying %s to %s...%n", resource, dest);
-                FileUtils.writeStringToFile(dest, ProjectGenerator.readResource(resource));
+                writeStringToFile(dest, ProjectGenerator.readResource(resource));
 
                 count++;
             }
@@ -419,16 +420,18 @@ public class BearMain extends AppCli<GlobalContext, Bear, BearMain.AppOptions2> 
             File projectFile = new File(BEAR_DIR, g.getProjectTitle() + ".groovy");
             File pomFile = new File(BEAR_DIR, "pom.xml");
 
-            FileUtils.writeStringToFile(projectFile, g.processTemplate("TemplateProject.template"));
-            FileUtils.writeStringToFile(new File(BEAR_DIR, dashedTitle + ".properties"), g.processTemplate("project-properties.template"));
-            FileUtils.writeStringToFile(new File(BEAR_DIR, "demos.properties"), g.processTemplate("project-properties.template"));
-            FileUtils.writeStringToFile(new File(BEAR_DIR, "bear-fx.properties"), g.processTemplate("bear-fx.properties.template"));
-            FileUtils.writeStringToFile(pomFile, g.generatePom(dashedTitle));
+            writeStringToFile(projectFile, g.processTemplate("TemplateProject.template"));
+            writeStringToFile(new File(BEAR_DIR, dashedTitle + ".properties"), g.processTemplate("project-properties.template"));
+            writeStringToFile(new File(BEAR_DIR, "demos.properties"), g.processTemplate("project-properties.template"));
+            writeStringToFile(new File(BEAR_DIR, "bear-fx.properties"), g.processTemplate("bear-fx.properties.template"));
+            writeStringToFile(pomFile, g.generatePom(dashedTitle));
 
             System.out.printf("Created project file: %s%n", projectFile.getPath());
             System.out.printf("Created maven pom: %s%n", pomFile.getPath());
 
-            System.out.println("\nProject files have been created. You may open a Bear project in your favourite IDE by importing a Maven module (.bear/pom.xml).");
+            System.out.println("\nProject files have been created. You may now: " +
+                "\n a) Run `bear " + g.getShortName() + ".ls` to quick-test your minimal setup" +
+                "\n b) Import the project to IDE or run smoke tests, find more details at the project wiki: https://github.com/chaschev/bear/wiki/.");
 
             return;
         }
@@ -479,7 +482,7 @@ public class BearMain extends AppCli<GlobalContext, Bear, BearMain.AppOptions2> 
 
         if (!optional.isPresent()) {
             throw new IllegalArgumentException("project was not found: " + projectName +
-                ", loaded classes: " + bearMain.compileManager.findProjects() +
+                ", loaded classes: \n" + Joiner.on("\n").join(bearMain.compileManager.findProjects()) +
                 ", searched in: " + bearMain.compileManager.getSourceDirs() + ", ");
         }
 
@@ -524,7 +527,7 @@ public class BearMain extends AppCli<GlobalContext, Bear, BearMain.AppOptions2> 
 
             BearScriptRunner bearScriptRunner = new BearScriptRunner(global, null, project).withVars(variables);
 
-            BearScriptRunner.RunResponse response = bearScriptRunner.exec(grid, true);
+            BearScriptRunner.RunResponse response = bearScriptRunner.exec(grid);
 
             try {
                 GlobalTaskRunner runner = response.getGlobalRunner();
@@ -571,7 +574,7 @@ public class BearMain extends AppCli<GlobalContext, Bear, BearMain.AppOptions2> 
 
                     StringBuilder sb = threadDump();
 
-                    org.apache.commons.io.FileUtils.writeStringToFile(file, sb.toString());
+                    writeStringToFile(file, sb.toString());
 
                     System.exit(0);
                 } catch (Exception e1) {

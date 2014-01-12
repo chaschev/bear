@@ -24,7 +24,11 @@ public class ${projectTitle} extends BearProject<${projectTitle}> {
         bear.stages.set(new Stages(global)
             .addQuick("one", "${host}")
             .addQuick("two", "${host}, vm02")
-            .addQuick("three", "${host}, vm02, vm03"));
+            .addQuick("three", "${host}, vm02, vm03")
+            .addQuick("u-1", "${host}")
+            .addQuick("u-2", "${host}, vm05")
+            .addQuick("u-3", "${host}, vm05, vm06")
+            );
 
         return global;
     }

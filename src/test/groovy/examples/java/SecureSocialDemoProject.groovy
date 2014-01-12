@@ -33,7 +33,7 @@ import static bear.task.TaskResult.OK
 @Project(shortName = "ss-demo", name = "Secure Social Demo")
 @Configuration(
     properties = ".bear/demos",
-    stage = "u-3",
+    stage = "u-1",
     vcs = "https://github.com/chaschev/securesocial",
     branch = "master",
     user = "andrey",
@@ -157,8 +157,4 @@ public class SecureSocialDemoProject extends BearProject<SecureSocialDemoProject
         return _.sys.writeString(plugins).toPath(pluginsPath).run();
     }
 
-    static $static_methodMissing(String name, args) {
-        BearProject<? extends BearProject> prj = this.newInstance()
-        prj.invoke(name, args)
-    }
 }

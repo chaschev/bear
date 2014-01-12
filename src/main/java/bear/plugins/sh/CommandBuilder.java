@@ -3,10 +3,7 @@ package bear.plugins.sh;
 import bear.console.ConsoleCallback;
 import bear.context.HavingContext;
 import bear.core.SessionContext;
-import bear.core.except.NoSuchFileException;
-import bear.core.except.PermissionsException;
-import bear.core.except.ValidationException;
-import bear.core.except.WrongCommandException;
+import bear.core.except.*;
 import bear.vcs.CommandLineResult;
 import com.google.common.base.Optional;
 import com.google.common.base.Strings;
@@ -229,6 +226,7 @@ public abstract class CommandBuilder<SELF extends CommandBuilder> extends Having
         PermissionsException.check(script, output);
         WrongCommandException.check(script, output);
         NoSuchFileException.check(script, output);
+//        CommandNotFoundException.check(script, output);
     }
 
     protected void setCalled(){

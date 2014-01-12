@@ -26,7 +26,7 @@ import static bear.task.TaskResult.OK
     stage = "u-3",
     vcs = "https://github.com/jedireza/drywall.git",
     branch = "master",
-    useUI = false
+    useUI = true
 )
 public class DrywallDemoProject extends BearProject<DrywallDemoProject> {
     // these are the plugins which are injected
@@ -92,7 +92,7 @@ public class DrywallDemoProject extends BearProject<DrywallDemoProject> {
 
     static main(args)
     {
-        new DrywallDemoProject().stop()
+        new DrywallDemoProject().start()
     }
 
     public GlobalTaskRunner setup()

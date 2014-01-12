@@ -24,17 +24,17 @@ import com.google.common.base.Preconditions;
 * @author Andrey Chaschev chaschev@gmail.com
 */
 public class BearRunner2 {
-    private BearProject bearSettings;
+    private BearProject bearProject;
     private GlobalContextFactory factory;
     private GlobalContext global;
 
     private boolean shutdownAfterRun;
 
-    public BearRunner2(BearProject bearSettings,  GlobalContextFactory factory) {
+    public BearRunner2(BearProject bearProject,  GlobalContextFactory factory) {
         try {
-            this.bearSettings = bearSettings;
+            this.bearProject = bearProject;
             this.factory = factory;
-            this.global = bearSettings.getGlobal();
+            this.global = bearProject.getGlobal();
         } catch (Exception e) {
             throw Exceptions.runtime(e);
         }
@@ -43,14 +43,14 @@ public class BearRunner2 {
 
     public PreparationResult createRunContext()  {
         try {
-            Preconditions.checkArgument(bearSettings.isConfigured(), "settings must be configured. call settings.init() to configure");
-            if(!bearSettings.isConfigured()){
-                bearSettings.configure(factory);
+            Preconditions.checkArgument(bearProject.isConfigured(), "settings must be configured. call settings.init() to configure");
+            if(!bearProject.isConfigured()){
+                bearProject.configure(factory);
             }
 
             Stage stage = global.var(global.bear.getStage);
 
-            return stage.prepareToRun2(bearSettings);
+            return stage.prepareToRun2(bearProject);
         } catch (Exception e) {
             throw Exceptions.runtime(e);
         }

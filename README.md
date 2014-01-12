@@ -10,7 +10,7 @@ You may find an interesting topic to read in our [Wiki](https://github.com/chasc
 
 Bear has [demos and examples](https://github.com/chaschev/bear/wiki/1.1.3.-Node.js%2C-Grails%2C-Tomcat%2C-Play-and-other-demos) to use as prototypes for your own projects. These demos are also integration tests which are used to test it. At the moment Bear supports Node.js, Grails, Play! Framework.
 
-The main priorities for project are now usability and bugfixing, so your feedback, bugreports and feature requests are very welcome. You can [create a ticket or ask a question](https://github.com/chaschev/bear/issues) or just drop me a line at chaschev@gmail.com.
+The main priorities for project are now usability and bugfixing, so your feedback, bugreports and feature requests are very welcome. You can [create a ticket or ask a question](https://github.com/chaschev/bear/issues) or just drop me a line at chaschev@gmail.com. We will accept contributions, please discuss your changes with us if you want to change or add something significant.
 
 ### Bear Highlights
 

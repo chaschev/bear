@@ -222,12 +222,12 @@ public abstract class AbstractContext {
         return layer.getVariable(key);
     }
 
-    public <T> AbstractContext putConst(Nameable<T> key, T value) {
+    public <T> AbstractContext putConst(Nameable<? extends T> key, T value) {
         layer.putConst(key, value);
         return this;
     }
 
-    public <T> AbstractContext putConst(DynamicVariable<T> key, T value) {
+    public <T> AbstractContext putConst(DynamicVariable<? extends T> key, T value) {
         layer.putConst(key, value);
         return this;
     }

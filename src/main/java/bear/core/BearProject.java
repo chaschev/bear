@@ -200,7 +200,7 @@ public abstract class BearProject<SELF extends BearProject> {
 //        BearMain.run(this, variables, true);
 //    }
 
-    public <T> SELF set(DynamicVariable<T> var, T value) {
+    public <T> SELF set(DynamicVariable<? extends T> var, T value) {
         if (!global.isSet(var)) {
             global.putConst(var, value);
         }
@@ -365,6 +365,8 @@ public abstract class BearProject<SELF extends BearProject> {
     }
 
     public GlobalTaskRunner runTasksWithAnnotations(Supplier<? extends List<? extends TaskDef>> taskList, boolean useAnnotations) {
+        global.putConst(bear.activeProject, this);
+
         Configuration projectConf = configureWithAnnotations(useAnnotations);
 
         GridBuilder grid = newGrid()

@@ -1,5 +1,4 @@
 package test
-
 import bear.core.BearProject
 import bear.core.GlobalContext
 import bear.core.GlobalContextFactory
@@ -14,6 +13,7 @@ import org.junit.Before
 import org.junit.Ignore
 import org.junit.Test
 
+import static bear.task.NamedCallable.named
 /**
  * @author Andrey Chaschev chaschev@gmail.com
  */
@@ -29,11 +29,11 @@ class DeploymentProjectsTests {
 
         project.shutdownAfterRun = false
 
-        //uninstall tools && delete releases
-        project.run([{ SessionContext _, task ->
+        // uninstall tools && delete releases
+        project.run([named("uninstall-all-and-remove-releases", { SessionContext _, task ->
             _.sys.rm(_.var(_.bear.toolsInstallDirPath)).force().run()
             _.sys.rm(_.var(_.plugin(ReleasesPlugin).path)).force().run()
-        } as TaskCallable])
+        } as TaskCallable)])
 
         project.setup().throwIfAnyFailed()
         project.setup().throwIfAnyFailed()

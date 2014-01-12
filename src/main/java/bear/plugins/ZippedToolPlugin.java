@@ -157,7 +157,16 @@ public class ZippedToolPlugin extends Plugin<TaskDef<Object, TaskResult<?>>> {
                 new Predicate<CharSequence>() {
                     @Override
                     public boolean apply(CharSequence s) {
-                        return $(version).equals(extractVersion(s.toString()));
+                        String extractedVersion = extractVersion(s.toString());
+                        String version = $(ZippedToolPlugin.this.version);
+
+                        boolean r = version.equals(extractedVersion);
+
+                        if(!r){
+                            LoggerFactory.getLogger("log").info("expected version: {}, actual: {}", version, extractedVersion);
+                        }
+
+                        return r;
                     }
                 },
                 String.format("'%s' expected version: %s", $(toolDistrName), $(version))
@@ -260,6 +269,7 @@ public class ZippedToolPlugin extends Plugin<TaskDef<Object, TaskResult<?>>> {
             if (r.ok()) {
                 $.log("%s has been installed", $(versionName));
             }
+
             return r;
         }
     }

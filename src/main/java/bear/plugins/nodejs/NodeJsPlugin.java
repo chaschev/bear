@@ -249,6 +249,8 @@ public class NodeJsPlugin extends ServerToolPlugin {
                 public Dependency asInstalledDependency() {
                     Dependency dep = super.asInstalledDependency();
 
+                    dep.add(dep.new Command("node --version", ""));
+                    dep.add(dep.new Command("npm --version", ""));
                     dep.add(dep.new Command("grunt --version", ""));
 
                     return dep;

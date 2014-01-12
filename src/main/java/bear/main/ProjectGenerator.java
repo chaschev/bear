@@ -22,6 +22,7 @@ import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.Resources;
 import org.apache.commons.lang3.text.StrSubstitutor;
+import org.apache.commons.lang3.text.WordUtils;
 
 import java.io.IOException;
 
@@ -78,7 +79,7 @@ public class ProjectGenerator {
                 .put("user", this.user)
                 .put("password", this.password)
                 .put("host", this.host)
-                .put("spacedTitle", toSpacedTitle(toCamelHumpCase(this.dashedTitle)))
+                .put("spacedTitle", toSpacedTitle(projectTitle))
                 .build());
         } catch (IOException e) {
             throw Exceptions.runtime(e);
@@ -101,6 +102,10 @@ public class ProjectGenerator {
         }
 
         return sb.toString();
+    }
+
+    public String getShortName(){
+        return WordUtils.uncapitalize(toCamelHumpCase(dashedTitle));
     }
 
     public static String toSpacedTitle(String dashedTitle) {

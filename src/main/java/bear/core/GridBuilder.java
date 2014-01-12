@@ -4,14 +4,13 @@ import bear.main.event.NewPhaseConsoleEventToUI;
 import bear.main.phaser.Phase;
 import bear.main.phaser.PhaseCallable;
 import bear.main.phaser.PhaseParty;
-import bear.plugins.Plugin;
-import bear.session.Result;
 import bear.task.*;
 import chaschev.lang.MutableSupplier;
 import chaschev.lang.OpenBean;
 import chaschev.util.Exceptions;
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Throwables;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -114,32 +113,12 @@ public class GridBuilder {
                                 $.whenPhaseStarts(phase.getPhase(), globalRunner.get().getShellContext());
 
                                 if (isFirstCallableFinal && $.var($.bear.verifyPlugins)) {
-                                    DependencyResult r = new DependencyResult(Result.OK);
+                                    result = $.runner.verifyPlugins(project, taskDef);
 
-                                    for (Plugin<TaskDef> plugin : project.getAllOrderedPlugins()) {
-                                        r.join(plugin.checkPluginDependencies());
-
-                                        //todo replace with insideInstallation? - no!
-                                        if (!taskDef.isSetupTask()) {
-                                            InstallationTaskDef<? extends InstallationTask> installTaskDef = plugin.getInstall();
-                                            InstallationTask session = (InstallationTask) installTaskDef
-                                                .singleTaskSupplier()
-                                                .createNewSession($, $.currentTask, installTaskDef);
-
-                                            Dependency dependency = session
-                                                .asInstalledDependency();
-
-                                            result = $.runner.runSession(dependency);
-
-                                            r.join((DependencyResult) result);
-                                        }
-                                    }
-
-                                    if (r.nok()) {
-                                        throw PartyResultException.create(r, party, phase);
+                                    if (!result.ok()) {
+                                        throw PartyResultException.create(result, party, phase);
                                     }
                                 }
-
 
                                 $.runner.taskPreRun = new Function<Task<Object, TaskResult<?>>, Task<Object, TaskResult<?>>>() {
                                     @Override
@@ -157,17 +136,18 @@ public class GridBuilder {
                                 }
 
                                 return $.runner.getMyLastResult();
-                            } catch (PartyResultException e) {
-                                throw e;
                             } catch (Throwable e) {
-                                BearMain.logger.warn("", e);
                                 result = TaskResult.of(e);
 
-                                $.executionContext.rootExecutionContext.getDefaultValue().taskResult = result;
+                                Throwables.propagateIfInstanceOf(e, PartyResultException.class);
+
+                                BearMain.logger.warn("", e);
 
                                 throw Exceptions.runtime(e);
                             } finally {
                                 try {
+                                    $.executionContext.rootExecutionContext.getDefaultValue().taskResult = result;
+
                                     long duration = System.currentTimeMillis() - phase.getPhase().startedAtMs;
                                     phase.getPhase().addArrival($, duration, result);
                                     $.executionContext.rootExecutionContext.fireExternalModification();

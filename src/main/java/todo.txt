@@ -1,12 +1,15 @@
 top priority:
 
-- Update README.md
-- Play issue
+- (ok) Update README.md
+- (ok) Play issue
 - Redo quick start guide
+- Deploy chutils
 - Install to maven central
 - Create articles
 - (ok) Idea Guide
 - (ok) ok/nok reporting is broken, rollback must mean that task failed
+- (ok) bug: when launching Drywall UI, project is not set
+- retest running Drywall in UI
 - Bear configuration and workspace
 -- (ok) How to setup variables
 -- (ok) How to work with contexts
@@ -17,7 +20,7 @@ top priority:
 - (ok) use-ui don't work
 - password works only from the annotations
 
-
+- set interactiveRun for interpreted commands only
 - (ok) fix fx-properties template
 - (ok) recheck demos with CentOS
 - (ok) Ubuntu
