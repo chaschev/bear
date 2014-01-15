@@ -1,10 +1,12 @@
 # Welcome the Bear!
 
-Bear is a lightweight remote automation tool for Java. Bear differs from other existing deployment tools by using OOP, static types and fluent programming techniques. It first started as a Capistrano clone, but then grew into a different project.
+Bear is a lightweight remote automation tool for Groovy/Java/JVM. Bear allows your to deploy projects, setup your cluster, install software to your remote machines. Bear differs from other existing tools in that it's using programmatic approach - your deployment is a regular Java class which may have it's `main()`. Bear also uses static types, chained method calls, FP and fluent programming techniques.
 
-First version of Bear has been released on January 12th, 2014 and is a work in progress.
+The goal of Bear is to provide less learning experience with help of the existing Java IDEs. Bear tries to minimize reading documentation and proposes using IDE features like code completion or quick method lookup to create your deployment project.
 
-To quickly start using the Bear, check out the [Quick Start Guide](https://github.com/chaschev/bear/wiki/1.1.1.-Demo.-List-a-remote-dir).
+First version of Bear has been released on January 12th, 2014 and is a work in progress. It first started as a Capistrano clone, but then grew into a different project.
+
+To quickly start using Bear, check out the [Quick Start Guide](https://github.com/chaschev/bear/wiki/1.1.1.-Demo.-List-a-remote-dir).
 
 You may find an interesting topic to read in our [Wiki](https://github.com/chaschev/bear/wiki).
 
@@ -40,18 +42,18 @@ To install the latest stage version of Bear, type in your console:
 
     mvn com.chaschev:installation-maven-plugin:1.4:install -Dartifact=com.chaschev:bear
 
-There is [more on this in Wiki](https://github.com/chaschev/bear/wiki).
+[Continue reading in Wiki](https://github.com/chaschev/bear/wiki).
 
 ### Building Bear
 
 Bear requires Maven 3.x to build:
 
+    mvn com.zenjava:javafx-maven-plugin:2.0:fix-classpath
     git clone https://github.com/chaschev/bear.git
     cd bear
-    mvn com.zenjava:javafx-maven-plugin:2.0:fix-classpath
     mvn install
 
-Third command will fix JavaFX installation to be available on classpath. You might need to run this with admin user. [More...](http://zenjava.com/javafx/maven/fix-classpath.html)
+The first command will fix JavaFX installation to be available on classpath. You might need to run this with admin user. [More...](http://zenjava.com/javafx/maven/fix-classpath.html)
 
 ### Road Map for Release 1.0a2 (+ Ubuntu Server, localhost, Cloud)
 
