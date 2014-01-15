@@ -49,10 +49,6 @@ Our main priorities for the project for now are usability and bugfixing, so your
 
 You can [create a ticket or ask a question](https://github.com/chaschev/bear/issues) or just drop a line at chaschev@gmail.com. We will accept contributions - below you will find instructions on how to build Bear and how to start the integration tests. Please discuss your changes with us if you want to change or add something significant.
 
-### Contributors
-
-* Andrey Chaschev chaschev@gmail.com
-
 ### Alternatives
 
 Bear can be compared to the following tools:
