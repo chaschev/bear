@@ -34,17 +34,42 @@
         <h1>
 <a name="welcome-the-bear" class="anchor" href="#welcome-the-bear"><span class="octicon octicon-link"></span></a>Welcome the Bear!</h1>
 
-<p>Bear is a lightweight remote automation tool for Groovy/Java/JVM. Bear allows your to deploy projects, setup your cluster, install software to your remote machines. Bear differs from other existing tools in that it's using programmatic approach - your deployment is a regular Java class which may have it's <code>main()</code>. Bear also uses static types, chained method calls, FP and fluent programming techniques.</p>
+<p>Bear is a lightweight remote automation tool for Groovy/Java/JVM. Bear allows your to deploy projects, setup your cluster, install software to your remote machines. Bear differs from other existing tools in that it's using programmatic approach - your deployment is a regular Java class which may have it's <code>main()</code>. Bear also uses static types, chained method calls, FP and fluent programming techniques. Below is an example of a remote task:</p>
+
+<div class="highlight highlight-groovy"><pre><span class="nd">@Project</span><span class="o">(</span><span class="n">shortName</span> <span class="o">=</span> <span class="s2">"my"</span><span class="o">)</span>
+<span class="kd">class</span> <span class="nc">MyProject</span><span class="o">{</span>
+
+    <span class="nd">@Method</span>
+    <span class="kt">def</span> <span class="nf">sayHi</span><span class="o">(){</span>
+        <span class="n">run</span><span class="o">([</span><span class="n">named</span><span class="o">(</span><span class="s2">"say-hi task"</span><span class="o">,</span> <span class="o">{</span> <span class="n">_</span><span class="o">,</span> <span class="n">task</span> <span class="o">-&gt;</span>
+            <span class="n">_</span><span class="o">.</span><span class="na">sys</span><span class="o">.</span><span class="na">copy</span><span class="o">(</span><span class="s1">'foo'</span><span class="o">).</span><span class="na">to</span><span class="o">(</span><span class="s1">'bar'</span><span class="o">).</span><span class="na">run</span><span class="o">().</span><span class="na">throwIfError</span><span class="o">();</span>
+
+            <span class="n">println</span> <span class="s2">"${_.host}: ${_.sys.capture('echo hi from `hostname`')}!"</span><span class="o">;</span>
+        <span class="o">}</span> <span class="k">as</span> <span class="n">TaskCallable</span><span class="o">)])</span>
+    <span class="o">}</span>
+
+    <span class="kd">static</span> <span class="nf">main</span><span class="o">(</span><span class="n">args</span><span class="o">){</span>
+        <span class="k">new</span> <span class="nf">MyProject</span><span class="o">().</span><span class="na">sayHi</span><span class="o">()</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+</pre></div>
+
+<p>Which can be run as a Java app or from a command line:</p>
+
+<div class="highlight highlight-sh"><pre><span class="nv">$ </span>bear my.sayHi --ui
+</pre></div>
+
+<h3>
+<a name="quick-start" class="anchor" href="#quick-start"><span class="octicon octicon-link"></span></a>Quick Start</h3>
+
+<p>To quickly start using Bear, check out the <a href="https://github.com/chaschev/bear/wiki/1.1.1.-Demo.-List-a-remote-dir">Quick Start Guide</a>. There also might be an interesting topic to read in our <a href="https://github.com/chaschev/bear/wiki">Wiki</a>. There are <a href="https://github.com/chaschev/bear/wiki/1.1.3.-Node.js%2C-Grails%2C-Tomcat%2C-Play-and-other-demos">demos and examples</a> to use as prototypes for your own projects. These demos are also used as integration tests. At the moment Bear supports Node.js, Grails, Play! Framework.</p>
+
+<h3>
+<a name="the-goal" class="anchor" href="#the-goal"><span class="octicon octicon-link"></span></a>The Goal</h3>
 
 <p>The goal of Bear is to provide less learning experience with help of the existing Java IDEs. Bear tries to minimize reading documentation and proposes using IDE features like code completion or quick method lookup to create your deployment project.</p>
 
-<p>First version of Bear has been released on January 12th, 2014 and is a work in progress. It first started as a Capistrano clone, but then grew into a different project.</p>
-
-<p>To quickly start using Bear, check out the <a href="https://github.com/chaschev/bear/wiki/1.1.1.-Demo.-List-a-remote-dir">Quick Start Guide</a>.</p>
-
-<p>You may find an interesting topic to read in our <a href="https://github.com/chaschev/bear/wiki">Wiki</a>.</p>
-
-<p>Bear has <a href="https://github.com/chaschev/bear/wiki/1.1.3.-Node.js%2C-Grails%2C-Tomcat%2C-Play-and-other-demos">demos and examples</a> to use as prototypes for your own projects. These demos are also used as integration tests. At the moment Bear supports Node.js, Grails, Play! Framework.</p>
+<p>The first version of Bear has been released on January 12th, 2014 and is a work in progress. It first started as a Capistrano clone, but then grew into a different project.</p>
 
 <p>Our main priorities for the project for now are usability and bugfixing, so your feedback, bugreports and feature requests are very welcome. You can <a href="https://github.com/chaschev/bear/issues">create a ticket or ask a question</a> or just drop a line at <a href="mailto:chaschev@gmail.com">chaschev@gmail.com</a>. We will accept contributions - below you will find instructions on how to build Bear and how to start the integration tests. Please discuss your changes with us if you want to change or add something significant.</p>
 
@@ -75,8 +100,17 @@
 
 <p>To install the latest stage version of Bear, type in your console:</p>
 
-<pre><code>mvn com.chaschev:installation-maven-plugin:1.4:install -Dartifact=com.chaschev:bear
-</code></pre>
+<div class="highlight highlight-sh"><pre><span class="nv">$ </span>mvn com.chaschev:installation-maven-plugin:1.4:install -Dartifact<span class="o">=</span>com.chaschev:bear
+</pre></div>
+
+<p>Bear is also available in Maven Central:</p>
+
+<div class="highlight highlight-xml"><pre><span class="nt">&lt;dependency&gt;</span>
+    <span class="nt">&lt;groupId&gt;</span>com.chaschev<span class="nt">&lt;/groupId&gt;</span>
+    <span class="nt">&lt;artifactId&gt;</span>bear<span class="nt">&lt;/artifactId&gt;</span>
+    <span class="nt">&lt;version&gt;</span>1.0.1<span class="nt">&lt;/version&gt;</span>
+<span class="nt">&lt;/dependency&gt;</span>
+</pre></div>
 
 <p><a href="https://github.com/chaschev/bear/wiki">Continue reading in Wiki...</a></p>
 
