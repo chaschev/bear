@@ -35,7 +35,11 @@ The goal of Bear is to provide less learning experience with help of the existin
 
 The first version of Bear has been released on January 12th, 2014 and is a work in progress. It first started as a Capistrano clone, but then grew into a different project.
 
-Our main priorities for the project for now are usability and bugfixing, so your feedback, bugreports and feature requests are very welcome. You can [create a ticket or ask a question](https://github.com/chaschev/bear/issues) or just drop a line at chaschev@gmail.com. We will accept contributions - below you will find instructions on how to build Bear and how to start the integration tests. Please discuss your changes with us if you want to change or add something significant.
+Our main priorities for the project for now are usability and bugfixing, so your feedback, bugreports and feature requests are very welcome. 
+
+### Contacts
+
+You can [create a ticket or ask a question](https://github.com/chaschev/bear/issues) or just drop a line at chaschev@gmail.com. We will accept contributions - below you will find instructions on how to build Bear and how to start the integration tests. Please discuss your changes with us if you want to change or add something significant.
 
 ### Bear Highlights
 
@@ -82,9 +86,11 @@ Bear is also available in Maven Central:
 
 Bear requires Maven 3.x to build:
 
-    mvn com.zenjava:javafx-maven-plugin:2.0:fix-classpath
-    git clone https://github.com/chaschev/bear.git
-    cd bear
-    mvn install
+```sh
+$ mvn com.zenjava:javafx-maven-plugin:2.0:fix-classpath
+$ git clone https://github.com/chaschev/bear.git
+$ cd bear
+$ mvn install
+```
 
 The first command will fix JavaFX installation to be available on classpath. You might need to run this with admin user. [More...](http://zenjava.com/javafx/maven/fix-classpath.html)
