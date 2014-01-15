@@ -34,11 +34,13 @@
         <h1>
 <a name="welcome-the-bear" class="anchor" href="#welcome-the-bear"><span class="octicon octicon-link"></span></a>Welcome the Bear!</h1>
 
-<p>Bear is a lightweight remote automation tool for Java. Bear differs from other existing deployment tools by using OOP, static types and fluent programming techniques. It first started as a Capistrano clone, but then grew into a different project.</p>
+<p>Bear is a lightweight remote automation tool for Groovy/Java/JVM. Bear allows your to deploy projects, setup your cluster, install software to your remote machines. Bear differs from other existing tools in that it's using programmatic approach - your deployment is a regular Java class which may have it's <code>main()</code>. Bear also uses static types, chained method calls, FP and fluent programming techniques.</p>
 
-<p>First version of Bear has been released on January 12th, 2014 and is a work in progress.</p>
+<p>The goal of Bear is to provide less learning experience with help of the existing Java IDEs. Bear tries to minimize reading documentation and proposes using IDE features like code completion or quick method lookup to create your deployment project.</p>
 
-<p>To quickly start using the Bear, check out the <a href="https://github.com/chaschev/bear/wiki/1.1.1.-Demo.-List-a-remote-dir">Quick Start Guide</a>.</p>
+<p>First version of Bear has been released on January 12th, 2014 and is a work in progress. It first started as a Capistrano clone, but then grew into a different project.</p>
+
+<p>To quickly start using Bear, check out the <a href="https://github.com/chaschev/bear/wiki/1.1.1.-Demo.-List-a-remote-dir">Quick Start Guide</a>.</p>
 
 <p>You may find an interesting topic to read in our <a href="https://github.com/chaschev/bear/wiki">Wiki</a>.</p>
 
@@ -76,64 +78,20 @@
 <pre><code>mvn com.chaschev:installation-maven-plugin:1.4:install -Dartifact=com.chaschev:bear
 </code></pre>
 
-<p>There is <a href="https://github.com/chaschev/bear/wiki">more on this in Wiki</a>.</p>
+<p><a href="https://github.com/chaschev/bear/wiki">Continue reading in Wiki...</a></p>
 
 <h3>
 <a name="building-bear" class="anchor" href="#building-bear"><span class="octicon octicon-link"></span></a>Building Bear</h3>
 
 <p>Bear requires Maven 3.x to build:</p>
 
-<pre><code>git clone https://github.com/chaschev/bear.git
+<pre><code>mvn com.zenjava:javafx-maven-plugin:2.0:fix-classpath
+git clone https://github.com/chaschev/bear.git
 cd bear
-mvn com.zenjava:javafx-maven-plugin:2.0:fix-classpath
 mvn install
 </code></pre>
 
-<p>Third command will fix JavaFX installation to be available on classpath. You might need to run this with admin user. <a href="http://zenjava.com/javafx/maven/fix-classpath.html">More...</a></p>
-
-<h3>
-<a name="road-map-for-release-10a2--ubuntu-server-localhost-cloud" class="anchor" href="#road-map-for-release-10a2--ubuntu-server-localhost-cloud"><span class="octicon octicon-link"></span></a>Road Map for Release 1.0a2 (+ Ubuntu Server, localhost, Cloud)</h3>
-
-<table>
-<thead><tr>
-<th>Step</th>
-<th align="center">State</th>
-</tr></thead>
-<tbody>
-<tr>
-<td>Support localhost</td>
-<td align="center"></td>
-</tr>
-<tr>
-<td>Support JavaScript, sample project</td>
-<td align="center"></td>
-</tr>
-<tr>
-<td>Support Ruby, RoR demo, sample project</td>
-<td align="center"></td>
-</tr>
-<tr>
-<td>Support Python &amp; sample project &amp; demo</td>
-<td align="center"></td>
-</tr>
-<tr>
-<td>Deployments to Heroku, AWS, GCE, Azure, Rackspace</td>
-<td align="center"></td>
-</tr>
-<tr>
-<td>Run via a Maven Plugin</td>
-<td align="center"></td>
-</tr>
-<tr>
-<td>Support JDK 6 for CLI, JDK 7 for GUI</td>
-<td align="center"></td>
-</tr>
-<tr>
-<td>Documentation</td>
-<td align="center"></td>
-</tr>
-</tbody>
-</table>
+<p>The first command will fix JavaFX installation to be available on classpath. You might need to run this with admin user. <a href="http://zenjava.com/javafx/maven/fix-classpath.html">More...</a></p>
       </section>
     </div>
 
