@@ -11,7 +11,7 @@ class MyProject{
         run([named("say-hi task", { _, task ->
             _.sys.copy('foo').to('bar').run().throwIfError();
             
-            println "${_.host}: hi from ${_.sys.capture('hostname')}!";
+            println "${_.host}: ${_.sys.capture('echo hi from `hostname`')}!";
         } as TaskCallable)])
     }
     
@@ -20,22 +20,20 @@ class MyProject{
     }
 }
 ```
-
 Which can be run as a Java app or from a command line:
-
 ```sh
 $ bear my.sayHi --ui
 ```
 
+### Quick Start
+
+To quickly start using Bear, check out the [Quick Start Guide](https://github.com/chaschev/bear/wiki/1.1.1.-Demo.-List-a-remote-dir). There also might be an interesting topic to read in our [Wiki](https://github.com/chaschev/bear/wiki). There are [demos and examples](https://github.com/chaschev/bear/wiki/1.1.3.-Node.js%2C-Grails%2C-Tomcat%2C-Play-and-other-demos) to use as prototypes for your own projects. These demos are also used as integration tests. At the moment Bear supports Node.js, Grails, Play! Framework.
+
+### The Goal
+
 The goal of Bear is to provide less learning experience with help of the existing Java IDEs. Bear tries to minimize reading documentation and proposes using IDE features like code completion or quick method lookup to create your deployment project.
 
 The first version of Bear has been released on January 12th, 2014 and is a work in progress. It first started as a Capistrano clone, but then grew into a different project.
-
-To quickly start using Bear, check out the [Quick Start Guide](https://github.com/chaschev/bear/wiki/1.1.1.-Demo.-List-a-remote-dir).
-
-You may find an interesting topic to read in our [Wiki](https://github.com/chaschev/bear/wiki).
-
-Bear has [demos and examples](https://github.com/chaschev/bear/wiki/1.1.3.-Node.js%2C-Grails%2C-Tomcat%2C-Play-and-other-demos) to use as prototypes for your own projects. These demos are also used as integration tests. At the moment Bear supports Node.js, Grails, Play! Framework.
 
 Our main priorities for the project for now are usability and bugfixing, so your feedback, bugreports and feature requests are very welcome. You can [create a ticket or ask a question](https://github.com/chaschev/bear/issues) or just drop a line at chaschev@gmail.com. We will accept contributions - below you will find instructions on how to build Bear and how to start the integration tests. Please discuss your changes with us if you want to change or add something significant.
 
@@ -65,7 +63,18 @@ Bear has a UI written in AngularJS inside a JavaFX's WebView. It's probably the 
 
 To install the latest stage version of Bear, type in your console:
 
-    mvn com.chaschev:installation-maven-plugin:1.4:install -Dartifact=com.chaschev:bear
+```sh
+$ mvn com.chaschev:installation-maven-plugin:1.4:install -Dartifact=com.chaschev:bear
+```
+    
+Bear is also available in Maven Central:
+```xml
+<dependency>
+    <groupId>com.chaschev</groupId>
+    <artifactId>bear</artifactId>
+    <version>1.0.1</version>
+</dependency>
+```
 
 [Continue reading in Wiki...](https://github.com/chaschev/bear/wiki)
 
