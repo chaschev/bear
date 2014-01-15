@@ -1,10 +1,35 @@
 # Welcome the Bear!
 
-Bear is a lightweight remote automation tool for Groovy/Java/JVM. Bear allows your to deploy projects, setup your cluster, install software to your remote machines. Bear differs from other existing tools in that it's using programmatic approach - your deployment is a regular Java class which may have it's `main()`. Bear also uses static types, chained method calls, FP and fluent programming techniques.
+Bear is a lightweight remote automation tool for Groovy/Java/JVM. Bear allows your to deploy projects, setup your cluster, install software to your remote machines. Bear differs from other existing tools in that it's using programmatic approach - your deployment is a regular Java class which may have it's `main()`. Bear also uses static types, chained method calls, FP and fluent programming techniques. Below is an example of a remote task:
+
+```groovy
+@Project(shortName = "my")
+class MyProject{
+    
+    @Method
+    def sayHi(){
+        run([named("say-hi task", { _, task ->
+            _.sys.copy('foo').to('bar').run().throwIfError();
+            
+            println "${_.host}: hi from ${_.sys.capture('hostname')}!";
+        } as TaskCallable)])
+    }
+    
+    static main(args){
+        new MyProject().sayHi()
+    }
+}
+```
+
+Which can be run as a Java app or from a command line:
+
+```sh
+$ bear my.sayHi --ui
+```
 
 The goal of Bear is to provide less learning experience with help of the existing Java IDEs. Bear tries to minimize reading documentation and proposes using IDE features like code completion or quick method lookup to create your deployment project.
 
-First version of Bear has been released on January 12th, 2014 and is a work in progress. It first started as a Capistrano clone, but then grew into a different project.
+The first version of Bear has been released on January 12th, 2014 and is a work in progress. It first started as a Capistrano clone, but then grew into a different project.
 
 To quickly start using Bear, check out the [Quick Start Guide](https://github.com/chaschev/bear/wiki/1.1.1.-Demo.-List-a-remote-dir).
 
