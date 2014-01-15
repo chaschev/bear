@@ -34,7 +34,9 @@
         <h1>
 <a name="welcome-the-bear" class="anchor" href="#welcome-the-bear"><span class="octicon octicon-link"></span></a>Welcome the Bear!</h1>
 
-<p>Bear is a lightweight remote automation tool for Groovy/Java/JVM. Bear allows your to deploy projects, setup your cluster, install software to your remote machines. Bear differs from other existing tools in that it's using programmatic approach - your deployment is a regular Java class which may have it's <code>main()</code>. Bear also uses static types, chained method calls, FP and fluent programming techniques. Below is an example of a remote task:</p>
+<p>Bear is a lightweight remote automation tool for Groovy/Java/JVM. Bear allows your to deploy projects, setup your cluster and install software to your remote machines. Bear differs from other existing tools in that it's using programmatic approach - your deployment is a regular Java class which may have it's <code>main()</code>. Bear also uses static types, chained method calls, FP and fluent programming techniques. </p>
+
+<p>Below is an example of a remote task:</p>
 
 <div class="highlight highlight-groovy"><pre><span class="nd">@Project</span><span class="o">(</span><span class="n">shortName</span> <span class="o">=</span> <span class="s2">"my"</span><span class="o">)</span>
 <span class="kd">class</span> <span class="nc">MyProject</span><span class="o">{</span>
@@ -59,7 +61,16 @@
 <div class="highlight highlight-sh"><pre><span class="nv">$ </span>bear my.sayHi --ui
 </pre></div>
 
-<h3>
+<p>Bear provides tested deployment examples which include deploying, starting and monitoring, release management, installing server application as a service for the following technologies:</p>
+
+<ul>
+<li>Node.js <a href="https://github.com/chaschev/bear/blob/master/src/test/groovy/examples/nodejs/DrywallDemoProject.groovy">[Source 1 - Drywall Demo]</a> <a href="https://github.com/chaschev/bear/blob/master/src/test/groovy/examples/nodejs/NodeExpressMongooseDemoProject.groovy">[Source 2 - Express/Express Demo]</a>
+</li>
+<li>Play! Framework <a href="https://github.com/chaschev/bear/blob/master/src/test/groovy/examples/java/SecureSocialDemoProject.groovy">[Source - Secure Social Demo for MongoDB/MySQL]</a>
+</li>
+<li>Grails/Tomcat <a href="https://github.com/chaschev/bear/blob/master/src/test/groovy/examples/java/GrailsTomcatDemoProject.groovy">[Source - Grails Petclinic Demo]</a>
+</li>
+</ul><h3>
 <a name="quick-start" class="anchor" href="#quick-start"><span class="octicon octicon-link"></span></a>Quick Start</h3>
 
 <p>To quickly start using Bear, check out the <a href="https://github.com/chaschev/bear/wiki/1.1.1.-Demo.-List-a-remote-dir">Quick Start Guide</a>. There also might be an interesting topic to read in our <a href="https://github.com/chaschev/bear/wiki">Wiki</a>. There are <a href="https://github.com/chaschev/bear/wiki/1.1.3.-Node.js%2C-Grails%2C-Tomcat%2C-Play-and-other-demos">demos and examples</a> to use as prototypes for your own projects. These demos are also used as integration tests. At the moment Bear supports Node.js, Grails, Play! Framework.</p>
@@ -67,7 +78,7 @@
 <h3>
 <a name="the-goal" class="anchor" href="#the-goal"><span class="octicon octicon-link"></span></a>The Goal</h3>
 
-<p>The goal of Bear is to provide less learning experience with help of the existing Java IDEs. Bear tries to minimize reading documentation and proposes using IDE features like code completion or quick method lookup to create your deployment project.</p>
+<p>The goal of Bear is to provide less learning experience by using features of the existing Java IDEs. Bear tries to minimize reading documentation and proposes using code completion or quick method lookup to create your deployment project.</p>
 
 <p>The first version of Bear has been released on January 12th, 2014 and is a work in progress. It first started as a Capistrano clone, but then grew into a different project.</p>
 
@@ -79,6 +90,25 @@
 <p>You can <a href="https://github.com/chaschev/bear/issues">create a ticket or ask a question</a> or just drop a line at <a href="mailto:chaschev@gmail.com">chaschev@gmail.com</a>. We will accept contributions - below you will find instructions on how to build Bear and how to start the integration tests. Please discuss your changes with us if you want to change or add something significant.</p>
 
 <h3>
+<a name="contributors" class="anchor" href="#contributors"><span class="octicon octicon-link"></span></a>Contributors</h3>
+
+<ul>
+<li>Andrey Chaschev <a href="mailto:chaschev@gmail.com">chaschev@gmail.com</a>
+</li>
+</ul><h3>
+<a name="alternatives" class="anchor" href="#alternatives"><span class="octicon octicon-link"></span></a>Alternatives</h3>
+
+<p>Bear can be compared to the following tools:</p>
+
+<ul>
+<li><a href="http://puppetlabs.com/">Puppet</a></li>
+<li><a href="http://www.getchef.com/chef/">Chef</a></li>
+<li><a href="http://capistranorb.com/">Capistrano</a></li>
+<li><a href="http://docs.fabfile.org/en/1.8/">Fabric</a></li>
+<li><a href="http://www.saltstack.com/">Salt</a></li>
+<li><a href="https://flynn.io/">Flynn</a></li>
+<li><a href="http://www.ansibleworks.com/">Ansible</a></li>
+</ul><h3>
 <a name="bear-highlights" class="anchor" href="#bear-highlights"><span class="octicon octicon-link"></span></a>Bear Highlights</h3>
 
 <ul>
