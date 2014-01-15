@@ -42,7 +42,7 @@ To install the latest stage version of Bear, type in your console:
 
     mvn com.chaschev:installation-maven-plugin:1.4:install -Dartifact=com.chaschev:bear
 
-[Continue reading in Wiki](https://github.com/chaschev/bear/wiki).
+[Continue reading in Wiki...](https://github.com/chaschev/bear/wiki)
 
 ### Building Bear
 
@@ -54,16 +54,3 @@ Bear requires Maven 3.x to build:
     mvn install
 
 The first command will fix JavaFX installation to be available on classpath. You might need to run this with admin user. [More...](http://zenjava.com/javafx/maven/fix-classpath.html)
-
-### Road Map for Release 1.0a2 (+ Ubuntu Server, localhost, Cloud)
-
-| Step                                              | State          |
-| ------------------------------------------------- |:--------------:|
-| Support localhost                                 |                |
-| Support JavaScript, sample project                        |                |
-| Support Ruby, RoR demo, sample project                    |                |
-| Support Python & sample project & demo                    |                |
-| Deployments to Heroku, AWS, GCE, Azure, Rackspace |                |
-| Run via a Maven Plugin                            |                |
-| Support JDK 6 for CLI, JDK 7 for GUI              |                |
-| Documentation                                     |                |
