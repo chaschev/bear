@@ -100,7 +100,7 @@ public class TomcatPlugin extends ServerToolPlugin {
             public String apply(AbstractContext $) {
                 String version = $.var(TomcatPlugin.this.version);
 
-                switch (version.charAt(0)){
+                switch (version.charAt(0)) {
                     case '6':
                         return MessageFormat.format("http://apache-mirror.rbc.ru/pub/apache/tomcat/tomcat-6/v{0}/bin/apache-tomcat-{0}.tar.gz", version);
                     default:
@@ -109,6 +109,21 @@ public class TomcatPlugin extends ServerToolPlugin {
                 }
             }
         });
+
+        configureService.setEqualTo(dynamic(new Fun<SessionContext, Function<ConfigureServiceInput, Void>>() {
+            @Override
+            public Function<ConfigureServiceInput, Void> apply(SessionContext $) {
+                return newBasicUpstartConfigurator($);
+            }
+        }).temp());
+
+
+        createScriptText.setEqualTo(dynamic(new Fun<SessionContext, Function<String, String>>() {
+            @Override
+            public Function<String, String> apply(SessionContext $) {
+                return newBasicUpstartScriptText($);
+            }
+        }).temp());
     }
 
     @Override

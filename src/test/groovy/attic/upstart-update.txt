@@ -1,0 +1,24 @@
+    // a helper upstart task which updates a port in a tomcat upstart script
+    // not used, left for reference only
+    // it recreates tomcat upstart scripts from scratch by reusing tomcat's upstart implementation
+    // may be there is a more simple way to do this with tomcat...
+    def updateUpstart = new TaskDef({ SessionContext _, task ->
+        def defaultUpstartConfigurator = tomcat.newBasicUpstartConfigurator(_)
+
+        _.putConst(tomcat.createScriptText, tomcat.newBasicUpstartScriptText(_))
+
+        _.putConst(tomcat.configureService, { ConfigureServiceInput serviceInput ->
+            defaultUpstartConfigurator.apply(serviceInput)
+
+            int diff = serviceInput.port.toInteger() - 8080
+
+            serviceInput.service.exportVar("ACTIVE_MQ_PORT", "" + (61616 + diff))
+
+            return null;
+        } as Function)
+
+        return _.runSession(
+            upstart.create.singleTaskSupplier().createNewSession(_, task, upstart.create),
+            _.var(tomcat.customUpstart)
+        );
+    } as TaskCallable)

@@ -26,7 +26,8 @@ import static bear.task.TaskResult.OK
     stage = "u-3",
     vcs = "https://github.com/jedireza/drywall.git",
     branch = "master",
-    useUI = true
+    useUI = true,
+    user = "andrey"
 )
 public class DrywallDemoProject extends BearProject<DrywallDemoProject> {
     // these are the plugins which are injected

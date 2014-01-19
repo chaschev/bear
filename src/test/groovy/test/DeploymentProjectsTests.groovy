@@ -65,13 +65,13 @@ class DeploymentProjectsTests {
         runProject(SecureSocialDemoProject)
     }
 
-    @Test(timeout = 600000L)
+    @Test(timeout = 300000L)
     public void testDrywall() throws Exception
     {
         runProject(DrywallDemoProject)
     }
 
-    @Test(timeout = 600000L)
+    @Test(timeout = 300000L)
     public void testNodeExpressDemo() throws Exception
     {
         runProject(NodeExpressMongooseDemoProject)
