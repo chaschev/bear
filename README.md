@@ -1,6 +1,6 @@
 # Welcome the Bear!
 
-Bear is a lightweight remote automation tool for Groovy/Java/JVM. Bear allows your to deploy projects, setup your cluster and install software to your remote machines. Bear differs from other existing tools in that it's using programmatic approach - your deployment is a regular Java class which may have it's `main()`. Bear loves static type safety, chained method calls, FP and fluent programming techniques. 
+Bear is a lightweight remote automation tool for Groovy/Java/JVM. Bear allows your to deploy projects, setup your cluster and install software to your remote machines. Bear differs from other existing tools in that it's using programmatic approach. In Bear your deployment is a regular Java class which may have it's `main()`. Bear loves static type safety, chained method calls, FP and fluent programming techniques. 
 
 Below is an example of a remote task:
 
