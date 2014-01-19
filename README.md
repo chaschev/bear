@@ -1,6 +1,8 @@
 # Welcome the Bear!
 
-Bear is a lightweight remote automation tool for Groovy/Java/JVM. Bear allows your to deploy projects, setup your cluster, install software to your remote machines. Bear differs from other existing tools in that it's using programmatic approach - your deployment is a regular Java class which may have it's `main()`. Bear also uses static types, chained method calls, FP and fluent programming techniques. Below is an example of a remote task:
+Bear is a lightweight remote automation tool for Groovy/Java/JVM. Bear allows your to deploy projects, setup your cluster and install software to your remote machines. Bear differs from other existing tools in that it's using programmatic approach. In Bear your deployment is a regular Java class which may have it's `main()`. Bear loves static type safety, chained method calls, FP and fluent programming techniques. 
+
+Below is an example of a remote task:
 
 ```groovy
 @Project(shortName = "my")
@@ -25,13 +27,19 @@ Which can be run as a Java app or from a command line:
 $ bear my.sayHi --ui
 ```
 
+Bear provides tested deployment examples which include deploying, starting and monitoring, release management, installing server application as a service for the following technologies:
+
+* Node.js [[Source 1 - Drywall Demo]](https://github.com/chaschev/bear/blob/master/src/test/groovy/examples/nodejs/DrywallDemoProject.groovy) [[Source 2 - Express/Express Demo]](https://github.com/chaschev/bear/blob/master/src/test/groovy/examples/nodejs/NodeExpressMongooseDemoProject.groovy)
+* Play! Framework [[Source - Secure Social Demo for MongoDB/MySQL]](https://github.com/chaschev/bear/blob/master/src/test/groovy/examples/java/SecureSocialDemoProject.groovy)
+* Grails/Tomcat [[Source - Grails Petclinic Demo]](https://github.com/chaschev/bear/blob/master/src/test/groovy/examples/java/GrailsTomcatDemoProject.groovy)
+
 ### Quick Start
 
 To quickly start using Bear, check out the [Quick Start Guide](https://github.com/chaschev/bear/wiki/1.1.1.-Demo.-List-a-remote-dir). There also might be an interesting topic to read in our [Wiki](https://github.com/chaschev/bear/wiki). There are [demos and examples](https://github.com/chaschev/bear/wiki/1.1.3.-Node.js%2C-Grails%2C-Tomcat%2C-Play-and-other-demos) to use as prototypes for your own projects. These demos are also used as integration tests. At the moment Bear supports Node.js, Grails, Play! Framework.
 
 ### The Goal
 
-The goal of Bear is to provide less learning experience with help of the existing Java IDEs. Bear tries to minimize reading documentation and proposes using IDE features like code completion or quick method lookup to create your deployment project.
+The goal of Bear is to provide less learning experience by using features of the existing Java IDEs. Bear tries to minimize reading documentation and proposes using code completion or quick method lookup to create your deployment project.
 
 The first version of Bear has been released on January 12th, 2014 and is a work in progress. It first started as a Capistrano clone, but then grew into a different project.
 
@@ -40,6 +48,18 @@ Our main priorities for the project for now are usability and bugfixing, so your
 ### Contacts
 
 You can [create a ticket or ask a question](https://github.com/chaschev/bear/issues) or just drop a line at chaschev@gmail.com. We will accept contributions - below you will find instructions on how to build Bear and how to start the integration tests. Please discuss your changes with us if you want to change or add something significant.
+
+### Alternatives
+
+Bear can be compared to the following tools:
+
+* [Puppet](http://puppetlabs.com/)
+* [Chef](http://www.getchef.com/chef/)
+* [Capistrano](http://capistranorb.com/)
+* [Fabric](http://docs.fabfile.org/en/1.8/)
+* [Salt](http://www.saltstack.com/)
+* [Flynn](https://flynn.io/)
+* [Ansible](http://www.ansibleworks.com/)
 
 ### Bear Highlights
 
@@ -94,3 +114,4 @@ $ mvn install
 ```
 
 The first command will fix JavaFX installation to be available on classpath. You might need to run this with admin user. [More...](http://zenjava.com/javafx/maven/fix-classpath.html)
+
