@@ -1,6 +1,8 @@
 package bear.fx;
 
 import javafx.application.Application;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.scene.Scene;
@@ -15,16 +17,15 @@ import javafx.scene.layout.VBoxBuilder;
 import javafx.stage.Stage;
 
 public class FXBrowser {
-
-
-    public static class TestApp extends Application {
-
+    public static class FxBrowserApp extends Application {
 
         @Override
         public void start(Stage stage) throws Exception {
             try {
-                final SimpleBrowser browser = new SimpleBrowser()
-                    .useFirebug(true);
+                final SimpleBrowser browser = SimpleBrowser.newBuilder()
+                    .useFirebug(false)
+                    .useJQuery(true)
+                    .build();
 
                 final TextField location = new TextField(FXBrowser.class.getResource("/app/bear.html").toExternalForm());
 
@@ -36,8 +37,7 @@ public class FXBrowser {
                         browser.load(location.getText(), new Runnable() {
                             @Override
                             public void run() {
-                                System.out.println("---------------");
-                                System.out.println(browser.getHTML());
+                                System.out.println(browser.getEngine().executeScript("jQuery('#sso_username')[0]"));
                             }
                         });
                     }
@@ -49,6 +49,12 @@ public class FXBrowser {
                 menuItem.setAccelerator(new KeyCodeCombination(KeyCode.G, KeyCombination.CONTROL_DOWN));
                 menuItem.setOnAction(goAction);
 
+                browser.getEngine().locationProperty().addListener(new ChangeListener<String>() {
+                    @Override
+                    public void changed(ObservableValue<? extends String> observableValue, String s, String newLoc) {
+                        System.out.println("location changed to: " + newLoc);
+                    }
+                });
 
                 HBox toolbar = new HBox();
                 toolbar.getChildren().addAll(location, go);

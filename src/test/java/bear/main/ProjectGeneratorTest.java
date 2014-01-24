@@ -16,6 +16,7 @@
 
 package bear.main;
 
+import com.google.common.collect.Lists;
 import org.junit.Test;
 
 import static bear.main.ProjectGenerator.toCamelHumpCase;
@@ -35,9 +36,10 @@ public class ProjectGeneratorTest {
 
     @Test
     public void testGenerate() throws Exception {
-        System.out.println(new ProjectGenerator("drywall-demo", "andrey", "pass", "host").processTemplate("TemplateProject.template"));
+        System.out.println(new ProjectGenerator("drywall-demo", "andrey", "pass", Lists.newArrayList("h1", "h2"), Lists.newArrayList("java")).processTemplate("TemplateProject.template"));
+
         System.out.println("--------------");
 
-        System.out.println(new ProjectGenerator("drywall-demo", "andrey",  "pass", "host").generatePom("drywall-demo"));
+        System.out.println(new ProjectGenerator("drywall-demo", "andrey",  "pass", Lists.newArrayList("h1", "h2"), Lists.newArrayList("java")).generatePom("drywall-demo"));
     }
 }

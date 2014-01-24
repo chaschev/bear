@@ -71,7 +71,7 @@ public class DependencyInjection {
     }
 
     //optimization
-    private static String shortName(Class<?> aClass, String className, Field field) {
+    public static String shortName(Class<?> aClass, String className, Field field) {
         Class<?> thisFieldClass = field.getDeclaringClass();
 
         return aClass == thisFieldClass ? className : Plugin.shortenName(aClass.getSimpleName());

@@ -6,7 +6,6 @@ import bear.main.phaser.PhaseCallable;
 import bear.main.phaser.PhaseParty;
 import bear.task.*;
 import chaschev.lang.MutableSupplier;
-import chaschev.lang.OpenBean;
 import chaschev.util.Exceptions;
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
@@ -18,7 +17,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-import static bear.context.AbstractContext.logger;
 import static bear.core.SessionContext.ui;
 
 /**
@@ -208,8 +206,7 @@ public class GridBuilder {
             async = true;
             shutdownAfterRun = false;
 
-            logger.info("launching ui...");
-            OpenBean.invokeStatic(Class.forName("bear.main.BearFX"), "getInstance");
+            BearMain.launchUi();
 
             return runCli();
         } catch (ClassNotFoundException e) {

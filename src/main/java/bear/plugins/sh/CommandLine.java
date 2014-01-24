@@ -275,7 +275,7 @@ public abstract class CommandLine<T extends CommandLineResult<?>, SCRIPT extends
     }
 
     @Override
-    public CommandLine<T, ?> setCallback(ConsoleCallback callback) {
+    public CommandLine<T, SCRIPT> setCallback(ConsoleCallback callback) {
         super.setCallback(callback);
         return this;
     }

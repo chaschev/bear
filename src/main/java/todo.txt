@@ -1,10 +1,9 @@
 top priority:
 
-- remotely install java environment with a single command
--- bear --create my --template java.basic|nodejs.express| --hosts=vm01,vm02,vm03 --user user --password password
--- bear my.setup
-
-- download jdk with a SimpleBrowser
+- (ok) remotely install java environment with a single command
+-- (ok) bear --create my --template java.basic|nodejs.express| --hosts=vm01,vm02,vm03 --user user --password password --oracleUser us --oraclePassword pa
+-- (ok) bear my.setup
+- (ok) download jdk with a SimpleBrowser
 - (ok) Update README.md
 - (ok) Play issue
 - (ok) Redo quick start guide
@@ -12,6 +11,7 @@ top priority:
 - (ok) Install to maven central
 - Create articles
 -- (ok) Habrahabr.ru
+-- "Setting up a Tomcat/Play Framework cluster in 5 minutes"
 -- Other sites for articles
 -- Stackoverflow.com
 -- after getting 30-50 stars, google adword requests and answer questions at SO

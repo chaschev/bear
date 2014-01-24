@@ -93,8 +93,10 @@ public class TomcatPlugin extends ServerToolPlugin {
 
         execPath.setEqualTo(concat(catalinaHome, "/bin/catalina.sh"));
 
-        multiServiceName.setEqualTo(concat(toolname, "_%s"));
+        multiServiceName.setEqualTo(concat(toolname, "-%s"));
         singleServiceName.setEqualTo(toolname);
+
+        groupName.setEqualTo(toolname);
 
         distrWwwAddress.setDynamic(new Fun<AbstractContext, String>() {
             public String apply(AbstractContext $) {
@@ -309,11 +311,11 @@ public class TomcatPlugin extends ServerToolPlugin {
                     .exportVar("CATALINA_TMPDIR", tempPath)
                 ;
 
-                if($.isSet(javaOpts) || javaOpts.isDefined()){
+                if($.isDefined(javaOpts)){
                     in.service.exportVar("JAVA_OPTS", $.var(javaOpts));
                 }
 
-                if($.isSet(catalinaOpts) || catalinaOpts.isDefined()){
+                if($.isDefined(catalinaOpts)){
                     in.service.exportVar("CATALINA_OPTS", $.var(catalinaOpts));
                 }
 

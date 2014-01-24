@@ -260,7 +260,7 @@ public class VariablesLayer extends HavingContext<Variables, AbstractContext> {
         @Nullable DynamicVariable<?> var, @Nullable String varName, Object _default,
         VariablesLayer initialLayer, boolean memoization) {
         Preconditions.checkArgument(var != null || varName != null, "they can't both be null!");
-        Preconditions.checkArgument(var == null || var.isNameSet(), "var must have name set");
+        Preconditions.checkArgument(var == null || var.isNameSet(), "var must have a name set or declared temporary");
 
         if(!memoization && var != null && var.memoizeIn() == $.getClass()){
             return atomicMemoize(var, varName, _default, initialLayer);

@@ -16,6 +16,9 @@
 
 package bear.plugins;
 
+import bear.console.AbstractConsole;
+import bear.console.ConsoleCallback;
+import bear.console.ConsoleCallbackResult;
 import bear.context.Fun;
 import bear.core.GlobalContext;
 import bear.core.SessionContext;
@@ -30,6 +33,8 @@ import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
 import org.slf4j.LoggerFactory;
+
+import javax.annotation.Nonnull;
 
 import static bear.session.Variables.*;
 import static chaschev.lang.Predicates2.contains;
@@ -213,8 +218,15 @@ public class ZippedToolPlugin extends Plugin<TaskDef<Object, TaskResult<?>>> {
                 script.line().addRaw("unzip ../%s", distrName).build();
             } else if (distrName.endsWith("bin")) {
                 script
-                    .add($.sys.permissions(distrName).withPermissions("u+x").asLine())
-                    .line().addRaw("./%s", distrName).build();
+                    .add($.sys.permissions("../" + distrName).withPermissions("u+x").asLine())
+                    .line().addRaw("../%s", distrName).setCallback(new ConsoleCallback() {
+                    @Nonnull
+                    @Override
+                    public ConsoleCallbackResult progress(AbstractConsole.Terminal console, String buffer, String wholeText) {
+                        if(buffer.contains("Press Enter")) console.println("");           //a surprise from jdk 6u43-
+                        return ConsoleCallbackResult.CONTINUE;
+                    }
+                }).build();
             } else {
                 throw new IllegalArgumentException("unsupported archive type: " + distrName);
             }

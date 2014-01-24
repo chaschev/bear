@@ -3,6 +3,7 @@ import bear.annotations.Project
 import bear.core.*
 import bear.task.TaskCallable
 import bear.annotations.Method
+${imports}
 
 import static bear.task.TaskResult.OK
 import static bear.task.NamedCallable.named
@@ -10,7 +11,7 @@ import static bear.task.NamedCallable.named
 @Project(shortName = "${dashedTitle}", name = "${spacedTitle}")
 @Configuration(
     properties = ".bear/${dashedTitle}",
-    stage = "one",
+    stage = "all",
     useUI = true,
     user = "${user}",
     password = "${password}"
@@ -18,17 +19,14 @@ import static bear.task.NamedCallable.named
 public class ${projectTitle} extends BearProject<${projectTitle}> {
     Bear bear;
 
+${fields}
+
     @Override
     protected GlobalContext configureMe(GlobalContextFactory factory) throws Exception
     {
         bear.stages.set(new Stages(global)
-            .addQuick("one", "${host}")
-            .addQuick("two", "${host}, vm02")
-            .addQuick("three", "${host}, vm02, vm03")
-            .addQuick("u-1", "${host}")
-            .addQuick("u-2", "${host}, vm05")
-            .addQuick("u-3", "${host}, vm05, vm06")
-            );
+${hosts}
+        );
 
         return global;
     }

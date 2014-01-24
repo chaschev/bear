@@ -420,7 +420,11 @@ public abstract class BearProject<SELF extends BearProject> {
             return Annotations.defaultBoolean(annotation, "useUI");
         }
 
-        return annotation.useUI();
+        boolean r = annotation.useUI();
+
+        global.put(bear.useUI, r);
+
+        return r;
     }
 
     private Configuration configureWithAnnotations(
@@ -625,8 +629,6 @@ public abstract class BearProject<SELF extends BearProject> {
                 URI uri = null;
 
                 try {
-
-
                     uri = new URIBuilder()
                         .setScheme("http")
                         .setHost(address.getAddress())

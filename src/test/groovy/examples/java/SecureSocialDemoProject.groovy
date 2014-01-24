@@ -33,7 +33,7 @@ import static bear.task.TaskResult.OK
 @Project(shortName = "ss-demo", name = "Secure Social Demo")
 @Configuration(
     properties = ".bear/demos",
-    stage = "u-1",
+    stage = "u-3",
     vcs = "https://github.com/chaschev/securesocial",
     branch = "master",
     user = "andrey",
@@ -64,8 +64,11 @@ public class SecureSocialDemoProject extends BearProject<SecureSocialDemoProject
     {
         maven.version.set("3.1.1");
 
-        java.versionName.set("jdk-7u40-linux-x64");
-        java.version.set("1.7.0_40");
+        java.version.set("7u51");
+        java.acceptLicense.set(true)
+
+//        java.oracleUser.set("your-user")
+//        java.oraclePassword.set("***")
 
         play.version.set("2.2.0");
 
@@ -81,7 +84,6 @@ public class SecureSocialDemoProject extends BearProject<SecureSocialDemoProject
             .addQuick("u-2", "vm04, vm05")
             .addQuick("u-3", "vm04, vm05, vm06")
         );
-
 
         // this defines the deployment task
         defaultDeployment = deployment.newBuilder()
@@ -116,8 +118,8 @@ public class SecureSocialDemoProject extends BearProject<SecureSocialDemoProject
 //            ])
 
         new SecureSocialDemoProject()
-            .deploy('mongo')
-//            .setup()
+//            .deploy('mongo')
+            .setup()
     }
 
 

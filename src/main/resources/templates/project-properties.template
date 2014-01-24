@@ -2,3 +2,6 @@
 
 bear.sshUsername=${user}
 bear.sshPassword=${password}
+
+java.oracleUser=${oracleUser}
+java.oraclePassword=${oraclePassword}

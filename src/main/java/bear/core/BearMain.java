@@ -37,7 +37,9 @@ import groovy.lang.GroovyShell;
 import joptsimple.OptionSpec;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.ArrayUtils;
+import org.apache.commons.lang3.JavaVersion;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.SystemUtils;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.core.Appender;
@@ -55,6 +57,7 @@ import java.util.*;
 
 import static bear.session.Variables.*;
 import static chaschev.lang.OpenBean.getFieldValue;
+import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 import static org.apache.commons.io.FileUtils.writeStringToFile;
 
@@ -74,12 +77,25 @@ public class BearMain extends AppCli<GlobalContext, Bear, BearMain.AppOptions2> 
         if (!BUILD_DIR.exists()) BUILD_DIR.mkdirs();
     }
 
+    public static boolean hasFx(){
+        return SystemUtils.isJavaVersionAtLeast(JavaVersion.JAVA_1_7);
+    }
+
+    public static void launchUi() throws ClassNotFoundException {
+        logger.info("launching ui...");
+        OpenBean.invokeStatic(Class.forName("bear.main.BearFX"), "getInstance");
+    }
+
     public static class AppOptions2 extends AppOptions {
         public final static OptionSpec<String>
             CREATE_NEW = parser.accepts("create", "creates a new project, i.e. 'my-project'").withRequiredArg().describedAs("name-with-dashes").ofType(String.class),
             USER = parser.accepts("user", "remote user for the deployment").requiredIf(CREATE_NEW).withRequiredArg().describedAs("username").ofType(String.class),
             PASSWORD = parser.accepts("password", "user password").requiredIf(CREATE_NEW).withRequiredArg().describedAs("password").ofType(String.class),
-            HOST = parser.accepts("host", "any of the remote hosts").requiredIf(CREATE_NEW).withRequiredArg().describedAs("host").ofType(String.class)
+//            HOST = parser.accepts("host", "one of the remote hosts").requiredIf(CREATE_NEW).withRequiredArg().describedAs("host").ofType(String.class),
+            HOSTS = parser.accepts("hosts", "remote hosts").requiredIf(CREATE_NEW).withRequiredArg().describedAs("hosts").withValuesSeparatedBy(",").ofType(String.class),
+            TEMPLATE = parser.accepts("template", "template, i.e. java.basic or nodejs").withRequiredArg().describedAs("template").withValuesSeparatedBy(".").ofType(String.class),
+            ORACLE_USER = parser.accepts("oracleUser", "(optional) user to download JDK from Oracle.com").withRequiredArg().describedAs("username").ofType(String.class),
+            ORACLE_PASSWORD = parser.accepts("oraclePassword", "(optional) password to download JDK from Oracle.com").withRequiredArg().describedAs("password").ofType(String.class)
         ;
 
         public final static OptionSpec<Void>
@@ -391,7 +407,9 @@ public class BearMain extends AppCli<GlobalContext, Bear, BearMain.AppOptions2> 
             return;
         }
 
-        if(bearMain.options.has(AppOptions2.UNPACK_DEMOS)){
+        AppOptions2 options2 = bearMain.options;
+
+        if(options2.has(AppOptions2.UNPACK_DEMOS)){
             String filesAsText = ProjectGenerator.readResource("/demoFiles.txt");
 
             int count = 0;
@@ -399,6 +417,7 @@ public class BearMain extends AppCli<GlobalContext, Bear, BearMain.AppOptions2> 
             for (String resource : filesAsText.split("::")) {
                 File dest = new File(BEAR_DIR + resource);
                 System.out.printf("copying %s to %s...%n", resource, dest);
+
                 writeStringToFile(dest, ProjectGenerator.readResource(resource));
 
                 count++;
@@ -409,21 +428,41 @@ public class BearMain extends AppCli<GlobalContext, Bear, BearMain.AppOptions2> 
             return;
         }
 
-        if (bearMain.options.has(AppOptions2.CREATE_NEW)) {
-            String dashedTitle = bearMain.options.get(AppOptions2.CREATE_NEW);
-            String user = bearMain.options.get(AppOptions2.USER);
-            String pass = bearMain.options.get(AppOptions2.PASSWORD);
-            String host = bearMain.options.get(AppOptions2.HOST);
+        if (options2.has(AppOptions2.CREATE_NEW)) {
+            String dashedTitle = options2.get(AppOptions2.CREATE_NEW);
 
-            ProjectGenerator g = new ProjectGenerator(dashedTitle, user, pass, host);
+            String user = options2.get(AppOptions2.USER);
+            String pass = options2.get(AppOptions2.PASSWORD);
+
+            List<String> hosts = options2.getList(AppOptions2.HOSTS);
+
+            List<String> template;
+
+            if(options2.has(AppOptions2.TEMPLATE)){
+                template = options2.getList(AppOptions2.TEMPLATE);
+            }else{
+                template = emptyList();
+            }
+
+            ProjectGenerator g = new ProjectGenerator(dashedTitle, user, pass, hosts, template);
+
+            if(options2.has(AppOptions2.ORACLE_USER)){
+                g.oracleUser = options2.get(AppOptions2.ORACLE_USER);
+            }
+
+            if(options2.has(AppOptions2.ORACLE_PASSWORD)){
+                g.oraclePassword = options2.get(AppOptions2.ORACLE_PASSWORD);
+            }
 
             File projectFile = new File(BEAR_DIR, g.getProjectTitle() + ".groovy");
             File pomFile = new File(BEAR_DIR, "pom.xml");
 
             writeStringToFile(projectFile, g.processTemplate("TemplateProject.template"));
+
             writeStringToFile(new File(BEAR_DIR, dashedTitle + ".properties"), g.processTemplate("project-properties.template"));
             writeStringToFile(new File(BEAR_DIR, "demos.properties"), g.processTemplate("project-properties.template"));
             writeStringToFile(new File(BEAR_DIR, "bear-fx.properties"), g.processTemplate("bear-fx.properties.template"));
+
             writeStringToFile(pomFile, g.generatePom(dashedTitle));
 
             System.out.printf("Created project file: %s%n", projectFile.getPath());
@@ -438,20 +477,20 @@ public class BearMain extends AppCli<GlobalContext, Bear, BearMain.AppOptions2> 
 
         Bear bear = global.bear;
 
-        if(bearMain.options.has(AppOptions2.QUIET)){
+        if(options2.has(AppOptions2.QUIET)){
             global.put(bear.quiet, true);
             LoggingBooter.changeLogLevel(LogManager.ROOT_LOGGER_NAME, Level.WARN);
         }
 
-        if(bearMain.options.has(AppOptions2.USE_UI)){
+        if(options2.has(AppOptions2.USE_UI)){
             global.put(bear.useUI, true);
         }
 
-        if(bearMain.options.has(AppOptions2.NO_UI)){
+        if(options2.has(AppOptions2.NO_UI)){
             global.put(bear.useUI, false);
         }
 
-        List<?> list = bearMain.options.getOptionSet().nonOptionArguments();
+        List<?> list = options2.getOptionSet().nonOptionArguments();
 
         if (list.size() > 1) {
             throw new IllegalArgumentException("too many arguments: " + list + ", " +
