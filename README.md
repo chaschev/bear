@@ -96,7 +96,7 @@ Bear is also available in Maven Central:
 <dependency>
     <groupId>com.chaschev</groupId>
     <artifactId>bear</artifactId>
-    <version>1.0.1</version>
+    <version>1.0.2</version>
 </dependency>
 ```
 
@@ -115,3 +115,4 @@ $ mvn install
 
 The first command will fix JavaFX installation to be available on classpath. You might need to run this with admin user. [More...](http://zenjava.com/javafx/maven/fix-classpath.html)
 
+[![Bitdeli Badge](https://d2weczhvl823v0.cloudfront.net/chaschev/bear/trend.png)](https://bitdeli.com/free "Bitdeli Badge")
