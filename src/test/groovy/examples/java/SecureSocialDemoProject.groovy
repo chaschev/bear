@@ -65,7 +65,7 @@ public class SecureSocialDemoProject extends BearProject<SecureSocialDemoProject
         maven.version.set("3.1.1");
 
         java.version.set("7u51");
-        java.acceptLicense.set(true)
+        java.acceptLicense.set true
 
 //        java.oracleUser.set("your-user")
 //        java.oraclePassword.set("***")

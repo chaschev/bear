@@ -25,7 +25,6 @@ top priority:
 -- (ok) Where the logs are stored
 - (ok) Deployment Management Guide
 - (ok) Parallel execution examples tutorial
-
 - (ok) use-ui don't work
 - password works only from the annotations
 

@@ -31,8 +31,8 @@ class DeploymentProjectsTests {
 
         // uninstall tools && delete releases
         project.run([named("uninstall-all-and-remove-releases", { SessionContext _, task ->
-            _.sys.rm(_.var(_.bear.toolsInstallDirPath)).force().run()
-            _.sys.rm(_.var(_.plugin(ReleasesPlugin).path)).force().run()
+            _.sys.rm(_.var(_.bear.toolsInstallDirPath)).sudo().force().run()
+            _.sys.rm(_.var(_.plugin(ReleasesPlugin).path)).sudo().force().run()
         } as TaskCallable)])
 
         project.setup().throwIfAnyFailed()

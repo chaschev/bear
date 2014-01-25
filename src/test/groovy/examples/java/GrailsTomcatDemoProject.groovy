@@ -45,10 +45,11 @@ public class GrailsTomcatDemoProject extends BearProject<GrailsTomcatDemoProject
     @Override
     protected GlobalContext configureMe(GlobalContextFactory factory) throws Exception
     {
+
         maven.version.set("3.0.5");
 
-        java.versionName.set("jdk-7u40-linux-x64");
-        java.version.set("1.7.0_40");
+        java.acceptLicense.set true
+        java.version.set "7u51"
 
         grails.version.set("2.1.1")
 
