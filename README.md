@@ -116,3 +116,5 @@ $ mvn install
 The first command will fix JavaFX installation to be available on classpath. You might need to run this with admin user. [More...](http://zenjava.com/javafx/maven/fix-classpath.html)
 
 [![Bitdeli Badge](https://d2weczhvl823v0.cloudfront.net/chaschev/bear/trend.png)](https://bitdeli.com/free "Bitdeli Badge")
+
+[![Codeship](https://www.codeship.io/projects/86902100-6a7f-0131-672e-7aae494fce4d/status)]
